@@ -27,6 +27,13 @@ if (builder.Configuration.GetValue<bool>("Database:ApplyMigrations"))
     await dbContext.Database.MigrateAsync();
 }
 
+if (app.Environment.IsDevelopment() && builder.Configuration.GetValue<bool>("DemoAdmin:Enabled"))
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    var seeder = scope.ServiceProvider.GetRequiredService<DevelopmentDataSeeder>();
+    await seeder.SeedAsync();
+}
+
 app.UseExceptionHandler();
 app.UseHttpsRedirection();
 app.UseCors("frontend");

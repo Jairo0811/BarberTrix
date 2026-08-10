@@ -1,12 +1,24 @@
 # BarberTurn 💈
 
+<p align="center">
+  <img src="https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white" alt=".NET 10" />
+  <img src="https://img.shields.io/badge/ASP.NET_Core-Web_API-512BD4?logo=dotnet&logoColor=white" alt="ASP.NET Core" />
+  <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=111827" alt="React 19" />
+  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white" alt="Vite 8" />
+  <img src="https://img.shields.io/badge/SQL_Server-2022-CC2927?logo=microsoftsqlserver&logoColor=white" alt="SQL Server" />
+  <img src="https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white" alt="Docker" />
+  <img src="https://img.shields.io/badge/Nginx-Frontend-009639?logo=nginx&logoColor=white" alt="Nginx" />
+  <img src="https://img.shields.io/badge/GitHub_Actions-CI-2088FF?logo=githubactions&logoColor=white" alt="GitHub Actions" />
+</p>
+
 **BarberTurn** es una plataforma web para gestionar turnos de barberías con el menor nivel de fricción posible para el negocio y sus clientes.
 
 > **Tu turno. Tu estilo. Tu tiempo.**
 
 El producto nace de una premisa simple: la tecnología debe adaptarse a la forma de trabajar de la barbería, no obligar a la barbería a transformar toda su operación para poder usar el software.
 
-## Visión
+## 🎯 Visión
 
 BarberTurn comienza como un sistema de filas y turnos digitales, pero su arquitectura queda preparada para evolucionar hacia una plataforma multi-barbería con citas, clientes, caja, reportes y funciones SaaS.
 
@@ -18,7 +30,7 @@ La experiencia inicial debe funcionar incluso en barberías que:
 - permiten elegir un barbero específico;
 - combinan clientes espontáneos con citas.
 
-## Estado actual
+## 🚀 Estado actual
 
 ### Fase 1 — Fundación técnica
 
@@ -40,7 +52,7 @@ Implementada en el PR inicial:
 - configuración mediante variables de entorno;
 - GitHub Actions para validar backend y frontend.
 
-## Stack
+## 🧰 Stack
 
 ### Backend
 
@@ -65,7 +77,7 @@ Implementada en el PR inicial:
 - GitHub Actions
 - Nginx para servir el frontend en contenedor
 
-## Arquitectura
+## 🏗️ Arquitectura
 
 ```text
 BarberTurn
@@ -96,7 +108,7 @@ BarberTurn
 
 **Frontend** implementa la experiencia web del cliente y del personal de la barbería.
 
-## Modelo operativo
+## 💈 Modelo operativo
 
 BarberTurn contempla tres modalidades:
 
@@ -108,7 +120,7 @@ BarberTurn contempla tres modalidades:
 
 El **MVP se concentra en la modalidad por llegada**. Las citas se integrarán después sin alterar el núcleo de turnos.
 
-## Roles iniciales
+## 👥 Roles iniciales
 
 - **Owner:** propietario de la barbería.
 - **Administrator:** administración general.
@@ -117,18 +129,20 @@ El **MVP se concentra en la modalidad por llegada**. Las citas se integrarán de
 
 Los clientes podrán generar turnos sin necesidad de crear una cuenta.
 
-## Seguridad
+## 🔐 Seguridad
 
-BarberTurn no almacena claves de base de datos ni secretos JWT reales en el repositorio.
+BarberTurn no almacena claves de base de datos, secretos JWT ni contraseñas demo reales en el repositorio.
 
 La aplicación requiere los valores mediante configuración de entorno:
 
 - `ConnectionStrings__DefaultConnection`
 - `Jwt__Key`
+- `DemoAdmin__Email`
+- `DemoAdmin__Password`
 
 El JWT debe utilizar una clave de al menos 32 caracteres.
 
-## Ejecutar con Docker
+## 🐳 Ejecutar con Docker
 
 1. Copia el archivo de entorno de ejemplo:
 
@@ -154,7 +168,22 @@ Servicios locales:
 
 Docker configura `Database__ApplyMigrations=true`, por lo que la API aplica las migraciones al iniciar el entorno local.
 
-## Autenticación inicial
+## 🔑 Acceso demo de desarrollo
+
+El entorno Docker puede crear automáticamente una barbería demo y un usuario administrador al iniciar por primera vez.
+
+Configura en `.env`:
+
+```env
+DEMO_ADMIN_EMAIL=admin@barberturn.com.do
+DEMO_ADMIN_PASSWORD=tu-clave-demo-local
+```
+
+El seeding está limitado al entorno `Development`, es idempotente y solo se ejecuta cuando `DemoAdmin__Enabled=true`.
+
+> La contraseña demo debe mantenerse únicamente en el archivo `.env` local y nunca debe utilizarse como credencial de producción.
+
+## 🔌 Autenticación inicial
 
 ### Registrar la primera barbería
 
@@ -181,7 +210,7 @@ Docker configura `Database__ApplyMigrations=true`, por lo que la API aplica las 
 }
 ```
 
-## Principios del proyecto
+## ✅ Principios del proyecto
 
 - Clean Code
 - SOLID
@@ -193,7 +222,7 @@ Docker configura `Database__ApplyMigrations=true`, por lo que la API aplica las 
 - diseño responsive
 - automatización mediante CI
 
-## Roadmap
+## 🗺️ Roadmap
 
 ### Fase 2 — Núcleo de turnos
 
@@ -247,7 +276,7 @@ Docker configura `Database__ApplyMigrations=true`, por lo que la API aplica las 
 - documentación final;
 - preparación para portafolio y comercialización.
 
-## Documentación
+## 📚 Documentación
 
 - [`docs/architecture.md`](docs/architecture.md): decisiones y estructura arquitectónica.
 - [`docs/mvp.md`](docs/mvp.md): alcance funcional del MVP.

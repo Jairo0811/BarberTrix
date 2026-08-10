@@ -1,0 +1,48 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: ${BARBERTURN_DB_PASSWORD:?Set BARBERTURN_DB_PASSWORD in .env}
+    ports:
+      - "1433:1433"
+    volumes:
+      - barberturn-sqlserver:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'cat < /dev/null > /dev/tcp/localhost/1433'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=BarberTurnDb;User Id=sa;Password=${BARBERTURN_DB_PASSWORD};Encrypt=True;TrustServerCertificate=True"
+      Jwt__Issuer: BarberTurn.Api
+      Jwt__Audience: BarberTurn.Web
+      Jwt__Key: ${BARBERTURN_JWT_KEY:?Set BARBERTURN_JWT_KEY in .env}
+      Database__ApplyMigrations: "true"
+      Cors__AllowedOrigins__0: http://localhost:5173
+      Cors__AllowedOrigins__1: http://localhost:8081
+    ports:
+      - "8080:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "8081:80"
+    depends_on:
+      - api
+
+volumes:
+  barberturn-sqlserver:

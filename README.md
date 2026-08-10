@@ -55,15 +55,16 @@ Implementada en el PR inicial:
 
 ### 🟣 Backend
 
-<p>
-  <img src="https://skillicons.dev/icons?i=dotnet&theme=dark" height="44" alt=".NET" />
-  &nbsp;
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/csharp/csharp-original.svg" height="44" alt="C#" />
-  &nbsp;
-  <img src="https://img.shields.io/badge/ASP.NET_Core-Web_API-512BD4?style=for-the-badge&logo=dotnet&logoColor=white" alt="ASP.NET Core" />
-  <img src="https://img.shields.io/badge/Entity_Framework_Core-ORM-512BD4?style=for-the-badge&logo=dotnet&logoColor=white" alt="Entity Framework Core" />
-  <img src="https://img.shields.io/badge/JWT-Authentication-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white" alt="JWT" />
-  <img src="https://img.shields.io/badge/OpenAPI-Documentation-6BA539?style=for-the-badge&logo=openapiinitiative&logoColor=white" alt="OpenAPI" />
+<p align="left">
+  <img src="https://skillicons.dev/icons?i=dotnet&theme=dark" height="48" alt=".NET" />
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/csharp/csharp-original.svg" height="48" alt="C#" />
+</p>
+
+<p align="left">
+  <img src="https://img.shields.io/badge/ASP.NET_Core-Web_API-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt="ASP.NET Core" />
+  <img src="https://img.shields.io/badge/Entity_Framework_Core-ORM-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt="Entity Framework Core" />
+  <img src="https://img.shields.io/badge/JWT-Authentication-000000?style=flat-square&logo=jsonwebtokens&logoColor=white" alt="JWT" />
+  <img src="https://img.shields.io/badge/OpenAPI-Documentation-6BA539?style=flat-square&logo=openapiinitiative&logoColor=white" alt="OpenAPI" />
 </p>
 
 - 🧠 Reglas de negocio separadas del framework.
@@ -73,13 +74,15 @@ Implementada en el PR inicial:
 
 ### 🔵 Frontend
 
-<p>
-  <img src="https://skillicons.dev/icons?i=react,ts,vite,html,css&theme=dark" height="44" alt="React, TypeScript, Vite, HTML y CSS" />
-  &nbsp;
-  <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=111827" alt="React 19" />
-  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript 5" />
-  <img src="https://img.shields.io/badge/Vite-8-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite 8" />
-  <img src="https://img.shields.io/badge/UI-Responsive-0EA5E9?style=for-the-badge" alt="Responsive UI" />
+<p align="left">
+  <img src="https://skillicons.dev/icons?i=react,ts,vite,html,css&theme=dark" height="48" alt="React, TypeScript, Vite, HTML y CSS" />
+</p>
+
+<p align="left">
+  <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=111827" alt="React 19" />
+  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript 5" />
+  <img src="https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite 8" />
+  <img src="https://img.shields.io/badge/UI-Responsive-0EA5E9?style=flat-square" alt="Responsive UI" />
 </p>
 
 - ⚛️ React 19.
@@ -89,15 +92,16 @@ Implementada en el PR inicial:
 
 ### 🗄️ Datos e infraestructura
 
-<p>
-  <img src="https://skillicons.dev/icons?i=docker,nginx,github&theme=dark" height="44" alt="Docker, Nginx y GitHub" />
-  &nbsp;
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/microsoftsqlserver/microsoftsqlserver-original.svg" height="44" alt="SQL Server" />
-  &nbsp;
-  <img src="https://img.shields.io/badge/SQL_Server-2022-CC2927?style=for-the-badge&logo=microsoftsqlserver&logoColor=white" alt="SQL Server 2022" />
-  <img src="https://img.shields.io/badge/Docker_Compose-Orchestration-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker Compose" />
-  <img src="https://img.shields.io/badge/Nginx-Frontend-009639?style=for-the-badge&logo=nginx&logoColor=white" alt="Nginx" />
-  <img src="https://img.shields.io/badge/GitHub_Actions-CI-2088FF?style=for-the-badge&logo=githubactions&logoColor=white" alt="GitHub Actions" />
+<p align="left">
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/microsoftsqlserver/microsoftsqlserver-original.svg" height="48" alt="SQL Server" />
+  <img src="https://skillicons.dev/icons?i=docker,nginx,github&theme=dark" height="48" alt="Docker, Nginx y GitHub" />
+</p>
+
+<p align="left">
+  <img src="https://img.shields.io/badge/SQL_Server-2022-CC2927?style=flat-square&logo=microsoftsqlserver&logoColor=white" alt="SQL Server 2022" />
+  <img src="https://img.shields.io/badge/Docker_Compose-Orchestration-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker Compose" />
+  <img src="https://img.shields.io/badge/Nginx-Frontend-009639?style=flat-square&logo=nginx&logoColor=white" alt="Nginx" />
+  <img src="https://img.shields.io/badge/GitHub_Actions-CI-2088FF?style=flat-square&logo=githubactions&logoColor=white" alt="GitHub Actions" />
 </p>
 
 - 🗃️ SQL Server 2022.

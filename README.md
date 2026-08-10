@@ -1,156 +1,257 @@
 # BarberTurn 💈
 
-**BarberTurn** es una plataforma web para gestionar turnos en barberías, diseñada para digitalizar la fila de atención sin obligar al barbero a cambiar su forma de trabajar.
+**BarberTurn** es una plataforma web para gestionar turnos de barberías con el menor nivel de fricción posible para el negocio y sus clientes.
 
 > **Tu turno. Tu estilo. Tu tiempo.**
 
-## Problema que resuelve
+El producto nace de una premisa simple: la tecnología debe adaptarse a la forma de trabajar de la barbería, no obligar a la barbería a transformar toda su operación para poder usar el software.
 
-En muchas barberías el orden de atención todavía se administra de forma verbal o informal. Esto funciona cuando hay pocos clientes, pero puede generar incertidumbre, tiempos de espera difíciles de estimar y conflictos cuando existen varios barberos, clientes con preferencias específicas o personas que salen temporalmente del local.
+## Visión
 
-BarberTurn busca resolver ese problema con una experiencia progresiva: una barbería puede utilizar únicamente la fila digital o activar funciones adicionales cuando realmente las necesite.
+BarberTurn comienza como un sistema de filas y turnos digitales, pero su arquitectura queda preparada para evolucionar hacia una plataforma multi-barbería con citas, clientes, caja, reportes y funciones SaaS.
 
-## Principios de producto
+La experiencia inicial debe funcionar incluso en barberías que:
 
-- El software se adapta a la operación de la barbería, no al revés.
-- La gestión de turnos es el núcleo del producto.
-- Los turnos pueden ser anónimos para mantener el flujo rápido.
-- Citas, clientes, caja y reportes son capacidades opcionales.
-- La interfaz debe requerir la menor cantidad posible de pasos durante la jornada.
-- La arquitectura se prepara desde el inicio para múltiples establecimientos.
+- trabajan únicamente por orden de llegada;
+- no quieren registrar todos los clientes;
+- utilizan varios barberos en paralelo;
+- permiten elegir un barbero específico;
+- combinan clientes espontáneos con citas.
 
-## Modalidades de operación
+## Estado actual
 
-| Modalidad | Descripción |
-| --- | --- |
-| Por llegada | Los clientes entran a una fila y se atienden por turno. |
-| Por cita | Los clientes reservan barbero, servicio, fecha y hora. |
-| Híbrida | La barbería combina citas con clientes sin reservación. |
+### Fase 1 — Fundación técnica
 
-## MVP
+Implementada en el PR inicial:
 
-La primera versión se enfocará en validar el flujo principal:
+- solución .NET 10 con separación Domain / Application / Infrastructure / API;
+- ASP.NET Core Web API;
+- Entity Framework Core + SQL Server;
+- migración inicial para barberías y usuarios;
+- autenticación JWT;
+- registro inicial del propietario de una barbería;
+- login;
+- health check;
+- OpenAPI en desarrollo;
+- React 19 + TypeScript + Vite 8;
+- interfaz inicial responsive con identidad BarberTurn;
+- Dockerfiles para API y frontend;
+- Docker Compose con SQL Server;
+- configuración mediante variables de entorno;
+- GitHub Actions para validar backend y frontend.
 
-- Gestión de barberías.
-- Gestión de barberos.
-- Catálogo de servicios.
-- Creación de turnos.
-- Fila de espera.
-- Asignación de barbero.
-- Estados del turno.
-- Llamar al siguiente cliente.
-- Inicio y finalización de atención.
-- Cancelación y no presentación.
-- Tiempo estimado de espera.
-- Pantalla pública de turnos.
-- Actualizaciones en tiempo real.
-
-## Roadmap funcional
-
-### Fase 1 — Fundación
-
-Arquitectura, solución, autenticación, persistencia, Docker y configuración transversal.
-
-### Fase 2 — Núcleo de turnos
-
-Barberías, barberos, servicios, turnos y reglas de la fila de atención.
-
-### Fase 3 — Tiempo real
-
-SignalR, estados operativos, estimación de espera y BarberTurn TV.
-
-### Fase 4 — Citas
-
-Agenda, disponibilidad, reservaciones, reprogramaciones, cancelaciones y no-show.
-
-### Fase 5 — Gestión comercial
-
-Clientes, pagos, caja, propinas, cierres y reportes.
-
-### Fase 6 — SaaS / multi-barbería
-
-Aislamiento por establecimiento, configuración, roles y capacidades activables.
-
-### Fase 7 — Producción
-
-Testing, seguridad, CI/CD, observabilidad, documentación y hardening.
-
-## Stack propuesto
-
-### Frontend
-
-- React
-- TypeScript
-- Tailwind CSS
-- TanStack Query
-- SignalR Client
+## Stack
 
 ### Backend
 
-- .NET / ASP.NET Core Web API
+- .NET 10
+- ASP.NET Core
 - Entity Framework Core
-- SignalR
-- FluentValidation
+- SQL Server
+- JWT Bearer Authentication
 - OpenAPI
 
-### Datos e infraestructura
+### Frontend
 
-- SQL Server
-- Docker / Docker Compose
+- React 19
+- TypeScript
+- Vite 8
+- CSS modularizable desde la base del proyecto
+
+### Infraestructura
+
+- Docker
+- Docker Compose
 - GitHub Actions
-
-### Testing
-
-- xUnit
-- Pruebas unitarias
-- Pruebas de integración
-- Pruebas de componentes frontend
+- Nginx para servir el frontend en contenedor
 
 ## Arquitectura
 
-El backend seguirá una arquitectura modular con separación clara entre dominio, casos de uso, infraestructura y API. El frontend se organizará por funcionalidades para evitar una estructura centrada únicamente en tipos técnicos.
-
 ```text
-BarberTurn/
-├── backend/
-├── frontend/
-├── docs/
-├── .github/
-├── .editorconfig
-├── .gitignore
-└── README.md
+BarberTurn
+├── backend
+│   └── src
+│       ├── BarberTurn.Domain
+│       ├── BarberTurn.Application
+│       ├── BarberTurn.Infrastructure
+│       └── BarberTurn.Api
+├── frontend
+│   └── src
+├── docs
+├── .github
+│   └── workflows
+├── BarberTurn.sln
+└── docker-compose.yml
 ```
 
-La arquitectura detallada se documenta en [`docs/architecture.md`](docs/architecture.md).
+### Responsabilidades
 
-## Estados iniciales de un turno
+**Domain** contiene entidades y reglas de negocio sin depender de infraestructura.
 
-```text
-Waiting -> Called -> InService -> Completed
-    |         |           |
-    +-------> Cancelled <-+
-    +-------> NoShow
+**Application** define contratos y casos de uso.
+
+**Infrastructure** contiene EF Core, SQL Server, seguridad y servicios externos.
+
+**Api** expone la aplicación mediante HTTP y configura el host ASP.NET Core.
+
+**Frontend** implementa la experiencia web del cliente y del personal de la barbería.
+
+## Modelo operativo
+
+BarberTurn contempla tres modalidades:
+
+| Modalidad | Descripción |
+|---|---|
+| Por llegada | El cliente entra a una fila y espera su turno. |
+| Por cita | El cliente reserva fecha, hora, servicio y opcionalmente barbero. |
+| Híbrida | La barbería combina citas y clientes por orden de llegada. |
+
+El **MVP se concentra en la modalidad por llegada**. Las citas se integrarán después sin alterar el núcleo de turnos.
+
+## Roles iniciales
+
+- **Owner:** propietario de la barbería.
+- **Administrator:** administración general.
+- **Receptionist:** creación y gestión operativa de turnos.
+- **Barber:** atención de clientes y control de su flujo.
+
+Los clientes podrán generar turnos sin necesidad de crear una cuenta.
+
+## Seguridad
+
+BarberTurn no almacena claves de base de datos ni secretos JWT reales en el repositorio.
+
+La aplicación requiere los valores mediante configuración de entorno:
+
+- `ConnectionStrings__DefaultConnection`
+- `Jwt__Key`
+
+El JWT debe utilizar una clave de al menos 32 caracteres.
+
+## Ejecutar con Docker
+
+1. Copia el archivo de entorno de ejemplo:
+
+```bash
+cp .env.example .env
 ```
 
-Las transiciones serán controladas por reglas de negocio; la API no permitirá cambios arbitrarios de estado.
+2. Sustituye los valores de ejemplo por secretos locales propios.
 
-## Seguridad y mantenibilidad
+3. Levanta la solución:
 
-El desarrollo seguirá Clean Code, SOLID, DRY y KISS, priorizando:
+```bash
+docker compose up --build
+```
 
-- Validación explícita de entradas.
-- Autorización basada en roles y establecimiento.
-- Aislamiento de datos por barbería.
-- Manejo centralizado de errores.
-- Secretos fuera del repositorio.
-- Migraciones versionadas.
-- Logging estructurado.
-- Pruebas automatizadas para reglas críticas.
+Servicios locales:
 
-## Estado del proyecto
+- Frontend: `http://localhost:8081`
+- API: `http://localhost:8080/api`
+- Health check: `http://localhost:8080/health`
+- OpenAPI en Development: `http://localhost:8080/openapi/v1.json`
+- SQL Server: `localhost:1433`
 
-🚧 **En desarrollo — Fase 1: Fundación**
+Docker configura `Database__ApplyMigrations=true`, por lo que la API aplica las migraciones al iniciar el entorno local.
 
-## Autor
+## Autenticación inicial
 
-**Jairo Matías**
+### Registrar la primera barbería
+
+`POST /api/auth/register-owner`
+
+```json
+{
+  "barberShopName": "BarberTurn Central",
+  "barberShopSlug": "barberturn-central",
+  "name": "Administrador",
+  "email": "admin@example.com",
+  "password": "ChangeThisPassword123!"
+}
+```
+
+### Iniciar sesión
+
+`POST /api/auth/login`
+
+```json
+{
+  "email": "admin@example.com",
+  "password": "ChangeThisPassword123!"
+}
+```
+
+## Principios del proyecto
+
+- Clean Code
+- SOLID
+- DRY
+- KISS
+- separación de responsabilidades
+- multi-tenancy preparado desde el dominio
+- configuración segura por entorno
+- diseño responsive
+- automatización mediante CI
+
+## Roadmap
+
+### Fase 2 — Núcleo de turnos
+
+- barberías;
+- barberos;
+- servicios;
+- generación de turnos;
+- fila por establecimiento;
+- selección de barbero o próximo disponible;
+- estados `Waiting`, `Called`, `InService`, `Completed`, `Cancelled`, `NoShow`.
+
+### Fase 3 — Tiempo real
+
+- SignalR;
+- actualización automática de la fila;
+- estados de barberos;
+- estimaciones de espera;
+- BarberTurn TV.
+
+### Fase 4 — Citas
+
+- calendario;
+- disponibilidad;
+- reservas;
+- reprogramaciones;
+- cancelaciones;
+- bloqueo de horarios.
+
+### Fase 5 — Gestión comercial
+
+- clientes;
+- historial;
+- pagos;
+- caja;
+- reportes;
+- indicadores del negocio.
+
+### Fase 6 — SaaS
+
+- configuración avanzada por barbería;
+- aislamiento completo por tenant;
+- planes y suscripciones;
+- administración de establecimientos.
+
+### Fase 7 — Producción
+
+- suite de pruebas;
+- hardening de seguridad;
+- observabilidad;
+- despliegue;
+- documentación final;
+- preparación para portafolio y comercialización.
+
+## Documentación
+
+- [`docs/architecture.md`](docs/architecture.md): decisiones y estructura arquitectónica.
+- [`docs/mvp.md`](docs/mvp.md): alcance funcional del MVP.
+
+---
+
+**BarberTurn 💈 — Tu turno. Tu estilo. Tu tiempo.**

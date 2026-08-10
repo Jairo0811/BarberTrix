@@ -10,6 +10,8 @@ namespace BarberTurn.Infrastructure.Persistence.Migrations;
 [Migration("20260810120000_InitialCreate")]
 public sealed class InitialCreate : Migration
 {
+    private static readonly string[] UserTenantStatusIndexColumns = ["BarberShopId", "IsActive"];
+
     protected override void Up(MigrationBuilder migrationBuilder)
     {
         migrationBuilder.CreateTable(
@@ -47,7 +49,7 @@ public sealed class InitialCreate : Migration
 
         migrationBuilder.CreateIndex(name: "IX_BarberShops_Slug", table: "BarberShops", column: "Slug", unique: true);
         migrationBuilder.CreateIndex(name: "IX_Users_Email", table: "Users", column: "Email", unique: true);
-        migrationBuilder.CreateIndex(name: "IX_Users_BarberShopId_IsActive", table: "Users", columns: new[] { "BarberShopId", "IsActive" });
+        migrationBuilder.CreateIndex(name: "IX_Users_BarberShopId_IsActive", table: "Users", columns: UserTenantStatusIndexColumns);
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)

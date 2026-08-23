@@ -55,7 +55,7 @@ export default function HomePage() {
     <main className="home-page">
       <header className="home-nav">
         <a className="home-brand" href="#inicio" aria-label="BarberTurn inicio">
-          <img src="/branding/barberturn-logo.webp" alt="BarberTurn" />
+          <img src="/branding/barberturn-logo.png" alt="BarberTurn" />
         </a>
 
         <nav className="home-links" aria-label="Navegación principal">
@@ -94,7 +94,7 @@ export default function HomePage() {
 
         <div className="home-hero-visual" aria-label="Silla de barbería BarberTurn">
           <div className="home-hero-glow" />
-          <img src="/branding/barberturn-home-chair.webp" alt="Silla profesional dentro de una barbería BarberTurn" />
+          <img src="/branding/barberturn-home-chair.png" alt="Silla profesional dentro de una barbería BarberTurn" />
         </div>
       </section>
 
@@ -170,9 +170,9 @@ export default function HomePage() {
       </section>
 
       <footer className="home-footer">
-        <img src="/branding/barberturn-logo.webp" alt="BarberTurn" />
+        <img src="/branding/barberturn-logo.png" alt="BarberTurn" />
         <p>Tu turno. Tu estilo. Tu tiempo.</p>
-        <span>© {currentYear} BarberTurn. Todos los derechos reservados.</span>
+        <span>© 2026 BarberTurn. Todos los derechos reservados.</span>
       </footer>
     </main>
   )

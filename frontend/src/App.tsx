@@ -30,7 +30,7 @@ async function api<T>(path: string, auth: Auth, init?: RequestInit): Promise<T> 
 function BarberTurnLogo({ compact = false }: { compact?: boolean }) {
   return (
     <div className={`official-logo${compact ? ' compact' : ''}`} aria-label="BarberTurn">
-      <img src="/branding/barberturn-logo.webp" alt="BarberTurn" />
+      <img src="/branding/barberturn-logo.png" alt="BarberTurn" />
     </div>
   )
 }

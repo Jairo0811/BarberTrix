@@ -96,7 +96,7 @@ export default function RegisterPage() {
       <section className="register-showcase" aria-label="Beneficios de BarberTurn">
         <div className="register-showcase-overlay" />
         <div className="register-brand">
-          <img src="/branding/barberturn-logo.webp" alt="BarberTurn" />
+          <img src="/branding/barberturn-logo.png" alt="BarberTurn" />
         </div>
 
         <div className="register-copy-block">

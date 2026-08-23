@@ -18,8 +18,7 @@ public sealed class Barber : BaseEntity
             throw new ArgumentException("Barbershop is required.", nameof(barberShopId));
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Name is required.", nameof(name));
-        if (chairNumber <= 0)
-            throw new ArgumentOutOfRangeException(nameof(chairNumber), "Chair number must be greater than zero.");
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(chairNumber);
 
         BarberShopId = barberShopId;
         Name = name.Trim();
@@ -50,10 +49,8 @@ public sealed class BarberService : BaseEntity
             throw new ArgumentException("Barbershop is required.", nameof(barberShopId));
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Name is required.", nameof(name));
-        if (price < 0)
-            throw new ArgumentOutOfRangeException(nameof(price), "Price cannot be negative.");
-        if (estimatedDurationMinutes <= 0)
-            throw new ArgumentOutOfRangeException(nameof(estimatedDurationMinutes), "Estimated duration must be greater than zero.");
+        ArgumentOutOfRangeException.ThrowIfNegative(price);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(estimatedDurationMinutes);
 
         BarberShopId = barberShopId;
         Name = name.Trim();
@@ -96,8 +93,7 @@ public sealed class Turn : BaseEntity
             throw new ArgumentException("Barbershop is required.", nameof(barberShopId));
         if (serviceId == Guid.Empty)
             throw new ArgumentException("Service is required.", nameof(serviceId));
-        if (sequenceNumber <= 0)
-            throw new ArgumentOutOfRangeException(nameof(sequenceNumber));
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(sequenceNumber);
 
         BarberShopId = barberShopId;
         ServiceId = serviceId;

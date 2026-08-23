@@ -32,6 +32,34 @@ public static class AuthEndpoints
             return response is null ? Results.Unauthorized() : Results.Ok(response);
         });
 
+        group.MapPost("/demo-login", async (
+            IAuthService authService,
+            IConfiguration configuration,
+            IHostEnvironment environment,
+            CancellationToken cancellationToken) =>
+        {
+            if (!environment.IsDevelopment() || !configuration.GetValue<bool>("DemoAdmin:Enabled"))
+                return Results.NotFound();
+
+            var email = configuration["DemoAdmin:Email"];
+            var password = configuration["DemoAdmin:Password"];
+
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+            {
+                return Results.Problem(
+                    "El usuario demo no está configurado.",
+                    statusCode: StatusCodes.Status503ServiceUnavailable);
+            }
+
+            var response = await authService.LoginAsync(new LoginRequest(email, password), cancellationToken);
+
+            return response is null
+                ? Results.Problem(
+                    "No se pudo iniciar la sesión demo.",
+                    statusCode: StatusCodes.Status503ServiceUnavailable)
+                : Results.Ok(response);
+        });
+
         group.MapPost("/forgot-password", async (
             ForgotPasswordRequest request,
             IAuthService authService,

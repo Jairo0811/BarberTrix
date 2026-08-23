@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using BarberTurn.Application.Auth;
 using BarberTurn.Domain.Entities;
@@ -16,6 +17,9 @@ internal sealed class AuthService(
     IPasswordHasher<User> passwordHasher,
     IConfiguration configuration) : IAuthService
 {
+    private const string PasswordResetAudience = "BarberTurn.PasswordReset";
+    private const string PasswordResetPurpose = "password-reset";
+
     public async Task<AuthResponse> RegisterOwnerAsync(RegisterOwnerRequest request, CancellationToken cancellationToken = default)
     {
         var normalizedEmail = request.Email.Trim().ToLowerInvariant();
@@ -56,9 +60,115 @@ internal sealed class AuthService(
         return verification == PasswordVerificationResult.Failed ? null : CreateToken(user);
     }
 
+    public async Task<string?> CreatePasswordResetTokenAsync(ForgotPasswordRequest request, CancellationToken cancellationToken = default)
+    {
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+        var user = await dbContext.Users
+            .AsNoTracking()
+            .SingleOrDefaultAsync(x => x.Email == normalizedEmail && x.IsActive, cancellationToken);
+
+        if (user is null)
+            return null;
+
+        var key = GetJwtKey();
+        var issuer = configuration["Jwt:Issuer"] ?? "BarberTurn.Api";
+        var expiresAt = DateTimeOffset.UtcNow.AddMinutes(30);
+
+        var claims = new[]
+        {
+            new Claim("user_id", user.Id.ToString()),
+            new Claim("email", user.Email),
+            new Claim("purpose", PasswordResetPurpose),
+            new Claim("password_fingerprint", CreatePasswordFingerprint(user.PasswordHash))
+        };
+
+        var credentials = new SigningCredentials(
+            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
+            SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            issuer,
+            PasswordResetAudience,
+            claims,
+            notBefore: DateTime.UtcNow,
+            expires: expiresAt.UtcDateTime,
+            signingCredentials: credentials);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public async Task<bool> ResetPasswordAsync(ResetPasswordRequest request, CancellationToken cancellationToken = default)
+    {
+        var principal = ValidatePasswordResetToken(request.Token);
+        if (principal is null)
+            return false;
+
+        if (!string.Equals(principal.FindFirst("purpose")?.Value, PasswordResetPurpose, StringComparison.Ordinal))
+            return false;
+
+        if (!Guid.TryParse(principal.FindFirst("user_id")?.Value, out var userId))
+            return false;
+
+        var user = await dbContext.Users.SingleOrDefaultAsync(x => x.Id == userId && x.IsActive, cancellationToken);
+        if (user is null)
+            return false;
+
+        var tokenEmail = principal.FindFirst("email")?.Value;
+        var tokenFingerprint = principal.FindFirst("password_fingerprint")?.Value;
+
+        if (!string.Equals(user.Email, tokenEmail, StringComparison.OrdinalIgnoreCase) ||
+            !string.Equals(CreatePasswordFingerprint(user.PasswordHash), tokenFingerprint, StringComparison.Ordinal))
+            return false;
+
+        var newHash = passwordHasher.HashPassword(user, request.NewPassword);
+        user.ChangePasswordHash(newHash);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return true;
+    }
+
+    private ClaimsPrincipal? ValidatePasswordResetToken(string token)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+            return null;
+
+        var key = GetJwtKey();
+        var issuer = configuration["Jwt:Issuer"] ?? "BarberTurn.Api";
+        var tokenHandler = new JwtSecurityTokenHandler();
+
+        try
+        {
+            var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = issuer,
+                ValidAudience = PasswordResetAudience,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
+                ClockSkew = TimeSpan.FromMinutes(1)
+            }, out var validatedToken);
+
+            if (validatedToken is not JwtSecurityToken jwtToken ||
+                !string.Equals(jwtToken.Header.Alg, SecurityAlgorithms.HmacSha256, StringComparison.Ordinal))
+                return null;
+
+            return principal;
+        }
+        catch (SecurityTokenException)
+        {
+            return null;
+        }
+        catch (ArgumentException)
+        {
+            return null;
+        }
+    }
+
     private AuthResponse CreateToken(User user)
     {
-        var key = configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key is not configured.");
+        var key = GetJwtKey();
         var issuer = configuration["Jwt:Issuer"] ?? "BarberTurn.Api";
         var audience = configuration["Jwt:Audience"] ?? "BarberTurn.Web";
         var expiresAt = DateTimeOffset.UtcNow.AddHours(8);
@@ -80,5 +190,14 @@ internal sealed class AuthService(
         var accessToken = new JwtSecurityTokenHandler().WriteToken(token);
 
         return new AuthResponse(accessToken, expiresAt, user.Id, user.BarberShopId, user.Name, user.Role.ToString());
+    }
+
+    private string GetJwtKey() =>
+        configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key is not configured.");
+
+    private static string CreatePasswordFingerprint(string passwordHash)
+    {
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(passwordHash));
+        return Convert.ToHexString(hash);
     }
 }

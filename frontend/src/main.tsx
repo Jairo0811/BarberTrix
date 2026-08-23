@@ -21,7 +21,7 @@ function Root() {
     const onHashChange = () => setRoute(getRoute())
     const onRegisterClick = (event: MouseEvent) => {
       const target = event.target as HTMLElement | null
-      if (!target?.closest('.register-copy span')) return
+      if (!target?.closest('.register-copy')) return
       window.location.hash = '#/register'
     }
 

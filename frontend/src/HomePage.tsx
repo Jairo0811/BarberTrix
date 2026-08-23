@@ -172,7 +172,7 @@ export default function HomePage() {
       <footer className="home-footer">
         <img src="/branding/barberturn-logo.png" alt="BarberTurn" />
         <p>Tu turno. Tu estilo. Tu tiempo.</p>
-        <span>© 2026 BarberTurn. Todos los derechos reservados.</span>
+     <span>© {currentYear} BarberTurn. Todos los derechos reservados.</span>
       </footer>
     </main>
   )

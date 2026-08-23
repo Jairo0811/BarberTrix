@@ -1,17 +1,28 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import './auth-recovery.css'
+import type { Auth } from './types'
+import './demo-login.css'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
 const authStorageKey = 'barberturn.auth'
+const demoStorageKey = 'barberturn.demo'
 
-type Auth = {
-  accessToken: string
-  expiresAtUtc: string
-  userId: string
-  barberShopId: string
-  name: string
-  role: string
-}
+const demoFeatures = [
+  {
+    icon: '◷',
+    title: 'Gestionar turnos',
+    text: 'Crea clientes en la fila y recorre los estados principales de atención.',
+  },
+  {
+    icon: '♙',
+    title: 'Probar barberos',
+    text: 'Consulta disponibilidad, sillas y estados del equipo de trabajo.',
+  },
+  {
+    icon: '✂',
+    title: 'Explorar servicios',
+    text: 'Visualiza y administra el catálogo disponible para generar turnos.',
+  },
+]
 
 export default function DemoLoginPage() {
   const [busy, setBusy] = useState(true)
@@ -37,6 +48,7 @@ export default function DemoLoginPage() {
       localStorage.removeItem(authStorageKey)
       sessionStorage.removeItem(authStorageKey)
       sessionStorage.setItem(authStorageKey, JSON.stringify(auth))
+      sessionStorage.setItem(demoStorageKey, 'true')
 
       window.location.hash = '#/login'
     } catch (exception) {
@@ -52,27 +64,53 @@ export default function DemoLoginPage() {
   }, [loginAsDemo])
 
   return (
-    <main className="recovery-page">
-      <section className="recovery-card" aria-labelledby="demo-login-title">
-        <a className="recovery-logo" href="#/" aria-label="Volver al inicio de BarberTurn">
+    <main className="demo-login-page">
+      <section className="demo-login-card" aria-labelledby="demo-login-title">
+        <a className="demo-login-logo" href="#/" aria-label="Volver al inicio de BarberTurn">
           <img src="/branding/barberturn-logo.png" alt="BarberTurn" />
         </a>
 
-        <div className="recovery-icon" aria-hidden="true">◎</div>
-        <h1 id="demo-login-title">Usuario demo</h1>
-        <p className="recovery-description">
-          {busy
-            ? 'Preparando un entorno de demostración de BarberTurn…'
-            : 'No pudimos abrir la demostración automáticamente.'}
-        </p>
+        <span className="demo-login-badge">◎ EXPERIENCIA DE DEMOSTRACIÓN</span>
 
-        {error && <p className="recovery-error" role="alert">{error}</p>}
+        <div className="demo-login-heading">
+          <h1 id="demo-login-title">Explora BarberTurn sin crear una cuenta</h1>
+          <p>
+            Abriremos un entorno de prueba para que puedas recorrer el flujo operativo del sistema y entender cómo se gestiona una barbería desde BarberTurn.
+          </p>
+        </div>
+
+        <div className="demo-feature-grid">
+          {demoFeatures.map(feature => (
+            <article className="demo-feature-card" key={feature.title}>
+              <span aria-hidden="true">{feature.icon}</span>
+              <strong>{feature.title}</strong>
+              <small>{feature.text}</small>
+            </article>
+          ))}
+        </div>
+
+        <div className="demo-login-status" role="status" aria-live="polite">
+          <span className="demo-login-status-icon" aria-hidden="true">{busy ? '↻' : '!'}</span>
+          <div>
+            <strong>{busy ? 'Preparando tu sesión demo…' : 'No pudimos abrir la demostración automáticamente'}</strong>
+            <span>{busy ? 'Conectando con el entorno de prueba de BarberTurn.' : 'Puedes reintentar el acceso o volver al inicio de sesión.'}</span>
+          </div>
+        </div>
+
+        {error && <p className="demo-login-error" role="alert">{error}</p>}
 
         {!busy && (
-          <button className="recovery-primary" type="button" onClick={() => void loginAsDemo()}>
-            Reintentar acceso demo
-          </button>
+          <div className="demo-login-actions">
+            <button className="demo-login-primary" type="button" onClick={() => void loginAsDemo()}>
+              Reintentar acceso demo
+            </button>
+            <a className="demo-login-secondary" href="#/login">Volver al login</a>
+          </div>
         )}
+
+        <p className="demo-login-note">
+          Esta sesión usa datos de demostración y se guarda únicamente durante la sesión actual del navegador.
+        </p>
       </section>
     </main>
   )

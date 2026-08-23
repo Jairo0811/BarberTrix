@@ -8,7 +8,7 @@ namespace BarberTurn.Infrastructure.Persistence.Migrations;
 
 [DbContext(typeof(ApplicationDbContext))]
 [Migration("20260823170000_Phase2CoreQueue")]
-public sealed class Phase2CoreQueue : Migration
+public sealed class Phase2TurnManagement : Migration
 {
     private static readonly string[] BarberChairIndexColumns = ["BarberShopId", "ChairNumber"];
     private static readonly string[] BarberStatusIndexColumns = ["BarberShopId", "IsActive", "Status"];

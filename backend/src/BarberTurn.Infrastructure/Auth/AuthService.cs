@@ -103,18 +103,18 @@ internal sealed class AuthService(
         if (principal is null)
             return false;
 
-        if (!string.Equals(principal.FindFirstValue("purpose"), PasswordResetPurpose, StringComparison.Ordinal))
+        if (!string.Equals(principal.FindFirst("purpose")?.Value, PasswordResetPurpose, StringComparison.Ordinal))
             return false;
 
-        if (!Guid.TryParse(principal.FindFirstValue("user_id"), out var userId))
+        if (!Guid.TryParse(principal.FindFirst("user_id")?.Value, out var userId))
             return false;
 
         var user = await dbContext.Users.SingleOrDefaultAsync(x => x.Id == userId && x.IsActive, cancellationToken);
         if (user is null)
             return false;
 
-        var tokenEmail = principal.FindFirstValue("email");
-        var tokenFingerprint = principal.FindFirstValue("password_fingerprint");
+        var tokenEmail = principal.FindFirst("email")?.Value;
+        var tokenFingerprint = principal.FindFirst("password_fingerprint")?.Value;
 
         if (!string.Equals(user.Email, tokenEmail, StringComparison.OrdinalIgnoreCase) ||
             !string.Equals(CreatePasswordFingerprint(user.PasswordHash), tokenFingerprint, StringComparison.Ordinal))

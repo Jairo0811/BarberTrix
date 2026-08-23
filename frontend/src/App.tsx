@@ -10,6 +10,11 @@ type Auth = { accessToken: string; expiresAtUtc: string; userId: string; barberS
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
 const authStorageKey = 'barberturn.auth'
 
+function getStoredAuth(): Auth | null {
+  const value = localStorage.getItem(authStorageKey) ?? sessionStorage.getItem(authStorageKey)
+  return value ? JSON.parse(value) as Auth : null
+}
+
 async function api<T>(path: string, auth: Auth, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, {
     ...init,
@@ -22,16 +27,23 @@ async function api<T>(path: string, auth: Auth, init?: RequestInit): Promise<T> 
   return response.json() as Promise<T>
 }
 
+function BarberTurnLogo() {
+  return (
+    <div className="login-brand" aria-label="BarberTurn">
+      <span className="barber-pole" aria-hidden="true"><i /></span>
+      <span className="brand-word">Barber<span>Turn</span></span>
+    </div>
+  )
+}
+
 function App() {
-  const [auth, setAuth] = useState<Auth | null>(() => {
-    const value = localStorage.getItem(authStorageKey)
-    return value ? JSON.parse(value) as Auth : null
-  })
+  const [auth, setAuth] = useState<Auth | null>(getStoredAuth)
   const [barbers, setBarbers] = useState<Barber[]>([])
   const [services, setServices] = useState<Service[]>([])
   const [turns, setTurns] = useState<Turn[]>([])
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const canManageCatalog = auth?.role === 'Owner' || auth?.role === 'Administrator'
 
@@ -71,9 +83,12 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: data.get('email'), password: data.get('password') }),
       })
-      if (!response.ok) throw new Error('Credenciales inválidas.')
+      if (!response.ok) throw new Error('Correo o contraseña incorrectos.')
       const nextAuth = await response.json() as Auth
-      localStorage.setItem(authStorageKey, JSON.stringify(nextAuth))
+      const remember = data.get('remember') === 'on'
+      localStorage.removeItem(authStorageKey)
+      sessionStorage.removeItem(authStorageKey)
+      ;(remember ? localStorage : sessionStorage).setItem(authStorageKey, JSON.stringify(nextAuth))
       setAuth(nextAuth)
     } catch (exception) {
       setError(exception instanceof Error ? exception.message : 'No se pudo iniciar sesión.')
@@ -152,16 +167,37 @@ function App() {
   if (!auth) return (
     <main className="login-shell">
       <section className="login-card">
-        <div className="brand-mark" aria-label="BarberTurn"><span className="brand-b">B</span><span className="brand-t">T</span></div>
-        <p className="eyebrow">BARBERSHOP QUEUE SYSTEM</p>
-        <h1>Panel <span>operativo.</span></h1>
-        <p className="description">Inicia sesión para administrar la cola de tu barbería.</p>
-        <form className="form-stack" onSubmit={login}>
-          <input name="email" type="email" placeholder="Correo" required />
-          <input name="password" type="password" placeholder="Contraseña" required />
-          <button className="primary" disabled={busy}>Entrar</button>
+        <BarberTurnLogo />
+        <p className="login-subtitle">Inicia sesión para continuar</p>
+
+        <form className="login-form" onSubmit={login}>
+          <label className="login-field">
+            <span>Correo electrónico</span>
+            <div className="input-wrap">
+              <span className="field-icon" aria-hidden="true">✉</span>
+              <input name="email" type="email" autoComplete="email" placeholder="admin@barberturn.com.do" required />
+            </div>
+          </label>
+
+          <label className="login-field">
+            <span>Contraseña</span>
+            <div className="input-wrap">
+              <span className="field-icon" aria-hidden="true">●</span>
+              <input name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="••••••••••••" required />
+              <button className="password-toggle" type="button" aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'} onClick={() => setShowPassword(value => !value)}>{showPassword ? 'Ocultar' : 'Ver'}</button>
+            </div>
+          </label>
+
+          <div className="login-options">
+            <label className="remember-option"><input name="remember" type="checkbox" defaultChecked /><span>Recordarme</span></label>
+            <button className="forgot-link" type="button" title="Recuperación de contraseña disponible en una fase posterior">¿Olvidaste tu contraseña?</button>
+          </div>
+
+          <button className="login-submit" disabled={busy}>{busy ? 'Ingresando…' : 'Iniciar sesión'}</button>
         </form>
-        {error && <p className="error">{error}</p>}
+
+        {error && <p className="login-error" role="alert">{error}</p>}
+        <p className="login-footer">© 2026 BarberTurn. Tu turno. Tu estilo. Tu tiempo.</p>
       </section>
     </main>
   )
@@ -170,7 +206,7 @@ function App() {
     <main className="dashboard-shell">
       <header className="topbar">
         <div><p className="eyebrow">BARBERTURN OPERATIONS</p><h2>Cola de hoy</h2></div>
-        <div className="session"><span>{auth.name} · {auth.role}</span><button className="secondary" onClick={() => { localStorage.removeItem(authStorageKey); setAuth(null) }}>Salir</button></div>
+        <div className="session"><span>{auth.name} · {auth.role}</span><button className="secondary" onClick={() => { localStorage.removeItem(authStorageKey); sessionStorage.removeItem(authStorageKey); setAuth(null) }}>Salir</button></div>
       </header>
 
       {error && <p className="error banner">{error}</p>}

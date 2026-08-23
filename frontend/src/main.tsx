@@ -5,16 +5,18 @@ import HomePage from './HomePage'
 import RegisterPage from './RegisterPage'
 import ForgotPasswordPage from './ForgotPasswordPage'
 import ResetPasswordPage from './ResetPasswordPage'
+import DemoLoginPage from './DemoLoginPage'
 import './styles.css'
 import './login.css'
 
-type PublicRoute = 'home' | 'login' | 'register' | 'forgot-password' | 'reset-password'
+type PublicRoute = 'home' | 'login' | 'register' | 'forgot-password' | 'reset-password' | 'demo'
 
 function getRoute(): PublicRoute {
   if (window.location.hash === '#/login') return 'login'
   if (window.location.hash === '#/register') return 'register'
   if (window.location.hash === '#/forgot-password') return 'forgot-password'
   if (window.location.hash.startsWith('#/reset-password')) return 'reset-password'
+  if (window.location.hash === '#/demo') return 'demo'
   return 'home'
 }
 
@@ -34,6 +36,11 @@ function Root() {
 
       if (target.closest('.forgot-link')) {
         window.location.hash = '#/forgot-password'
+        return
+      }
+
+      if (target.closest('.demo-button')) {
+        window.location.hash = '#/demo'
       }
     }
 
@@ -50,6 +57,7 @@ function Root() {
   if (route === 'register') return <RegisterPage />
   if (route === 'forgot-password') return <ForgotPasswordPage />
   if (route === 'reset-password') return <ResetPasswordPage />
+  if (route === 'demo') return <DemoLoginPage />
   return <HomePage />
 }
 

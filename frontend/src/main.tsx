@@ -3,14 +3,18 @@ import { createRoot } from 'react-dom/client'
 import App from './App'
 import HomePage from './HomePage'
 import RegisterPage from './RegisterPage'
+import ForgotPasswordPage from './ForgotPasswordPage'
+import ResetPasswordPage from './ResetPasswordPage'
 import './styles.css'
 import './login.css'
 
-type PublicRoute = 'home' | 'login' | 'register'
+type PublicRoute = 'home' | 'login' | 'register' | 'forgot-password' | 'reset-password'
 
 function getRoute(): PublicRoute {
   if (window.location.hash === '#/login') return 'login'
   if (window.location.hash === '#/register') return 'register'
+  if (window.location.hash === '#/forgot-password') return 'forgot-password'
+  if (window.location.hash.startsWith('#/reset-password')) return 'reset-password'
   return 'home'
 }
 
@@ -19,23 +23,33 @@ function Root() {
 
   useEffect(() => {
     const onHashChange = () => setRoute(getRoute())
-    const onRegisterClick = (event: MouseEvent) => {
+    const onPublicAuthAction = (event: MouseEvent) => {
       const target = event.target as HTMLElement | null
-      if (!target?.closest('.register-copy')) return
-      window.location.hash = '#/register'
+      if (!target) return
+
+      if (target.closest('.register-copy')) {
+        window.location.hash = '#/register'
+        return
+      }
+
+      if (target.closest('.forgot-link')) {
+        window.location.hash = '#/forgot-password'
+      }
     }
 
     window.addEventListener('hashchange', onHashChange)
-    document.addEventListener('click', onRegisterClick)
+    document.addEventListener('click', onPublicAuthAction)
 
     return () => {
       window.removeEventListener('hashchange', onHashChange)
-      document.removeEventListener('click', onRegisterClick)
+      document.removeEventListener('click', onPublicAuthAction)
     }
   }, [])
 
   if (route === 'login') return <App />
   if (route === 'register') return <RegisterPage />
+  if (route === 'forgot-password') return <ForgotPasswordPage />
+  if (route === 'reset-password') return <ResetPasswordPage />
   return <HomePage />
 }
 

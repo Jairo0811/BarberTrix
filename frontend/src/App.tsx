@@ -27,11 +27,10 @@ async function api<T>(path: string, auth: Auth, init?: RequestInit): Promise<T> 
   return response.json() as Promise<T>
 }
 
-function BarberTurnLogo() {
+function BarberTurnLogo({ compact = false }: { compact?: boolean }) {
   return (
-    <div className="login-brand" aria-label="BarberTurn">
-      <span className="barber-pole" aria-hidden="true"><i /></span>
-      <span className="brand-word">Barber<span>Turn</span></span>
+    <div className={`official-logo${compact ? ' compact' : ''}`} aria-label="BarberTurn">
+      <img src="/branding/barberturn-logo.webp" alt="BarberTurn" />
     </div>
   )
 }
@@ -168,7 +167,7 @@ function App() {
     <main className="login-shell login-split">
       <section className="login-showcase" aria-label="Presentación de BarberTurn">
         <div className="showcase-content">
-          <BarberTurnLogo />
+          <BarberTurnLogo compact />
           <span className="showcase-badge">SISTEMA DE GESTIÓN PARA BARBERÍAS</span>
           <h1>Organiza tu barbería.<br /><span>Atiende mejor.</span></h1>
           <p className="showcase-copy">BarberTurn te ayuda a gestionar turnos, barberos, servicios y clientes de forma simple y eficiente.</p>

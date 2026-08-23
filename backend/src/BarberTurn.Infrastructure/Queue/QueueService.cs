@@ -54,11 +54,12 @@ internal sealed class QueueService(ApplicationDbContext dbContext) : IQueueServi
     public async Task<IReadOnlyList<TurnResponse>> GetQueueAsync(Guid barberShopId, CancellationToken cancellationToken = default)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        return await QueryTurns(barberShopId)
+        var rows = await QueryTurns(barberShopId)
             .Where(x => x.Turn.QueueDate == today && x.Turn.Status != TurnStatus.Completed && x.Turn.Status != TurnStatus.Cancelled && x.Turn.Status != TurnStatus.NoShow)
             .OrderBy(x => x.Turn.SequenceNumber)
-            .Select(x => MapTurn(x.Turn, x.Service, x.Barber))
             .ToListAsync(cancellationToken);
+
+        return rows.Select(x => MapTurn(x.Turn, x.Service, x.Barber)).ToList();
     }
 
     public async Task<TurnResponse> CreateTurnAsync(Guid barberShopId, CreateTurnRequest request, CancellationToken cancellationToken = default)
@@ -165,11 +166,13 @@ internal sealed class QueueService(ApplicationDbContext dbContext) : IQueueServi
         return await GetTurnResponseAsync(barberShopId, turnId, cancellationToken);
     }
 
-    private async Task<TurnResponse?> GetTurnResponseAsync(Guid barberShopId, Guid turnId, CancellationToken cancellationToken) =>
-        await QueryTurns(barberShopId)
-            .Where(x => x.Turn.Id == turnId)
-            .Select(x => MapTurn(x.Turn, x.Service, x.Barber))
-            .SingleOrDefaultAsync(cancellationToken);
+    private async Task<TurnResponse?> GetTurnResponseAsync(Guid barberShopId, Guid turnId, CancellationToken cancellationToken)
+    {
+        var row = await QueryTurns(barberShopId)
+            .SingleOrDefaultAsync(x => x.Turn.Id == turnId, cancellationToken);
+
+        return row is null ? null : MapTurn(row.Turn, row.Service, row.Barber);
+    }
 
     private IQueryable<TurnJoin> QueryTurns(Guid barberShopId) =>
         from turn in dbContext.Turns.AsNoTracking()

@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using BarberTurn.Api.Endpoints;
 using BarberTurn.Infrastructure;
 using BarberTurn.Infrastructure.Persistence;
@@ -8,6 +9,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks();
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("frontend", policy =>

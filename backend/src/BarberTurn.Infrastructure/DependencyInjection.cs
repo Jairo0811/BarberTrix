@@ -1,8 +1,10 @@
 using System.Text;
 using BarberTurn.Application.Auth;
+using BarberTurn.Application.Queue;
 using BarberTurn.Domain.Entities;
 using BarberTurn.Infrastructure.Auth;
 using BarberTurn.Infrastructure.Persistence;
+using BarberTurn.Infrastructure.Queue;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +28,7 @@ public static class DependencyInjection
 
         services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IQueueService, QueueService>();
         services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
         services.AddScoped<DevelopmentDataSeeder>();
 

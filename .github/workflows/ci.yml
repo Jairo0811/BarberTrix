@@ -20,6 +20,8 @@ jobs:
         run: dotnet restore BarberTurn.sln
       - name: Build
         run: dotnet build BarberTurn.sln --configuration Release --no-restore
+      - name: Test
+        run: dotnet test BarberTurn.sln --configuration Release --no-build --no-restore
 
   frontend:
     name: Frontend (React)

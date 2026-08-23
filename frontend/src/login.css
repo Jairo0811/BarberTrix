@@ -150,6 +150,17 @@
   font-size: 10px;
 }
 
+.register-copy span {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.register-copy span:hover {
+  color: #8ac3ff;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .login-error {
   margin-top: 14px;
   padding: 9px 11px;

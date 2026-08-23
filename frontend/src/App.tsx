@@ -165,39 +165,67 @@ function App() {
   }
 
   if (!auth) return (
-    <main className="login-shell">
-      <section className="login-card">
-        <BarberTurnLogo />
-        <p className="login-subtitle">Inicia sesión para continuar</p>
+    <main className="login-shell login-split">
+      <section className="login-showcase" aria-label="Presentación de BarberTurn">
+        <div className="showcase-content">
+          <BarberTurnLogo />
+          <span className="showcase-badge">SISTEMA DE GESTIÓN PARA BARBERÍAS</span>
+          <h1>Organiza tu barbería.<br /><span>Atiende mejor.</span></h1>
+          <p className="showcase-copy">BarberTurn te ayuda a gestionar turnos, barberos, servicios y clientes de forma simple y eficiente.</p>
 
-        <form className="login-form" onSubmit={login}>
-          <label className="login-field">
-            <span>Correo electrónico</span>
-            <div className="input-wrap">
-              <span className="field-icon" aria-hidden="true">✉</span>
-              <input name="email" type="email" autoComplete="email" placeholder="admin@barberturn.com.do" required />
-            </div>
-          </label>
-
-          <label className="login-field">
-            <span>Contraseña</span>
-            <div className="input-wrap">
-              <span className="field-icon" aria-hidden="true">●</span>
-              <input name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="••••••••••••" required />
-              <button className="password-toggle" type="button" aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'} onClick={() => setShowPassword(value => !value)}>{showPassword ? 'Ocultar' : 'Ver'}</button>
-            </div>
-          </label>
-
-          <div className="login-options">
-            <label className="remember-option"><input name="remember" type="checkbox" defaultChecked /><span>Recordarme</span></label>
-            <button className="forgot-link" type="button" title="Recuperación de contraseña disponible en una fase posterior">¿Olvidaste tu contraseña?</button>
+          <div className="showcase-features">
+            <article><span className="feature-icon">◎</span><div><strong>Fácil de usar</strong><small>Interfaz intuitiva para ti y tu equipo</small></div></article>
+            <article><span className="feature-icon">☁</span><div><strong>En la nube</strong><small>Accede desde cualquier lugar, siempre seguro</small></div></article>
+            <article><span className="feature-icon">◇</span><div><strong>Seguro</strong><small>Tus datos siempre protegidos</small></div></article>
           </div>
 
-          <button className="login-submit" disabled={busy}>{busy ? 'Ingresando…' : 'Iniciar sesión'}</button>
-        </form>
+          <div className="showcase-stats">
+            <div><strong>+50</strong><span>Barberías confían</span></div>
+            <div><strong>+1,000</strong><span>Turnos gestionados</span></div>
+            <div><strong>+200</strong><span>Clientes satisfechos</span></div>
+            <div><strong>99.9%</strong><span>Tiempo activo</span></div>
+          </div>
+        </div>
+      </section>
 
-        {error && <p className="login-error" role="alert">{error}</p>}
-        <p className="login-footer">© 2026 BarberTurn. Tu turno. Tu estilo. Tu tiempo.</p>
+      <section className="login-panel">
+        <div className="login-card">
+          <BarberTurnLogo />
+          <h2>Bienvenido de nuevo</h2>
+          <p className="login-subtitle">Inicia sesión para continuar</p>
+
+          <form className="login-form" onSubmit={login}>
+            <label className="login-field">
+              <span>Correo electrónico</span>
+              <div className="input-wrap">
+                <span className="field-icon" aria-hidden="true">✉</span>
+                <input name="email" type="email" autoComplete="email" placeholder="ejemplo@barberia.com" required />
+              </div>
+            </label>
+
+            <label className="login-field">
+              <span>Contraseña</span>
+              <div className="input-wrap">
+                <span className="field-icon" aria-hidden="true">●</span>
+                <input name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="••••••••••••" required />
+                <button className="password-toggle" type="button" aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'} onClick={() => setShowPassword(value => !value)}>{showPassword ? 'Ocultar' : 'Ver'}</button>
+              </div>
+            </label>
+
+            <div className="login-options">
+              <label className="remember-option"><input name="remember" type="checkbox" defaultChecked /><span>Recordarme</span></label>
+              <button className="forgot-link" type="button" title="Recuperación de contraseña disponible en una fase posterior">¿Olvidaste tu contraseña?</button>
+            </div>
+
+            <button className="login-submit" disabled={busy}>{busy ? 'Ingresando…' : 'Iniciar sesión'}</button>
+          </form>
+
+          <div className="login-separator"><span>o continúa con</span></div>
+          <button className="demo-button" type="button" title="Usa las credenciales demo configuradas localmente">Usuario demo</button>
+          <p className="register-copy">¿No tienes cuenta? <span>Regístrate aquí</span></p>
+
+          {error && <p className="login-error" role="alert">{error}</p>}
+        </div>
       </section>
     </main>
   )

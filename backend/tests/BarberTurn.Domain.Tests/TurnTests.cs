@@ -5,7 +5,7 @@ namespace BarberTurn.Domain.Tests;
 public sealed class TurnTests
 {
     [Fact]
-    public void NewTurn_StartsWaitingAndFormatsTicketNumber()
+    public void NewTurnStartsWaitingAndFormatsTicketNumber()
     {
         var turn = CreateTurn(sequenceNumber: 7);
 
@@ -15,7 +15,7 @@ public sealed class TurnTests
     }
 
     [Fact]
-    public void CallStartAndComplete_FollowValidLifecycle()
+    public void CallStartAndCompleteFollowValidLifecycle()
     {
         var barberId = Guid.NewGuid();
         var turn = CreateTurn();
@@ -35,7 +35,7 @@ public sealed class TurnTests
     }
 
     [Fact]
-    public void Cancel_WaitingTurnBecomesCancelled()
+    public void CancelWaitingTurnBecomesCancelled()
     {
         var turn = CreateTurn();
 
@@ -45,7 +45,7 @@ public sealed class TurnTests
     }
 
     [Fact]
-    public void MarkNoShow_CalledTurnBecomesNoShow()
+    public void MarkNoShowCalledTurnBecomesNoShow()
     {
         var turn = CreateTurn();
         turn.Call(Guid.NewGuid());
@@ -56,7 +56,7 @@ public sealed class TurnTests
     }
 
     [Fact]
-    public void StartService_WithoutCalling_Throws()
+    public void StartServiceWithoutCallingThrows()
     {
         var turn = CreateTurn();
 
@@ -64,7 +64,7 @@ public sealed class TurnTests
     }
 
     [Fact]
-    public void CompletedTurn_CannotBeAssignedAgain()
+    public void CompletedTurnCannotBeAssignedAgain()
     {
         var turn = CreateTurn();
         turn.Call(Guid.NewGuid());

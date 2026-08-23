@@ -4,6 +4,8 @@ namespace BarberTurn.Api.Endpoints;
 
 public static class AuthEndpoints
 {
+    private const string PasswordResetMessage = "Si existe una cuenta asociada a ese correo, recibirás instrucciones para restablecer tu contraseña.";
+
     public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("/api/auth").WithTags("Authentication");
@@ -28,6 +30,39 @@ public static class AuthEndpoints
         {
             var response = await authService.LoginAsync(request, cancellationToken);
             return response is null ? Results.Unauthorized() : Results.Ok(response);
+        });
+
+        group.MapPost("/forgot-password", async (
+            ForgotPasswordRequest request,
+            IAuthService authService,
+            IConfiguration configuration,
+            IHostEnvironment environment,
+            CancellationToken cancellationToken) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.Email))
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["email"] = ["El correo electrónico es obligatorio."] });
+
+            var token = await authService.CreatePasswordResetTokenAsync(request, cancellationToken);
+            string? developmentResetUrl = null;
+
+            if (environment.IsDevelopment() && token is not null)
+            {
+                var frontendBaseUrl = configuration["PasswordReset:FrontendBaseUrl"] ?? "http://localhost:5173";
+                developmentResetUrl = $"{frontendBaseUrl.TrimEnd('/')}/#/reset-password?token={Uri.EscapeDataString(token)}";
+            }
+
+            return Results.Ok(new ForgotPasswordResponse(PasswordResetMessage, developmentResetUrl));
+        });
+
+        group.MapPost("/reset-password", async (ResetPasswordRequest request, IAuthService authService, CancellationToken cancellationToken) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.Token) || string.IsNullOrWhiteSpace(request.NewPassword) || request.NewPassword.Length < 8)
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["credentials"] = ["Se requiere un token válido y una contraseña de al menos 8 caracteres."] });
+
+            var changed = await authService.ResetPasswordAsync(request, cancellationToken);
+            return changed
+                ? Results.Ok(new { message = "Tu contraseña se actualizó correctamente." })
+                : Results.ValidationProblem(new Dictionary<string, string[]> { ["token"] = ["El enlace de recuperación es inválido, ya fue utilizado o expiró."] });
         });
 
         return endpoints;

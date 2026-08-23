@@ -1,0 +1,284 @@
+.register-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(420px, .95fr);
+  color: #f7fbff;
+  background: #02060d;
+}
+
+.register-showcase {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 54px 7vw;
+  background:
+    linear-gradient(90deg, rgba(2, 6, 13, .96) 0%, rgba(3, 8, 16, .72) 46%, rgba(2, 6, 13, .86) 100%),
+    url('/branding/barberturn-home-chair.webp') center / cover no-repeat;
+  border-right: 1px solid rgba(111, 145, 195, .14);
+}
+
+.register-showcase-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 26% 30%, rgba(26, 120, 255, .17), transparent 25%),
+    linear-gradient(180deg, rgba(3, 7, 14, .08), rgba(1, 4, 10, .58));
+  pointer-events: none;
+}
+
+.register-brand,
+.register-copy-block {
+  position: relative;
+  z-index: 2;
+}
+
+.register-brand img {
+  width: min(230px, 52vw);
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 14px 32px rgba(0, 0, 0, .46));
+}
+
+.register-copy-block {
+  margin-top: 36px;
+  max-width: 480px;
+}
+
+.register-copy-block > p {
+  margin: 0;
+  max-width: 390px;
+  color: #e9eef7;
+  font-size: 21px;
+  line-height: 1.55;
+  font-weight: 650;
+}
+
+.register-benefits {
+  display: grid;
+  gap: 18px;
+  margin-top: 30px;
+}
+
+.register-benefits article {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.register-benefits article > span {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #71b6ff;
+  background: rgba(27, 120, 241, .16);
+  border: 1px solid rgba(75, 150, 245, .18);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.register-benefits strong {
+  color: #cbd5e4;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.register-panel {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 34px;
+  background:
+    radial-gradient(circle at 50% 28%, rgba(18, 94, 190, .13), transparent 34%),
+    linear-gradient(180deg, #050a14 0%, #02050b 100%);
+}
+
+.register-card {
+  width: min(500px, 100%);
+  padding: 32px 34px 26px;
+  border-radius: 18px;
+  border: 1px solid rgba(118, 150, 201, .2);
+  background: linear-gradient(180deg, rgba(10, 19, 34, .97), rgba(5, 11, 21, .99));
+  box-shadow: 0 32px 80px rgba(0, 0, 0, .48), inset 0 1px 0 rgba(255, 255, 255, .02);
+}
+
+.register-card header h1 {
+  margin: 0;
+  font-size: 24px;
+  letter-spacing: -.03em;
+}
+
+.register-card header p {
+  margin: 8px 0 0;
+  color: #8f9db2;
+  font-size: 13px;
+}
+
+.register-form {
+  display: grid;
+  gap: 15px;
+  margin-top: 24px;
+}
+
+.register-form label {
+  display: grid;
+  gap: 7px;
+}
+
+.register-form label > span {
+  color: #cbd5e3;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.register-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.register-input-wrap input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 62px 0 42px;
+  color: #edf4ff;
+  background: rgba(6, 13, 24, .94);
+  border: 1px solid rgba(123, 151, 193, .2);
+  border-radius: 9px;
+  outline: none;
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.register-input-wrap input::placeholder {
+  color: #637087;
+}
+
+.register-input-wrap input:focus {
+  border-color: rgba(37, 139, 255, .86);
+  box-shadow: 0 0 0 3px rgba(37, 139, 255, .12);
+  background: #0a1728;
+}
+
+.register-field-icon {
+  position: absolute;
+  left: 13px;
+  color: #72849e;
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.register-password-toggle {
+  position: absolute;
+  right: 10px;
+  border: 0;
+  padding: 7px;
+  background: transparent;
+  color: #58a8ff;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.register-password-toggle:hover {
+  color: #8ac3ff;
+}
+
+.register-submit {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 4px;
+  border: 0;
+  border-radius: 9px;
+  color: white;
+  background: linear-gradient(180deg, #2b88ff, #1a66dc);
+  box-shadow: 0 13px 30px rgba(17, 104, 225, .28);
+  font-weight: 800;
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+}
+
+.register-submit:not(:disabled):hover {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+  box-shadow: 0 17px 36px rgba(17, 104, 225, .34);
+}
+
+.register-submit:disabled {
+  opacity: .62;
+  cursor: wait;
+}
+
+.register-error {
+  margin: 16px 0 0;
+  padding: 11px 12px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 108, 108, .18);
+  background: rgba(255, 74, 74, .08);
+  color: #ffb0b0;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.register-login-copy {
+  margin: 24px 0 0;
+  text-align: center;
+  color: #8f9caf;
+  font-size: 12px;
+}
+
+.register-login-copy a {
+  color: #2d94ff;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.register-login-copy a:hover {
+  color: #8ac3ff;
+}
+
+@media (max-width: 900px) {
+  .register-page {
+    grid-template-columns: 1fr;
+  }
+
+  .register-showcase {
+    min-height: 430px;
+    padding: 48px 8vw;
+    border-right: 0;
+    border-bottom: 1px solid rgba(111, 145, 195, .14);
+    background-position: center 62%;
+  }
+
+  .register-panel {
+    min-height: auto;
+    padding: 42px 20px;
+  }
+}
+
+@media (max-width: 560px) {
+  .register-showcase {
+    min-height: 360px;
+    padding: 36px 22px;
+  }
+
+  .register-brand img {
+    width: 180px;
+  }
+
+  .register-copy-block > p {
+    font-size: 18px;
+  }
+
+  .register-benefits {
+    gap: 13px;
+  }
+
+  .register-card {
+    padding: 26px 20px 22px;
+    border-radius: 15px;
+  }
+}

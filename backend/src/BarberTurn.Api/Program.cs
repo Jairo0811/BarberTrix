@@ -46,6 +46,7 @@ if (app.Environment.IsDevelopment())
 app.MapHealthChecks("/health");
 app.MapGet("/api", () => Results.Ok(new { name = "BarberTurn API", status = "ok" }));
 app.MapAuthEndpoints();
+app.MapQueueEndpoints();
 
 app.Run();
 

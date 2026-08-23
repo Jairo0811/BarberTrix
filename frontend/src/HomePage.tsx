@@ -1,4 +1,5 @@
 import './home.css'
+import { buildSupportEmailHref, buildWhatsAppHref, supportConfig } from './support'
 
 const heroFeatures = [
   { icon: '◉', title: 'Fácil de usar', text: 'Interfaz intuitiva para ti y tu equipo' },
@@ -50,6 +51,7 @@ function navigateToLogin() {
 
 export default function HomePage() {
   const currentYear = new Date().getFullYear()
+  const whatsappHref = buildWhatsAppHref()
 
   return (
     <main className="home-page">
@@ -169,10 +171,47 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className="support-section" aria-labelledby="support-title">
+        <div className="support-copy">
+          <span className="home-section-kicker">SOPORTE</span>
+          <h2 id="support-title">¿Algo falló? Estamos para ayudarte.</h2>
+          <p>Si no puedes iniciar sesión, encuentras un error o necesitas ayuda con tu cuenta, puedes contactar soporte directamente.</p>
+        </div>
+
+        <div className="support-options">
+          <a className="support-option" href={buildSupportEmailHref()}>
+            <span className="support-option-icon" aria-hidden="true">✉</span>
+            <div>
+              <strong>Correo de soporte</strong>
+              <small>{supportConfig.email}</small>
+            </div>
+          </a>
+
+          <a className="support-option" href={buildSupportEmailHref('[BarberTurn] Reporte de problema')}>
+            <span className="support-option-icon" aria-hidden="true">⚠</span>
+            <div>
+              <strong>Reportar un problema</strong>
+              <small>Abre un correo con una plantilla para describir el error.</small>
+            </div>
+          </a>
+
+          {whatsappHref && (
+            <a className="support-option" href={whatsappHref} target="_blank" rel="noreferrer">
+              <span className="support-option-icon" aria-hidden="true">◉</span>
+              <div>
+                <strong>WhatsApp</strong>
+                <small>Contacto directo con soporte.</small>
+              </div>
+            </a>
+          )}
+        </div>
+      </section>
+
       <footer className="home-footer">
         <img src="/branding/barberturn-logo.png" alt="BarberTurn" />
         <p>Tu turno. Tu estilo. Tu tiempo.</p>
-     <span>© {currentYear} BarberTurn. Todos los derechos reservados.</span>
+        <a className="footer-support-link" href={buildSupportEmailHref()}>Contactar soporte</a>
+        <span>© {currentYear} BarberTurn. Todos los derechos reservados.</span>
       </footer>
     </main>
   )

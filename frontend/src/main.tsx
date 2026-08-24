@@ -9,6 +9,7 @@ import DemoLoginPage from './DemoLoginPage'
 import './styles.css'
 import './login.css'
 import './support.css'
+import './smooth-scroll.css'
 
 type PublicRoute = 'home' | 'login' | 'register' | 'forgot-password' | 'reset-password' | 'demo'
 

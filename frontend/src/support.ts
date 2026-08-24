@@ -26,5 +26,5 @@ export function buildWhatsAppHref() {
   if (!supportConfig.whatsapp) return null
 
   const message = 'Hola, necesito ayuda con BarberTurn.'
-  return `https://wa.me/${supportConfig.whatsapp}?text=${encodeURIComponent(message)}`
+  return `https://wa.me/18298477528?text=${encodeURIComponent(message)}`
 }

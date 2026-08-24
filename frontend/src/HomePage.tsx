@@ -51,20 +51,20 @@ const productFeatures = [
 const plans = [
   {
     name: 'Starter',
-    price: 'US$19',
+    price: 'US$20.00',
     description: 'Para barberías pequeñas que quieren organizar su fila sin complicaciones.',
     features: ['1 barbería', 'Hasta 3 barberos', 'Gestión de turnos', 'Servicios ilimitados', 'Panel operativo'],
   },
   {
     name: 'Pro',
-    price: 'US$39',
+    price: 'US$40.00',
     description: 'La experiencia completa para barberías con mayor volumen de clientes.',
     features: ['1 barbería', 'Hasta 10 barberos', 'Todo lo de Starter', 'BarberTurn TV', 'Citas y fila híbrida', 'Reportes avanzados'],
     featured: true,
   },
   {
     name: 'Business',
-    price: 'US$69',
+    price: 'US$70.00',
     description: 'Para operaciones con equipos grandes y necesidades de gestión avanzadas.',
     features: ['Hasta 3 sucursales', 'Barberos ilimitados', 'Todo lo de Pro', 'Roles y permisos', 'Analítica avanzada', 'Soporte prioritario'],
   },

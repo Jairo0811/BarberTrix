@@ -34,3 +34,6 @@ Thumbs.db
 # Logs
 *.log
 logs/
+
+# TypeScript incremental build
+*.tsbuildinfo

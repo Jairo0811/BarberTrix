@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faClock, faFlask, faRotate, faScissors, faUserTie } from '@fortawesome/free-solid-svg-icons'
+import { faClock, faFlask, faRotate, faScissors, faTriangleExclamation, faUserTie } from '@fortawesome/free-solid-svg-icons'
 import type { Auth } from './types'
 import { buildSupportEmailHref } from './support'
 import './demo-login.css'
@@ -30,11 +30,13 @@ const demoFeatures = [
 export default function DemoLoginPage() {
   const [busy, setBusy] = useState(true)
   const [error, setError] = useState('')
+  const [isTakingLong, setIsTakingLong] = useState(false)
   const started = useRef(false)
 
   const loginAsDemo = useCallback(async () => {
     setBusy(true)
     setError('')
+    setIsTakingLong(false)
 
     try {
       const response = await fetch(`${API_URL}/api/auth/demo-login`, {
@@ -66,6 +68,16 @@ export default function DemoLoginPage() {
     void loginAsDemo()
   }, [loginAsDemo])
 
+  useEffect(() => {
+    if (!busy) {
+      setIsTakingLong(false)
+      return
+    }
+
+    const timer = window.setTimeout(() => setIsTakingLong(true), 5000)
+    return () => window.clearTimeout(timer)
+  }, [busy])
+
   return (
     <main className="demo-login-page">
       <section className="demo-login-card" aria-labelledby="demo-login-title">
@@ -94,13 +106,23 @@ export default function DemoLoginPage() {
 
         <div className="demo-login-status" role="status" aria-live="polite">
           <span className={`demo-login-status-icon${busy ? ' loading' : ' error'}`} aria-hidden="true">
-            <FontAwesomeIcon icon={busy ? faRotate : faFlask} spin={busy} />
+            <FontAwesomeIcon icon={busy ? faRotate : faTriangleExclamation} spin={busy} />
           </span>
           <div>
             <strong>{busy ? 'Preparando tu sesión demo…' : 'No pudimos abrir la demostración automáticamente'}</strong>
-            <span>{busy ? 'Conectando con el entorno de prueba de BarberTurn.' : 'Puedes reintentar el acceso, volver al login o contactar soporte.'}</span>
+            <span>
+              {busy
+                ? isTakingLong
+                  ? 'La conexión está tardando más de lo habitual. Puedes esperar unos segundos más.'
+                  : 'Conectando con el entorno de prueba de BarberTurn.'
+                : 'Puedes reintentar el acceso, volver al login o contactar soporte.'}
+            </span>
           </div>
         </div>
+
+        {isTakingLong && busy && (
+          <a className="demo-login-cancel-link" href="#/">Volver al inicio</a>
+        )}
 
         {error && <p className="demo-login-error" role="alert">{error}</p>}
 

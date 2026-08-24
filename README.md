@@ -1,7 +1,7 @@
-# BarberTurn 💈
+
 
 <p align="center">
-  <img src="https://skillicons.dev/icons?i=dotnet,react,ts,vite,docker,nginx,github&theme=dark" alt="Tecnologías principales de BarberTurn" />
+  <img src="docs/images/barberturn-logo.png" alt="Logo de BaberTurn" width="720" />
 </p>
 
 <p align="center">

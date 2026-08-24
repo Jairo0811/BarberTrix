@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faBars,
@@ -77,8 +77,11 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
   const [turns, setTurns] = useState<Turn[]>([])
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [activeSection, setActiveSection] = useState('dashboard-overview')
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null)
+  const sidebarRef = useRef<HTMLElement>(null)
 
   const canManageCatalog = auth.role === 'Owner' || auth.role === 'Administrator'
   const visibleNavItems = useMemo(
@@ -87,6 +90,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
   )
 
   const loadQueue = useCallback(async () => {
+    setLoading(true)
     try {
       const [nextBarbers, nextServices, nextTurns] = await Promise.all([
         api<Barber[]>('/api/queue/barbers', auth),
@@ -101,6 +105,8 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
     } catch (exception) {
       const message = getErrorMessage(exception, 'No se pudo cargar la operación de la barbería.')
       setError(message)
+    } finally {
+      setLoading(false)
     }
   }, [auth])
 
@@ -131,12 +137,51 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
   useEffect(() => {
     if (!mobileNavOpen) return
 
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setMobileNavOpen(false)
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    const closeDrawer = () => {
+      setMobileNavOpen(false)
+      window.requestAnimationFrame(() => mobileMenuButtonRef.current?.focus())
     }
 
-    document.addEventListener('keydown', closeOnEscape)
-    return () => document.removeEventListener('keydown', closeOnEscape)
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        closeDrawer()
+        return
+      }
+
+      if (event.key !== 'Tab' || !sidebarRef.current) return
+
+      const focusableElements = Array.from(
+        sidebarRef.current.querySelectorAll<HTMLElement>(
+          'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), [tabindex]:not([tabindex="-1"])',
+        ),
+      )
+
+      if (focusableElements.length === 0) return
+
+      const firstElement = focusableElements[0]
+      const lastElement = focusableElements[focusableElements.length - 1]
+
+      if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault()
+        lastElement.focus()
+      } else if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault()
+        firstElement.focus()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    window.requestAnimationFrame(() => {
+      sidebarRef.current?.querySelector<HTMLElement>('button:not(:disabled)')?.focus()
+    })
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.removeEventListener('keydown', handleKeyDown)
+    }
   }, [mobileNavOpen])
 
   function navigateToSection(id: string) {
@@ -185,7 +230,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
         barberId: data.get('barberId') || null,
       })
       form.reset()
-      await showSuccessToast('Turno creado correctamente')
+      void showSuccessToast('Turno creado correctamente')
     } catch {
       // El error se informa desde submitAndReload.
     }
@@ -202,7 +247,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
         chairNumber: Number(data.get('chairNumber')),
       })
       form.reset()
-      await showSuccessToast('Barbero agregado correctamente')
+      void showSuccessToast('Barbero agregado correctamente')
     } catch {
       // El error se informa desde submitAndReload.
     }
@@ -221,7 +266,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
         description: data.get('description') || null,
       })
       form.reset()
-      await showSuccessToast('Servicio agregado correctamente')
+      void showSuccessToast('Servicio agregado correctamente')
     } catch {
       // El error se informa desde submitAndReload.
     }
@@ -230,7 +275,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
   async function changeBarberStatus(barber: Barber, status: BarberStatus) {
     try {
       await submitAndReload<Barber>(`/api/queue/barbers/${barber.id}/status`, { status }, 'PATCH')
-      await showSuccessToast(`Estado de ${barber.name} actualizado`)
+      void showSuccessToast(`Estado de ${barber.name} actualizado`)
     } catch {
       // El error se informa desde submitAndReload.
     }
@@ -275,7 +320,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
         'no-show': 'Turno marcado como no presentado',
       }[action]
 
-      await showSuccessToast(successMessage)
+      void showSuccessToast(successMessage)
     } catch (exception) {
       const message = getErrorMessage(exception, 'No se pudo actualizar el turno.')
       setError(message)
@@ -302,7 +347,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
         />
       )}
 
-      <aside className={`dashboard-sidebar${mobileNavOpen ? ' mobile-open' : ''}`} aria-label="Navegación del panel">
+      <aside id="dashboard-sidebar" ref={sidebarRef} className={`dashboard-sidebar${mobileNavOpen ? ' mobile-open' : ''}`} aria-label="Navegación del panel">
         <div className="dashboard-brand-row">
           <div className="dashboard-brand">
             <img src="/branding/barberturn-logo.png" alt="BarberTurn" />
@@ -336,6 +381,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
             <button key={item.label} type="button" disabled title="Disponible en una fase posterior">
               <span className="nav-icon" aria-hidden="true"><FontAwesomeIcon icon={item.icon} /></span>
               <span>{item.label}</span>
+              <small className="nav-coming-soon">Próximamente</small>
             </button>
           ))}
         </nav>
@@ -357,10 +403,12 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
         <header className="dashboard-topbar">
           <div className="dashboard-topbar-left">
             <button
+              ref={mobileMenuButtonRef}
               className="dashboard-mobile-menu"
               type="button"
               aria-label="Abrir menú"
               aria-expanded={mobileNavOpen}
+              aria-controls="dashboard-sidebar"
               onClick={() => setMobileNavOpen(true)}
             >
               <FontAwesomeIcon icon={faBars} />
@@ -414,22 +462,22 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
 
             {error && <p className="error banner" role="alert">{error}</p>}
 
-            <div className="dashboard-kpis">
+            <div className={`dashboard-kpis${loading ? ' is-loading' : ''}`} aria-busy={loading}>
               <article className="dashboard-kpi">
                 <span className="kpi-icon"><FontAwesomeIcon icon={faClock} /></span>
-                <div><strong>{overview.waiting}</strong><span>Turnos en espera</span><small>Cola pendiente</small></div>
+                <div><strong>{loading ? '—' : overview.waiting}</strong><span>Turnos en espera</span><small>{loading ? 'Cargando operación…' : 'Cola pendiente'}</small></div>
               </article>
               <article className="dashboard-kpi">
                 <span className="kpi-icon"><FontAwesomeIcon icon={faScissors} /></span>
-                <div><strong>{overview.inService}</strong><span>En servicio</span><small>Atenciones activas</small></div>
+                <div><strong>{loading ? '—' : overview.inService}</strong><span>En servicio</span><small>{loading ? 'Cargando operación…' : 'Atenciones activas'}</small></div>
               </article>
               <article className="dashboard-kpi">
                 <span className="kpi-icon"><FontAwesomeIcon icon={faUserTie} /></span>
-                <div><strong>{overview.availableBarbers}</strong><span>Barberos disponibles</span><small>{activeBarbers} activos en el equipo</small></div>
+                <div><strong>{loading ? '—' : overview.availableBarbers}</strong><span>Barberos disponibles</span><small>{loading ? 'Cargando equipo…' : `${activeBarbers} activos en el equipo`}</small></div>
               </article>
               <article className="dashboard-kpi">
                 <span className="kpi-icon"><FontAwesomeIcon icon={faListOl} /></span>
-                <div><strong>{activeServices}</strong><span>Servicios activos</span><small>Catálogo disponible</small></div>
+                <div><strong>{loading ? '—' : activeServices}</strong><span>Servicios activos</span><small>{loading ? 'Cargando catálogo…' : 'Catálogo disponible'}</small></div>
               </article>
             </div>
 
@@ -437,11 +485,12 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
               <article className="dashboard-card">
                 <div className="dashboard-card-header">
                   <div><h2>Resumen de la cola</h2><p>Turnos más recientes de la operación.</p></div>
-                  <button className="secondary" type="button" onClick={() => void loadQueue()}><FontAwesomeIcon icon={faRotate} /> Actualizar</button>
+                  <button className="secondary" type="button" disabled={loading} onClick={() => void loadQueue()}><FontAwesomeIcon icon={faRotate} /> Actualizar</button>
                 </div>
 
                 <div className="queue-summary">
-                  {queuePreview.length === 0 && <p className="empty">No hay turnos activos en este momento.</p>}
+                  {queuePreview.length === 0 && !loading && <p className="empty">No hay turnos activos en este momento.</p>}
+                  {loading && <p className="empty">Cargando turnos…</p>}
                   {queuePreview.map(turn => (
                     <div className="queue-summary-item" key={turn.id}>
                       <span className="queue-summary-ticket">{turn.ticketNumber}</span>
@@ -463,7 +512,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
                   <button type="button" onClick={() => navigateToSection('queue-section')}><span className="quick-icon"><FontAwesomeIcon icon={faPlus} /></span>Crear nuevo turno</button>
                   <button type="button" onClick={() => navigateToSection('barbers-section')}><span className="quick-icon"><FontAwesomeIcon icon={faUserTie} /></span>Gestionar barberos</button>
                   {canManageCatalog && <button type="button" onClick={() => navigateToSection('services-section')}><span className="quick-icon"><FontAwesomeIcon icon={faScissors} /></span>Gestionar servicios</button>}
-                  <button type="button" onClick={() => void loadQueue()}><span className="quick-icon"><FontAwesomeIcon icon={faRotate} /></span>Actualizar operación</button>
+                  <button type="button" disabled={loading} onClick={() => void loadQueue()}><span className="quick-icon"><FontAwesomeIcon icon={faRotate} /></span>Actualizar operación</button>
                 </div>
               </article>
             </div>
@@ -492,7 +541,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
                       <option key={barber.id} value={barber.id}>{barber.name} · Silla {barber.chairNumber}</option>
                     ))}
                   </select>
-                  <button className="primary" disabled={busy || services.length === 0}><FontAwesomeIcon icon={faPlus} /> Generar turno</button>
+                  <button className="primary" disabled={busy || loading || activeServices === 0}><FontAwesomeIcon icon={faPlus} /> Generar turno</button>
                 </form>
               </article>
 
@@ -509,11 +558,12 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
             <section className="panel queue-panel dashboard-section" id="queue-list">
               <div className="panel-heading">
                 <div><p className="eyebrow">COLA EN VIVO</p><h2>Turnos</h2></div>
-                <button className="secondary" type="button" onClick={() => void loadQueue()}><FontAwesomeIcon icon={faRotate} /> Actualizar</button>
+                <button className="secondary" type="button" disabled={loading} onClick={() => void loadQueue()}><FontAwesomeIcon icon={faRotate} /> Actualizar</button>
               </div>
 
               <div className="turn-list">
-                {turns.length === 0 && <p className="empty">No hay turnos activos para hoy.</p>}
+                {turns.length === 0 && !loading && <p className="empty">No hay turnos activos para hoy.</p>}
+                {loading && <p className="empty">Cargando cola…</p>}
                 {turns.map(turn => (
                   <article className="turn-card" key={turn.id}>
                     <div className="ticket"><small>{turn.status}</small><strong>{turn.ticketNumber}</strong></div>

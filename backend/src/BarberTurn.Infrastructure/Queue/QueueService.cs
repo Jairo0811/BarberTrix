@@ -54,9 +54,18 @@ internal sealed class QueueService(ApplicationDbContext dbContext) : IQueueServi
     public async Task<IReadOnlyList<TurnResponse>> GetQueueAsync(Guid barberShopId, CancellationToken cancellationToken = default)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var rows = await QueryTurns(barberShopId)
-            .Where(x => x.Turn.QueueDate == today && x.Turn.Status != TurnStatus.Completed && x.Turn.Status != TurnStatus.Cancelled && x.Turn.Status != TurnStatus.NoShow)
-            .OrderBy(x => x.Turn.SequenceNumber)
+
+        var turns = dbContext.Turns
+            .AsNoTracking()
+            .Where(x =>
+                x.BarberShopId == barberShopId &&
+                x.QueueDate == today &&
+                x.Status != TurnStatus.Completed &&
+                x.Status != TurnStatus.Cancelled &&
+                x.Status != TurnStatus.NoShow)
+            .OrderBy(x => x.SequenceNumber);
+
+        var rows = await JoinTurns(turns)
             .ToListAsync(cancellationToken);
 
         return rows.Select(x => MapTurn(x.Turn, x.Service, x.Barber)).ToList();
@@ -168,18 +177,21 @@ internal sealed class QueueService(ApplicationDbContext dbContext) : IQueueServi
 
     private async Task<TurnResponse?> GetTurnResponseAsync(Guid barberShopId, Guid turnId, CancellationToken cancellationToken)
     {
-        var row = await QueryTurns(barberShopId)
-            .SingleOrDefaultAsync(x => x.Turn.Id == turnId, cancellationToken);
+        var turns = dbContext.Turns
+            .AsNoTracking()
+            .Where(x => x.BarberShopId == barberShopId && x.Id == turnId);
+
+        var row = await JoinTurns(turns)
+            .SingleOrDefaultAsync(cancellationToken);
 
         return row is null ? null : MapTurn(row.Turn, row.Service, row.Barber);
     }
 
-    private IQueryable<TurnJoin> QueryTurns(Guid barberShopId) =>
-        from turn in dbContext.Turns.AsNoTracking()
+    private IQueryable<TurnJoin> JoinTurns(IQueryable<Turn> turns) =>
+        from turn in turns
         join service in dbContext.BarberServices.AsNoTracking() on turn.ServiceId equals service.Id
         join barber in dbContext.Barbers.AsNoTracking() on turn.BarberId equals barber.Id into barberJoin
         from barber in barberJoin.DefaultIfEmpty()
-        where turn.BarberShopId == barberShopId
         select new TurnJoin(turn, service, barber);
 
     private static TurnResponse MapTurn(Turn turn, BarberService service, Barber? barber) =>

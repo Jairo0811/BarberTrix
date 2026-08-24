@@ -11,6 +11,7 @@ import './login.css'
 import './support.css'
 import './smooth-scroll.css'
 import './home-polish.css'
+import './icon-polish.css'
 
 type PublicRoute = 'home' | 'login' | 'register' | 'forgot-password' | 'reset-password' | 'demo'
 

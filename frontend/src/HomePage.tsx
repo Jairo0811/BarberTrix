@@ -1,5 +1,13 @@
+import { useEffect, useState } from 'react'
 import './home.css'
 import { buildSupportEmailHref, buildWhatsAppHref, supportConfig } from './support'
+
+const navigationItems = [
+  { id: 'inicio', label: 'Inicio' },
+  { id: 'caracteristicas', label: 'Características' },
+  { id: 'precios', label: 'Precios' },
+  { id: 'contacto', label: 'Contacto' },
+]
 
 const heroFeatures = [
   { icon: '◉', title: 'Fácil de usar', text: 'Interfaz intuitiva para ti y tu equipo' },
@@ -52,19 +60,52 @@ function navigateToLogin() {
 export default function HomePage() {
   const currentYear = new Date().getFullYear()
   const whatsappHref = buildWhatsAppHref()
+  const [activeSection, setActiveSection] = useState('inicio')
+
+  useEffect(() => {
+    const sections = navigationItems
+      .map(item => document.getElementById(item.id))
+      .filter((section): section is HTMLElement => section !== null)
+
+    const observer = new IntersectionObserver(
+      entries => {
+        const visibleSection = entries
+          .filter(entry => entry.isIntersecting)
+          .sort((first, second) => second.intersectionRatio - first.intersectionRatio)[0]
+
+        if (visibleSection) {
+          setActiveSection(visibleSection.target.id)
+        }
+      },
+      {
+        rootMargin: '-25% 0px -60% 0px',
+        threshold: [0, 0.25, 0.5, 0.75],
+      },
+    )
+
+    sections.forEach(section => observer.observe(section))
+    return () => observer.disconnect()
+  }, [])
 
   return (
     <main className="home-page">
       <header className="home-nav">
-        <a className="home-brand" href="#inicio" aria-label="BarberTurn inicio">
+        <a className="home-brand" href="#inicio" aria-label="BarberTurn inicio" onClick={() => setActiveSection('inicio')}>
           <img src="/branding/barberturn-logo.png" alt="BarberTurn" />
         </a>
 
         <nav className="home-links" aria-label="Navegación principal">
-          <a className="active" href="#inicio">Inicio</a>
-          <a href="#caracteristicas">Características</a>
-          <a href="#precios">Precios</a>
-          <a href="#contacto">Contacto</a>
+          {navigationItems.map(item => (
+            <a
+              key={item.id}
+              className={activeSection === item.id ? 'active' : undefined}
+              href={`#${item.id}`}
+              aria-current={activeSection === item.id ? 'page' : undefined}
+              onClick={() => setActiveSection(item.id)}
+            >
+              {item.label}
+            </a>
+          ))}
         </nav>
 
         <div className="home-nav-actions">
@@ -81,7 +122,7 @@ export default function HomePage() {
 
           <div className="home-hero-actions">
             <button className="home-primary-button large" type="button" onClick={navigateToLogin}>Comenzar gratis <span>→</span></button>
-            <a className="home-secondary-button" href="#caracteristicas">Ver características</a>
+            <a className="home-secondary-button" href="#caracteristicas" onClick={() => setActiveSection('caracteristicas')}>Ver características</a>
           </div>
 
           <div className="home-feature-row">

@@ -1,0 +1,125 @@
+.support-section {
+  width: min(1180px, calc(100% - 10vw));
+  margin: 0 auto;
+  padding: 24px 0 90px;
+  display: grid;
+  grid-template-columns: .9fr 1.1fr;
+  gap: 46px;
+  align-items: start;
+}
+
+.support-copy h2 {
+  margin: 12px 0 0;
+  font-size: clamp(32px, 4vw, 46px);
+  letter-spacing: -.04em;
+}
+
+.support-copy p {
+  max-width: 600px;
+  margin: 16px 0 0;
+  color: #8794a8;
+  line-height: 1.7;
+}
+
+.support-options {
+  display: grid;
+  gap: 12px;
+}
+
+.support-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 82px;
+  padding: 18px 20px;
+  border: 1px solid rgba(92, 149, 226, .18);
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(10, 21, 37, .96), rgba(5, 12, 22, .98));
+  color: #f5f9ff;
+  text-decoration: none;
+  transition: transform .16s ease, border-color .16s ease, background .16s ease;
+}
+
+.support-option:hover {
+  transform: translateY(-1px);
+  border-color: rgba(50, 145, 255, .45);
+  background: linear-gradient(180deg, rgba(12, 28, 49, .98), rgba(6, 15, 27, .98));
+}
+
+.support-option-icon {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: #62adff;
+  background: rgba(24, 111, 225, .14);
+  border: 1px solid rgba(72, 145, 237, .15);
+}
+
+.support-option strong,
+.support-option small {
+  display: block;
+}
+
+.support-option strong {
+  font-size: 14px;
+}
+
+.support-option small {
+  margin-top: 5px;
+  color: #8492a7;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.footer-support-link {
+  display: inline-block;
+  margin-top: 12px;
+  color: #2d94ff;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.footer-support-link:hover {
+  color: #8ac3ff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.recovery-support-link {
+  display: inline-flex;
+  justify-content: center;
+  margin-top: 14px;
+  color: #5faaff;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.recovery-support-link:hover {
+  color: #91c8ff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 820px) {
+  .support-section {
+    width: min(100% - 12vw, 1180px);
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
+
+@media (max-width: 560px) {
+  .support-section {
+    width: calc(100% - 40px);
+    padding-bottom: 70px;
+  }
+
+  .support-copy h2 {
+    font-size: 32px;
+  }
+}

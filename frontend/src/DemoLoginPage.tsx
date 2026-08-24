@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Auth } from './types'
+import { buildSupportEmailHref } from './support'
 import './demo-login.css'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
@@ -93,19 +94,24 @@ export default function DemoLoginPage() {
           <span className="demo-login-status-icon" aria-hidden="true">{busy ? '↻' : '!'}</span>
           <div>
             <strong>{busy ? 'Preparando tu sesión demo…' : 'No pudimos abrir la demostración automáticamente'}</strong>
-            <span>{busy ? 'Conectando con el entorno de prueba de BarberTurn.' : 'Puedes reintentar el acceso o volver al inicio de sesión.'}</span>
+            <span>{busy ? 'Conectando con el entorno de prueba de BarberTurn.' : 'Puedes reintentar el acceso, volver al login o contactar soporte.'}</span>
           </div>
         </div>
 
         {error && <p className="demo-login-error" role="alert">{error}</p>}
 
         {!busy && (
-          <div className="demo-login-actions">
-            <button className="demo-login-primary" type="button" onClick={() => void loginAsDemo()}>
-              Reintentar acceso demo
-            </button>
-            <a className="demo-login-secondary" href="#/login">Volver al login</a>
-          </div>
+          <>
+            <div className="demo-login-actions">
+              <button className="demo-login-primary" type="button" onClick={() => void loginAsDemo()}>
+                Reintentar acceso demo
+              </button>
+              <a className="demo-login-secondary" href="#/login">Volver al login</a>
+            </div>
+            <a className="recovery-support-link" href={buildSupportEmailHref('[BarberTurn] Problema con acceso demo')}>
+              Contactar soporte
+            </a>
+          </>
         )}
 
         <p className="demo-login-note">

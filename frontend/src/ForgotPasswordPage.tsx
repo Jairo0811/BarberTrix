@@ -43,8 +43,8 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <main className="recovery-page">
-      <section className="recovery-card" aria-labelledby="forgot-password-title">
+    <main className="recovery-page" aria-labelledby="forgot-password-title">
+      <section className="recovery-card">
         <a className="recovery-logo" href="#/" aria-label="Volver al inicio de BarberTurn">
           <img src="/branding/barberturn-logo.png" alt="BarberTurn" />
         </a>
@@ -57,12 +57,24 @@ export default function ForgotPasswordPage() {
               Escribe el correo asociado a tu cuenta. Si existe, te enviaremos las instrucciones para recuperar el acceso.
             </p>
 
-            <form className="recovery-form" onSubmit={requestReset}>
+            <form
+              className="recovery-form"
+              onSubmit={requestReset}
+              aria-busy={busy}
+              aria-describedby={error ? 'forgot-password-error' : undefined}
+            >
               <label>
                 <span>Correo electrónico</span>
                 <div className="recovery-input-wrap">
                   <span aria-hidden="true">✉</span>
-                  <input name="email" type="email" autoComplete="email" placeholder="ejemplo@barberia.com" required />
+                  <input
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    inputMode="email"
+                    placeholder="ejemplo@barberia.com"
+                    required
+                  />
                 </div>
               </label>
 
@@ -71,12 +83,12 @@ export default function ForgotPasswordPage() {
               </button>
             </form>
 
-            {error && <p className="recovery-error" role="alert">{error}</p>}
+            {error && <p id="forgot-password-error" className="recovery-error" role="alert" aria-live="assertive">{error}</p>}
           </>
         ) : (
-          <div className="recovery-success" role="status">
+          <div className="recovery-success" role="status" aria-live="polite" aria-atomic="true">
             <div className="recovery-icon success" aria-hidden="true">✓</div>
-            <h1>Revisa tu correo</h1>
+            <h1 id="forgot-password-title">Revisa tu correo</h1>
             <p>{result.message}</p>
 
             {result.developmentResetUrl && (

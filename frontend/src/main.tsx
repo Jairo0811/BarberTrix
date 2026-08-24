@@ -8,6 +8,7 @@ import ResetPasswordPage from './ResetPasswordPage'
 import DemoLoginPage from './DemoLoginPage'
 import './styles.css'
 import './login.css'
+import './support.css'
 
 type PublicRoute = 'home' | 'login' | 'register' | 'forgot-password' | 'reset-password' | 'demo'
 

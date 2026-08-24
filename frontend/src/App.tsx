@@ -1,4 +1,6 @@
 import { FormEvent, useState } from 'react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faArrowLeft, faEnvelope, faEye, faEyeSlash, faFlask, faLock } from '@fortawesome/free-solid-svg-icons'
 import DashboardView from './DashboardView'
 import type { Auth } from './types'
 
@@ -81,7 +83,7 @@ export default function App() {
       <section className="login-panel">
         <div className="login-card">
           <a className="back-home-link" href="#/">
-            <span aria-hidden="true">←</span>
+            <span className="back-home-icon" aria-hidden="true"><FontAwesomeIcon icon={faArrowLeft} /></span>
             Volver al inicio
           </a>
 
@@ -93,7 +95,7 @@ export default function App() {
             <label className="login-field">
               <span>Correo electrónico</span>
               <div className="input-wrap">
-                <span className="field-icon" aria-hidden="true">✉</span>
+                <span className="field-icon" aria-hidden="true"><FontAwesomeIcon icon={faEnvelope} /></span>
                 <input
                   name="email"
                   type="email"
@@ -107,7 +109,7 @@ export default function App() {
             <label className="login-field">
               <span>Contraseña</span>
               <div className="input-wrap">
-                <span className="field-icon" aria-hidden="true">●</span>
+                <span className="field-icon" aria-hidden="true"><FontAwesomeIcon icon={faLock} /></span>
                 <input
                   name="password"
                   type={showPassword ? 'text' : 'password'}
@@ -121,7 +123,8 @@ export default function App() {
                   aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                   onClick={() => setShowPassword(value => !value)}
                 >
-                  {showPassword ? 'Ocultar' : 'Ver'}
+                  <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} aria-hidden="true" />
+                  <span>{showPassword ? 'Ocultar' : 'Ver'}</span>
                 </button>
               </div>
             </label>
@@ -149,7 +152,8 @@ export default function App() {
             type="button"
             onClick={() => { window.location.hash = '#/demo' }}
           >
-            Explorar BarberTurn en modo demo
+            <FontAwesomeIcon icon={faFlask} aria-hidden="true" />
+            <span>Explorar BarberTurn en modo demo</span>
           </button>
 
           <p className="register-copy">¿No tienes cuenta? <span>Regístrate aquí</span></p>

@@ -1,5 +1,22 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import {
+  faBars,
+  faChartColumn,
+  faClock,
+  faFlask,
+  faHouse,
+  faListOl,
+  faPlus,
+  faRightFromBracket,
+  faRotate,
+  faScissors,
+  faTv,
+  faUserTie,
+  faUsers,
+} from '@fortawesome/free-solid-svg-icons'
 import type { Auth, Barber, BarberStatus, Service, Turn } from './types'
+import { confirmDestructive, showError, showSuccessToast } from './alerts'
 import './dashboard.css'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
@@ -29,16 +46,16 @@ type DashboardViewProps = {
 }
 
 const navItems = [
-  { id: 'dashboard-overview', label: 'Dashboard', icon: '⌂' },
-  { id: 'queue-section', label: 'Cola en vivo', icon: '≡' },
-  { id: 'barbers-section', label: 'Barberos', icon: '♙' },
-  { id: 'services-section', label: 'Servicios', icon: '✂' },
+  { id: 'dashboard-overview', label: 'Dashboard', icon: faHouse },
+  { id: 'queue-section', label: 'Cola en vivo', icon: faListOl },
+  { id: 'barbers-section', label: 'Barberos', icon: faUserTie },
+  { id: 'services-section', label: 'Servicios', icon: faScissors },
 ]
 
 const futureItems = [
-  { label: 'Clientes', icon: '◎' },
-  { label: 'BarberTurn TV', icon: '▣' },
-  { label: 'Reportes', icon: '▤' },
+  { label: 'Clientes', icon: faUsers },
+  { label: 'BarberTurn TV', icon: faTv },
+  { label: 'Reportes', icon: faChartColumn },
 ]
 
 function scrollToSection(id: string) {
@@ -49,6 +66,10 @@ function formatRole(role: string) {
   if (role === 'Owner') return 'Propietario'
   if (role === 'Administrator') return 'Administrador'
   return role
+}
+
+function getErrorMessage(exception: unknown, fallback: string) {
+  return exception instanceof Error ? exception.message : fallback
 }
 
 export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewProps) {
@@ -73,7 +94,8 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
       setTurns(nextTurns)
       setError('')
     } catch (exception) {
-      setError(exception instanceof Error ? exception.message : 'No se pudo cargar la operación de la barbería.')
+      const message = getErrorMessage(exception, 'No se pudo cargar la operación de la barbería.')
+      setError(message)
     }
   }, [auth])
 
@@ -98,7 +120,9 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
       await api<T>(path, auth, { method, body: JSON.stringify(body) })
       await loadQueue()
     } catch (exception) {
-      setError(exception instanceof Error ? exception.message : 'No se pudo completar la operación.')
+      const message = getErrorMessage(exception, 'No se pudo completar la operación.')
+      setError(message)
+      await showError('No se pudo completar la operación', message)
       throw exception
     } finally {
       setBusy(false)
@@ -117,8 +141,9 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
         barberId: data.get('barberId') || null,
       })
       form.reset()
+      await showSuccessToast('Turno creado correctamente')
     } catch {
-      // Error visible en pantalla.
+      // El error se informa desde submitAndReload.
     }
   }
 
@@ -133,8 +158,9 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
         chairNumber: Number(data.get('chairNumber')),
       })
       form.reset()
+      await showSuccessToast('Barbero agregado correctamente')
     } catch {
-      // Error visible en pantalla.
+      // El error se informa desde submitAndReload.
     }
   }
 
@@ -151,16 +177,18 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
         description: data.get('description') || null,
       })
       form.reset()
+      await showSuccessToast('Servicio agregado correctamente')
     } catch {
-      // Error visible en pantalla.
+      // El error se informa desde submitAndReload.
     }
   }
 
   async function changeBarberStatus(barber: Barber, status: BarberStatus) {
     try {
       await submitAndReload<Barber>(`/api/queue/barbers/${barber.id}/status`, { status }, 'PATCH')
+      await showSuccessToast(`Estado de ${barber.name} actualizado`)
     } catch {
-      // Error visible en pantalla.
+      // El error se informa desde submitAndReload.
     }
   }
 
@@ -169,6 +197,24 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
     action: 'call' | 'start' | 'complete' | 'cancel' | 'no-show',
     barberId?: string,
   ) {
+    if (action === 'cancel') {
+      const confirmed = await confirmDestructive(
+        '¿Cancelar este turno?',
+        `El turno ${turn.ticketNumber} dejará de aparecer en la cola activa.`,
+        'Sí, cancelar',
+      )
+      if (!confirmed) return
+    }
+
+    if (action === 'no-show') {
+      const confirmed = await confirmDestructive(
+        '¿Marcar como no presentado?',
+        `El turno ${turn.ticketNumber} será marcado como No Show.`,
+        'Sí, marcar',
+      )
+      if (!confirmed) return
+    }
+
     setBusy(true)
     setError('')
 
@@ -176,8 +222,20 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
       const suffix = action === 'call' ? `/call/${barberId}` : `/${action}`
       await api<Turn>(`/api/queue/turns/${turn.id}${suffix}`, auth, { method: 'POST' })
       await loadQueue()
+
+      const successMessage = {
+        call: 'Cliente llamado correctamente',
+        start: 'Servicio iniciado',
+        complete: 'Turno completado',
+        cancel: 'Turno cancelado',
+        'no-show': 'Turno marcado como no presentado',
+      }[action]
+
+      await showSuccessToast(successMessage)
     } catch (exception) {
-      setError(exception instanceof Error ? exception.message : 'No se pudo actualizar el turno.')
+      const message = getErrorMessage(exception, 'No se pudo actualizar el turno.')
+      setError(message)
+      await showError('No se pudo actualizar el turno', message)
     } finally {
       setBusy(false)
     }
@@ -194,7 +252,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
           <img src="/branding/barberturn-logo.png" alt="BarberTurn" />
         </div>
 
-        {isDemo && <span className="demo-pill">◎ MODO DEMO</span>}
+        {isDemo && <span className="demo-pill"><FontAwesomeIcon icon={faFlask} /> MODO DEMO</span>}
 
         <nav className="dashboard-nav">
           {navItems.map((item, index) => (
@@ -204,14 +262,14 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
               type="button"
               onClick={() => scrollToSection(item.id)}
             >
-              <span className="nav-icon" aria-hidden="true">{item.icon}</span>
+              <span className="nav-icon" aria-hidden="true"><FontAwesomeIcon icon={item.icon} /></span>
               <span>{item.label}</span>
             </button>
           ))}
 
           {futureItems.map(item => (
             <button key={item.label} type="button" disabled title="Disponible en una fase posterior">
-              <span className="nav-icon" aria-hidden="true">{item.icon}</span>
+              <span className="nav-icon" aria-hidden="true"><FontAwesomeIcon icon={item.icon} /></span>
               <span>{item.label}</span>
             </button>
           ))}
@@ -220,7 +278,8 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
         <div className="sidebar-spacer" />
         <div className="sidebar-footer">
           <button className="sidebar-logout" type="button" onClick={onLogout}>
-            <span>↪ Cerrar sesión</span>
+            <FontAwesomeIcon icon={faRightFromBracket} />
+            <span>Cerrar sesión</span>
           </button>
         </div>
       </aside>
@@ -228,7 +287,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
       <section className="dashboard-main">
         <header className="dashboard-topbar">
           <div className="dashboard-topbar-left">
-            <button className="dashboard-mobile-menu" type="button" aria-label="Menú">☰</button>
+            <button className="dashboard-mobile-menu" type="button" aria-label="Menú"><FontAwesomeIcon icon={faBars} /></button>
             <div className="dashboard-topbar-copy">
               <strong>BarberTurn Operations</strong>
               <span>Gestión diaria de tu barbería</span>
@@ -269,19 +328,19 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
 
             <div className="dashboard-kpis">
               <article className="dashboard-kpi">
-                <span className="kpi-icon">◷</span>
+                <span className="kpi-icon"><FontAwesomeIcon icon={faClock} /></span>
                 <div><strong>{overview.waiting}</strong><span>Turnos en espera</span><small>Cola pendiente</small></div>
               </article>
               <article className="dashboard-kpi">
-                <span className="kpi-icon">✂</span>
+                <span className="kpi-icon"><FontAwesomeIcon icon={faScissors} /></span>
                 <div><strong>{overview.inService}</strong><span>En servicio</span><small>Atenciones activas</small></div>
               </article>
               <article className="dashboard-kpi">
-                <span className="kpi-icon">♙</span>
+                <span className="kpi-icon"><FontAwesomeIcon icon={faUserTie} /></span>
                 <div><strong>{overview.availableBarbers}</strong><span>Barberos disponibles</span><small>Listos para atender</small></div>
               </article>
               <article className="dashboard-kpi">
-                <span className="kpi-icon">▤</span>
+                <span className="kpi-icon"><FontAwesomeIcon icon={faListOl} /></span>
                 <div><strong>{services.filter(service => service.isActive).length}</strong><span>Servicios activos</span><small>Catálogo disponible</small></div>
               </article>
             </div>
@@ -290,7 +349,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
               <article className="dashboard-card">
                 <div className="dashboard-card-header">
                   <div><h2>Resumen de la cola</h2><p>Turnos más recientes de la operación.</p></div>
-                  <button className="secondary" type="button" onClick={() => void loadQueue()}>Actualizar</button>
+                  <button className="secondary" type="button" onClick={() => void loadQueue()}><FontAwesomeIcon icon={faRotate} /> Actualizar</button>
                 </div>
 
                 <div className="queue-summary">
@@ -313,10 +372,10 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
                   <div><h2>Accesos rápidos</h2><p>Acciones frecuentes.</p></div>
                 </div>
                 <div className="quick-actions">
-                  <button type="button" onClick={() => scrollToSection('queue-section')}><span className="quick-icon">＋</span>Crear nuevo turno</button>
-                  <button type="button" onClick={() => scrollToSection('barbers-section')}><span className="quick-icon">♙</span>Gestionar barberos</button>
-                  <button type="button" onClick={() => scrollToSection('services-section')}><span className="quick-icon">✂</span>Gestionar servicios</button>
-                  <button type="button" onClick={() => void loadQueue()}><span className="quick-icon">↻</span>Actualizar operación</button>
+                  <button type="button" onClick={() => scrollToSection('queue-section')}><span className="quick-icon"><FontAwesomeIcon icon={faPlus} /></span>Crear nuevo turno</button>
+                  <button type="button" onClick={() => scrollToSection('barbers-section')}><span className="quick-icon"><FontAwesomeIcon icon={faUserTie} /></span>Gestionar barberos</button>
+                  <button type="button" onClick={() => scrollToSection('services-section')}><span className="quick-icon"><FontAwesomeIcon icon={faScissors} /></span>Gestionar servicios</button>
+                  <button type="button" onClick={() => void loadQueue()}><span className="quick-icon"><FontAwesomeIcon icon={faRotate} /></span>Actualizar operación</button>
                 </div>
               </article>
             </div>
@@ -345,7 +404,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
                       <option key={barber.id} value={barber.id}>{barber.name} · Silla {barber.chairNumber}</option>
                     ))}
                   </select>
-                  <button className="primary" disabled={busy || services.length === 0}>Generar turno</button>
+                  <button className="primary" disabled={busy || services.length === 0}><FontAwesomeIcon icon={faPlus} /> Generar turno</button>
                 </form>
               </article>
 
@@ -362,7 +421,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
             <section className="panel queue-panel dashboard-section" id="queue-list">
               <div className="panel-heading">
                 <div><p className="eyebrow">COLA EN VIVO</p><h2>Turnos</h2></div>
-                <button className="secondary" type="button" onClick={() => void loadQueue()}>Actualizar</button>
+                <button className="secondary" type="button" onClick={() => void loadQueue()}><FontAwesomeIcon icon={faRotate} /> Actualizar</button>
               </div>
 
               <div className="turn-list">
@@ -417,7 +476,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
                 <form className="form-stack" onSubmit={createBarber}>
                   <input name="name" placeholder="Nombre del barbero" required />
                   <input name="chairNumber" type="number" min="1" placeholder="Número de silla" required />
-                  <button className="primary" disabled={busy}>Agregar barbero</button>
+                  <button className="primary" disabled={busy}><FontAwesomeIcon icon={faPlus} /> Agregar barbero</button>
                 </form>
               </article>
             )}
@@ -434,7 +493,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
                     <input name="price" type="number" min="0" step="0.01" placeholder="Precio" required />
                     <input name="estimatedDurationMinutes" type="number" min="1" placeholder="Duración estimada (min)" required />
                     <input name="description" placeholder="Descripción (opcional)" />
-                    <button className="primary" disabled={busy}>Agregar servicio</button>
+                    <button className="primary" disabled={busy}><FontAwesomeIcon icon={faPlus} /> Agregar servicio</button>
                   </form>
                 </article>
 
@@ -443,7 +502,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
                   <div className="queue-summary">
                     {services.filter(service => service.isActive).slice(0, 6).map(service => (
                       <div className="queue-summary-item" key={service.id}>
-                        <span className="queue-summary-ticket">✂</span>
+                        <span className="queue-summary-ticket"><FontAwesomeIcon icon={faScissors} /></span>
                         <div className="queue-summary-copy"><strong>{service.name}</strong><span>RD${service.price} · {service.estimatedDurationMinutes} min</span></div>
                       </div>
                     ))}

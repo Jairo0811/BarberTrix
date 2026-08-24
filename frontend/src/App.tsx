@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft, faEnvelope, faEye, faEyeSlash, faFlask, faLock } from '@fortawesome/free-solid-svg-icons'
 import DashboardView from './DashboardView'
 import type { Auth } from './types'
+import { useI18n } from './i18n'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
 const authStorageKey = 'barberturn.auth'
@@ -22,6 +23,7 @@ function BarberTurnLogo() {
 }
 
 export default function App() {
+  const { t } = useI18n()
   const [auth, setAuth] = useState<Auth | null>(getStoredAuth)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -30,8 +32,8 @@ export default function App() {
   const isDemo = sessionStorage.getItem(demoStorageKey) === 'true'
 
   useEffect(() => {
-    if (auth) document.title = `${isDemo ? 'Demo' : 'Panel'} | BarberTurn`
-  }, [auth, isDemo])
+    if (auth) document.title = `${isDemo ? t('route.demo') : 'Panel'} | BarberTurn`
+  }, [auth, isDemo, t])
 
   async function login(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -44,15 +46,10 @@ export default function App() {
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: data.get('email'),
-          password: data.get('password'),
-        }),
+        body: JSON.stringify({ email: data.get('email'), password: data.get('password') }),
       })
 
-      if (!response.ok) {
-        throw new Error('Correo o contraseña incorrectos.')
-      }
+      if (!response.ok) throw new Error(t('login.invalid'))
 
       const nextAuth = await response.json() as Auth
       const remember = data.get('remember') === 'on'
@@ -61,10 +58,9 @@ export default function App() {
       sessionStorage.removeItem(authStorageKey)
       sessionStorage.removeItem(demoStorageKey)
       ;(remember ? localStorage : sessionStorage).setItem(authStorageKey, JSON.stringify(nextAuth))
-
       setAuth(nextAuth)
     } catch (exception) {
-      setError(exception instanceof Error ? exception.message : 'No se pudo iniciar sesión.')
+      setError(exception instanceof Error ? exception.message : t('login.genericError'))
     } finally {
       setBusy(false)
     }
@@ -78,9 +74,7 @@ export default function App() {
     window.location.hash = '#/login'
   }
 
-  if (auth) {
-    return <DashboardView auth={auth} isDemo={isDemo} onLogout={logout} />
-  }
+  if (auth) return <DashboardView auth={auth} isDemo={isDemo} onLogout={logout} />
 
   return (
     <main className="login-shell login-split" aria-labelledby="login-title">
@@ -88,12 +82,12 @@ export default function App() {
         <div className="login-card">
           <a className="back-home-link" href="#/">
             <span className="back-home-icon" aria-hidden="true"><FontAwesomeIcon icon={faArrowLeft} /></span>
-            Volver al inicio
+            {t('common.backHome')}
           </a>
 
           <BarberTurnLogo />
-          <h1 id="login-title">Bienvenido de nuevo</h1>
-          <p className="login-subtitle">Inicia sesión para continuar</p>
+          <h1 id="login-title">{t('login.welcome')}</h1>
+          <p className="login-subtitle">{t('login.subtitle')}</p>
 
           <form
             className="login-form"
@@ -102,40 +96,27 @@ export default function App() {
             aria-describedby={error ? 'login-error' : undefined}
           >
             <label className="login-field">
-              <span>Correo electrónico</span>
+              <span>{t('common.email')}</span>
               <div className="input-wrap">
                 <span className="field-icon" aria-hidden="true"><FontAwesomeIcon icon={faEnvelope} /></span>
-                <input
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  inputMode="email"
-                  placeholder="ejemplo@barberia.com"
-                  required
-                />
+                <input name="email" type="email" autoComplete="email" inputMode="email" placeholder="ejemplo@barberia.com" required />
               </div>
             </label>
 
             <label className="login-field">
-              <span>Contraseña</span>
+              <span>{t('common.password')}</span>
               <div className="input-wrap">
                 <span className="field-icon" aria-hidden="true"><FontAwesomeIcon icon={faLock} /></span>
-                <input
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  autoComplete="current-password"
-                  placeholder="••••••••••••"
-                  required
-                />
+                <input name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="••••••••••••" required />
                 <button
                   className="password-toggle"
                   type="button"
-                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  aria-label={showPassword ? t('common.hide') : t('common.show')}
                   aria-pressed={showPassword}
                   onClick={() => setShowPassword(value => !value)}
                 >
                   <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} aria-hidden="true" />
-                  <span>{showPassword ? 'Ocultar' : 'Ver'}</span>
+                  <span>{showPassword ? t('common.hide') : t('common.show')}</span>
                 </button>
               </div>
             </label>
@@ -143,31 +124,26 @@ export default function App() {
             <div className="login-options">
               <label className="remember-option">
                 <input name="remember" type="checkbox" defaultChecked />
-                <span>Recordarme</span>
+                <span>{t('login.remember')}</span>
               </label>
-
-              <a className="forgot-link" href="#/forgot-password">
-                ¿Olvidaste tu contraseña?
-              </a>
+              <a className="forgot-link" href="#/forgot-password">{t('login.forgot')}</a>
             </div>
 
             <button className="login-submit" type="submit" disabled={busy}>
-              {busy ? 'Ingresando…' : 'Iniciar sesión'}
+              {busy ? t('login.submitting') : t('login.submit')}
             </button>
           </form>
 
-          <div className="login-separator" aria-hidden="true"><span>o continúa con</span></div>
+          <div className="login-separator" aria-hidden="true"><span>{t('login.separator')}</span></div>
 
-          <button
-            className="demo-button"
-            type="button"
-            onClick={() => { window.location.hash = '#/demo' }}
-          >
+          <button className="demo-button" type="button" onClick={() => { window.location.hash = '#/demo' }}>
             <FontAwesomeIcon icon={faFlask} aria-hidden="true" />
-            <span>Explorar BarberTurn en modo demo</span>
+            <span>{t('login.demo')}</span>
           </button>
 
-          <p className="register-copy">¿No tienes cuenta? <a className="register-link" href="#/register">Regístrate aquí</a></p>
+          <p className="register-copy">
+            {t('login.noAccount')} <a className="register-link" href="#/register">{t('login.registerHere')}</a>
+          </p>
           {error && <p id="login-error" className="login-error" role="alert" aria-live="assertive">{error}</p>}
         </div>
       </section>

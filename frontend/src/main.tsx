@@ -6,6 +6,8 @@ import RegisterPage from './RegisterPage'
 import ForgotPasswordPage from './ForgotPasswordPage'
 import ResetPasswordPage from './ResetPasswordPage'
 import DemoLoginPage from './DemoLoginPage'
+import LanguageSwitcher from './LanguageSwitcher'
+import { I18nProvider, useI18n } from './i18n'
 import './styles.css'
 import './login.css'
 import './support.css'
@@ -13,16 +15,17 @@ import './smooth-scroll.css'
 import './home-polish.css'
 import './icon-polish.css'
 import './accessibility.css'
+import './language-switcher.css'
 
 type PublicRoute = 'home' | 'login' | 'register' | 'forgot-password' | 'reset-password' | 'demo'
 
-const routeLabels: Record<PublicRoute, string> = {
-  home: 'Inicio',
-  login: 'Iniciar sesión',
-  register: 'Crear cuenta',
-  'forgot-password': 'Recuperar contraseña',
-  'reset-password': 'Restablecer contraseña',
-  demo: 'Modo demo',
+const routeLabelKeys: Record<PublicRoute, string> = {
+  home: 'route.home',
+  login: 'route.login',
+  register: 'route.register',
+  'forgot-password': 'route.forgot',
+  'reset-password': 'route.reset',
+  demo: 'route.demo',
 }
 
 function getRoute(): PublicRoute {
@@ -45,6 +48,7 @@ function RouteContent({ route }: { route: PublicRoute }) {
 
 function Root() {
   const [route, setRoute] = useState<PublicRoute>(getRoute)
+  const { t } = useI18n()
 
   useEffect(() => {
     const onHashChange = () => setRoute(getRoute())
@@ -53,9 +57,10 @@ function Root() {
   }, [])
 
   useEffect(() => {
+    const routeLabel = t(routeLabelKeys[route])
     document.title = route === 'home'
       ? 'BarberTurn | Tu Turno, Tu Estilo, Tu Tiempo'
-      : `${routeLabels[route]} | BarberTurn`
+      : `${routeLabel} | BarberTurn`
 
     const frame = window.requestAnimationFrame(() => {
       const main = document.querySelector<HTMLElement>('main')
@@ -67,14 +72,17 @@ function Root() {
     })
 
     return () => window.cancelAnimationFrame(frame)
-  }, [route])
+  }, [route, t])
+
+  const routeLabel = t(routeLabelKeys[route])
 
   return (
     <>
-      <a className="skip-link" href="#main-content">Saltar al contenido principal</a>
+      <a className="skip-link" href="#main-content">{t('accessibility.skip')}</a>
       <div className="visually-hidden" role="status" aria-live="polite" aria-atomic="true">
-        Vista actual: {routeLabels[route]}
+        {t('accessibility.currentView', { view: routeLabel })}
       </div>
+      <LanguageSwitcher />
       <RouteContent route={route} />
     </>
   )
@@ -82,6 +90,8 @@ function Root() {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <Root />
+    <I18nProvider>
+      <Root />
+    </I18nProvider>
   </StrictMode>,
 )

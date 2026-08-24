@@ -1,0 +1,80 @@
+/* Accesibilidad global de BarberTurn.
+   Mantiene la identidad visual actual; no introduce un tema alternativo. */
+
+.skip-link {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 10000;
+  max-width: calc(100vw - 24px);
+  padding: 10px 14px;
+  border: 2px solid #8ac3ff;
+  border-radius: 8px;
+  background: #07111f;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+  transform: translateY(-180%);
+  transition: transform .15s ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid #62adff;
+  outline-offset: 3px;
+}
+
+main[tabindex='-1']:focus {
+  outline: none;
+}
+
+button:disabled,
+[aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
+.login-card h1 {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 23px;
+  line-height: 1.2;
+  letter-spacing: -.02em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .skip-link,
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    forced-color-adjust: auto;
+  }
+}

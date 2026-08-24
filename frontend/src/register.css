@@ -16,7 +16,7 @@
   padding: 54px 7vw;
   background:
     linear-gradient(90deg, rgba(2, 6, 13, .96) 0%, rgba(3, 8, 16, .72) 46%, rgba(2, 6, 13, .86) 100%),
-    url('/branding/barberturn-home-chair.webp') center / cover no-repeat;
+    url('/branding/barberturn-home-chair.png') center / cover no-repeat;
   border-right: 1px solid rgba(111, 145, 195, .14);
 }
 

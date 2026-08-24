@@ -9,6 +9,8 @@
   <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=111827" alt="React 19" />
   <img src="https://img.shields.io/badge/SQL_Server-2022-CC2927?style=flat-square&logo=microsoftsqlserver&logoColor=white" alt="SQL Server 2022" />
   <img src="https://img.shields.io/badge/CI-GitHub_Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white" alt="GitHub Actions" />
+  <img src="https://img.shields.io/badge/Fase_1-Completada-22C55E?style=flat-square" alt="Fase 1 completada" />
+  <img src="https://img.shields.io/badge/Fase_2-Completada-22C55E?style=flat-square" alt="Fase 2 completada" />
 </p>
 
 **BarberTurn** es una plataforma web para gestionar turnos de barberías con el menor nivel de fricción posible para el negocio y sus clientes.
@@ -19,37 +21,67 @@ El producto nace de una premisa simple: la tecnología debe adaptarse a la forma
 
 ## 🎯 Visión
 
-BarberTurn comienza como un sistema de filas y turnos digitales, pero su arquitectura queda preparada para evolucionar hacia una plataforma multi-barbería con citas, clientes, caja, reportes y funciones SaaS.
+BarberTurn comienza como un sistema de filas y turnos digitales, pero su arquitectura está preparada para evolucionar hacia una plataforma multi-barbería con citas, clientes, caja, reportes, BarberTurn TV y funciones SaaS.
 
-La experiencia inicial debe funcionar incluso en barberías que:
+La experiencia inicial está diseñada para barberías que:
 
-- 💈 trabajan únicamente por orden de llegada;
-- 👤 no quieren registrar todos los clientes;
+- 💈 trabajan por orden de llegada;
+- 👤 no quieren registrar obligatoriamente a todos los clientes;
 - ✂️ utilizan varios barberos en paralelo;
 - 🎯 permiten elegir un barbero específico;
-- 📅 combinan clientes espontáneos con citas.
+- 📅 combinarán en el futuro clientes espontáneos con citas.
 
 ## 🚀 Estado actual
 
+BarberTurn ya cuenta con un **MVP funcional del flujo de turnos por llegada**, acompañado de una experiencia web pública, autenticación, dashboard operativo y acceso demo.
+
 ### ✅ Fase 1 — Fundación técnica
 
-Implementada en el PR inicial:
-
-- 🧱 solución .NET 10 con separación Domain / Application / Infrastructure / API;
+- 🧱 solución .NET 10 con separación `Domain / Application / Infrastructure / API`;
 - 🌐 ASP.NET Core Web API;
 - 🗄️ Entity Framework Core + SQL Server;
-- 🧬 migración inicial para barberías y usuarios;
+- 🧬 migraciones iniciales;
 - 🔐 autenticación JWT;
 - 👑 registro inicial del propietario de una barbería;
 - 🔑 login;
+- 🔄 recuperación y restablecimiento seguro de contraseña;
 - ❤️ health check;
-- 📘 OpenAPI en desarrollo;
+- 📘 OpenAPI en Development;
 - ⚛️ React 19 + TypeScript + Vite 8;
-- 📱 interfaz inicial responsive con identidad BarberTurn;
 - 🐳 Dockerfiles para API y frontend;
 - 🧩 Docker Compose con SQL Server;
+- 🌍 Nginx para servir el frontend;
 - ⚙️ configuración mediante variables de entorno;
-- 🤖 GitHub Actions para validar backend y frontend.
+- 🤖 GitHub Actions para validar backend, frontend y tests.
+
+### ✅ Fase 2 — Núcleo de turnos
+
+- ✂️ gestión de barberos;
+- 🧴 gestión de servicios;
+- 🎟️ generación de turnos;
+- 🔢 numeración diaria tipo `A-001`, `A-002`, etc.;
+- 👥 cola por barbería;
+- 🎯 selección de barbero específico o flujo operativo por disponibilidad;
+- 🔄 ciclo de estados `Waiting`, `Called`, `InService`, `Completed`, `Cancelled`, `NoShow`;
+- ✂️ estados de barbero `Available`, `Busy`, `Break`, `Offline`;
+- 🔐 endpoints operativos protegidos con JWT;
+- 🏪 aislamiento por `BarberShopId` obtenido desde el token;
+- 📊 métricas operativas de la cola;
+- 🧪 pruebas de dominio para transiciones válidas e inválidas.
+
+### 🎨 Experiencia web actual
+
+- 🏠 Home público responsive con branding BarberTurn;
+- 🔐 login rediseñado con mostrar/ocultar contraseña y opción `Recordarme`;
+- 📝 registro de barbería/propietario;
+- 🔄 recuperación de contraseña;
+- 👤 acceso mediante Usuario Demo en Development;
+- 📊 Dashboard V2 con sidebar, topbar, KPIs, cola y accesos rápidos;
+- 💈 gestión visual de turnos, barberos y servicios;
+- 🧭 navegación interna preparada para módulos futuros;
+- 🧪 onboarding y señalización persistente cuando se utiliza el modo demo;
+- 📱 interfaz responsive para escritorio, tablet y móvil;
+- 📅 footer con año dinámico.
 
 ## 🧰 Stack tecnológico
 
@@ -70,6 +102,7 @@ Implementada en el PR inicial:
 - 🧠 Reglas de negocio separadas del framework.
 - 🧩 Inyección de dependencias.
 - 🔒 Autenticación Bearer con JWT.
+- 🏪 Contexto de barbería derivado del token autenticado.
 - 📘 Contrato HTTP documentado mediante OpenAPI.
 
 ### 🔵 Frontend
@@ -88,7 +121,9 @@ Implementada en el PR inicial:
 - ⚛️ React 19.
 - 🟦 TypeScript.
 - ⚡ Vite 8.
-- 🎨 CSS modularizable desde la base del proyecto.
+- 🎨 estilos organizados por experiencia/pantalla.
+- 📱 diseño responsive.
+- 🔐 persistencia de sesión configurable mediante `localStorage` o `sessionStorage`.
 
 ### 🗄️ Datos e infraestructura
 
@@ -106,7 +141,7 @@ Implementada en el PR inicial:
 
 - 🗃️ SQL Server 2022.
 - 🐳 Docker y Docker Compose.
-- 🌍 Nginx para servir el frontend en producción.
+- 🌍 Nginx para servir el frontend.
 - 🤖 GitHub Actions para CI.
 
 ## 🏗️ Arquitectura
@@ -114,11 +149,13 @@ Implementada en el PR inicial:
 ```text
 BarberTurn
 ├── backend
-│   └── src
-│       ├── BarberTurn.Domain
-│       ├── BarberTurn.Application
-│       ├── BarberTurn.Infrastructure
-│       └── BarberTurn.Api
+│   ├── src
+│   │   ├── BarberTurn.Domain
+│   │   ├── BarberTurn.Application
+│   │   ├── BarberTurn.Infrastructure
+│   │   └── BarberTurn.Api
+│   └── tests
+│       └── BarberTurn.Domain.Tests
 ├── frontend
 │   └── src
 ├── docs
@@ -130,23 +167,46 @@ BarberTurn
 
 ### 🧩 Responsabilidades
 
-- 🧠 **Domain:** entidades y reglas de negocio sin depender de infraestructura.
+- 🧠 **Domain:** entidades, estados y reglas de negocio sin depender de infraestructura.
 - 📋 **Application:** contratos y casos de uso.
-- 🗄️ **Infrastructure:** EF Core, SQL Server, seguridad y servicios externos.
-- 🌐 **Api:** exposición HTTP y configuración del host ASP.NET Core.
-- ⚛️ **Frontend:** experiencia web del cliente y del personal de la barbería.
+- 🗄️ **Infrastructure:** EF Core, SQL Server, seguridad, persistencia y servicios externos.
+- 🌐 **Api:** endpoints HTTP y configuración del host ASP.NET Core.
+- ⚛️ **Frontend:** experiencia pública y operación diaria del personal de la barbería.
+- 🧪 **Tests:** validación de reglas críticas del dominio.
 
 ## 💈 Modelo operativo
 
 BarberTurn contempla tres modalidades:
 
-| Modalidad | Descripción |
-|---|---|
-| 🚶 Por llegada | El cliente entra a una fila y espera su turno. |
-| 📅 Por cita | El cliente reserva fecha, hora, servicio y opcionalmente barbero. |
-| 🔀 Híbrida | La barbería combina citas y clientes por orden de llegada. |
+| Modalidad | Estado | Descripción |
+|---|---|---|
+| 🚶 Por llegada | ✅ MVP actual | El cliente entra a una fila y espera su turno. |
+| 📅 Por cita | ⏳ Fase 4 | El cliente reserva fecha, hora, servicio y opcionalmente barbero. |
+| 🔀 Híbrida | ⏳ Evolución | La barbería combina citas y clientes por orden de llegada. |
 
-El **MVP se concentra en la modalidad por llegada**. Las citas se integrarán después sin alterar el núcleo de turnos.
+El **MVP actual se concentra en la modalidad por llegada**. Las citas se incorporarán posteriormente sin alterar el núcleo existente de turnos.
+
+## 🔄 Flujo principal del MVP
+
+```text
+Barbería
+   ↓
+Usuario autenticado
+   ↓
+Barberos + Servicios
+   ↓
+Nuevo turno
+   ↓
+Waiting
+   ↓
+Called
+   ↓
+InService
+   ↓
+Completed
+```
+
+También se contemplan los estados `Cancelled` y `NoShow`.
 
 ## 👥 Roles iniciales
 
@@ -155,19 +215,22 @@ El **MVP se concentra en la modalidad por llegada**. Las citas se integrarán de
 - 🛎️ **Receptionist:** creación y gestión operativa de turnos.
 - ✂️ **Barber:** atención de clientes y control de su flujo.
 
-Los clientes podrán generar turnos sin necesidad de crear una cuenta.
+Los clientes podrán generar turnos sin necesidad de crear una cuenta en la evolución del flujo público.
 
 ## 🔐 Seguridad
 
 - 🔑 JWT Bearer Authentication.
-- 🔒 Contraseñas almacenadas mediante hashing.
-- 🧾 Secretos fuera del repositorio.
-- 🏪 Preparación para aislamiento por `BarberShopId`.
-- 🧪 Seeder demo limitado a `Development`.
+- 🔒 contraseñas almacenadas mediante hashing.
+- 🧾 secretos fuera del repositorio.
+- 🏪 aislamiento operativo por `BarberShopId`.
+- 🛡️ endpoints administrativos protegidos por rol.
+- 🔄 recuperación de contraseña con token temporal y propósito específico.
+- 🕵️ respuesta genérica en recuperación para evitar enumeración de usuarios.
+- 🧪 seeder y acceso demo limitados a `Development`.
 
 BarberTurn no almacena claves de base de datos, secretos JWT ni contraseñas demo reales en el repositorio.
 
-La aplicación requiere los valores mediante configuración de entorno:
+La aplicación recibe configuración sensible mediante variables de entorno, entre ellas:
 
 - `ConnectionStrings__DefaultConnection`
 - `Jwt__Key`
@@ -176,17 +239,29 @@ La aplicación requiere los valores mediante configuración de entorno:
 
 El JWT debe utilizar una clave de al menos 32 caracteres.
 
+## 👤 Usuario Demo
+
+En `Development`, BarberTurn puede crear una barbería demo y permitir acceso mediante un flujo dedicado sin exponer las credenciales en el bundle de React.
+
+- 🏪 Barbería: `BarberTurn Demo`.
+- 🛡️ Rol: `Administrator`.
+- 🔐 credenciales obtenidas desde configuración del backend.
+- 🧠 sesión demo almacenada únicamente en `sessionStorage`.
+- 🚫 endpoint demo no disponible fuera de `Development`.
+
+El dashboard identifica visualmente el modo demo y muestra un onboarding con las funciones disponibles para probar.
+
 ## 🐳 Ejecutar con Docker
 
-1. 📄 Copia el archivo de entorno de ejemplo:
+1. Copia el archivo de entorno de ejemplo:
 
 ```bash
 cp .env.example .env
 ```
 
-2. 🔐 Sustituye los valores de ejemplo por secretos locales propios.
+2. Sustituye los valores de ejemplo por secretos locales propios.
 
-3. 🚀 Levanta la solución:
+3. Levanta la solución:
 
 ```bash
 docker compose up --build
@@ -200,29 +275,7 @@ docker compose up --build
 - 📘 OpenAPI en Development: `http://localhost:8080/openapi/v1.json`
 - 🗄️ SQL Server: `localhost:1433`
 
-Docker configura `Database__ApplyMigrations=true`, por lo que la API aplica las migraciones al iniciar el entorno local.
-
-## 🔑 Acceso demo de desarrollo
-
-El entorno Docker puede crear automáticamente una barbería demo y un usuario administrador al iniciar por primera vez.
-
-### 👤 Usuario demo
-
-- 📧 Correo: `admin@barberturn.com.do`
-- 🔐 Contraseña: definida localmente mediante `DEMO_ADMIN_PASSWORD`
-- 🛡️ Rol: `Administrator`
-- 🏪 Barbería: `BarberTurn Demo`
-
-Configura en `.env`:
-
-```env
-DEMO_ADMIN_EMAIL=admin@barberturn.com.do
-DEMO_ADMIN_PASSWORD=tu-clave-demo-local
-```
-
-El seeding está limitado al entorno `Development`, es idempotente y solo se ejecuta cuando `DemoAdmin__Enabled=true`.
-
-> ⚠️ La contraseña demo debe mantenerse únicamente en el archivo `.env` local y nunca debe utilizarse como credencial de producción.
+Docker configura `Database__ApplyMigrations=true`, por lo que la API puede aplicar las migraciones al iniciar el entorno local.
 
 ## 🔌 Autenticación inicial
 
@@ -251,6 +304,15 @@ El seeding está limitado al entorno `Development`, es idempotente y solo se eje
 }
 ```
 
+### 🔄 Recuperar contraseña
+
+```text
+POST /api/auth/forgot-password
+POST /api/auth/reset-password
+```
+
+En producción, el enlace de recuperación deberá entregarse mediante un proveedor transaccional de correo. En `Development` el flujo puede exponerse temporalmente para facilitar pruebas locales.
+
 ## ✅ Principios del proyecto
 
 - 🧼 Clean Code
@@ -261,27 +323,27 @@ El seeding está limitado al entorno `Development`, es idempotente y solo se eje
 - 🏢 multi-tenancy preparado desde el dominio
 - 🔐 configuración segura por entorno
 - 📱 diseño responsive
+- 🧪 reglas críticas cubiertas mediante tests
 - 🤖 automatización mediante CI
 
 ## 🗺️ Roadmap
 
-### 💈 Fase 2 — Núcleo de turnos
+### ✅ Fase 1 — Fundación técnica
 
-- 🏪 barberías;
-- ✂️ barberos;
-- 🧴 servicios;
-- 🎟️ generación de turnos;
-- 👥 fila por establecimiento;
-- 🎯 selección de barbero o próximo disponible;
-- 🔄 estados `Waiting`, `Called`, `InService`, `Completed`, `Cancelled`, `NoShow`.
+Completada.
+
+### ✅ Fase 2 — Núcleo de turnos
+
+Completada.
 
 ### ⚡ Fase 3 — Tiempo real
 
 - 📡 SignalR;
 - 🔄 actualización automática de la fila;
-- ✂️ estados de barberos;
+- ✂️ sincronización de estados de barberos;
 - ⏱️ estimaciones de espera;
-- 📺 BarberTurn TV.
+- 📺 BarberTurn TV;
+- 🔔 eventos operativos en tiempo real.
 
 ### 📅 Fase 4 — Citas
 
@@ -290,7 +352,8 @@ El seeding está limitado al entorno `Development`, es idempotente y solo se eje
 - 📌 reservas;
 - 🔁 reprogramaciones;
 - ❌ cancelaciones;
-- 🚫 bloqueo de horarios.
+- 🚫 bloqueo de horarios;
+- 🔀 convivencia con la fila por llegada.
 
 ### 💰 Fase 5 — Gestión comercial
 
@@ -306,22 +369,24 @@ El seeding está limitado al entorno `Development`, es idempotente y solo se eje
 - ⚙️ configuración avanzada por barbería;
 - 🔐 aislamiento completo por tenant;
 - 💳 planes y suscripciones;
-- 🏪 administración de establecimientos.
+- 🏪 administración de establecimientos;
+- 📦 límites y capacidades por plan.
 
 ### 🚀 Fase 7 — Producción
 
-- 🧪 suite de pruebas;
+- 🧪 ampliación de la suite de pruebas;
 - 🛡️ hardening de seguridad;
 - 👁️ observabilidad;
 - ☁️ despliegue;
+- 📧 proveedor transaccional de correo;
 - 📚 documentación final;
-- 💼 preparación para portafolio y comercialización.
+- 💼 preparación para comercialización.
 
 ## 📚 Documentación
 
 - 🏗️ [`docs/architecture.md`](docs/architecture.md): decisiones y estructura arquitectónica.
 - 🎯 [`docs/mvp.md`](docs/mvp.md): alcance funcional del MVP.
-- 🚀 [`docs/phase-1.md`](docs/phase-1.md): resumen de la fundación técnica implementada.
+- 🚀 [`docs/phase-1.md`](docs/phase-1.md): fundación técnica del proyecto.
 
 ---
 

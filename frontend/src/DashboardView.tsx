@@ -2,6 +2,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faBars,
+  faBolt,
   faChartColumn,
   faClock,
   faFlask,
@@ -11,9 +12,11 @@ import {
   faRightFromBracket,
   faRotate,
   faScissors,
+  faShieldHalved,
   faTv,
   faUserTie,
   faUsers,
+  faXmark,
 } from '@fortawesome/free-solid-svg-icons'
 import type { Auth, Barber, BarberStatus, Service, Turn } from './types'
 import { confirmDestructive, showError, showSuccessToast } from './alerts'
@@ -49,7 +52,7 @@ const navItems = [
   { id: 'dashboard-overview', label: 'Dashboard', icon: faHouse },
   { id: 'queue-section', label: 'Cola en vivo', icon: faListOl },
   { id: 'barbers-section', label: 'Barberos', icon: faUserTie },
-  { id: 'services-section', label: 'Servicios', icon: faScissors },
+  { id: 'services-section', label: 'Servicios', icon: faScissors, requiresCatalogAccess: true },
 ]
 
 const futureItems = [
@@ -57,10 +60,6 @@ const futureItems = [
   { label: 'BarberTurn TV', icon: faTv },
   { label: 'Reportes', icon: faChartColumn },
 ]
-
-function scrollToSection(id: string) {
-  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-}
 
 function formatRole(role: string) {
   if (role === 'Owner') return 'Propietario'
@@ -78,8 +77,14 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
   const [turns, setTurns] = useState<Turn[]>([])
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [activeSection, setActiveSection] = useState('dashboard-overview')
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
   const canManageCatalog = auth.role === 'Owner' || auth.role === 'Administrator'
+  const visibleNavItems = useMemo(
+    () => navItems.filter(item => !item.requiresCatalogAccess || canManageCatalog),
+    [canManageCatalog],
+  )
 
   const loadQueue = useCallback(async () => {
     try {
@@ -102,6 +107,45 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
   useEffect(() => {
     void loadQueue()
   }, [loadQueue])
+
+  useEffect(() => {
+    const sections = visibleNavItems
+      .map(item => document.getElementById(item.id))
+      .filter((section): section is HTMLElement => section !== null)
+
+    const observer = new IntersectionObserver(
+      entries => {
+        const visibleSection = entries
+          .filter(entry => entry.isIntersecting)
+          .sort((first, second) => second.intersectionRatio - first.intersectionRatio)[0]
+
+        if (visibleSection) setActiveSection(visibleSection.target.id)
+      },
+      { rootMargin: '-18% 0px -68% 0px', threshold: [0, 0.2, 0.5] },
+    )
+
+    sections.forEach(section => observer.observe(section))
+    return () => observer.disconnect()
+  }, [visibleNavItems])
+
+  useEffect(() => {
+    if (!mobileNavOpen) return
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobileNavOpen(false)
+    }
+
+    document.addEventListener('keydown', closeOnEscape)
+    return () => document.removeEventListener('keydown', closeOnEscape)
+  }, [mobileNavOpen])
+
+  function navigateToSection(id: string) {
+    setActiveSection(id)
+    setMobileNavOpen(false)
+    const section = document.getElementById(id)
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    section?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
+  }
 
   const overview = useMemo(() => {
     const waiting = turns.filter(turn => turn.status === 'Waiting').length
@@ -244,23 +288,44 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
   const currentYear = new Date().getFullYear()
   const today = new Intl.DateTimeFormat('es-DO', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date())
   const queuePreview = turns.slice(0, 4)
+  const activeServices = services.filter(service => service.isActive).length
+  const activeBarbers = barbers.filter(barber => barber.isActive).length
 
   return (
-    <main className="dashboard-app">
-      <aside className="dashboard-sidebar" aria-label="Navegación del panel">
-        <div className="dashboard-brand">
-          <img src="/branding/barberturn-logo.png" alt="BarberTurn" />
+    <main className={`dashboard-app${isDemo ? ' dashboard-demo' : ' dashboard-admin'}`}>
+      {mobileNavOpen && (
+        <button
+          className="dashboard-nav-backdrop"
+          type="button"
+          aria-label="Cerrar navegación"
+          onClick={() => setMobileNavOpen(false)}
+        />
+      )}
+
+      <aside className={`dashboard-sidebar${mobileNavOpen ? ' mobile-open' : ''}`} aria-label="Navegación del panel">
+        <div className="dashboard-brand-row">
+          <div className="dashboard-brand">
+            <img src="/branding/barberturn-logo.png" alt="BarberTurn" />
+          </div>
+          <button className="dashboard-sidebar-close" type="button" aria-label="Cerrar menú" onClick={() => setMobileNavOpen(false)}>
+            <FontAwesomeIcon icon={faXmark} />
+          </button>
         </div>
 
-        {isDemo && <span className="demo-pill"><FontAwesomeIcon icon={faFlask} /> MODO DEMO</span>}
+        {isDemo ? (
+          <span className="demo-pill"><FontAwesomeIcon icon={faFlask} /> MODO DEMO</span>
+        ) : canManageCatalog ? (
+          <span className="admin-pill"><FontAwesomeIcon icon={faShieldHalved} /> PANEL ADMIN</span>
+        ) : null}
 
         <nav className="dashboard-nav">
-          {navItems.map((item, index) => (
+          {visibleNavItems.map(item => (
             <button
               key={item.id}
-              className={index === 0 ? 'active' : ''}
+              className={activeSection === item.id ? 'active' : undefined}
               type="button"
-              onClick={() => scrollToSection(item.id)}
+              aria-current={activeSection === item.id ? 'page' : undefined}
+              onClick={() => navigateToSection(item.id)}
             >
               <span className="nav-icon" aria-hidden="true"><FontAwesomeIcon icon={item.icon} /></span>
               <span>{item.label}</span>
@@ -277,6 +342,10 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
 
         <div className="sidebar-spacer" />
         <div className="sidebar-footer">
+          <div className="sidebar-session-summary">
+            <strong>{auth.name}</strong>
+            <small>{isDemo ? 'Sesión temporal' : formatRole(auth.role)}</small>
+          </div>
           <button className="sidebar-logout" type="button" onClick={onLogout}>
             <FontAwesomeIcon icon={faRightFromBracket} />
             <span>Cerrar sesión</span>
@@ -287,15 +356,23 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
       <section className="dashboard-main">
         <header className="dashboard-topbar">
           <div className="dashboard-topbar-left">
-            <button className="dashboard-mobile-menu" type="button" aria-label="Menú"><FontAwesomeIcon icon={faBars} /></button>
+            <button
+              className="dashboard-mobile-menu"
+              type="button"
+              aria-label="Abrir menú"
+              aria-expanded={mobileNavOpen}
+              onClick={() => setMobileNavOpen(true)}
+            >
+              <FontAwesomeIcon icon={faBars} />
+            </button>
             <div className="dashboard-topbar-copy">
-              <strong>BarberTurn Operations</strong>
-              <span>Gestión diaria de tu barbería</span>
+              <strong>{isDemo ? 'BarberTurn Demo' : 'BarberTurn Admin'}</strong>
+              <span>{isDemo ? 'Entorno guiado de demostración' : 'Centro de control operativo'}</span>
             </div>
           </div>
 
           <div className="dashboard-user">
-            {isDemo && <span className="demo-pill">DEMO</span>}
+            {isDemo ? <span className="demo-pill">DEMO</span> : canManageCatalog && <span className="admin-pill compact">ADMIN</span>}
             <div className="dashboard-user-copy">
               <strong>{auth.name}</strong>
               <small>{formatRole(auth.role)}</small>
@@ -305,24 +382,35 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
         </header>
 
         <div className="dashboard-content">
-          <section className="dashboard-section" id="dashboard-overview">
+          <section className="dashboard-section dashboard-overview-section" id="dashboard-overview">
             <div className="dashboard-heading">
               <div>
-                <h1>Dashboard</h1>
-                <p>Resumen general de la operación de hoy.</p>
+                <span className="dashboard-heading-kicker">{isDemo ? 'EXPERIENCIA DE PRUEBA' : 'OPERACIÓN DEL DÍA'}</span>
+                <h1>{isDemo ? 'Panel de demostración' : 'Panel de administración'}</h1>
+                <p>{isDemo ? 'Explora el flujo completo con datos temporales y acciones seguras.' : 'Supervisa la cola, el equipo y el catálogo desde un solo lugar.'}</p>
               </div>
               <span className="dashboard-date">{today}</span>
             </div>
 
-            {isDemo && (
-              <div className="demo-banner">
+            {isDemo ? (
+              <div className="dashboard-context-banner demo-banner">
+                <span className="context-banner-icon"><FontAwesomeIcon icon={faFlask} /></span>
                 <div>
                   <strong>Estás explorando BarberTurn en modo demo</strong>
-                  <span>Puedes crear turnos, cambiar estados y recorrer el flujo operativo sin usar una cuenta personal.</span>
+                  <span>Puedes crear turnos, cambiar estados y recorrer el flujo operativo. Los datos de esta sesión son temporales.</span>
                 </div>
                 <span className="demo-pill">ENTORNO DE PRUEBA</span>
               </div>
-            )}
+            ) : canManageCatalog ? (
+              <div className="dashboard-context-banner admin-banner">
+                <span className="context-banner-icon"><FontAwesomeIcon icon={faShieldHalved} /></span>
+                <div>
+                  <strong>Centro de administración activo</strong>
+                  <span>Tienes permisos para gestionar turnos, barberos y el catálogo de servicios de la barbería.</span>
+                </div>
+                <span className="admin-pill">{formatRole(auth.role).toUpperCase()}</span>
+              </div>
+            ) : null}
 
             {error && <p className="error banner" role="alert">{error}</p>}
 
@@ -337,11 +425,11 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
               </article>
               <article className="dashboard-kpi">
                 <span className="kpi-icon"><FontAwesomeIcon icon={faUserTie} /></span>
-                <div><strong>{overview.availableBarbers}</strong><span>Barberos disponibles</span><small>Listos para atender</small></div>
+                <div><strong>{overview.availableBarbers}</strong><span>Barberos disponibles</span><small>{activeBarbers} activos en el equipo</small></div>
               </article>
               <article className="dashboard-kpi">
                 <span className="kpi-icon"><FontAwesomeIcon icon={faListOl} /></span>
-                <div><strong>{services.filter(service => service.isActive).length}</strong><span>Servicios activos</span><small>Catálogo disponible</small></div>
+                <div><strong>{activeServices}</strong><span>Servicios activos</span><small>Catálogo disponible</small></div>
               </article>
             </div>
 
@@ -367,14 +455,14 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
                 </div>
               </article>
 
-              <article className="dashboard-card">
+              <article className="dashboard-card dashboard-actions-card">
                 <div className="dashboard-card-header">
-                  <div><h2>Accesos rápidos</h2><p>Acciones frecuentes.</p></div>
+                  <div><h2><FontAwesomeIcon icon={faBolt} /> Accesos rápidos</h2><p>Acciones frecuentes.</p></div>
                 </div>
                 <div className="quick-actions">
-                  <button type="button" onClick={() => scrollToSection('queue-section')}><span className="quick-icon"><FontAwesomeIcon icon={faPlus} /></span>Crear nuevo turno</button>
-                  <button type="button" onClick={() => scrollToSection('barbers-section')}><span className="quick-icon"><FontAwesomeIcon icon={faUserTie} /></span>Gestionar barberos</button>
-                  <button type="button" onClick={() => scrollToSection('services-section')}><span className="quick-icon"><FontAwesomeIcon icon={faScissors} /></span>Gestionar servicios</button>
+                  <button type="button" onClick={() => navigateToSection('queue-section')}><span className="quick-icon"><FontAwesomeIcon icon={faPlus} /></span>Crear nuevo turno</button>
+                  <button type="button" onClick={() => navigateToSection('barbers-section')}><span className="quick-icon"><FontAwesomeIcon icon={faUserTie} /></span>Gestionar barberos</button>
+                  {canManageCatalog && <button type="button" onClick={() => navigateToSection('services-section')}><span className="quick-icon"><FontAwesomeIcon icon={faScissors} /></span>Gestionar servicios</button>}
                   <button type="button" onClick={() => void loadQueue()}><span className="quick-icon"><FontAwesomeIcon icon={faRotate} /></span>Actualizar operación</button>
                 </div>
               </article>
@@ -498,7 +586,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
                 </article>
 
                 <article className="panel">
-                  <p className="eyebrow">SERVICIOS ACTIVOS</p><h2>{services.filter(service => service.isActive).length} disponibles</h2>
+                  <p className="eyebrow">SERVICIOS ACTIVOS</p><h2>{activeServices} disponibles</h2>
                   <div className="queue-summary">
                     {services.filter(service => service.isActive).slice(0, 6).map(service => (
                       <div className="queue-summary-item" key={service.id}>

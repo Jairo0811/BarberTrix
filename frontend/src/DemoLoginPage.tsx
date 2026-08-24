@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faClock, faFlask, faRotate, faScissors, faUserTie } from '@fortawesome/free-solid-svg-icons'
 import type { Auth } from './types'
 import { buildSupportEmailHref } from './support'
 import './demo-login.css'
@@ -9,17 +11,17 @@ const demoStorageKey = 'barberturn.demo'
 
 const demoFeatures = [
   {
-    icon: '◷',
+    icon: faClock,
     title: 'Gestionar turnos',
     text: 'Crea clientes en la fila y recorre los estados principales de atención.',
   },
   {
-    icon: '♙',
+    icon: faUserTie,
     title: 'Probar barberos',
     text: 'Consulta disponibilidad, sillas y estados del equipo de trabajo.',
   },
   {
-    icon: '✂',
+    icon: faScissors,
     title: 'Explorar servicios',
     text: 'Visualiza y administra el catálogo disponible para generar turnos.',
   },
@@ -71,7 +73,7 @@ export default function DemoLoginPage() {
           <img src="/branding/barberturn-logo.png" alt="BarberTurn" />
         </a>
 
-        <span className="demo-login-badge">◎ EXPERIENCIA DE DEMOSTRACIÓN</span>
+        <span className="demo-login-badge"><FontAwesomeIcon icon={faFlask} /> EXPERIENCIA DE DEMOSTRACIÓN</span>
 
         <div className="demo-login-heading">
           <h1 id="demo-login-title">Explora BarberTurn sin crear una cuenta</h1>
@@ -83,7 +85,7 @@ export default function DemoLoginPage() {
         <div className="demo-feature-grid">
           {demoFeatures.map(feature => (
             <article className="demo-feature-card" key={feature.title}>
-              <span aria-hidden="true">{feature.icon}</span>
+              <span aria-hidden="true"><FontAwesomeIcon icon={feature.icon} /></span>
               <strong>{feature.title}</strong>
               <small>{feature.text}</small>
             </article>
@@ -91,7 +93,9 @@ export default function DemoLoginPage() {
         </div>
 
         <div className="demo-login-status" role="status" aria-live="polite">
-          <span className="demo-login-status-icon" aria-hidden="true">{busy ? '↻' : '!'}</span>
+          <span className={`demo-login-status-icon${busy ? ' loading' : ' error'}`} aria-hidden="true">
+            <FontAwesomeIcon icon={busy ? faRotate : faFlask} spin={busy} />
+          </span>
           <div>
             <strong>{busy ? 'Preparando tu sesión demo…' : 'No pudimos abrir la demostración automáticamente'}</strong>
             <span>{busy ? 'Conectando con el entorno de prueba de BarberTurn.' : 'Puedes reintentar el acceso, volver al login o contactar soporte.'}</span>
@@ -104,7 +108,7 @@ export default function DemoLoginPage() {
           <>
             <div className="demo-login-actions">
               <button className="demo-login-primary" type="button" onClick={() => void loginAsDemo()}>
-                Reintentar acceso demo
+                <FontAwesomeIcon icon={faRotate} /> Reintentar acceso demo
               </button>
               <a className="demo-login-secondary" href="#/login">Volver al login</a>
             </div>

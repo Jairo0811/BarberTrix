@@ -1,4 +1,21 @@
 import { useEffect, useState } from 'react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import {
+  faBars,
+  faBolt,
+  faCheck,
+  faCloud,
+  faEnvelope,
+  faListOl,
+  faMobileScreenButton,
+  faScissors,
+  faShieldHalved,
+  faTriangleExclamation,
+  faTv,
+  faUserTie,
+  faUsers,
+  faXmark,
+} from '@fortawesome/free-solid-svg-icons'
 import './home.css'
 import { buildSupportEmailHref, buildWhatsAppHref, supportConfig } from './support'
 
@@ -10,25 +27,25 @@ const navigationItems = [
 ]
 
 const heroFeatures = [
-  { icon: '◉', title: 'Fácil de usar', text: 'Interfaz intuitiva para ti y tu equipo' },
-  { icon: '☁', title: 'En la nube', text: 'Accede desde cualquier lugar' },
-  { icon: '◇', title: 'Seguro', text: 'Tus datos siempre protegidos' },
+  { icon: faBolt, title: 'Fácil de usar', text: 'Interfaz intuitiva para ti y tu equipo' },
+  { icon: faCloud, title: 'En la nube', text: 'Accede desde cualquier lugar' },
+  { icon: faShieldHalved, title: 'Seguro', text: 'Tus datos siempre protegidos' },
 ]
 
-const stats = [
-  { icon: '♙', value: '+50', label: 'Barberías confían' },
-  { icon: '▣', value: '+1,000', label: 'Turnos gestionados' },
-  { icon: '♙', value: '+200', label: 'Clientes satisfechos' },
-  { icon: '◷', value: '99.9%', label: 'Tiempo activo' },
+const capabilityHighlights = [
+  { icon: faListOl, value: 'Fila híbrida', label: 'Turnos por llegada y citas' },
+  { icon: faUserTie, value: 'Multi-barbero', label: 'Equipo y disponibilidad' },
+  { icon: faBolt, value: 'Operación ágil', label: 'Flujo diario centralizado' },
+  { icon: faTv, value: 'Preparado para TV', label: 'Experiencia pública en evolución' },
 ]
 
 const productFeatures = [
-  { icon: '⌁', title: 'Cola inteligente', text: 'Organiza clientes por orden de llegada, citas o un modelo híbrido sin complicar el trabajo del barbero.' },
-  { icon: '✂', title: 'Gestión de barberos', text: 'Controla disponibilidad, silla, estado y carga de trabajo de cada miembro del equipo.' },
-  { icon: '▤', title: 'Servicios y precios', text: 'Configura cortes, barba, combos, duración estimada y precio desde un catálogo central.' },
-  { icon: '◷', title: 'Turnos en tiempo real', text: 'Visualiza quién espera, quién está siendo atendido y cuál es el siguiente turno.' },
-  { icon: '▣', title: 'BarberTurn TV', text: 'Proyecta la cola de forma clara en una pantalla del local y mantén informados a los clientes.' },
-  { icon: '⌁', title: 'Diseñado para crecer', text: 'Arquitectura preparada para citas, clientes, reportes, pagos y operación multi-barbería.' },
+  { icon: faListOl, title: 'Cola inteligente', text: 'Organiza clientes por orden de llegada, citas o un modelo híbrido sin complicar el trabajo del barbero.' },
+  { icon: faUserTie, title: 'Gestión de barberos', text: 'Controla disponibilidad, silla, estado y carga de trabajo de cada miembro del equipo.' },
+  { icon: faScissors, title: 'Servicios y precios', text: 'Configura cortes, barba, combos, duración estimada y precio desde un catálogo central.' },
+  { icon: faBolt, title: 'Turnos en tiempo real', text: 'Visualiza quién espera, quién está siendo atendido y cuál es el siguiente turno.' },
+  { icon: faTv, title: 'BarberTurn TV', text: 'Proyecta la cola de forma clara en una pantalla del local y mantén informados a los clientes.' },
+  { icon: faMobileScreenButton, title: 'Diseñado para crecer', text: 'Arquitectura preparada para citas, clientes, reportes, pagos y operación multi-barbería.' },
 ]
 
 const plans = [
@@ -61,6 +78,7 @@ export default function HomePage() {
   const currentYear = new Date().getFullYear()
   const whatsappHref = buildWhatsAppHref()
   const [activeSection, setActiveSection] = useState('inicio')
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     const sections = navigationItems
@@ -73,35 +91,44 @@ export default function HomePage() {
           .filter(entry => entry.isIntersecting)
           .sort((first, second) => second.intersectionRatio - first.intersectionRatio)[0]
 
-        if (visibleSection) {
-          setActiveSection(visibleSection.target.id)
-        }
+        if (visibleSection) setActiveSection(visibleSection.target.id)
       },
-      {
-        rootMargin: '-25% 0px -60% 0px',
-        threshold: [0, 0.25, 0.5, 0.75],
-      },
+      { rootMargin: '-25% 0px -60% 0px', threshold: [0, 0.25, 0.5, 0.75] },
     )
 
     sections.forEach(section => observer.observe(section))
     return () => observer.disconnect()
   }, [])
 
+  useEffect(() => {
+    if (!mobileMenuOpen) return
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobileMenuOpen(false)
+    }
+    document.addEventListener('keydown', closeOnEscape)
+    return () => document.removeEventListener('keydown', closeOnEscape)
+  }, [mobileMenuOpen])
+
+  function selectSection(id: string) {
+    setActiveSection(id)
+    setMobileMenuOpen(false)
+  }
+
   return (
     <main className="home-page">
       <header className="home-nav">
-        <a className="home-brand" href="#inicio" aria-label="BarberTurn inicio" onClick={() => setActiveSection('inicio')}>
+        <a className="home-brand" href="#inicio" aria-label="BarberTurn inicio" onClick={() => selectSection('inicio')}>
           <img src="/branding/barberturn-logo.png" alt="BarberTurn" />
         </a>
 
-        <nav className="home-links" aria-label="Navegación principal">
+        <nav className={`home-links${mobileMenuOpen ? ' mobile-open' : ''}`} aria-label="Navegación principal">
           {navigationItems.map(item => (
             <a
               key={item.id}
               className={activeSection === item.id ? 'active' : undefined}
               href={`#${item.id}`}
               aria-current={activeSection === item.id ? 'page' : undefined}
-              onClick={() => setActiveSection(item.id)}
+              onClick={() => selectSection(item.id)}
             >
               {item.label}
             </a>
@@ -111,6 +138,15 @@ export default function HomePage() {
         <div className="home-nav-actions">
           <button className="home-login-button" type="button" onClick={navigateToLogin}>Iniciar sesión</button>
           <button className="home-primary-button" type="button" onClick={navigateToLogin}>Comenzar gratis</button>
+          <button
+            className="home-mobile-menu"
+            type="button"
+            aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
+            aria-expanded={mobileMenuOpen}
+            onClick={() => setMobileMenuOpen(open => !open)}
+          >
+            <FontAwesomeIcon icon={mobileMenuOpen ? faXmark : faBars} />
+          </button>
         </div>
       </header>
 
@@ -122,13 +158,13 @@ export default function HomePage() {
 
           <div className="home-hero-actions">
             <button className="home-primary-button large" type="button" onClick={navigateToLogin}>Comenzar gratis <span>→</span></button>
-            <a className="home-secondary-button" href="#caracteristicas" onClick={() => setActiveSection('caracteristicas')}>Ver características</a>
+            <a className="home-secondary-button" href="#caracteristicas" onClick={() => selectSection('caracteristicas')}>Ver características</a>
           </div>
 
           <div className="home-feature-row">
             {heroFeatures.map(feature => (
               <article key={feature.title}>
-                <span className="home-feature-icon" aria-hidden="true">{feature.icon}</span>
+                <span className="home-feature-icon" aria-hidden="true"><FontAwesomeIcon icon={feature.icon} /></span>
                 <div><strong>{feature.title}</strong><small>{feature.text}</small></div>
               </article>
             ))}
@@ -141,11 +177,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="home-stats" aria-label="Indicadores de BarberTurn">
-        {stats.map(stat => (
-          <article key={stat.label}>
-            <span className="home-stat-icon" aria-hidden="true">{stat.icon}</span>
-            <div><strong>{stat.value}</strong><small>{stat.label}</small></div>
+      <section className="home-stats" aria-label="Capacidades principales de BarberTurn">
+        {capabilityHighlights.map(item => (
+          <article key={item.value}>
+            <span className="home-stat-icon" aria-hidden="true"><FontAwesomeIcon icon={item.icon} /></span>
+            <div><strong>{item.value}</strong><small>{item.label}</small></div>
           </article>
         ))}
       </section>
@@ -160,7 +196,7 @@ export default function HomePage() {
         <div className="home-feature-grid">
           {productFeatures.map(feature => (
             <article key={feature.title} className="home-feature-card">
-              <span className="home-card-icon" aria-hidden="true">{feature.icon}</span>
+              <span className="home-card-icon" aria-hidden="true"><FontAwesomeIcon icon={feature.icon} /></span>
               <h3>{feature.title}</h3>
               <p>{feature.text}</p>
             </article>
@@ -183,7 +219,7 @@ export default function HomePage() {
               <p className="pricing-description">{plan.description}</p>
               <div className="pricing-price"><strong>{plan.price}</strong><span>/mes</span></div>
               <ul>
-                {plan.features.map(feature => <li key={feature}>✓ {feature}</li>)}
+                {plan.features.map(feature => <li key={feature}><FontAwesomeIcon icon={faCheck} /> {feature}</li>)}
               </ul>
               <button className={plan.featured ? 'home-primary-button pricing-button' : 'home-login-button pricing-button'} type="button" onClick={navigateToLogin}>Comenzar gratis</button>
             </article>
@@ -198,9 +234,9 @@ export default function HomePage() {
           <h2>¿Quieres llevar BarberTurn a tu barbería?</h2>
           <p>Cuéntanos cómo trabaja tu equipo y qué necesitas mejorar. BarberTurn está pensado para adaptarse a tu operación, no al revés.</p>
           <div className="contact-points">
-            <span>✓ Configuración sencilla</span>
-            <span>✓ Pensado para barberías reales</span>
-            <span>✓ Preparado para crecer contigo</span>
+            <span><FontAwesomeIcon icon={faCheck} /> Configuración sencilla</span>
+            <span><FontAwesomeIcon icon={faCheck} /> Pensado para barberías reales</span>
+            <span><FontAwesomeIcon icon={faCheck} /> Preparado para crecer contigo</span>
           </div>
         </div>
 
@@ -221,28 +257,19 @@ export default function HomePage() {
 
         <div className="support-options">
           <a className="support-option" href={buildSupportEmailHref()}>
-            <span className="support-option-icon" aria-hidden="true">✉</span>
-            <div>
-              <strong>Correo de soporte</strong>
-              <small>{supportConfig.email}</small>
-            </div>
+            <span className="support-option-icon" aria-hidden="true"><FontAwesomeIcon icon={faEnvelope} /></span>
+            <div><strong>Correo de soporte</strong><small>{supportConfig.email}</small></div>
           </a>
 
           <a className="support-option" href={buildSupportEmailHref('[BarberTurn] Reporte de problema')}>
-            <span className="support-option-icon" aria-hidden="true">⚠</span>
-            <div>
-              <strong>Reportar un problema</strong>
-              <small>Abre un correo con una plantilla para describir el error.</small>
-            </div>
+            <span className="support-option-icon" aria-hidden="true"><FontAwesomeIcon icon={faTriangleExclamation} /></span>
+            <div><strong>Reportar un problema</strong><small>Abre un correo con una plantilla para describir el error.</small></div>
           </a>
 
           {whatsappHref && (
             <a className="support-option" href={whatsappHref} target="_blank" rel="noreferrer">
-              <span className="support-option-icon" aria-hidden="true">◉</span>
-              <div>
-                <strong>WhatsApp</strong>
-                <small>Contacto directo con soporte.</small>
-              </div>
+              <span className="support-option-icon" aria-hidden="true"><FontAwesomeIcon icon={faUsers} /></span>
+              <div><strong>WhatsApp</strong><small>Contacto directo con soporte.</small></div>
             </a>
           )}
         </div>

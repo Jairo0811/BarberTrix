@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react'
+import { FormEvent, useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft, faEnvelope, faEye, faEyeSlash, faFlask, faLock } from '@fortawesome/free-solid-svg-icons'
 import DashboardView from './DashboardView'
@@ -28,6 +28,10 @@ export default function App() {
   const [showPassword, setShowPassword] = useState(false)
 
   const isDemo = sessionStorage.getItem(demoStorageKey) === 'true'
+
+  useEffect(() => {
+    if (auth) document.title = `${isDemo ? 'Demo' : 'Panel'} | BarberTurn`
+  }, [auth, isDemo])
 
   async function login(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -79,7 +83,7 @@ export default function App() {
   }
 
   return (
-    <main className="login-shell login-split">
+    <main className="login-shell login-split" aria-labelledby="login-title">
       <section className="login-panel">
         <div className="login-card">
           <a className="back-home-link" href="#/">
@@ -88,10 +92,15 @@ export default function App() {
           </a>
 
           <BarberTurnLogo />
-          <h2>Bienvenido de nuevo</h2>
+          <h1 id="login-title">Bienvenido de nuevo</h1>
           <p className="login-subtitle">Inicia sesión para continuar</p>
 
-          <form className="login-form" onSubmit={login}>
+          <form
+            className="login-form"
+            onSubmit={login}
+            aria-busy={busy}
+            aria-describedby={error ? 'login-error' : undefined}
+          >
             <label className="login-field">
               <span>Correo electrónico</span>
               <div className="input-wrap">
@@ -100,6 +109,7 @@ export default function App() {
                   name="email"
                   type="email"
                   autoComplete="email"
+                  inputMode="email"
                   placeholder="ejemplo@barberia.com"
                   required
                 />
@@ -121,6 +131,7 @@ export default function App() {
                   className="password-toggle"
                   type="button"
                   aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  aria-pressed={showPassword}
                   onClick={() => setShowPassword(value => !value)}
                 >
                   <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} aria-hidden="true" />
@@ -140,12 +151,12 @@ export default function App() {
               </a>
             </div>
 
-            <button className="login-submit" disabled={busy}>
+            <button className="login-submit" type="submit" disabled={busy}>
               {busy ? 'Ingresando…' : 'Iniciar sesión'}
             </button>
           </form>
 
-          <div className="login-separator"><span>o continúa con</span></div>
+          <div className="login-separator" aria-hidden="true"><span>o continúa con</span></div>
 
           <button
             className="demo-button"
@@ -156,8 +167,8 @@ export default function App() {
             <span>Explorar BarberTurn en modo demo</span>
           </button>
 
-          <p className="register-copy">¿No tienes cuenta? <span>Regístrate aquí</span></p>
-          {error && <p className="login-error" role="alert">{error}</p>}
+          <p className="register-copy">¿No tienes cuenta? <a className="register-link" href="#/register">Regístrate aquí</a></p>
+          {error && <p id="login-error" className="login-error" role="alert" aria-live="assertive">{error}</p>}
         </div>
       </section>
     </main>

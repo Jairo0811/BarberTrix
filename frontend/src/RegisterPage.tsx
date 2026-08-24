@@ -92,9 +92,9 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="register-page">
+    <main className="register-page" aria-labelledby="register-title">
       <section className="register-showcase" aria-label="Beneficios de BarberTurn">
-        <div className="register-showcase-overlay" />
+        <div className="register-showcase-overlay" aria-hidden="true" />
         <div className="register-brand">
           <img src="/branding/barberturn-logo.png" alt="BarberTurn" />
         </div>
@@ -104,7 +104,7 @@ export default function RegisterPage() {
           <div className="register-benefits">
             {benefits.map((benefit, index) => (
               <article key={benefit}>
-                <span>{index + 1}</span>
+                <span aria-hidden="true">{index + 1}</span>
                 <strong>{benefit}</strong>
               </article>
             ))}
@@ -115,11 +115,20 @@ export default function RegisterPage() {
       <section className="register-panel">
         <div className="register-card">
           <header>
-            <h1>Crear cuenta</h1>
+            <h1 id="register-title">Crear cuenta</h1>
             <p>Completa la información para crear tu cuenta</p>
           </header>
 
-          <form className="register-form" onSubmit={register}>
+          <span id="register-password-requirements" className="visually-hidden">
+            La contraseña debe tener al menos 8 caracteres.
+          </span>
+
+          <form
+            className="register-form"
+            onSubmit={register}
+            aria-busy={busy}
+            aria-describedby={error ? 'register-error' : undefined}
+          >
             <label>
               <span>Nombre completo</span>
               <div className="register-input-wrap">
@@ -132,7 +141,7 @@ export default function RegisterPage() {
               <span>Correo electrónico</span>
               <div className="register-input-wrap">
                 <span className="register-field-icon" aria-hidden="true">✉</span>
-                <input name="email" type="email" autoComplete="email" placeholder="ejemplo@barberia.com" required />
+                <input name="email" type="email" autoComplete="email" inputMode="email" placeholder="ejemplo@barberia.com" required />
               </div>
             </label>
 
@@ -140,8 +149,24 @@ export default function RegisterPage() {
               <span>Contraseña</span>
               <div className="register-input-wrap">
                 <span className="register-field-icon" aria-hidden="true">♙</span>
-                <input name="password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={8} placeholder="Mínimo 8 caracteres" required />
-                <button type="button" className="register-password-toggle" onClick={() => setShowPassword(value => !value)}>{showPassword ? 'Ocultar' : 'Ver'}</button>
+                <input
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  minLength={8}
+                  aria-describedby="register-password-requirements"
+                  placeholder="Mínimo 8 caracteres"
+                  required
+                />
+                <button
+                  type="button"
+                  className="register-password-toggle"
+                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  aria-pressed={showPassword}
+                  onClick={() => setShowPassword(value => !value)}
+                >
+                  {showPassword ? 'Ocultar' : 'Ver'}
+                </button>
               </div>
             </label>
 
@@ -149,15 +174,31 @@ export default function RegisterPage() {
               <span>Confirmar contraseña</span>
               <div className="register-input-wrap">
                 <span className="register-field-icon" aria-hidden="true">♙</span>
-                <input name="confirmPassword" type={showConfirmation ? 'text' : 'password'} autoComplete="new-password" minLength={8} placeholder="Repite tu contraseña" required />
-                <button type="button" className="register-password-toggle" onClick={() => setShowConfirmation(value => !value)}>{showConfirmation ? 'Ocultar' : 'Ver'}</button>
+                <input
+                  name="confirmPassword"
+                  type={showConfirmation ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  minLength={8}
+                  aria-describedby="register-password-requirements"
+                  placeholder="Repite tu contraseña"
+                  required
+                />
+                <button
+                  type="button"
+                  className="register-password-toggle"
+                  aria-label={showConfirmation ? 'Ocultar confirmación de contraseña' : 'Mostrar confirmación de contraseña'}
+                  aria-pressed={showConfirmation}
+                  onClick={() => setShowConfirmation(value => !value)}
+                >
+                  {showConfirmation ? 'Ocultar' : 'Ver'}
+                </button>
               </div>
             </label>
 
             <button className="register-submit" type="submit" disabled={busy}>{busy ? 'Creando cuenta…' : 'Crear cuenta'}</button>
           </form>
 
-          {error && <p className="register-error" role="alert">{error}</p>}
+          {error && <p id="register-error" className="register-error" role="alert" aria-live="assertive">{error}</p>}
 
           <p className="register-login-copy">¿Ya tienes cuenta? <a href="#/login">Inicia sesión</a></p>
         </div>

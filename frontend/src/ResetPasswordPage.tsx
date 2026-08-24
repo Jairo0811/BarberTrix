@@ -59,21 +59,21 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <main className="recovery-page">
-      <section className="recovery-card" aria-labelledby="reset-password-title">
+    <main className="recovery-page" aria-labelledby="reset-password-title">
+      <section className="recovery-card">
         <a className="recovery-logo" href="#/" aria-label="Volver al inicio de BarberTurn">
           <img src="/branding/barberturn-logo.png" alt="BarberTurn" />
         </a>
 
         {!token ? (
-          <div className="recovery-success">
+          <div className="recovery-success" role="alert" aria-live="assertive">
             <div className="recovery-icon invalid" aria-hidden="true">!</div>
             <h1 id="reset-password-title">Enlace inválido</h1>
             <p>El enlace de recuperación no contiene un token válido. Solicita uno nuevo para continuar.</p>
             <a className="recovery-primary recovery-action-link" href="#/forgot-password">Solicitar nuevo enlace</a>
           </div>
         ) : success ? (
-          <div className="recovery-success" role="status">
+          <div className="recovery-success" role="status" aria-live="polite" aria-atomic="true">
             <div className="recovery-icon success" aria-hidden="true">✓</div>
             <h1 id="reset-password-title">Contraseña actualizada</h1>
             <p>Tu nueva contraseña ya está activa. Puedes volver a BarberTurn e iniciar sesión.</p>
@@ -86,14 +86,37 @@ export default function ResetPasswordPage() {
             <p className="recovery-description">
               Usa una contraseña de al menos 8 caracteres que no hayas compartido con otras personas.
             </p>
+            <span id="reset-password-requirements" className="visually-hidden">
+              La contraseña debe tener al menos 8 caracteres.
+            </span>
 
-            <form className="recovery-form" onSubmit={resetPassword}>
+            <form
+              className="recovery-form"
+              onSubmit={resetPassword}
+              aria-busy={busy}
+              aria-describedby={error ? 'reset-password-error' : undefined}
+            >
               <label>
                 <span>Nueva contraseña</span>
                 <div className="recovery-input-wrap">
                   <span aria-hidden="true">●</span>
-                  <input name="password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={8} placeholder="Mínimo 8 caracteres" required />
-                  <button type="button" onClick={() => setShowPassword(value => !value)}>{showPassword ? 'Ocultar' : 'Ver'}</button>
+                  <input
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    minLength={8}
+                    aria-describedby="reset-password-requirements"
+                    placeholder="Mínimo 8 caracteres"
+                    required
+                  />
+                  <button
+                    type="button"
+                    aria-label={showPassword ? 'Ocultar nueva contraseña' : 'Mostrar nueva contraseña'}
+                    aria-pressed={showPassword}
+                    onClick={() => setShowPassword(value => !value)}
+                  >
+                    {showPassword ? 'Ocultar' : 'Ver'}
+                  </button>
                 </div>
               </label>
 
@@ -101,8 +124,23 @@ export default function ResetPasswordPage() {
                 <span>Confirmar contraseña</span>
                 <div className="recovery-input-wrap">
                   <span aria-hidden="true">●</span>
-                  <input name="confirmPassword" type={showConfirmation ? 'text' : 'password'} autoComplete="new-password" minLength={8} placeholder="Repite tu contraseña" required />
-                  <button type="button" onClick={() => setShowConfirmation(value => !value)}>{showConfirmation ? 'Ocultar' : 'Ver'}</button>
+                  <input
+                    name="confirmPassword"
+                    type={showConfirmation ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    minLength={8}
+                    aria-describedby="reset-password-requirements"
+                    placeholder="Repite tu contraseña"
+                    required
+                  />
+                  <button
+                    type="button"
+                    aria-label={showConfirmation ? 'Ocultar confirmación de contraseña' : 'Mostrar confirmación de contraseña'}
+                    aria-pressed={showConfirmation}
+                    onClick={() => setShowConfirmation(value => !value)}
+                  >
+                    {showConfirmation ? 'Ocultar' : 'Ver'}
+                  </button>
                 </div>
               </label>
 
@@ -111,7 +149,7 @@ export default function ResetPasswordPage() {
               </button>
             </form>
 
-            {error && <p className="recovery-error" role="alert">{error}</p>}
+            {error && <p id="reset-password-error" className="recovery-error" role="alert" aria-live="assertive">{error}</p>}
           </>
         )}
 

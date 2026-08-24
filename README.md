@@ -1,7 +1,5 @@
-
-
 <p align="center">
-  <img src="docs/images/barberturn-logo.png" alt="Logo de BaberTurn" width="720" />
+  <img src="docs/images/barberturn-logo.png" alt="Logo de BarberTurn" width="720" />
 </p>
 
 <p align="center">
@@ -9,6 +7,8 @@
   <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=111827" alt="React 19" />
   <img src="https://img.shields.io/badge/SQL_Server-2022-CC2927?style=flat-square&logo=microsoftsqlserver&logoColor=white" alt="SQL Server 2022" />
   <img src="https://img.shields.io/badge/CI-GitHub_Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white" alt="GitHub Actions" />
+  <img src="https://img.shields.io/badge/i18n-es--419%20%7C%20en%20%7C%20es--ES-0EA5E9?style=flat-square" alt="Idiomas: Español Latino, Inglés y Español de España" />
+  <img src="https://img.shields.io/badge/Accesibilidad-NORTIC_B2%20%2F%20WCAG-22C55E?style=flat-square" alt="Accesibilidad basada en NORTIC B2 y WCAG" />
   <img src="https://img.shields.io/badge/Fase_1-Completada-22C55E?style=flat-square" alt="Fase 1 completada" />
   <img src="https://img.shields.io/badge/Fase_2-Completada-22C55E?style=flat-square" alt="Fase 2 completada" />
 </p>
@@ -29,11 +29,12 @@ La experiencia inicial está diseñada para barberías que:
 - 👤 no quieren registrar obligatoriamente a todos los clientes;
 - ✂️ utilizan varios barberos en paralelo;
 - 🎯 permiten elegir un barbero específico;
-- 📅 combinarán en el futuro clientes espontáneos con citas.
+- 📅 combinarán en el futuro clientes espontáneos con citas;
+- 🌎 necesitan operar en distintos mercados e idiomas.
 
 ## 🚀 Estado actual
 
-BarberTurn ya cuenta con un **MVP funcional del flujo de turnos por llegada**, acompañado de una experiencia web pública, autenticación, dashboard operativo y acceso demo.
+BarberTurn ya cuenta con un **MVP funcional del flujo de turnos por llegada**, acompañado de una experiencia web pública, autenticación, dashboard operativo, acceso demo, accesibilidad reforzada y soporte multidioma.
 
 ### ✅ Fase 1 — Fundación técnica
 
@@ -72,16 +73,57 @@ BarberTurn ya cuenta con un **MVP funcional del flujo de turnos por llegada**, a
 ### 🎨 Experiencia web actual
 
 - 🏠 Home público responsive con branding BarberTurn;
-- 🔐 login rediseñado con mostrar/ocultar contraseña y opción `Recordarme`;
+- 🔐 login rediseñado con iconografía consistente, mostrar/ocultar contraseña y opción `Recordarme`;
 - 📝 registro de barbería/propietario;
-- 🔄 recuperación de contraseña;
+- 🔄 recuperación y restablecimiento de contraseña;
 - 👤 acceso mediante Usuario Demo en Development;
 - 📊 Dashboard V2 con sidebar, topbar, KPIs, cola y accesos rápidos;
 - 💈 gestión visual de turnos, barberos y servicios;
 - 🧭 navegación interna preparada para módulos futuros;
 - 🧪 onboarding y señalización persistente cuando se utiliza el modo demo;
 - 📱 interfaz responsive para escritorio, tablet y móvil;
+- 📨 sección de soporte y contacto;
+- 🎯 iconografía normalizada y centrada visualmente;
 - 📅 footer con año dinámico.
+
+### ♿ Accesibilidad
+
+La interfaz incorpora una base técnica de accesibilidad alineada con buenas prácticas de **NORTIC B2 / WCAG** sin alterar la identidad visual oscura del producto.
+
+- ⌨️ navegación mediante teclado;
+- 🎯 foco visible consistente;
+- ⏭️ enlace global **«Saltar al contenido principal»**;
+- 🔊 uso de `aria-live`, `aria-describedby`, `aria-busy` y `aria-pressed` donde corresponde;
+- 🧭 gestión de foco al cambiar de vista;
+- 🏷️ títulos de página dinámicos;
+- 🧑‍🦯 mejoras semánticas para lectores de pantalla;
+- 🎞️ respeto de `prefers-reduced-motion`;
+- 📝 formularios con errores e instrucciones asociados programáticamente.
+
+> Esta base mejora la accesibilidad del producto, pero no implica por sí sola certificación formal de conformidad sin una auditoría completa.
+
+### 🌐 Multidioma
+
+BarberTurn soporta actualmente tres locales:
+
+| Locale | Idioma |
+|---|---|
+| `es-419` | Español Latino |
+| `en` | English |
+| `es-ES` | Español de España |
+
+Características de internacionalización:
+
+- 🌍 detección automática del idioma del navegador;
+- 💾 persistencia de la selección en `localStorage`;
+- 🔁 cambio de idioma sin recargar la aplicación;
+- 🧑‍🦯 actualización dinámica de `<html lang>`;
+- 🗓️ fechas adaptadas al locale seleccionado;
+- 🧩 Home, Login, Registro, Recuperación, Demo y Dashboard localizados;
+- 🎛️ selector global de idioma accesible y responsive;
+- 🇪🇸 diferenciación entre `es-419` y `es-ES` solo cuando el uso regional realmente lo requiere.
+
+La convención del proyecto es **no forzar diferencias artificiales entre variantes del español**: los textos se mantienen iguales cuando son naturales en ambos mercados.
 
 ## 🧰 Stack tecnológico
 
@@ -99,11 +141,11 @@ BarberTurn ya cuenta con un **MVP funcional del flujo de turnos por llegada**, a
   <img src="https://img.shields.io/badge/OpenAPI-Documentation-6BA539?style=flat-square&logo=openapiinitiative&logoColor=white" alt="OpenAPI" />
 </p>
 
-- 🧠 Reglas de negocio separadas del framework.
-- 🧩 Inyección de dependencias.
-- 🔒 Autenticación Bearer con JWT.
-- 🏪 Contexto de barbería derivado del token autenticado.
-- 📘 Contrato HTTP documentado mediante OpenAPI.
+- 🧠 reglas de negocio separadas del framework;
+- 🧩 inyección de dependencias;
+- 🔒 autenticación Bearer con JWT;
+- 🏪 contexto de barbería derivado del token autenticado;
+- 📘 contrato HTTP documentado mediante OpenAPI.
 
 ### 🔵 Frontend
 
@@ -116,14 +158,18 @@ BarberTurn ya cuenta con un **MVP funcional del flujo de turnos por llegada**, a
   <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript 5" />
   <img src="https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite 8" />
   <img src="https://img.shields.io/badge/UI-Responsive-0EA5E9?style=flat-square" alt="Responsive UI" />
+  <img src="https://img.shields.io/badge/Icons-Font_Awesome-528DD7?style=flat-square&logo=fontawesome&logoColor=white" alt="Font Awesome" />
 </p>
 
-- ⚛️ React 19.
-- 🟦 TypeScript.
-- ⚡ Vite 8.
-- 🎨 estilos organizados por experiencia/pantalla.
-- 📱 diseño responsive.
-- 🔐 persistencia de sesión configurable mediante `localStorage` o `sessionStorage`.
+- ⚛️ React 19;
+- 🟦 TypeScript;
+- ⚡ Vite 8;
+- 🎨 estilos organizados por experiencia/pantalla;
+- 📱 diseño responsive;
+- ♿ accesibilidad transversal;
+- 🌐 internacionalización propia y tipada;
+- 🔐 persistencia de sesión mediante `localStorage` o `sessionStorage`;
+- 🎯 Font Awesome para iconografía consistente.
 
 ### 🗄️ Datos e infraestructura
 
@@ -139,9 +185,9 @@ BarberTurn ya cuenta con un **MVP funcional del flujo de turnos por llegada**, a
   <img src="https://img.shields.io/badge/GitHub_Actions-CI-2088FF?style=flat-square&logo=githubactions&logoColor=white" alt="GitHub Actions" />
 </p>
 
-- 🗃️ SQL Server 2022.
-- 🐳 Docker y Docker Compose.
-- 🌍 Nginx para servir el frontend.
+- 🗃️ SQL Server 2022;
+- 🐳 Docker y Docker Compose;
+- 🌍 Nginx para servir el frontend;
 - 🤖 GitHub Actions para CI.
 
 ## 🏗️ Arquitectura
@@ -158,6 +204,9 @@ BarberTurn
 │       └── BarberTurn.Domain.Tests
 ├── frontend
 │   └── src
+│       ├── i18n.ts
+│       ├── LanguageSwitcher.tsx
+│       └── ...
 ├── docs
 ├── .github
 │   └── workflows
@@ -171,7 +220,7 @@ BarberTurn
 - 📋 **Application:** contratos y casos de uso.
 - 🗄️ **Infrastructure:** EF Core, SQL Server, seguridad, persistencia y servicios externos.
 - 🌐 **Api:** endpoints HTTP y configuración del host ASP.NET Core.
-- ⚛️ **Frontend:** experiencia pública y operación diaria del personal de la barbería.
+- ⚛️ **Frontend:** experiencia pública, autenticación, accesibilidad, internacionalización y operación diaria.
 - 🧪 **Tests:** validación de reglas críticas del dominio.
 
 ## 💈 Modelo operativo
@@ -219,13 +268,13 @@ Los clientes podrán generar turnos sin necesidad de crear una cuenta en la evol
 
 ## 🔐 Seguridad
 
-- 🔑 JWT Bearer Authentication.
-- 🔒 contraseñas almacenadas mediante hashing.
-- 🧾 secretos fuera del repositorio.
-- 🏪 aislamiento operativo por `BarberShopId`.
-- 🛡️ endpoints administrativos protegidos por rol.
-- 🔄 recuperación de contraseña con token temporal y propósito específico.
-- 🕵️ respuesta genérica en recuperación para evitar enumeración de usuarios.
+- 🔑 JWT Bearer Authentication;
+- 🔒 contraseñas almacenadas mediante hashing;
+- 🧾 secretos fuera del repositorio;
+- 🏪 aislamiento operativo por `BarberShopId`;
+- 🛡️ endpoints administrativos protegidos por rol;
+- 🔄 recuperación de contraseña con token temporal y propósito específico;
+- 🕵️ respuesta genérica en recuperación para evitar enumeración de usuarios;
 - 🧪 seeder y acceso demo limitados a `Development`.
 
 BarberTurn no almacena claves de base de datos, secretos JWT ni contraseñas demo reales en el repositorio.
@@ -243,10 +292,10 @@ El JWT debe utilizar una clave de al menos 32 caracteres.
 
 En `Development`, BarberTurn puede crear una barbería demo y permitir acceso mediante un flujo dedicado sin exponer las credenciales en el bundle de React.
 
-- 🏪 Barbería: `BarberTurn Demo`.
-- 🛡️ Rol: `Administrator`.
-- 🔐 credenciales obtenidas desde configuración del backend.
-- 🧠 sesión demo almacenada únicamente en `sessionStorage`.
+- 🏪 Barbería: `BarberTurn Demo`;
+- 🛡️ Rol: `Administrator`;
+- 🔐 credenciales obtenidas desde configuración del backend;
+- 🧠 sesión demo almacenada únicamente en `sessionStorage`;
 - 🚫 endpoint demo no disponible fuera de `Development`.
 
 El dashboard identifica visualmente el modo demo y muestra un onboarding con las funciones disponibles para probar.
@@ -323,6 +372,8 @@ En producción, el enlace de recuperación deberá entregarse mediante un provee
 - 🏢 multi-tenancy preparado desde el dominio
 - 🔐 configuración segura por entorno
 - 📱 diseño responsive
+- ♿ accesibilidad desde la interfaz
+- 🌐 internacionalización preparada para crecimiento comercial
 - 🧪 reglas críticas cubiertas mediante tests
 - 🤖 automatización mediante CI
 
@@ -379,6 +430,8 @@ Completada.
 - 👁️ observabilidad;
 - ☁️ despliegue;
 - 📧 proveedor transaccional de correo;
+- ♿ auditoría final de accesibilidad;
+- 🌐 revisión final de localización;
 - 📚 documentación final;
 - 💼 preparación para comercialización.
 

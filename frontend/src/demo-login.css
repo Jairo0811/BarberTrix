@@ -105,8 +105,42 @@
 
 .demo-login-note { margin: 16px 0 0; color: #657389; font-size: 9px; line-height: 1.55; }
 
+.demo-login-primary:focus-visible,
+.demo-login-secondary:focus-visible,
+.demo-login-logo:focus-visible,
+.demo-login-cancel-link:focus-visible,
+.recovery-support-link:focus-visible {
+  outline: 2px solid #5aa9ff;
+  outline-offset: 3px;
+}
+
+.demo-login-status-icon.loading {
+  border: 1px solid rgba(83,160,255,.18);
+}
+
+.demo-login-status-icon.error {
+  border: 1px solid rgba(255,104,104,.22);
+  background: rgba(255,70,70,.08);
+  color: #ff9b9b;
+}
+
+.demo-login-cancel-link {
+  display: inline-flex;
+  margin-top: 12px;
+  color: #8fbdf2;
+  font-size: 10px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.demo-login-cancel-link:hover { color: #fff; }
+
 @media (max-width: 680px) {
   .demo-login-card { padding: 26px 20px; }
   .demo-feature-grid { grid-template-columns: 1fr; }
   .demo-login-actions { flex-direction: column; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-login-status-icon svg { animation: none !important; }
 }

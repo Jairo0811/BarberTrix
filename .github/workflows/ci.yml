@@ -17,6 +17,25 @@ jobs:
   backend:
     name: Backend (.NET 10)
     runs-on: ubuntu-latest
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_PID: Developer
+          MSSQL_SA_PASSWORD: BarberTurn_CI_2026!Secure
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "bash -c 'cat < /dev/null > /dev/tcp/localhost/1433'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 15
+          --health-start-period 20s
+    env:
+      BARBERTURN_TEST_CONNECTION: "Server=localhost,1433;Database=BarberTurnCi;User Id=sa;Password=BarberTurn_CI_2026!Secure;Encrypt=True;TrustServerCertificate=True"
+      ConnectionStrings__DefaultConnection: "Server=localhost,1433;Database=BarberTurnCi;User Id=sa;Password=BarberTurn_CI_2026!Secure;Encrypt=True;TrustServerCertificate=True"
+      Jwt__Key: "ci-only-jwt-key-with-more-than-thirty-two-characters-2026"
     steps:
       - uses: actions/checkout@v4
       - name: Setup .NET

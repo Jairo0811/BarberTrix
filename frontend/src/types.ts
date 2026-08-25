@@ -33,8 +33,12 @@ export type Turn = {
 export type Auth = {
   accessToken: string
   expiresAtUtc: string
+  refreshToken: string
+  refreshTokenExpiresAtUtc: string
   userId: string
   barberShopId: string
+  barberId?: string | null
   name: string
   role: string
+  isEmailVerified: boolean
 }

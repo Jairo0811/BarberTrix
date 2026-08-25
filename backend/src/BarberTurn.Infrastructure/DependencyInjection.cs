@@ -1,8 +1,14 @@
 using System.Text;
 using BarberTurn.Application.Auth;
+using BarberTurn.Application.Appointments;
+using BarberTurn.Application.Commercial;
+using BarberTurn.Application.Common;
 using BarberTurn.Application.Queue;
 using BarberTurn.Domain.Entities;
 using BarberTurn.Infrastructure.Auth;
+using BarberTurn.Infrastructure.Appointments;
+using BarberTurn.Infrastructure.Commercial;
+using BarberTurn.Infrastructure.Common;
 using BarberTurn.Infrastructure.Persistence;
 using BarberTurn.Infrastructure.Queue;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -29,6 +35,13 @@ public static class DependencyInjection
         services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IQueueService, QueueService>();
+        services.AddScoped<IAppointmentService, AppointmentService>();
+        services.AddScoped<ICommercialService, CommercialService>();
+        services.AddScoped<IAuditService, AuditService>();
+        services.AddScoped<IPlanLimitService, PlanLimitService>();
+        services.AddScoped<IEmailSender, ConfigurableEmailSender>();
+        services.AddHttpClient<IHumanVerificationService, HumanVerificationService>();
+        services.AddHttpClient<IBillingService, PayPalBillingService>();
         services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
         services.AddScoped<DevelopmentDataSeeder>();
 
@@ -46,9 +59,35 @@ public static class DependencyInjection
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
                     ClockSkew = TimeSpan.FromMinutes(1)
                 };
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        if (!string.IsNullOrEmpty(accessToken) && context.HttpContext.Request.Path.StartsWithSegments("/hubs/queue"))
+                            context.Token = accessToken;
+                        return Task.CompletedTask;
+                    },
+                    OnTokenValidated = async context =>
+                    {
+                        var userIdValue = context.Principal?.FindFirst("sub")?.Value
+                            ?? context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                        var securityStamp = context.Principal?.FindFirst("security_stamp")?.Value;
+                        if (!Guid.TryParse(userIdValue, out var userId) || string.IsNullOrWhiteSpace(securityStamp))
+                        {
+                            context.Fail("Invalid session.");
+                            return;
+                        }
+                        var db = context.HttpContext.RequestServices.GetRequiredService<ApplicationDbContext>();
+                        var valid = await db.Users.AsNoTracking().AnyAsync(x => x.Id == userId && x.IsActive && x.SecurityStamp == securityStamp, context.HttpContext.RequestAborted);
+                        if (!valid)
+                            context.Fail("Session revoked.");
+                    }
+                };
             });
 
-        services.AddAuthorization();
+        services.AddAuthorization(options =>
+            options.AddPolicy("VerifiedUser", policy => policy.RequireAuthenticatedUser().RequireClaim("email_verified", "true")));
         return services;
     }
 }

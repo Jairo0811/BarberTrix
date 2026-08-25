@@ -24,6 +24,10 @@ function navigateToLogin() {
   window.location.hash = '#/login'
 }
 
+function navigateToRegister() {
+  window.location.hash = '#/register'
+}
+
 type LocalizedPlan = {
   name: string
   price: string
@@ -134,7 +138,7 @@ export default function HomePage() {
 
         <div className="home-nav-actions">
           <button className="home-login-button" type="button" onClick={navigateToLogin}>{t('common.login')}</button>
-          <button className="home-primary-button" type="button" onClick={navigateToLogin}>{t('home.startFree')}</button>
+          <button className="home-primary-button" type="button" onClick={navigateToRegister}>{t('home.startFree')}</button>
           <button className="home-mobile-menu" type="button" aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'} aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(open => !open)}>
             <FontAwesomeIcon icon={mobileMenuOpen ? faXmark : faBars} />
           </button>
@@ -148,7 +152,7 @@ export default function HomePage() {
           <p>{t('home.hero.text')}</p>
 
           <div className="home-hero-actions">
-            <button className="home-primary-button large" type="button" onClick={navigateToLogin}>{t('home.startFree')} <span>→</span></button>
+            <button className="home-primary-button large" type="button" onClick={navigateToRegister}>{t('home.startFree')} <span>→</span></button>
             <a className="home-secondary-button" href="#caracteristicas" onClick={() => selectSection('caracteristicas')}>{t('home.viewFeatures')}</a>
           </div>
 
@@ -208,7 +212,7 @@ export default function HomePage() {
               <p className="pricing-description">{plan.description}</p>
               <div className="pricing-price"><strong>{plan.price}</strong><span>{t('home.pricing.month')}</span></div>
               <ul>{plan.features.map(feature => <li key={feature}><FontAwesomeIcon icon={faCheck} /> {feature}</li>)}</ul>
-              <button className={plan.featured ? 'home-primary-button pricing-button' : 'home-login-button pricing-button'} type="button" onClick={navigateToLogin}>{t('home.startFree')}</button>
+              <button className={plan.featured ? 'home-primary-button pricing-button' : 'home-login-button pricing-button'} type="button" onClick={navigateToRegister}>{t('home.startFree')}</button>
             </article>
           ))}
         </div>
@@ -229,7 +233,7 @@ export default function HomePage() {
         <div className="contact-card">
           <h3>{t('home.contact.cardTitle')}</h3>
           <p>{t('home.contact.cardText')}</p>
-          <button className="home-primary-button contact-button" type="button" onClick={navigateToLogin}>{t('home.startFree')} <span>→</span></button>
+          <button className="home-primary-button contact-button" type="button" onClick={navigateToRegister}>{t('home.startFree')} <span>→</span></button>
           <small>{t('home.contact.cardNote')}</small>
         </div>
       </section>
@@ -262,6 +266,8 @@ export default function HomePage() {
         <img src="/branding/barberturn-logo.png" alt="BarberTurn" />
         <p>Tu turno. Tu estilo. Tu tiempo.</p>
         <a className="footer-support-link" href={buildSupportEmailHref()}>{t('common.support')}</a>
+        <a className="footer-support-link" href="#/terms">Términos</a>
+        <a className="footer-support-link" href="#/privacy">Privacidad</a>
         <span>© {currentYear} BarberTurn. {t('home.footer.rights')}</span>
       </footer>
     </main>

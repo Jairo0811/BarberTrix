@@ -21,7 +21,7 @@ El producto nace de una premisa simple: la tecnología debe adaptarse a la forma
 
 ## 🎯 Visión
 
-BarberTurn comienza como un sistema de filas y turnos digitales, pero su arquitectura está preparada para evolucionar hacia una plataforma multi-barbería con citas, clientes, caja, reportes, BarberTurn TV y funciones SaaS.
+BarberTurn combina fila digital, citas, clientes, caja, reportes, BarberTurn TV y funciones SaaS en una plataforma multi-tenant.
 
 La experiencia inicial está diseñada para barberías que:
 
@@ -34,7 +34,7 @@ La experiencia inicial está diseñada para barberías que:
 
 ## 🚀 Estado actual
 
-BarberTurn ya cuenta con un **MVP funcional del flujo de turnos por llegada**, acompañado de una experiencia web pública, autenticación, dashboard operativo, acceso demo, accesibilidad reforzada y soporte multidioma.
+BarberTurn cuenta con una base funcional de operación comercial. La rama principal permanece estable; las funciones descritas aquí se validan mediante CI antes de cada fusión.
 
 ### ✅ Fase 1 — Fundación técnica
 
@@ -69,6 +69,19 @@ BarberTurn ya cuenta con un **MVP funcional del flujo de turnos por llegada**, a
 - 🏪 aislamiento por `BarberShopId` obtenido desde el token;
 - 📊 métricas operativas de la cola;
 - 🧪 pruebas de dominio para transiciones válidas e inválidas.
+
+### ✅ Operación comercial
+
+- 🌐 autoservicio público para tomar turno y consultar/cancelar con token opaco;
+- ⚡ actualizaciones en tiempo real con SignalR y pantalla BarberTurn TV;
+- 📅 disponibilidad, reservas, reprogramación, bloqueos, check-in y no-show;
+- 👥 clientes, caja y reportes de negocio;
+- 🧑‍🤝‍🧑 invitaciones, roles y cuentas vinculadas a barberos;
+- 🔄 access tokens cortos, refresh token rotation, cierre de sesión y revocación;
+- ✉️ verificación de correo y correo transaccional configurable;
+- 💳 planes, límites, sucursales y suscripciones PayPal con webhook verificado;
+- 🧪 demo temporal e independiente para cada visita;
+- 🧾 auditoría, rate limits, health checks y encabezados de seguridad.
 
 ### 🎨 Experiencia web actual
 
@@ -230,10 +243,10 @@ BarberTurn contempla tres modalidades:
 | Modalidad | Estado | Descripción |
 |---|---|---|
 | 🚶 Por llegada | ✅ MVP actual | El cliente entra a una fila y espera su turno. |
-| 📅 Por cita | ⏳ Fase 4 | El cliente reserva fecha, hora, servicio y opcionalmente barbero. |
-| 🔀 Híbrida | ⏳ Evolución | La barbería combina citas y clientes por orden de llegada. |
+| 📅 Por cita | ✅ Disponible | El cliente reserva fecha, hora, servicio y barbero. |
+| 🔀 Híbrida | ✅ Disponible | La barbería combina citas y clientes por orden de llegada. |
 
-El **MVP actual se concentra en la modalidad por llegada**. Las citas se incorporarán posteriormente sin alterar el núcleo existente de turnos.
+La base de datos es la fuente de verdad y SignalR propaga los cambios a paneles públicos, dashboard y TV.
 
 ## 🔄 Flujo principal del MVP
 
@@ -264,18 +277,21 @@ También se contemplan los estados `Cancelled` y `NoShow`.
 - 🛎️ **Receptionist:** creación y gestión operativa de turnos.
 - ✂️ **Barber:** atención de clientes y control de su flujo.
 
-Los clientes podrán generar turnos sin necesidad de crear una cuenta en la evolución del flujo público.
+Los clientes pueden generar turnos o reservar citas sin crear una cuenta. La consulta y cancelación utilizan tokens opacos separados del identificador público.
 
 ## 🔐 Seguridad
 
-- 🔑 JWT Bearer Authentication;
+- 🔑 access tokens JWT de 15 minutos y refresh tokens rotatorios;
 - 🔒 contraseñas almacenadas mediante hashing;
 - 🧾 secretos fuera del repositorio;
 - 🏪 aislamiento operativo por `BarberShopId`;
 - 🛡️ endpoints administrativos protegidos por rol;
 - 🔄 recuperación de contraseña con token temporal y propósito específico;
 - 🕵️ respuesta genérica en recuperación para evitar enumeración de usuarios;
-- 🧪 seeder y acceso demo limitados a `Development`.
+- ✉️ verificación de correo configurable;
+- 🚦 rate limiting para autenticación, registro, autoservicio y webhooks;
+- 🧾 auditoría de mutaciones autenticadas;
+- 🧪 cada sesión demo usa un tenant temporal independiente.
 
 BarberTurn no almacena claves de base de datos, secretos JWT ni contraseñas demo reales en el repositorio.
 
@@ -283,22 +299,16 @@ La aplicación recibe configuración sensible mediante variables de entorno, ent
 
 - `ConnectionStrings__DefaultConnection`
 - `Jwt__Key`
-- `DemoAdmin__Email`
-- `DemoAdmin__Password`
+- `Auth__RequireVerifiedEmail`
+- `Email__Smtp__*`
+- `HumanVerification__SecretKey`
+- `PayPal__*`
 
 El JWT debe utilizar una clave de al menos 32 caracteres.
 
 ## 👤 Usuario Demo
 
-En `Development`, BarberTurn puede crear una barbería demo y permitir acceso mediante un flujo dedicado sin exponer las credenciales en el bundle de React.
-
-- 🏪 Barbería: `BarberTurn Demo`;
-- 🛡️ Rol: `Administrator`;
-- 🔐 credenciales obtenidas desde configuración del backend;
-- 🧠 sesión demo almacenada únicamente en `sessionStorage`;
-- 🚫 endpoint demo no disponible fuera de `Development`.
-
-El dashboard identifica visualmente el modo demo y muestra un onboarding con las funciones disponibles para probar.
+Cuando `Demo__Enabled=true`, el endpoint demo crea una barbería independiente con equipo, servicios, clientes, turnos, cita y pago de ejemplo. No usa credenciales compartidas y elimina tenants demo con más de cuatro horas. En producción se recomienda mantenerlo desactivado salvo en un entorno de demostración dedicado.
 
 ## 🐳 Ejecutar con Docker
 
@@ -324,7 +334,13 @@ docker compose up --build
 - 📘 OpenAPI en Development: `http://localhost:8080/openapi/v1.json`
 - 🗄️ SQL Server: `localhost:1433`
 
-Docker configura `Database__ApplyMigrations=true`, por lo que la API puede aplicar las migraciones al iniciar el entorno local.
+Docker configura `Database__ApplyMigrations=true`, por lo que la API puede aplicar las migraciones al iniciar el entorno local. Para producción, copia `.env.production.example` y usa:
+
+```bash
+docker compose --env-file .env.production -f docker-compose.production.yml up -d --build
+```
+
+Termina TLS en un proxy o balanceador externo y mantén SQL Server fuera de Internet. Revisa [seguridad](SECURITY.md), [privacidad](docs/privacy.md) y [términos](docs/terms.md) antes de publicar.
 
 ## 🔌 Autenticación inicial
 

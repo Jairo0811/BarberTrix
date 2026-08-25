@@ -31,10 +31,29 @@ public sealed class Barber : BaseEntity
     public int ChairNumber { get; private set; }
     public BarberStatus Status { get; private set; }
     public bool IsActive { get; private set; } = true;
+    public byte[] RowVersion { get; private set; } = [];
 
     public void ChangeStatus(BarberStatus status)
     {
         Status = status;
+        Touch();
+    }
+
+    public void Update(string name, int chairNumber)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Name is required.", nameof(name));
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(chairNumber);
+        Name = name.Trim();
+        ChairNumber = chairNumber;
+        Touch();
+    }
+
+    public void SetActive(bool isActive)
+    {
+        IsActive = isActive;
+        if (!isActive)
+            Status = BarberStatus.Offline;
         Touch();
     }
 }
@@ -65,6 +84,26 @@ public sealed class BarberService : BaseEntity
     public decimal Price { get; private set; }
     public int EstimatedDurationMinutes { get; private set; }
     public bool IsActive { get; private set; } = true;
+    public byte[] RowVersion { get; private set; } = [];
+
+    public void Update(string name, decimal price, int estimatedDurationMinutes, string? description)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Name is required.", nameof(name));
+        ArgumentOutOfRangeException.ThrowIfNegative(price);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(estimatedDurationMinutes);
+        Name = name.Trim();
+        Price = price;
+        EstimatedDurationMinutes = estimatedDurationMinutes;
+        Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
+        Touch();
+    }
+
+    public void SetActive(bool isActive)
+    {
+        IsActive = isActive;
+        Touch();
+    }
 }
 
 public enum TurnStatus
@@ -87,7 +126,11 @@ public sealed class Turn : BaseEntity
         DateOnly queueDate,
         int sequenceNumber,
         string? customerName = null,
-        Guid? barberId = null)
+        Guid? barberId = null,
+        string? customerPhone = null,
+        string? publicLookupTokenHash = null,
+        string? idempotencyKey = null,
+        Guid? appointmentId = null)
     {
         if (barberShopId == Guid.Empty)
             throw new ArgumentException("Barbershop is required.", nameof(barberShopId));
@@ -101,6 +144,10 @@ public sealed class Turn : BaseEntity
         QueueDate = queueDate;
         SequenceNumber = sequenceNumber;
         CustomerName = string.IsNullOrWhiteSpace(customerName) ? null : customerName.Trim();
+        CustomerPhone = string.IsNullOrWhiteSpace(customerPhone) ? null : customerPhone.Trim();
+        PublicLookupTokenHash = publicLookupTokenHash;
+        IdempotencyKey = idempotencyKey;
+        AppointmentId = appointmentId;
         Status = TurnStatus.Waiting;
     }
 
@@ -111,10 +158,15 @@ public sealed class Turn : BaseEntity
     public int SequenceNumber { get; private set; }
     public string TicketNumber => $"A-{SequenceNumber:000}";
     public string? CustomerName { get; private set; }
+    public string? CustomerPhone { get; private set; }
+    public string? PublicLookupTokenHash { get; private set; }
+    public string? IdempotencyKey { get; private set; }
+    public Guid? AppointmentId { get; private set; }
     public TurnStatus Status { get; private set; }
     public DateTimeOffset? CalledAtUtc { get; private set; }
     public DateTimeOffset? ServiceStartedAtUtc { get; private set; }
     public DateTimeOffset? CompletedAtUtc { get; private set; }
+    public byte[] RowVersion { get; private set; } = [];
 
     public void AssignBarber(Guid barberId)
     {

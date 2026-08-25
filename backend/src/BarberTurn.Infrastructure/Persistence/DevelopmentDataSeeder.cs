@@ -49,6 +49,8 @@ public sealed class DevelopmentDataSeeder(
             passwordHash,
             UserRole.Administrator);
 
+        seededUser.MarkEmailVerified();
+
         dbContext.Users.Add(seededUser);
         await dbContext.SaveChangesAsync(cancellationToken);
     }

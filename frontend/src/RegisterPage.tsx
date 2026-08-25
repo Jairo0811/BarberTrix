@@ -1,18 +1,8 @@
 import { FormEvent, useState } from 'react'
 import { useI18n } from './i18n'
 import './register.css'
-
-type AuthResponse = {
-  accessToken: string
-  expiresAtUtc: string
-  userId: string
-  barberShopId: string
-  name: string
-  role: string
-}
-
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
-const authStorageKey = 'barberturn.auth'
+import type { Auth } from './types'
+import { API_URL, writeAuth } from './api'
 
 function buildShopSlug(name: string) {
   const normalized = name
@@ -41,11 +31,12 @@ export default function RegisterPage() {
 
     const data = new FormData(event.currentTarget)
     const name = String(data.get('name') ?? '').trim()
+    const shopName = String(data.get('shopName') ?? '').trim()
     const email = String(data.get('email') ?? '').trim()
     const password = String(data.get('password') ?? '')
     const confirmPassword = String(data.get('confirmPassword') ?? '')
 
-    if (password.length < 8) {
+    if (password.length < 10 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
       setError(t('register.passwordLength'))
       setBusy(false)
       return
@@ -62,11 +53,13 @@ export default function RegisterPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          barberShopName: `Barbería de ${name}`,
-          barberShopSlug: buildShopSlug(name),
+          barberShopName: shopName,
+          barberShopSlug: buildShopSlug(shopName),
           name,
           email,
           password,
+          timeZoneId: Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Santo_Domingo',
+          acceptedTerms: data.get('acceptedTerms') === 'on',
         }),
       })
 
@@ -75,9 +68,8 @@ export default function RegisterPage() {
         throw new Error(payload?.message ?? t('register.genericError'))
       }
 
-      const auth = await response.json() as AuthResponse
-      localStorage.setItem(authStorageKey, JSON.stringify(auth))
-      sessionStorage.removeItem(authStorageKey)
+      const auth = await response.json() as Auth
+      writeAuth(auth, true)
       window.location.hash = '#/login'
       window.location.reload()
     } catch (exception) {
@@ -119,6 +111,13 @@ export default function RegisterPage() {
 
           <form className="register-form" onSubmit={register} aria-busy={busy} aria-describedby={error ? 'register-error' : undefined}>
             <label>
+              <span>Nombre de la barbería</span>
+              <div className="register-input-wrap">
+                <span className="register-field-icon" aria-hidden="true">✂</span>
+                <input name="shopName" type="text" autoComplete="organization" maxLength={120} placeholder="Barbería Central" required />
+              </div>
+            </label>
+            <label>
               <span>{t('register.fullName')}</span>
               <div className="register-input-wrap">
                 <span className="register-field-icon" aria-hidden="true">♙</span>
@@ -138,7 +137,7 @@ export default function RegisterPage() {
               <span>{t('common.password')}</span>
               <div className="register-input-wrap">
                 <span className="register-field-icon" aria-hidden="true">♙</span>
-                <input name="password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={8} aria-describedby="register-password-requirements" placeholder={t('register.passwordHint')} required />
+                <input name="password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={10} aria-describedby="register-password-requirements" placeholder={t('register.passwordHint')} required />
                 <button type="button" className="register-password-toggle" aria-label={showPassword ? t('common.hide') : t('common.show')} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}>
                   {showPassword ? t('common.hide') : t('common.show')}
                 </button>
@@ -149,13 +148,14 @@ export default function RegisterPage() {
               <span>{t('common.confirmPassword')}</span>
               <div className="register-input-wrap">
                 <span className="register-field-icon" aria-hidden="true">♙</span>
-                <input name="confirmPassword" type={showConfirmation ? 'text' : 'password'} autoComplete="new-password" minLength={8} aria-describedby="register-password-requirements" placeholder={t('register.confirmPlaceholder')} required />
+                <input name="confirmPassword" type={showConfirmation ? 'text' : 'password'} autoComplete="new-password" minLength={10} aria-describedby="register-password-requirements" placeholder={t('register.confirmPlaceholder')} required />
                 <button type="button" className="register-password-toggle" aria-label={showConfirmation ? t('common.hide') : t('common.show')} aria-pressed={showConfirmation} onClick={() => setShowConfirmation(value => !value)}>
                   {showConfirmation ? t('common.hide') : t('common.show')}
                 </button>
               </div>
             </label>
 
+            <label className="register-terms"><input name="acceptedTerms" type="checkbox" required /> <span>Acepto los <a href="#/terms" target="_blank">términos de servicio</a> y la <a href="#/privacy" target="_blank">política de privacidad</a>.</span></label>
             <button className="register-submit" type="submit" disabled={busy}>{busy ? t('register.submitting') : t('register.submit')}</button>
           </form>
 

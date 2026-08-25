@@ -13,15 +13,35 @@ public sealed class BarberShop : BaseEntity
 {
     private BarberShop() { }
 
-    public BarberShop(string name, string slug)
+    public BarberShop(string name, string slug, string timeZoneId = "America/Santo_Domingo")
     {
         Name = Require(name, nameof(name));
         Slug = Require(slug, nameof(slug)).ToLowerInvariant();
+        TimeZoneId = Require(timeZoneId, nameof(timeZoneId));
+        TrialEndsAtUtc = DateTimeOffset.UtcNow.AddDays(14);
     }
 
     public string Name { get; private set; } = string.Empty;
     public string Slug { get; private set; } = string.Empty;
+    public string TimeZoneId { get; private set; } = "America/Santo_Domingo";
+    public SubscriptionPlan Plan { get; private set; } = SubscriptionPlan.Pro;
+    public SubscriptionStatus SubscriptionStatus { get; private set; } = SubscriptionStatus.Trialing;
+    public DateTimeOffset? TrialEndsAtUtc { get; private set; }
     public bool IsActive { get; private set; } = true;
+
+    public void UpdateSettings(string name, string timeZoneId)
+    {
+        Name = Require(name, nameof(name));
+        TimeZoneId = Require(timeZoneId, nameof(timeZoneId));
+        Touch();
+    }
+
+    public void ChangeSubscription(SubscriptionPlan plan, SubscriptionStatus status)
+    {
+        Plan = plan;
+        SubscriptionStatus = status;
+        Touch();
+    }
 
     private static string Require(string value, string parameterName) =>
         string.IsNullOrWhiteSpace(value)
@@ -41,13 +61,21 @@ public sealed class User : BaseEntity
 {
     private User() { }
 
-    public User(Guid barberShopId, string name, string email, string passwordHash, UserRole role)
+    public User(Guid barberShopId, string name, string email, string passwordHash, UserRole role, Guid? barberId = null)
     {
+        if (barberShopId == Guid.Empty)
+            throw new ArgumentException("Barbershop is required.", nameof(barberShopId));
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Name is required.", nameof(name));
+        if (string.IsNullOrWhiteSpace(email))
+            throw new ArgumentException("Email is required.", nameof(email));
+
         BarberShopId = barberShopId;
         Name = name.Trim();
         Email = email.Trim().ToLowerInvariant();
         PasswordHash = passwordHash;
         Role = role;
+        BarberId = barberId;
     }
 
     public Guid BarberShopId { get; private set; }
@@ -55,6 +83,9 @@ public sealed class User : BaseEntity
     public string Email { get; private set; } = string.Empty;
     public string PasswordHash { get; private set; } = string.Empty;
     public UserRole Role { get; private set; }
+    public Guid? BarberId { get; private set; }
+    public bool IsEmailVerified { get; private set; }
+    public string SecurityStamp { get; private set; } = Guid.NewGuid().ToString("N");
     public bool IsActive { get; private set; } = true;
 
     public void ChangePasswordHash(string passwordHash)
@@ -63,6 +94,43 @@ public sealed class User : BaseEntity
             throw new ArgumentException("Password hash is required.", nameof(passwordHash));
 
         PasswordHash = passwordHash;
+        SecurityStamp = Guid.NewGuid().ToString("N");
         Touch();
     }
+
+    public void MarkEmailVerified()
+    {
+        IsEmailVerified = true;
+        Touch();
+    }
+
+    public void ChangeRole(UserRole role, Guid? barberId)
+    {
+        Role = role;
+        BarberId = role == UserRole.Barber ? barberId : null;
+        SecurityStamp = Guid.NewGuid().ToString("N");
+        Touch();
+    }
+
+    public void Deactivate()
+    {
+        IsActive = false;
+        SecurityStamp = Guid.NewGuid().ToString("N");
+        Touch();
+    }
+}
+
+public enum SubscriptionPlan
+{
+    Starter = 1,
+    Pro = 2,
+    Business = 3
+}
+
+public enum SubscriptionStatus
+{
+    Trialing = 1,
+    Active = 2,
+    PastDue = 3,
+    Cancelled = 4
 }

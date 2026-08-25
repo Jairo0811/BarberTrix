@@ -6,10 +6,36 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   backend:
     name: Backend (.NET 10)
     runs-on: ubuntu-latest
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_PID: Developer
+          MSSQL_SA_PASSWORD: BarberTurn_CI_2026!Secure
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "bash -c 'cat < /dev/null > /dev/tcp/localhost/1433'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 15
+          --health-start-period 20s
+    env:
+      BARBERTURN_TEST_CONNECTION: "Server=localhost,1433;Database=BarberTurnCi;User Id=sa;Password=BarberTurn_CI_2026!Secure;Encrypt=True;TrustServerCertificate=True"
+      ConnectionStrings__DefaultConnection: "Server=localhost,1433;Database=BarberTurnCi;User Id=sa;Password=BarberTurn_CI_2026!Secure;Encrypt=True;TrustServerCertificate=True"
+      Jwt__Key: "ci-only-jwt-key-with-more-than-thirty-two-characters-2026"
     steps:
       - uses: actions/checkout@v4
       - name: Setup .NET
@@ -21,7 +47,12 @@ jobs:
       - name: Build
         run: dotnet build BarberTurn.sln --configuration Release --no-restore
       - name: Test
-        run: dotnet test BarberTurn.sln --configuration Release --no-build --no-restore
+        run: dotnet test BarberTurn.sln --configuration Release --no-build --no-restore --collect:"XPlat Code Coverage"
+      - name: Validate migration script
+        run: |
+          dotnet tool install --global dotnet-ef --version "10.0.*"
+          dotnet ef migrations has-pending-model-changes --project backend/src/BarberTurn.Infrastructure --startup-project backend/src/BarberTurn.Api --no-build --configuration Release
+          dotnet ef migrations script --idempotent --project backend/src/BarberTurn.Infrastructure --startup-project backend/src/BarberTurn.Api --no-build --configuration Release --output migration.sql
 
   frontend:
     name: Frontend (React)
@@ -35,7 +66,20 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
       - name: Install dependencies
-        run: npm install
+        run: npm ci
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
       - name: Build
         run: npm run build
+
+  containers:
+    name: Production containers
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f backend/Dockerfile -t barberturn-api:ci .
+      - run: docker build -f frontend/Dockerfile -t barberturn-web:ci .

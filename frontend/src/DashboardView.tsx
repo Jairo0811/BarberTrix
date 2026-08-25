@@ -1,5 +1,6 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
 import {
   faBars,
   faBolt,
@@ -22,32 +23,16 @@ import type { Auth, Barber, BarberStatus, Service, Turn } from './types'
 import { confirmDestructive, showError, showSuccessToast } from './alerts'
 import { Locale, useI18n } from './i18n'
 import './dashboard.css'
-
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
-
-async function api<T>(path: string, auth: Auth, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${auth.accessToken}`,
-      ...init?.headers,
-    },
-  })
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? `Error ${response.status}`)
-  }
-
-  return response.json() as Promise<T>
-}
+import { API_URL, api, readAuth } from './api'
+import BusinessModules from './BusinessModules'
 
 type DashboardViewProps = {
   auth: Auth
   isDemo: boolean
   onLogout: () => void
 }
+
+type QueueMetrics = { waiting: number; called: number; inService: number; completedToday: number; cancelledToday: number; noShowToday: number; availableBarbers: number; estimatedWaitMinutes: number }
 
 type DashboardCopy = typeof dashboardCopy['es-419']
 
@@ -83,6 +68,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
   const [barbers, setBarbers] = useState<Barber[]>([])
   const [services, setServices] = useState<Service[]>([])
   const [turns, setTurns] = useState<Turn[]>([])
+  const [metrics, setMetrics] = useState<QueueMetrics | null>(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -97,28 +83,32 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
     { id: 'queue-section', label: c.queueLive, icon: faListOl },
     { id: 'barbers-section', label: c.barbers, icon: faUserTie },
     { id: 'services-section', label: c.services, icon: faScissors, requiresCatalogAccess: true },
-  ], [c])
-  const futureItems = useMemo(() => [
-    { label: c.customers, icon: faUsers },
-    { label: 'BarberTurn TV', icon: faTv },
-    { label: c.reports, icon: faChartColumn },
+    { id: 'appointments-section', label: 'Citas', icon: faClock },
+    { id: 'customers-section', label: c.customers, icon: faUsers },
+    { id: 'payments-section', label: 'Caja', icon: faBolt, requiresCatalogAccess: true },
+    { id: 'reports-section', label: c.reports, icon: faChartColumn, requiresCatalogAccess: true },
+    { id: 'team-section', label: 'Equipo', icon: faUserTie, requiresCatalogAccess: true },
+    { id: 'locations-section', label: 'Sucursales', icon: faHouse, requiresOwner: true },
+    { id: 'billing-section', label: 'Suscripción', icon: faTv, requiresOwner: true },
   ], [c])
   const visibleNavItems = useMemo(
-    () => navItems.filter(item => !item.requiresCatalogAccess || canManageCatalog),
-    [canManageCatalog, navItems],
+    () => navItems.filter(item => (!item.requiresCatalogAccess || canManageCatalog) && (!item.requiresOwner || auth.role === 'Owner')),
+    [auth.role, canManageCatalog, navItems],
   )
 
   const loadQueue = useCallback(async () => {
     setLoading(true)
     try {
-      const [nextBarbers, nextServices, nextTurns] = await Promise.all([
-        api<Barber[]>('/api/queue/barbers', auth),
-        api<Service[]>('/api/queue/services', auth),
-        api<Turn[]>('/api/queue/turns', auth),
+      const [nextBarbers, nextServices, nextTurns, nextMetrics] = await Promise.all([
+        api<Barber[]>('/api/queue/barbers'),
+        api<Service[]>('/api/queue/services'),
+        api<Turn[]>('/api/queue/turns'),
+        api<QueueMetrics>('/api/queue/metrics'),
       ])
       setBarbers(nextBarbers)
       setServices(nextServices)
       setTurns(nextTurns)
+      setMetrics(nextMetrics)
       setError('')
     } catch (exception) {
       setError(getErrorMessage(exception, c.loadOperationError))
@@ -128,6 +118,17 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
   }, [auth, c.loadOperationError])
 
   useEffect(() => { void loadQueue() }, [loadQueue])
+
+  useEffect(() => {
+    const connection = new HubConnectionBuilder()
+      .withUrl(`${API_URL}/hubs/queue`, { accessTokenFactory: () => readAuth()?.accessToken ?? '' })
+      .withAutomaticReconnect()
+      .configureLogging(LogLevel.Warning)
+      .build()
+    connection.on('queueChanged', () => { void loadQueue() })
+    void connection.start().catch(() => undefined)
+    return () => { void connection.stop() }
+  }, [loadQueue])
 
   useEffect(() => {
     const sections = visibleNavItems.map(item => document.getElementById(item.id)).filter((section): section is HTMLElement => section !== null)
@@ -174,18 +175,18 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
   }
 
   const overview = useMemo(() => {
-    const waiting = turns.filter(turn => turn.status === 'Waiting').length
-    const inService = turns.filter(turn => turn.status === 'InService').length
-    const completed = turns.filter(turn => turn.status === 'Completed').length
-    const availableBarbers = barbers.filter(barber => barber.status === 'Available').length
+    const waiting = metrics?.waiting ?? turns.filter(turn => turn.status === 'Waiting').length
+    const inService = metrics?.inService ?? turns.filter(turn => turn.status === 'InService').length
+    const completed = metrics?.completedToday ?? 0
+    const availableBarbers = metrics?.availableBarbers ?? barbers.filter(barber => barber.status === 'Available').length
     return { waiting, inService, completed, availableBarbers }
-  }, [barbers, turns])
+  }, [barbers, metrics, turns])
 
   async function submitAndReload<T>(path: string, body: unknown, method = 'POST') {
     setBusy(true)
     setError('')
     try {
-      await api<T>(path, auth, { method, body: JSON.stringify(body) })
+      await api<T>(path, { method, body: JSON.stringify(body) })
       await loadQueue()
     } catch (exception) {
       const message = getErrorMessage(exception, c.operationError)
@@ -237,6 +238,29 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
     } catch { /* handled by submitAndReload */ }
   }
 
+  async function editBarber(barber: Barber, toggleActive = false) {
+    const name = toggleActive ? barber.name : window.prompt('Nombre del barbero', barber.name)
+    if (!name) return
+    const chairInput = toggleActive ? String(barber.chairNumber) : window.prompt('Número de silla', String(barber.chairNumber))
+    if (!chairInput) return
+    try {
+      await submitAndReload<Barber>(`/api/queue/barbers/${barber.id}`, { name, chairNumber: Number(chairInput), isActive: toggleActive ? !barber.isActive : barber.isActive }, 'PUT')
+      void showSuccessToast('Barbero actualizado')
+    } catch { /* handled by submitAndReload */ }
+  }
+
+  async function editService(service: Service, toggleActive = false) {
+    const name = toggleActive ? service.name : window.prompt('Nombre del servicio', service.name)
+    if (!name) return
+    const price = toggleActive ? String(service.price) : window.prompt('Precio', String(service.price))
+    const duration = toggleActive ? String(service.estimatedDurationMinutes) : window.prompt('Duración estimada (min)', String(service.estimatedDurationMinutes))
+    if (!price || !duration) return
+    try {
+      await submitAndReload<Service>(`/api/queue/services/${service.id}`, { name, price: Number(price), estimatedDurationMinutes: Number(duration), description: service.description ?? null, isActive: toggleActive ? !service.isActive : service.isActive }, 'PUT')
+      void showSuccessToast('Servicio actualizado')
+    } catch { /* handled by submitAndReload */ }
+  }
+
   async function transition(turn: Turn, action: 'call' | 'start' | 'complete' | 'cancel' | 'no-show', barberId?: string) {
     if (action === 'cancel') {
       const confirmed = await confirmDestructive(c.cancelTitle, interpolate(c.cancelText, { ticket: turn.ticketNumber }), c.confirmCancel)
@@ -251,7 +275,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
     setError('')
     try {
       const suffix = action === 'call' ? `/call/${barberId}` : `/${action}`
-      await api<Turn>(`/api/queue/turns/${turn.id}${suffix}`, auth, { method: 'POST' })
+      await api<Turn>(`/api/queue/turns/${turn.id}${suffix}`, { method: 'POST' })
       await loadQueue()
       const successMessage = { call: c.calledSuccess, start: c.startedSuccess, complete: c.completedSuccess, cancel: c.cancelledSuccess, 'no-show': c.noShowSuccess }[action]
       void showSuccessToast(successMessage)
@@ -287,11 +311,6 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
           {visibleNavItems.map(item => (
             <button key={item.id} className={activeSection === item.id ? 'active' : undefined} type="button" aria-current={activeSection === item.id ? 'page' : undefined} onClick={() => navigateToSection(item.id)}>
               <span className="nav-icon" aria-hidden="true"><FontAwesomeIcon icon={item.icon} /></span><span>{item.label}</span>
-            </button>
-          ))}
-          {futureItems.map(item => (
-            <button key={item.label} type="button" disabled title={c.availableLater}>
-              <span className="nav-icon" aria-hidden="true"><FontAwesomeIcon icon={item.icon} /></span><span>{item.label}</span><small className="nav-coming-soon">{c.comingSoon}</small>
             </button>
           ))}
         </nav>
@@ -405,7 +424,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
 
           <section className="dashboard-section" id="barbers-section">
             <div className="dashboard-section-title"><h2>{c.barbers}</h2><p>{c.teamAvailability}</p></div>
-            <article className="panel"><div className="barber-grid">{barbers.map(barber => <div className="barber-card" key={barber.id}><span className={`status-dot ${barber.status.toLowerCase()}`} /><strong>{barber.name}</strong><span>{c.chair} {barber.chairNumber}</span><small>{barber.status}</small><select value={barber.status} disabled={busy || barber.status === 'Busy'} onChange={event => void changeBarberStatus(barber, event.target.value as BarberStatus)}><option value="Available">{c.available}</option><option value="Break">{c.break}</option><option value="Offline">{c.offline}</option>{barber.status === 'Busy' && <option value="Busy">{c.busy}</option>}</select></div>)}</div></article>
+            <article className="panel"><div className="barber-grid">{barbers.map(barber => <div className="barber-card" key={barber.id}><span className={`status-dot ${barber.status.toLowerCase()}`} /><strong>{barber.name}</strong><span>{c.chair} {barber.chairNumber}</span><small>{barber.isActive ? barber.status : 'Inactivo'}</small><select value={barber.status} disabled={busy || !barber.isActive || barber.status === 'Busy'} onChange={event => void changeBarberStatus(barber, event.target.value as BarberStatus)}><option value="Available">{c.available}</option><option value="Break">{c.break}</option><option value="Offline">{c.offline}</option>{barber.status === 'Busy' && <option value="Busy">{c.busy}</option>}</select>{canManageCatalog && <div className="turn-actions"><button type="button" onClick={() => void editBarber(barber)}>Editar</button><button type="button" className={barber.isActive ? 'danger' : 'success'} onClick={() => void editBarber(barber, true)}>{barber.isActive ? 'Desactivar' : 'Activar'}</button></div>}</div>)}</div></article>
 
             {canManageCatalog && <article className="panel dashboard-section"><p className="eyebrow">{c.configuration}</p><h2>{c.newBarber}</h2><form className="form-stack" onSubmit={createBarber}><input name="name" placeholder={c.barberName} required /><input name="chairNumber" type="number" min="1" placeholder={c.chairNumber} required /><button className="primary" disabled={busy}><FontAwesomeIcon icon={faPlus} /> {c.addBarber}</button></form></article>}
           </section>
@@ -415,10 +434,12 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
               <div className="dashboard-section-title"><h2>{c.services}</h2><p>{c.servicesText}</p></div>
               <section className="management-grid">
                 <article className="panel"><p className="eyebrow">{c.catalog}</p><h2>{c.newService}</h2><form className="form-stack" onSubmit={createService}><input name="name" placeholder={c.serviceName} required /><input name="price" type="number" min="0" step="0.01" placeholder={c.price} required /><input name="estimatedDurationMinutes" type="number" min="1" placeholder={c.duration} required /><input name="description" placeholder={c.optionalDescription} /><button className="primary" disabled={busy}><FontAwesomeIcon icon={faPlus} /> {c.addService}</button></form></article>
-                <article className="panel"><p className="eyebrow">{c.activeServicesLabel}</p><h2>{activeServices} {c.availablePlural}</h2><div className="queue-summary">{services.filter(service => service.isActive).slice(0, 6).map(service => <div className="queue-summary-item" key={service.id}><span className="queue-summary-ticket"><FontAwesomeIcon icon={faScissors} /></span><div className="queue-summary-copy"><strong>{service.name}</strong><span>RD${service.price} · {service.estimatedDurationMinutes} min</span></div></div>)}</div></article>
+                <article className="panel"><p className="eyebrow">{c.activeServicesLabel}</p><h2>{activeServices} {c.availablePlural}</h2><div className="queue-summary">{services.slice(0, 12).map(service => <div className="queue-summary-item" key={service.id}><span className="queue-summary-ticket"><FontAwesomeIcon icon={faScissors} /></span><div className="queue-summary-copy"><strong>{service.name}</strong><span>RD${service.price} · {service.estimatedDurationMinutes} min · {service.isActive ? 'Activo' : 'Inactivo'}</span></div><div className="turn-actions"><button type="button" onClick={() => void editService(service)}>Editar</button><button type="button" className={service.isActive ? 'danger' : 'success'} onClick={() => void editService(service, true)}>{service.isActive ? 'Desactivar' : 'Activar'}</button></div></div>)}</div></article>
               </section>
             </section>
           )}
+
+          <BusinessModules auth={auth} />
 
           <footer className="dashboard-footer"><span>© {currentYear} BarberTurn. {c.rights}</span><span>Tu turno. Tu estilo. Tu tiempo.</span></footer>
         </div>

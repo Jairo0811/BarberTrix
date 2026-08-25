@@ -56,19 +56,19 @@ internal sealed class CommercialService(ApplicationDbContext dbContext) : IComme
         return ToResponse(payment);
     }
 
-    public async Task<BusinessReportResponse> GetReportAsync(Guid barberShopId, DateOnly from, DateOnly to, CancellationToken cancellationToken = default)
+    public async Task<BusinessReportResponse> GetReportAsync(Guid barberShopId, DateOnly fromDate, DateOnly toDate, CancellationToken cancellationToken = default)
     {
-        if (from > to)
+        if (fromDate > toDate)
             throw new ArgumentException("The from date must not be after the to date.");
-        var completed = await dbContext.Turns.CountAsync(x => x.BarberShopId == barberShopId && x.QueueDate >= from && x.QueueDate <= to && x.Status == TurnStatus.Completed, cancellationToken);
-        var cancelled = await dbContext.Turns.CountAsync(x => x.BarberShopId == barberShopId && x.QueueDate >= from && x.QueueDate <= to && x.Status == TurnStatus.Cancelled, cancellationToken);
-        var noShows = await dbContext.Turns.CountAsync(x => x.BarberShopId == barberShopId && x.QueueDate >= from && x.QueueDate <= to && x.Status == TurnStatus.NoShow, cancellationToken);
-        var startUtc = new DateTimeOffset(from.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc));
-        var endUtc = new DateTimeOffset(to.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc));
+        var completed = await dbContext.Turns.CountAsync(x => x.BarberShopId == barberShopId && x.QueueDate >= fromDate && x.QueueDate <= toDate && x.Status == TurnStatus.Completed, cancellationToken);
+        var cancelled = await dbContext.Turns.CountAsync(x => x.BarberShopId == barberShopId && x.QueueDate >= fromDate && x.QueueDate <= toDate && x.Status == TurnStatus.Cancelled, cancellationToken);
+        var noShows = await dbContext.Turns.CountAsync(x => x.BarberShopId == barberShopId && x.QueueDate >= fromDate && x.QueueDate <= toDate && x.Status == TurnStatus.NoShow, cancellationToken);
+        var startUtc = new DateTimeOffset(fromDate.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc));
+        var endUtc = new DateTimeOffset(toDate.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc));
         var appointments = await dbContext.Appointments.CountAsync(x => x.BarberShopId == barberShopId && x.StartsAtUtc >= startUtc && x.StartsAtUtc < endUtc && x.Status != AppointmentStatus.Cancelled, cancellationToken);
         var payments = await dbContext.Payments.AsNoTracking().Where(x => x.BarberShopId == barberShopId && x.PaidAtUtc >= startUtc && x.PaidAtUtc < endUtc && x.Status == PaymentStatus.Paid).ToListAsync(cancellationToken);
         var byMethod = payments.GroupBy(x => x.Method.ToString()).ToDictionary(x => x.Key, x => x.Sum(y => y.Amount));
-        return new BusinessReportResponse(from, to, completed, cancelled, noShows, appointments, payments.Sum(x => x.Amount), byMethod);
+        return new BusinessReportResponse(fromDate, toDate, completed, cancelled, noShows, appointments, payments.Sum(x => x.Amount), byMethod);
     }
 
     private async Task EnsureUniqueAsync(Guid shopId, Guid? excludedId, string? phone, string? email, CancellationToken ct)

@@ -62,7 +62,7 @@ public interface IQueueService
     Task<ServiceResponse?> UpdateServiceAsync(Guid barberShopId, Guid serviceId, UpdateServiceRequest request, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<TurnResponse>> GetQueueAsync(Guid barberShopId, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<TurnResponse>> GetHistoryAsync(Guid barberShopId, DateOnly from, DateOnly to, int take, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<TurnResponse>> GetHistoryAsync(Guid barberShopId, DateOnly fromDate, DateOnly toDate, int take, CancellationToken cancellationToken = default);
     Task<QueueMetricsResponse> GetMetricsAsync(Guid barberShopId, CancellationToken cancellationToken = default);
     Task<TurnResponse> CreateTurnAsync(Guid barberShopId, CreateTurnRequest request, CancellationToken cancellationToken = default);
     Task<TurnResponse?> CallTurnAsync(Guid barberShopId, Guid turnId, Guid barberId, CancellationToken cancellationToken = default);

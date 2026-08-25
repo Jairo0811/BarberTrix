@@ -15,7 +15,7 @@ public interface ICommercialService
     Task<CustomerResponse?> UpdateCustomerAsync(Guid barberShopId, Guid customerId, UpsertCustomerRequest request, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<PaymentResponse>> GetPaymentsAsync(Guid barberShopId, DateTimeOffset fromUtc, DateTimeOffset toUtc, CancellationToken cancellationToken = default);
     Task<PaymentResponse> CreatePaymentAsync(Guid barberShopId, CreatePaymentRequest request, CancellationToken cancellationToken = default);
-    Task<BusinessReportResponse> GetReportAsync(Guid barberShopId, DateOnly from, DateOnly to, CancellationToken cancellationToken = default);
+    Task<BusinessReportResponse> GetReportAsync(Guid barberShopId, DateOnly fromDate, DateOnly toDate, CancellationToken cancellationToken = default);
 }
 
 public sealed record CheckoutRequest(SubscriptionPlan Plan, string ReturnUrl, string CancelUrl);

@@ -95,13 +95,13 @@ internal sealed class QueueService(
         return rows.Select(x => MapTurn(x.Turn, x.Service, x.Barber)).ToList();
     }
 
-    public async Task<IReadOnlyList<TurnResponse>> GetHistoryAsync(Guid barberShopId, DateOnly from, DateOnly to, int take, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<TurnResponse>> GetHistoryAsync(Guid barberShopId, DateOnly fromDate, DateOnly toDate, int take, CancellationToken cancellationToken = default)
     {
-        if (from > to)
+        if (fromDate > toDate)
             throw new ArgumentException("The from date must not be after the to date.");
         take = Math.Clamp(take, 1, 500);
         var turns = dbContext.Turns.AsNoTracking()
-            .Where(x => x.BarberShopId == barberShopId && x.QueueDate >= from && x.QueueDate <= to)
+            .Where(x => x.BarberShopId == barberShopId && x.QueueDate >= fromDate && x.QueueDate <= toDate)
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(take);
         var rows = await JoinTurns(turns).ToListAsync(cancellationToken);

@@ -20,7 +20,7 @@ internal sealed class AppointmentService(
         return rows.Select(Map).ToList();
     }
 
-    public async Task<IReadOnlyList<AvailabilitySlotResponse>> GetAvailabilityAsync(string shopSlug, Guid serviceId, DateOnly date, Guid? barberId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<AvailabilitySlotResponse>> GetAvailabilityAsync(string shopSlug, Guid serviceId, DateOnly localDate, Guid? barberId, CancellationToken cancellationToken = default)
     {
         var shop = await dbContext.BarberShops.AsNoTracking().SingleOrDefaultAsync(x => x.Slug == shopSlug.ToLower() && x.IsActive, cancellationToken)
             ?? throw new InvalidOperationException("The barbershop was not found.");
@@ -31,8 +31,8 @@ internal sealed class AppointmentService(
             ?? throw new InvalidOperationException("The service was not found.");
         var barbers = await dbContext.Barbers.AsNoTracking().Where(x => x.BarberShopId == shop.Id && x.IsActive && (barberId == null || x.Id == barberId)).ToListAsync(cancellationToken);
         var timeZone = TimeZoneInfo.FindSystemTimeZoneById(shop.TimeZoneId);
-        var localStart = date.ToDateTime(new TimeOnly(9, 0), DateTimeKind.Unspecified);
-        var localEnd = date.ToDateTime(new TimeOnly(19, 0), DateTimeKind.Unspecified);
+        var localStart = localDate.ToDateTime(new TimeOnly(9, 0), DateTimeKind.Unspecified);
+        var localEnd = localDate.ToDateTime(new TimeOnly(19, 0), DateTimeKind.Unspecified);
         var dayStartUtc = new DateTimeOffset(localStart, timeZone.GetUtcOffset(localStart)).ToUniversalTime();
         var dayEndUtc = new DateTimeOffset(localEnd, timeZone.GetUtcOffset(localEnd)).ToUniversalTime();
         var appointments = await dbContext.Appointments.AsNoTracking().Where(x => x.BarberShopId == shop.Id && x.StartsAtUtc < dayEndUtc && x.EndsAtUtc > dayStartUtc && x.Status != AppointmentStatus.Cancelled).ToListAsync(cancellationToken);

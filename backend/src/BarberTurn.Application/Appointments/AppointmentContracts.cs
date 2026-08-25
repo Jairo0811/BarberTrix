@@ -12,7 +12,7 @@ public sealed record AvailabilitySlotResponse(DateTimeOffset StartsAtUtc, DateTi
 public interface IAppointmentService
 {
     Task<IReadOnlyList<AppointmentResponse>> GetAsync(Guid barberShopId, DateTimeOffset fromUtc, DateTimeOffset toUtc, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<AvailabilitySlotResponse>> GetAvailabilityAsync(string shopSlug, Guid serviceId, DateOnly date, Guid? barberId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<AvailabilitySlotResponse>> GetAvailabilityAsync(string shopSlug, Guid serviceId, DateOnly localDate, Guid? barberId, CancellationToken cancellationToken = default);
     Task<PublicAppointmentResponse> CreatePublicAsync(string shopSlug, CreateAppointmentRequest request, CancellationToken cancellationToken = default);
     Task<AppointmentResponse?> GetPublicAsync(string shopSlug, Guid appointmentId, string lookupToken, CancellationToken cancellationToken = default);
     Task<AppointmentResponse?> RescheduleAsync(Guid barberShopId, Guid appointmentId, RescheduleAppointmentRequest request, CancellationToken cancellationToken = default);

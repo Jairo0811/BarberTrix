@@ -1,5 +1,6 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
 import {
   faBars,
   faBolt,
@@ -22,32 +23,16 @@ import type { Auth, Barber, BarberStatus, Service, Turn } from './types'
 import { confirmDestructive, showError, showSuccessToast } from './alerts'
 import { Locale, useI18n } from './i18n'
 import './dashboard.css'
-
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
-
-async function api<T>(path: string, auth: Auth, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${auth.accessToken}`,
-      ...init?.headers,
-    },
-  })
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => null)
-    throw new Error(error?.message ?? `Error ${response.status}`)
-  }
-
-  return response.json() as Promise<T>
-}
+import { API_URL, api, readAuth } from './api'
+import BusinessModules from './BusinessModules'
 
 type DashboardViewProps = {
   auth: Auth
   isDemo: boolean
   onLogout: () => void
 }
+
+type QueueMetrics = { waiting: number; called: number; inService: number; completedToday: number; cancelledToday: number; noShowToday: number; availableBarbers: number; estimatedWaitMinutes: number }
 
 type DashboardCopy = typeof dashboardCopy['es-419']
 
@@ -83,6 +68,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
   const [barbers, setBarbers] = useState<Barber[]>([])
   const [services, setServices] = useState<Service[]>([])
   const [turns, setTurns] = useState<Turn[]>([])
+  const [metrics, setMetrics] = useState<QueueMetrics | null>(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -97,28 +83,32 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
     { id: 'queue-section', label: c.queueLive, icon: faListOl },
     { id: 'barbers-section', label: c.barbers, icon: faUserTie },
     { id: 'services-section', label: c.services, icon: faScissors, requiresCatalogAccess: true },
-  ], [c])
-  const futureItems = useMemo(() => [
-    { label: c.customers, icon: faUsers },
-    { label: 'BarberTurn TV', icon: faTv },
-    { label: c.reports, icon: faChartColumn },
+    { id: 'appointments-section', label: 'Citas', icon: faClock },
+    { id: 'customers-section', label: c.customers, icon: faUsers },
+    { id: 'payments-section', label: 'Caja', icon: faBolt, requiresCatalogAccess: true },
+    { id: 'reports-section', label: c.reports, icon: faChartColumn, requiresCatalogAccess: true },
+    { id: 'team-section', label: 'Equipo', icon: faUserTie, requiresCatalogAccess: true },
+    { id: 'locations-section', label: 'Sucursales', icon: faHouse, requiresOwner: true },
+    { id: 'billing-section', label: 'Suscripción', icon: faTv, requiresOwner: true },
   ], [c])
   const visibleNavItems = useMemo(
-    () => navItems.filter(item => !item.requiresCatalogAccess || canManageCatalog),
-    [canManageCatalog, navItems],
+    () => navItems.filter(item => (!item.requiresCatalogAccess || canManageCatalog) && (!item.requiresOwner || auth.role === 'Owner')),
+    [auth.role, canManageCatalog, navItems],
   )
 
   const loadQueue = useCallback(async () => {
     setLoading(true)
     try {
-      const [nextBarbers, nextServices, nextTurns] = await Promise.all([
-        api<Barber[]>('/api/queue/barbers', auth),
-        api<Service[]>('/api/queue/services', auth),
-        api<Turn[]>('/api/queue/turns', auth),
+      const [nextBarbers, nextServices, nextTurns, nextMetrics] = await Promise.all([
+        api<Barber[]>('/api/queue/barbers'),
+        api<Service[]>('/api/queue/services'),
+        api<Turn[]>('/api/queue/turns'),
+        api<QueueMetrics>('/api/queue/metrics'),
       ])
       setBarbers(nextBarbers)
       setServices(nextServices)
       setTurns(nextTurns)
+      setMetrics(nextMetrics)
       setError('')
     } catch (exception) {
       setError(getErrorMessage(exception, c.loadOperationError))
@@ -128,6 +118,17 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
   }, [auth, c.loadOperationError])
 
   useEffect(() => { void loadQueue() }, [loadQueue])
+
+  useEffect(() => {
+    const connection = new HubConnectionBuilder()
+      .withUrl(`${API_URL}/hubs/queue`, { accessTokenFactory: () => readAuth()?.accessToken ?? '' })
+      .withAutomaticReconnect()
+      .configureLogging(LogLevel.Warning)
+      .build()
+    connection.on('queueChanged', () => { void loadQueue() })
+    void connection.start().catch(() => undefined)
+    return () => { void connection.stop() }
+  }, [loadQueue])
 
   useEffect(() => {
     const sections = visibleNavItems.map(item => document.getElementById(item.id)).filter((section): section is HTMLElement => section !== null)
@@ -174,18 +175,18 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
   }
 
   const overview = useMemo(() => {
-    const waiting = turns.filter(turn => turn.status === 'Waiting').length
-    const inService = turns.filter(turn => turn.status === 'InService').length
-    const completed = turns.filter(turn => turn.status === 'Completed').length
-    const availableBarbers = barbers.filter(barber => barber.status === 'Available').length
+    const waiting = metrics?.waiting ?? turns.filter(turn => turn.status === 'Waiting').length
+    const inService = metrics?.inService ?? turns.filter(turn => turn.status === 'InService').length
+    const completed = metrics?.completedToday ?? 0
+    const availableBarbers = metrics?.availableBarbers ?? barbers.filter(barber => barber.status === 'Available').length
     return { waiting, inService, completed, availableBarbers }
-  }, [barbers, turns])
+  }, [barbers, metrics, turns])
 
   async function submitAndReload<T>(path: string, body: unknown, method = 'POST') {
     setBusy(true)
     setError('')
     try {
-      await api<T>(path, auth, { method, body: JSON.stringify(body) })
+      await api<T>(path, { method, body: JSON.stringify(body) })
       await loadQueue()
     } catch (exception) {
       const message = getErrorMessage(exception, c.operationError)
@@ -251,7 +252,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
     setError('')
     try {
       const suffix = action === 'call' ? `/call/${barberId}` : `/${action}`
-      await api<Turn>(`/api/queue/turns/${turn.id}${suffix}`, auth, { method: 'POST' })
+      await api<Turn>(`/api/queue/turns/${turn.id}${suffix}`, { method: 'POST' })
       await loadQueue()
       const successMessage = { call: c.calledSuccess, start: c.startedSuccess, complete: c.completedSuccess, cancel: c.cancelledSuccess, 'no-show': c.noShowSuccess }[action]
       void showSuccessToast(successMessage)
@@ -287,11 +288,6 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
           {visibleNavItems.map(item => (
             <button key={item.id} className={activeSection === item.id ? 'active' : undefined} type="button" aria-current={activeSection === item.id ? 'page' : undefined} onClick={() => navigateToSection(item.id)}>
               <span className="nav-icon" aria-hidden="true"><FontAwesomeIcon icon={item.icon} /></span><span>{item.label}</span>
-            </button>
-          ))}
-          {futureItems.map(item => (
-            <button key={item.label} type="button" disabled title={c.availableLater}>
-              <span className="nav-icon" aria-hidden="true"><FontAwesomeIcon icon={item.icon} /></span><span>{item.label}</span><small className="nav-coming-soon">{c.comingSoon}</small>
             </button>
           ))}
         </nav>
@@ -419,6 +415,8 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
               </section>
             </section>
           )}
+
+          <BusinessModules auth={auth} />
 
           <footer className="dashboard-footer"><span>© {currentYear} BarberTurn. {c.rights}</span><span>Tu turno. Tu estilo. Tu tiempo.</span></footer>
         </div>

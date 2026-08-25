@@ -5,9 +5,8 @@ import type { Auth } from './types'
 import { buildSupportEmailHref } from './support'
 import { useI18n } from './i18n'
 import './demo-login.css'
+import { API_URL, clearAuth, writeAuth } from './api'
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
-const authStorageKey = 'barberturn.auth'
 const demoStorageKey = 'barberturn.demo'
 
 export default function DemoLoginPage() {
@@ -37,9 +36,8 @@ export default function DemoLoginPage() {
       }
 
       const auth = await response.json() as Auth
-      localStorage.removeItem(authStorageKey)
-      sessionStorage.removeItem(authStorageKey)
-      sessionStorage.setItem(authStorageKey, JSON.stringify(auth))
+      clearAuth()
+      writeAuth(auth, false)
       sessionStorage.setItem(demoStorageKey, 'true')
       window.location.hash = '#/login'
     } catch (exception) {

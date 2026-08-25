@@ -4,15 +4,9 @@ import { faArrowLeft, faEnvelope, faEye, faEyeSlash, faFlask, faLock } from '@fo
 import DashboardView from './DashboardView'
 import type { Auth } from './types'
 import { useI18n } from './i18n'
+import { API_URL, api, clearAuth, readAuth, writeAuth } from './api'
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
-const authStorageKey = 'barberturn.auth'
 const demoStorageKey = 'barberturn.demo'
-
-function getStoredAuth(): Auth | null {
-  const value = localStorage.getItem(authStorageKey) ?? sessionStorage.getItem(authStorageKey)
-  return value ? JSON.parse(value) as Auth : null
-}
 
 function BarberTurnLogo() {
   return (
@@ -24,7 +18,7 @@ function BarberTurnLogo() {
 
 export default function App() {
   const { t } = useI18n()
-  const [auth, setAuth] = useState<Auth | null>(getStoredAuth)
+  const [auth, setAuth] = useState<Auth | null>(readAuth)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -54,10 +48,8 @@ export default function App() {
       const nextAuth = await response.json() as Auth
       const remember = data.get('remember') === 'on'
 
-      localStorage.removeItem(authStorageKey)
-      sessionStorage.removeItem(authStorageKey)
       sessionStorage.removeItem(demoStorageKey)
-      ;(remember ? localStorage : sessionStorage).setItem(authStorageKey, JSON.stringify(nextAuth))
+      writeAuth(nextAuth, remember)
       setAuth(nextAuth)
     } catch (exception) {
       setError(exception instanceof Error ? exception.message : t('login.genericError'))
@@ -67,12 +59,27 @@ export default function App() {
   }
 
   function logout() {
-    localStorage.removeItem(authStorageKey)
-    sessionStorage.removeItem(authStorageKey)
+    const current = readAuth()
+    if (current?.refreshToken) void fetch(`${API_URL}/api/auth/logout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refreshToken: current.refreshToken }) })
+    clearAuth()
     sessionStorage.removeItem(demoStorageKey)
     setAuth(null)
     window.location.hash = '#/login'
   }
+
+  async function resendVerification() {
+    setBusy(true); setError('')
+    try { await api('/api/auth/send-verification', { method: 'POST' }); setError('Te enviamos un enlace nuevo. Revisa también tu carpeta de spam.') }
+    catch (exception) { setError(exception instanceof Error ? exception.message : 'No se pudo reenviar el enlace.') }
+    finally { setBusy(false) }
+  }
+
+  if (auth && !auth.isEmailVerified) return <main className="login-shell"><section className="login-card">
+    <BarberTurnLogo /><h1>Verifica tu correo</h1><p className="login-subtitle">Antes de abrir el panel, confirma el enlace que enviamos a tu correo. El enlace vence en 24 horas.</p>
+    <button className="login-submit" disabled={busy} onClick={() => void resendVerification()}>{busy ? 'Enviando…' : 'Reenviar enlace'}</button>
+    <button className="demo-button" type="button" onClick={logout}>Cerrar sesión</button>
+    {error && <p className="login-error" role="status">{error}</p>}
+  </section></main>
 
   if (auth) return <DashboardView auth={auth} isDemo={isDemo} onLogout={logout} />
 

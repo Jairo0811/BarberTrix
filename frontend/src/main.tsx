@@ -6,6 +6,11 @@ import RegisterPage from './RegisterPage'
 import ForgotPasswordPage from './ForgotPasswordPage'
 import ResetPasswordPage from './ResetPasswordPage'
 import DemoLoginPage from './DemoLoginPage'
+import PublicBookingPage from './PublicBookingPage'
+import TvPage from './TvPage'
+import AcceptInvitationPage from './AcceptInvitationPage'
+import VerifyEmailPage from './VerifyEmailPage'
+import BillingSuccessPage from './BillingSuccessPage'
 import LanguageSwitcher from './LanguageSwitcher'
 import { I18nProvider, useI18n } from './i18n'
 import './styles.css'
@@ -17,7 +22,7 @@ import './icon-polish.css'
 import './accessibility.css'
 import './language-switcher.css'
 
-type PublicRoute = 'home' | 'login' | 'register' | 'forgot-password' | 'reset-password' | 'demo'
+type PublicRoute = 'home' | 'login' | 'register' | 'forgot-password' | 'reset-password' | 'demo' | 'book' | 'tv' | 'accept-invitation' | 'verify-email' | 'billing-success'
 
 const routeLabelKeys: Record<PublicRoute, string> = {
   home: 'route.home',
@@ -26,6 +31,11 @@ const routeLabelKeys: Record<PublicRoute, string> = {
   'forgot-password': 'route.forgot',
   'reset-password': 'route.reset',
   demo: 'route.demo',
+  book: 'route.register',
+  tv: 'route.demo',
+  'accept-invitation': 'route.register',
+  'verify-email': 'route.login',
+  'billing-success': 'route.login',
 }
 
 function getRoute(): PublicRoute {
@@ -34,6 +44,11 @@ function getRoute(): PublicRoute {
   if (window.location.hash === '#/forgot-password') return 'forgot-password'
   if (window.location.hash.startsWith('#/reset-password')) return 'reset-password'
   if (window.location.hash === '#/demo') return 'demo'
+  if (window.location.hash.startsWith('#/book')) return 'book'
+  if (window.location.hash.startsWith('#/tv')) return 'tv'
+  if (window.location.hash.startsWith('#/accept-invitation')) return 'accept-invitation'
+  if (window.location.hash.startsWith('#/verify-email')) return 'verify-email'
+  if (window.location.hash.startsWith('#/billing-success')) return 'billing-success'
   return 'home'
 }
 
@@ -43,6 +58,11 @@ function RouteContent({ route }: { route: PublicRoute }) {
   if (route === 'forgot-password') return <ForgotPasswordPage />
   if (route === 'reset-password') return <ResetPasswordPage />
   if (route === 'demo') return <DemoLoginPage />
+  if (route === 'book') return <PublicBookingPage />
+  if (route === 'tv') return <TvPage />
+  if (route === 'accept-invitation') return <AcceptInvitationPage />
+  if (route === 'verify-email') return <VerifyEmailPage />
+  if (route === 'billing-success') return <BillingSuccessPage />
   return <HomePage />
 }
 

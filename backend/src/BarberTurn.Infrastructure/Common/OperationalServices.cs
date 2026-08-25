@@ -24,12 +24,14 @@ internal sealed class PlanLimitService(ApplicationDbContext dbContext) : IPlanLi
         var shop = await dbContext.BarberShops.AsNoTracking().SingleAsync(x => x.Id == barberShopId, cancellationToken);
         var activeBarbers = await dbContext.Barbers.CountAsync(x => x.BarberShopId == barberShopId && x.IsActive, cancellationToken);
         var activeLocations = await dbContext.ShopLocations.CountAsync(x => x.BarberShopId == barberShopId && x.IsActive, cancellationToken);
-        var limit = shop.Plan switch { SubscriptionPlan.Starter => 3, SubscriptionPlan.Pro => 10, _ => int.MaxValue };
+        var status = shop.SubscriptionStatus == SubscriptionStatus.Trialing && shop.TrialEndsAtUtc <= DateTimeOffset.UtcNow ? SubscriptionStatus.PastDue : shop.SubscriptionStatus;
+        var entitled = status is SubscriptionStatus.Active or SubscriptionStatus.Trialing;
+        var limit = entitled ? shop.Plan switch { SubscriptionPlan.Starter => 3, SubscriptionPlan.Pro => 10, _ => int.MaxValue } : 0;
         var locationLimit = shop.Plan == SubscriptionPlan.Business ? 3 : 1;
-        return new PlanUsageResponse(shop.Plan, shop.SubscriptionStatus, activeBarbers, limit, activeLocations, locationLimit,
-            shop.Plan is SubscriptionPlan.Pro or SubscriptionPlan.Business,
-            shop.Plan is SubscriptionPlan.Pro or SubscriptionPlan.Business,
-            shop.Plan == SubscriptionPlan.Business);
+        return new PlanUsageResponse(shop.Plan, status, activeBarbers, limit, activeLocations, entitled ? locationLimit : 0,
+            entitled && (shop.Plan is SubscriptionPlan.Pro or SubscriptionPlan.Business),
+            entitled && (shop.Plan is SubscriptionPlan.Pro or SubscriptionPlan.Business),
+            entitled && shop.Plan == SubscriptionPlan.Business);
     }
 
     public async Task EnsureCanAddLocationAsync(Guid barberShopId, CancellationToken cancellationToken = default)

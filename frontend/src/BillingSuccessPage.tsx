@@ -13,7 +13,7 @@ export default function BillingSuccessPage() {
 
   useEffect(() => {
     if (!id) { setState('error'); setMessage('PayPal no devolvió un identificador de suscripción.'); return }
-    void api('/api/billing/capture', { method: 'POST', body: JSON.stringify({ providerSubscriptionId: id }) })
+    void api('/api/billing/capture', { method: 'POST', body: JSON.stringify({ providerOrderId: id }) })
       .then(() => { setState('success'); setMessage('Tu plan quedó activo y ya puedes usar sus beneficios.') })
       .catch(exception => { setState('error'); setMessage(exception instanceof Error ? exception.message : 'No se pudo confirmar la suscripción.') })
   }, [id])

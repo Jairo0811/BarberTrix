@@ -54,9 +54,6 @@ public sealed class BarberTurnFactory : WebApplicationFactory<Program>
         builder.ConfigureAppConfiguration((_, configuration) => configuration.AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["ConnectionStrings:DefaultConnection"] = connectionString,
-            ["Jwt:Issuer"] = "BarberTurn.Api.Tests",
-            ["Jwt:Audience"] = "BarberTurn.Api.Tests",
-            ["Jwt:Key"] = "integration-tests-only-jwt-key-with-at-least-sixty-four-characters-2026",
             ["Database:ApplyMigrations"] = "true",
             ["Demo:Enabled"] = "true",
             ["Auth:RequireVerifiedEmail"] = "false",

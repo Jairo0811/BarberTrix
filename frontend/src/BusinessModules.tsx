@@ -88,7 +88,7 @@ export default function BusinessModules({ auth }: { auth: Auth }) {
 
   async function cancelSubscription() {
     setBusy(true)
-    try { await api('/api/billing/cancel?atPeriodEnd=true', { method: 'POST' }); await load(); void showSuccessToast('La suscripción se cancelará al finalizar el periodo') }
+    try { await api('/api/billing/cancel?atPeriodEnd=false', { method: 'POST' }); await load(); void showSuccessToast('Suscripción cancelada') }
     catch (error) { await showError('No se pudo cancelar la suscripción', error instanceof Error ? error.message : 'Error inesperado') }
     finally { setBusy(false) }
   }
@@ -151,7 +151,7 @@ export default function BusinessModules({ auth }: { auth: Auth }) {
         <p className="eyebrow">SUSCRIPCIÓN</p><h2>{subscription?.plan ?? 'Pro'} · {subscription?.status ?? 'Trialing'}</h2>
         <p>{usage ? `${usage.activeBarbers} de ${usage.barberLimit > 1000 ? 'ilimitados' : usage.barberLimit} barberos activos` : 'Cargando uso…'}</p>
         {usage && <p>{usage.activeLocations} de {usage.locationLimit} sucursales activas</p>}
-        <div className="billing-actions"><button disabled={busy} onClick={() => void checkout('Starter')}>Starter · US$20</button><button disabled={busy} onClick={() => void checkout('Pro')}>Pro · US$40</button><button disabled={busy} onClick={() => void checkout('Business')}>Business · US$70</button>{subscription?.status === 'Active' && <button disabled={busy} onClick={() => void cancelSubscription()}>Cancelar al final del periodo</button>}{shop && usage?.canUseTv && <a href={`#/tv?shop=${shop.slug}`}>Abrir BarberTurn TV</a>}</div>
+        <div className="billing-actions"><button disabled={busy} onClick={() => void checkout('Starter')}>Starter · US$20</button><button disabled={busy} onClick={() => void checkout('Pro')}>Pro · US$40</button><button disabled={busy} onClick={() => void checkout('Business')}>Business · US$70</button>{subscription?.status === 'Active' && <button disabled={busy} onClick={() => void cancelSubscription()}>Cancelar suscripción</button>}{shop && usage?.canUseTv && <a href={`#/tv?shop=${shop.slug}`}>Abrir BarberTurn TV</a>}</div>
       </section>}
     </>
   )

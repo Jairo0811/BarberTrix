@@ -15,6 +15,8 @@ internal sealed class PayPalBillingService(HttpClient httpClient, ApplicationDbC
     public async Task<CheckoutResponse> CreateCheckoutAsync(Guid barberShopId, CheckoutRequest request, CancellationToken cancellationToken = default)
     {
         _ = await dbContext.BarberShops.AsNoTracking().SingleAsync(x => x.Id == barberShopId, cancellationToken);
+        ValidateRedirect(request.ReturnUrl);
+        ValidateRedirect(request.CancelUrl);
         var planId = configuration[$"PayPal:PlanIds:{request.Plan}"];
         if (string.IsNullOrWhiteSpace(planId))
             throw new InvalidOperationException($"PayPal plan {request.Plan} is not configured.");
@@ -27,7 +29,7 @@ internal sealed class PayPalBillingService(HttpClient httpClient, ApplicationDbC
         });
         using var response = await httpClient.SendAsync(message, cancellationToken);
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
-        EnsureSuccess(response, body);
+        EnsureSuccess(response);
         using var document = JsonDocument.Parse(body);
         var id = document.RootElement.GetProperty("id").GetString() ?? throw new InvalidOperationException("PayPal did not return a subscription id.");
         var approval = document.RootElement.GetProperty("links").EnumerateArray().FirstOrDefault(x => x.GetProperty("rel").GetString() == "approve").GetProperty("href").GetString()
@@ -40,7 +42,7 @@ internal sealed class PayPalBillingService(HttpClient httpClient, ApplicationDbC
         using var message = await CreateRequestAsync(HttpMethod.Get, $"/v1/billing/subscriptions/{Uri.EscapeDataString(request.ProviderOrderId)}", cancellationToken);
         using var response = await httpClient.SendAsync(message, cancellationToken);
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
-        EnsureSuccess(response, body);
+        EnsureSuccess(response);
         using var document = JsonDocument.Parse(body);
         var root = document.RootElement;
         if (!string.Equals(root.GetProperty("status").GetString(), "ACTIVE", StringComparison.OrdinalIgnoreCase))
@@ -81,7 +83,7 @@ internal sealed class PayPalBillingService(HttpClient httpClient, ApplicationDbC
             message.Content = JsonContent.Create(new { reason = "Cancelled by BarberTurn account owner" });
             using var response = await httpClient.SendAsync(message, cancellationToken);
             var body = await response.Content.ReadAsStringAsync(cancellationToken);
-            EnsureSuccess(response, body);
+            EnsureSuccess(response);
         }
         subscription.Cancel(atPeriodEnd);
         if (!atPeriodEnd)
@@ -106,7 +108,7 @@ internal sealed class PayPalBillingService(HttpClient httpClient, ApplicationDbC
         });
         using var verificationResponse = await httpClient.SendAsync(verify, cancellationToken);
         var verificationBody = await verificationResponse.Content.ReadAsStringAsync(cancellationToken);
-        EnsureSuccess(verificationResponse, verificationBody);
+        EnsureSuccess(verificationResponse);
         using var verificationDocument = JsonDocument.Parse(verificationBody);
         if (verificationDocument.RootElement.GetProperty("verification_status").GetString() != "SUCCESS")
             throw new InvalidOperationException("Invalid PayPal webhook signature.");
@@ -137,7 +139,7 @@ internal sealed class PayPalBillingService(HttpClient httpClient, ApplicationDbC
         tokenRequest.Content = new FormUrlEncodedContent(new Dictionary<string, string> { ["grant_type"] = "client_credentials" });
         using var tokenResponse = await httpClient.SendAsync(tokenRequest, cancellationToken);
         var tokenBody = await tokenResponse.Content.ReadAsStringAsync(cancellationToken);
-        EnsureSuccess(tokenResponse, tokenBody);
+        EnsureSuccess(tokenResponse);
         using var tokenDocument = JsonDocument.Parse(tokenBody);
         var accessToken = tokenDocument.RootElement.GetProperty("access_token").GetString() ?? throw new InvalidOperationException("PayPal authentication failed.");
         var request = new HttpRequestMessage(method, $"{baseUrl}{path}");
@@ -146,9 +148,17 @@ internal sealed class PayPalBillingService(HttpClient httpClient, ApplicationDbC
         return request;
     }
 
-    private static void EnsureSuccess(HttpResponseMessage response, string body)
+    private void ValidateRedirect(string value)
+    {
+        var configured = configuration["PasswordReset:FrontendBaseUrl"] ?? throw new InvalidOperationException("The frontend base URL is not configured.");
+        if (!Uri.TryCreate(configured, UriKind.Absolute, out var allowed) || !Uri.TryCreate(value, UriKind.Absolute, out var redirect) ||
+            !string.Equals(allowed.Scheme, redirect.Scheme, StringComparison.OrdinalIgnoreCase) || !string.Equals(allowed.Authority, redirect.Authority, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("The billing return URL is not allowed.");
+    }
+
+    private static void EnsureSuccess(HttpResponseMessage response)
     {
         if (!response.IsSuccessStatusCode)
-            throw new InvalidOperationException($"PayPal request failed ({(int)response.StatusCode}): {body}");
+            throw new InvalidOperationException($"PayPal request failed with status {(int)response.StatusCode}.");
     }
 }

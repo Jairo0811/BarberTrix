@@ -10,6 +10,10 @@
     linear-gradient(180deg, #030814 0%, #02050b 100%);
 }
 
+.legal-card { max-width: 760px; }
+.legal-card > p { color: #9aa8bc; line-height: 1.7; }
+.recovery-link-button { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+
 .login-showcase { display: none; }
 
 .login-panel {

@@ -1,12 +1,12 @@
-import { FormEvent, useEffect, useState } from 'react'
+import { FormEvent, lazy, Suspense, useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft, faEnvelope, faEye, faEyeSlash, faFlask, faLock } from '@fortawesome/free-solid-svg-icons'
-import DashboardView from './DashboardView'
 import type { Auth } from './types'
 import { useI18n } from './i18n'
 import { API_URL, api, clearAuth, readAuth, writeAuth } from './api'
 
 const demoStorageKey = 'barberturn.demo'
+const DashboardView = lazy(() => import('./DashboardView'))
 
 function BarberTurnLogo() {
   return (
@@ -81,7 +81,7 @@ export default function App() {
     {error && <p className="login-error" role="status">{error}</p>}
   </section></main>
 
-  if (auth) return <DashboardView auth={auth} isDemo={isDemo} onLogout={logout} />
+  if (auth) return <Suspense fallback={<main className="login-shell"><p>Cargando panel…</p></main>}><DashboardView auth={auth} isDemo={isDemo} onLogout={logout} /></Suspense>
 
   return (
     <main className="login-shell login-split" aria-labelledby="login-title">

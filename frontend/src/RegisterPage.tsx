@@ -155,7 +155,7 @@ export default function RegisterPage() {
               </div>
             </label>
 
-            <label className="register-terms"><input name="acceptedTerms" type="checkbox" required /> <span>Acepto los términos de servicio y la política de privacidad.</span></label>
+            <label className="register-terms"><input name="acceptedTerms" type="checkbox" required /> <span>Acepto los <a href="#/terms" target="_blank">términos de servicio</a> y la <a href="#/privacy" target="_blank">política de privacidad</a>.</span></label>
             <button className="register-submit" type="submit" disabled={busy}>{busy ? t('register.submitting') : t('register.submit')}</button>
           </form>
 

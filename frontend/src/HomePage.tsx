@@ -266,6 +266,8 @@ export default function HomePage() {
         <img src="/branding/barberturn-logo.png" alt="BarberTurn" />
         <p>Tu turno. Tu estilo. Tu tiempo.</p>
         <a className="footer-support-link" href={buildSupportEmailHref()}>{t('common.support')}</a>
+        <a className="footer-support-link" href="#/terms">Términos</a>
+        <a className="footer-support-link" href="#/privacy">Privacidad</a>
         <span>© {currentYear} BarberTurn. {t('home.footer.rights')}</span>
       </footer>
     </main>

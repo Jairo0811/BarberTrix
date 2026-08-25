@@ -9,8 +9,8 @@
   <img src="https://img.shields.io/badge/CI-GitHub_Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white" alt="GitHub Actions" />
   <img src="https://img.shields.io/badge/i18n-es--419%20%7C%20en%20%7C%20es--ES-0EA5E9?style=flat-square" alt="Idiomas: Español Latino, Inglés y Español de España" />
   <img src="https://img.shields.io/badge/Accesibilidad-NORTIC_B2%20%2F%20WCAG-22C55E?style=flat-square" alt="Accesibilidad basada en NORTIC B2 y WCAG" />
-  <img src="https://img.shields.io/badge/Fase_1-Completada-22C55E?style=flat-square" alt="Fase 1 completada" />
-  <img src="https://img.shields.io/badge/Fase_2-Completada-22C55E?style=flat-square" alt="Fase 2 completada" />
+  <img src="https://img.shields.io/badge/Fases_1--6-Completadas-22C55E?style=flat-square" alt="Fases 1 a 6 completadas" />
+  <img src="https://img.shields.io/badge/CI_y_Seguridad-Verde-22C55E?style=flat-square" alt="CI y seguridad en verde" />
 </p>
 
 **BarberTurn** es una plataforma web para gestionar turnos de barberías con el menor nivel de fricción posible para el negocio y sus clientes.
@@ -29,7 +29,7 @@ La experiencia inicial está diseñada para barberías que:
 - 👤 no quieren registrar obligatoriamente a todos los clientes;
 - ✂️ utilizan varios barberos en paralelo;
 - 🎯 permiten elegir un barbero específico;
-- 📅 combinarán en el futuro clientes espontáneos con citas;
+- 📅 combinan clientes espontáneos con citas;
 - 🌎 necesitan operar en distintos mercados e idiomas.
 
 ## 🚀 Estado actual
@@ -214,7 +214,8 @@ BarberTurn
 │   │   ├── BarberTurn.Infrastructure
 │   │   └── BarberTurn.Api
 │   └── tests
-│       └── BarberTurn.Domain.Tests
+│       ├── BarberTurn.Domain.Tests
+│       └── BarberTurn.Api.Tests
 ├── frontend
 │   └── src
 │       ├── i18n.ts
@@ -234,7 +235,7 @@ BarberTurn
 - 🗄️ **Infrastructure:** EF Core, SQL Server, seguridad, persistencia y servicios externos.
 - 🌐 **Api:** endpoints HTTP y configuración del host ASP.NET Core.
 - ⚛️ **Frontend:** experiencia pública, autenticación, accesibilidad, internacionalización y operación diaria.
-- 🧪 **Tests:** validación de reglas críticas del dominio.
+- 🧪 **Tests:** reglas críticas del dominio y flujo integrado API + SQL Server.
 
 ## 💈 Modelo operativo
 
@@ -354,7 +355,10 @@ Termina TLS en un proxy o balanceador externo y mantén SQL Server fuera de Inte
   "barberShopSlug": "barberturn-central",
   "name": "Administrador",
   "email": "admin@example.com",
-  "password": "ChangeThisPassword123!"
+  "password": "ChangeThisPassword123!",
+  "timeZoneId": "America/Santo_Domingo",
+  "acceptedTerms": true,
+  "captchaToken": null
 }
 ```
 
@@ -403,7 +407,7 @@ Completada.
 
 Completada.
 
-### ⚡ Fase 3 — Tiempo real
+### ✅ Fase 3 — Tiempo real
 
 - 📡 SignalR;
 - 🔄 actualización automática de la fila;
@@ -412,7 +416,9 @@ Completada.
 - 📺 BarberTurn TV;
 - 🔔 eventos operativos en tiempo real.
 
-### 📅 Fase 4 — Citas
+Completada.
+
+### ✅ Fase 4 — Citas
 
 - 🗓️ calendario;
 - 🟢 disponibilidad;
@@ -422,7 +428,9 @@ Completada.
 - 🚫 bloqueo de horarios;
 - 🔀 convivencia con la fila por llegada.
 
-### 💰 Fase 5 — Gestión comercial
+Completada.
+
+### ✅ Fase 5 — Gestión comercial
 
 - 👤 clientes;
 - 📚 historial;
@@ -431,7 +439,9 @@ Completada.
 - 📊 reportes;
 - 📈 indicadores del negocio.
 
-### 🏢 Fase 6 — SaaS
+Completada.
+
+### ✅ Fase 6 — SaaS
 
 - ⚙️ configuración avanzada por barbería;
 - 🔐 aislamiento completo por tenant;
@@ -439,23 +449,27 @@ Completada.
 - 🏪 administración de establecimientos;
 - 📦 límites y capacidades por plan.
 
-### 🚀 Fase 7 — Producción
+Completada.
 
-- 🧪 ampliación de la suite de pruebas;
-- 🛡️ hardening de seguridad;
-- 👁️ observabilidad;
-- ☁️ despliegue;
-- 📧 proveedor transaccional de correo;
-- ♿ auditoría final de accesibilidad;
-- 🌐 revisión final de localización;
-- 📚 documentación final;
-- 💼 preparación para comercialización.
+### 🟡 Fase 7 — Puesta en producción
+
+- ✅ suite de pruebas de dominio e integración;
+- ✅ hardening, rate limiting, CodeQL y escaneo de secretos;
+- ✅ contenedores, health checks y configuración de producción;
+- ⏳ despliegue en infraestructura real con DNS y TLS;
+- ⏳ credenciales/proveedores reales para correo, Turnstile y PayPal;
+- ⏳ auditoría formal de accesibilidad y revisión legal;
+- ⏳ observabilidad centralizada, alertas y estrategia de respaldo.
 
 ## 📚 Documentación
 
 - 🏗️ [`docs/architecture.md`](docs/architecture.md): decisiones y estructura arquitectónica.
 - 🎯 [`docs/mvp.md`](docs/mvp.md): alcance funcional del MVP.
 - 🚀 [`docs/phase-1.md`](docs/phase-1.md): fundación técnica del proyecto.
+- 🔐 [`SECURITY.md`](SECURITY.md): reporte de vulnerabilidades y prácticas de seguridad.
+- 🤝 [`CONTRIBUTING.md`](CONTRIBUTING.md): guía de contribución y validaciones requeridas.
+- 🧾 [`CHANGELOG.md`](CHANGELOG.md): historial de cambios relevantes.
+- ⚖️ [`docs/privacy.md`](docs/privacy.md) y [`docs/terms.md`](docs/terms.md): borradores legales para revisión antes del lanzamiento.
 
 ---
 

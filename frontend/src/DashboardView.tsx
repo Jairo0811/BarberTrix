@@ -238,6 +238,29 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
     } catch { /* handled by submitAndReload */ }
   }
 
+  async function editBarber(barber: Barber, toggleActive = false) {
+    const name = toggleActive ? barber.name : window.prompt('Nombre del barbero', barber.name)
+    if (!name) return
+    const chairInput = toggleActive ? String(barber.chairNumber) : window.prompt('Número de silla', String(barber.chairNumber))
+    if (!chairInput) return
+    try {
+      await submitAndReload<Barber>(`/api/queue/barbers/${barber.id}`, { name, chairNumber: Number(chairInput), isActive: toggleActive ? !barber.isActive : barber.isActive }, 'PUT')
+      void showSuccessToast('Barbero actualizado')
+    } catch { /* handled by submitAndReload */ }
+  }
+
+  async function editService(service: Service, toggleActive = false) {
+    const name = toggleActive ? service.name : window.prompt('Nombre del servicio', service.name)
+    if (!name) return
+    const price = toggleActive ? String(service.price) : window.prompt('Precio', String(service.price))
+    const duration = toggleActive ? String(service.estimatedDurationMinutes) : window.prompt('Duración estimada (min)', String(service.estimatedDurationMinutes))
+    if (!price || !duration) return
+    try {
+      await submitAndReload<Service>(`/api/queue/services/${service.id}`, { name, price: Number(price), estimatedDurationMinutes: Number(duration), description: service.description ?? null, isActive: toggleActive ? !service.isActive : service.isActive }, 'PUT')
+      void showSuccessToast('Servicio actualizado')
+    } catch { /* handled by submitAndReload */ }
+  }
+
   async function transition(turn: Turn, action: 'call' | 'start' | 'complete' | 'cancel' | 'no-show', barberId?: string) {
     if (action === 'cancel') {
       const confirmed = await confirmDestructive(c.cancelTitle, interpolate(c.cancelText, { ticket: turn.ticketNumber }), c.confirmCancel)
@@ -401,7 +424,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
 
           <section className="dashboard-section" id="barbers-section">
             <div className="dashboard-section-title"><h2>{c.barbers}</h2><p>{c.teamAvailability}</p></div>
-            <article className="panel"><div className="barber-grid">{barbers.map(barber => <div className="barber-card" key={barber.id}><span className={`status-dot ${barber.status.toLowerCase()}`} /><strong>{barber.name}</strong><span>{c.chair} {barber.chairNumber}</span><small>{barber.status}</small><select value={barber.status} disabled={busy || barber.status === 'Busy'} onChange={event => void changeBarberStatus(barber, event.target.value as BarberStatus)}><option value="Available">{c.available}</option><option value="Break">{c.break}</option><option value="Offline">{c.offline}</option>{barber.status === 'Busy' && <option value="Busy">{c.busy}</option>}</select></div>)}</div></article>
+            <article className="panel"><div className="barber-grid">{barbers.map(barber => <div className="barber-card" key={barber.id}><span className={`status-dot ${barber.status.toLowerCase()}`} /><strong>{barber.name}</strong><span>{c.chair} {barber.chairNumber}</span><small>{barber.isActive ? barber.status : 'Inactivo'}</small><select value={barber.status} disabled={busy || !barber.isActive || barber.status === 'Busy'} onChange={event => void changeBarberStatus(barber, event.target.value as BarberStatus)}><option value="Available">{c.available}</option><option value="Break">{c.break}</option><option value="Offline">{c.offline}</option>{barber.status === 'Busy' && <option value="Busy">{c.busy}</option>}</select>{canManageCatalog && <div className="turn-actions"><button type="button" onClick={() => void editBarber(barber)}>Editar</button><button type="button" className={barber.isActive ? 'danger' : 'success'} onClick={() => void editBarber(barber, true)}>{barber.isActive ? 'Desactivar' : 'Activar'}</button></div>}</div>)}</div></article>
 
             {canManageCatalog && <article className="panel dashboard-section"><p className="eyebrow">{c.configuration}</p><h2>{c.newBarber}</h2><form className="form-stack" onSubmit={createBarber}><input name="name" placeholder={c.barberName} required /><input name="chairNumber" type="number" min="1" placeholder={c.chairNumber} required /><button className="primary" disabled={busy}><FontAwesomeIcon icon={faPlus} /> {c.addBarber}</button></form></article>}
           </section>
@@ -411,7 +434,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
               <div className="dashboard-section-title"><h2>{c.services}</h2><p>{c.servicesText}</p></div>
               <section className="management-grid">
                 <article className="panel"><p className="eyebrow">{c.catalog}</p><h2>{c.newService}</h2><form className="form-stack" onSubmit={createService}><input name="name" placeholder={c.serviceName} required /><input name="price" type="number" min="0" step="0.01" placeholder={c.price} required /><input name="estimatedDurationMinutes" type="number" min="1" placeholder={c.duration} required /><input name="description" placeholder={c.optionalDescription} /><button className="primary" disabled={busy}><FontAwesomeIcon icon={faPlus} /> {c.addService}</button></form></article>
-                <article className="panel"><p className="eyebrow">{c.activeServicesLabel}</p><h2>{activeServices} {c.availablePlural}</h2><div className="queue-summary">{services.filter(service => service.isActive).slice(0, 6).map(service => <div className="queue-summary-item" key={service.id}><span className="queue-summary-ticket"><FontAwesomeIcon icon={faScissors} /></span><div className="queue-summary-copy"><strong>{service.name}</strong><span>RD${service.price} · {service.estimatedDurationMinutes} min</span></div></div>)}</div></article>
+                <article className="panel"><p className="eyebrow">{c.activeServicesLabel}</p><h2>{activeServices} {c.availablePlural}</h2><div className="queue-summary">{services.slice(0, 12).map(service => <div className="queue-summary-item" key={service.id}><span className="queue-summary-ticket"><FontAwesomeIcon icon={faScissors} /></span><div className="queue-summary-copy"><strong>{service.name}</strong><span>RD${service.price} · {service.estimatedDurationMinutes} min · {service.isActive ? 'Activo' : 'Inactivo'}</span></div><div className="turn-actions"><button type="button" onClick={() => void editService(service)}>Editar</button><button type="button" className={service.isActive ? 'danger' : 'success'} onClick={() => void editService(service, true)}>{service.isActive ? 'Desactivar' : 'Activar'}</button></div></div>)}</div></article>
               </section>
             </section>
           )}

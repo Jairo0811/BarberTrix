@@ -2,6 +2,7 @@ import { FormEvent, useCallback, useEffect, useState } from 'react'
 import type { Auth } from './types'
 import { api } from './api'
 import { showError, showSuccessToast } from './alerts'
+import QRCode from 'qrcode'
 import './business-modules.css'
 
 type Customer = { id: string; name: string; phone?: string; email?: string }
@@ -28,6 +29,7 @@ export default function BusinessModules({ auth }: { auth: Auth }) {
   const [shop, setShop] = useState<Shop | null>(null)
   const [locations, setLocations] = useState<Location[]>([])
   const [busy, setBusy] = useState(false)
+  const [bookingQr, setBookingQr] = useState('')
 
   const load = useCallback(async () => {
     const now = new Date()
@@ -53,6 +55,10 @@ export default function BusinessModules({ auth }: { auth: Auth }) {
   }, [elevated])
 
   useEffect(() => { void load().catch(() => undefined) }, [load])
+  useEffect(() => {
+    if (!shop) return
+    void QRCode.toDataURL(`${location.origin}/#/book?shop=${encodeURIComponent(shop.slug)}`, { width: 320, margin: 2, color: { dark: '#09111f', light: '#ffffff' } }).then(setBookingQr)
+  }, [shop])
 
   async function submit(event: FormEvent<HTMLFormElement>, path: string, success: string) {
     event.preventDefault(); setBusy(true)
@@ -73,11 +79,41 @@ export default function BusinessModules({ auth }: { auth: Auth }) {
     finally { setBusy(false) }
   }
 
+  async function appointmentAction(id: string, action: 'check-in' | 'complete' | 'no-show' | 'cancel') {
+    setBusy(true)
+    try { await api(`/api/appointments/${id}${action === 'cancel' ? '' : `/${action}`}`, { method: action === 'cancel' ? 'DELETE' : 'POST' }); await load(); void showSuccessToast('Cita actualizada') }
+    catch (error) { await showError('No se pudo actualizar la cita', error instanceof Error ? error.message : 'Error inesperado') }
+    finally { setBusy(false) }
+  }
+
+  async function cancelSubscription() {
+    setBusy(true)
+    try { await api('/api/billing/cancel?atPeriodEnd=true', { method: 'POST' }); await load(); void showSuccessToast('La suscripción se cancelará al finalizar el periodo') }
+    catch (error) { await showError('No se pudo cancelar la suscripción', error instanceof Error ? error.message : 'Error inesperado') }
+    finally { setBusy(false) }
+  }
+
+  async function deactivateMember(id: string) {
+    setBusy(true)
+    try { await api(`/api/team/${id}`, { method: 'DELETE' }); await load(); void showSuccessToast('Usuario desactivado') }
+    catch (error) { await showError('No se pudo desactivar el usuario', error instanceof Error ? error.message : 'Error inesperado') }
+    finally { setBusy(false) }
+  }
+
+  async function updateShop(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setBusy(true)
+    const data = new FormData(event.currentTarget)
+    try { await api('/api/shop/settings', { method: 'PUT', body: JSON.stringify({ name: data.get('name'), timeZoneId: data.get('timeZoneId') }) }); await load(); void showSuccessToast('Configuración actualizada') }
+    catch (error) { await showError('No se pudo actualizar la barbería', error instanceof Error ? error.message : 'Error inesperado') }
+    finally { setBusy(false) }
+  }
+
   return (
     <>
       <section className="panel dashboard-section" id="appointments-section">
         <div className="panel-heading"><div><p className="eyebrow">AGENDA HÍBRIDA</p><h2>Próximas citas</h2></div>{shop && <a className="secondary-link" href={`#/book?shop=${shop.slug}`}>Página pública de reservas</a>}</div>
-        <div className="business-list">{appointments.length ? appointments.map(item => <article key={item.id}><strong>{item.customerName}</strong><span>{item.serviceName} · {item.barberName}</span><small>{new Date(item.startsAtUtc).toLocaleString()} · {item.status}</small></article>) : <p>No hay citas próximas.</p>}</div>
+        {bookingQr && <div className="booking-qr"><img src={bookingQr} alt="Código QR para turnos y reservas" /><div><strong>QR de autoservicio</strong><span>Descárgalo, imprímelo o colócalo en la entrada.</span><a href={bookingQr} download={`barberturn-${shop?.slug ?? 'reservas'}-qr.png`}>Descargar QR</a></div></div>}
+        <div className="business-list">{appointments.length ? appointments.map(item => <article key={item.id}><strong>{item.customerName}</strong><span>{item.serviceName} · {item.barberName}</span><small>{new Date(item.startsAtUtc).toLocaleString()} · {item.status}</small><div className="billing-actions">{item.status === 'Confirmed' && <><button disabled={busy} onClick={() => void appointmentAction(item.id, 'check-in')}>Check-in</button><button disabled={busy} onClick={() => void appointmentAction(item.id, 'no-show')}>No llegó</button><button disabled={busy} onClick={() => void appointmentAction(item.id, 'cancel')}>Cancelar</button></>}{item.status === 'CheckedIn' && <button disabled={busy} onClick={() => void appointmentAction(item.id, 'complete')}>Completar</button>}</div></article>) : <p>No hay citas próximas.</p>}</div>
       </section>
 
       <section className="panel dashboard-section" id="customers-section">
@@ -100,11 +136,13 @@ export default function BusinessModules({ auth }: { auth: Auth }) {
       {elevated && <section className="panel dashboard-section" id="team-section">
         <p className="eyebrow">EQUIPO Y PERMISOS</p><h2>Usuarios</h2>
         <form className="business-form" onSubmit={event => void submit(event, '/api/team/invitations', 'Invitación creada')}><input name="name" placeholder="Nombre" required /><input name="email" type="email" placeholder="Correo" required /><select name="role"><option>Administrator</option><option>Receptionist</option><option>Barber</option></select><select name="barberId" defaultValue=""><option value="">Sin vínculo de barbero</option>{barbers.filter(x => x.isActive).map(x => <option key={x.id} value={x.id}>{x.name}</option>)}</select><button disabled={busy}>Invitar</button></form>
-        <div className="business-list compact">{team.map(item => <article key={item.id}><strong>{item.name}</strong><span>{item.role} · {item.isActive ? 'Activo' : 'Inactivo'}</span></article>)}</div>
+        <div className="business-list compact">{team.map(item => <article key={item.id}><strong>{item.name}</strong><span>{item.role} · {item.isActive ? 'Activo' : 'Inactivo'}</span>{auth.role === 'Owner' && item.role !== 'Owner' && item.isActive && <button disabled={busy} onClick={() => void deactivateMember(item.id)}>Desactivar</button>}</article>)}</div>
       </section>}
 
       {auth.role === 'Owner' && <section className="panel dashboard-section" id="locations-section">
-        <p className="eyebrow">SUCURSALES</p><h2>Ubicaciones</h2>
+        <p className="eyebrow">CONFIGURACIÓN Y SUCURSALES</p><h2>Mi barbería</h2>
+        {shop && <form className="business-form" onSubmit={updateShop}><input name="name" defaultValue={shop.name} required /><input name="timeZoneId" defaultValue={shop.timeZoneId} required /><button disabled={busy}>Guardar configuración</button></form>}
+        <h3>Ubicaciones</h3>
         <form className="business-form" onSubmit={event => void submit(event, '/api/locations', 'Sucursal agregada')}><input name="name" placeholder="Nombre" required /><input name="slug" placeholder="Identificador (ej. centro)" pattern="[a-z0-9-]+" required /><input name="address" placeholder="Dirección" /><input name="timeZoneId" defaultValue={shop?.timeZoneId ?? Intl.DateTimeFormat().resolvedOptions().timeZone} required /><button disabled={busy}>Agregar</button></form>
         <div className="business-list compact">{locations.map(item => <article key={item.id}><strong>{item.name}</strong><span>{item.address || item.slug} · {item.timeZoneId}</span></article>)}</div>
       </section>}
@@ -113,7 +151,7 @@ export default function BusinessModules({ auth }: { auth: Auth }) {
         <p className="eyebrow">SUSCRIPCIÓN</p><h2>{subscription?.plan ?? 'Pro'} · {subscription?.status ?? 'Trialing'}</h2>
         <p>{usage ? `${usage.activeBarbers} de ${usage.barberLimit > 1000 ? 'ilimitados' : usage.barberLimit} barberos activos` : 'Cargando uso…'}</p>
         {usage && <p>{usage.activeLocations} de {usage.locationLimit} sucursales activas</p>}
-        <div className="billing-actions"><button disabled={busy} onClick={() => void checkout('Starter')}>Starter · US$20</button><button disabled={busy} onClick={() => void checkout('Pro')}>Pro · US$40</button><button disabled={busy} onClick={() => void checkout('Business')}>Business · US$70</button>{shop && usage?.canUseTv && <a href={`#/tv?shop=${shop.slug}`}>Abrir BarberTurn TV</a>}</div>
+        <div className="billing-actions"><button disabled={busy} onClick={() => void checkout('Starter')}>Starter · US$20</button><button disabled={busy} onClick={() => void checkout('Pro')}>Pro · US$40</button><button disabled={busy} onClick={() => void checkout('Business')}>Business · US$70</button>{subscription?.status === 'Active' && <button disabled={busy} onClick={() => void cancelSubscription()}>Cancelar al final del periodo</button>}{shop && usage?.canUseTv && <a href={`#/tv?shop=${shop.slug}`}>Abrir BarberTurn TV</a>}</div>
       </section>}
     </>
   )

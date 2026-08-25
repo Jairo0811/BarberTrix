@@ -23,6 +23,22 @@ export default function PublicBookingPage() {
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
+    const turnId = queryValue('turn'); const token = queryValue('token')
+    if (!slug || !turnId || !token) return
+    void fetch(`${API_URL}/api/public/shops/${encodeURIComponent(slug)}/turns/${encodeURIComponent(turnId)}?token=${encodeURIComponent(token)}`)
+      .then(async response => { if (!response.ok) throw new Error('El turno guardado ya no está disponible.'); const payload = await response.json(); setMode('queue'); setTurn({ ...payload, lookupToken: token } as TurnResult) })
+      .catch(exception => setError(exception instanceof Error ? exception.message : 'No se pudo recuperar el turno.'))
+  }, [slug])
+
+  useEffect(() => {
+    const appointmentId = queryValue('appointment'); const token = queryValue('token')
+    if (!slug || !appointmentId || !token) return
+    void fetch(`${API_URL}/api/public/shops/${encodeURIComponent(slug)}/appointments/${encodeURIComponent(appointmentId)}?token=${encodeURIComponent(token)}`)
+      .then(async response => { if (!response.ok) throw new Error('La cita guardada ya no está disponible.'); setMode('appointment'); setAppointment({ appointment: await response.json(), lookupToken: token } as AppointmentResult) })
+      .catch(exception => setError(exception instanceof Error ? exception.message : 'No se pudo recuperar la cita.'))
+  }, [slug])
+
+  useEffect(() => {
     if (!slug) return
     void fetch(`${API_URL}/api/public/shops/${encodeURIComponent(slug)}`).then(async response => {
       if (!response.ok) throw new Error('No encontramos esta barbería.')
@@ -47,7 +63,9 @@ export default function PublicBookingPage() {
     try {
       const response = await fetch(`${API_URL}/api/public/shops/${encodeURIComponent(slug)}/turns`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ serviceId: data.get('serviceId'), barberId: data.get('barberId') || null, customerName: data.get('customerName') || null, customerPhone: data.get('customerPhone') || null, idempotencyKey: crypto.randomUUID() }) })
       const payload = await response.json(); if (!response.ok) throw new Error(payload.message ?? 'No se pudo crear el turno.')
-      setTurn(payload as TurnResult)
+      const created = payload as TurnResult
+      setTurn(created)
+      history.replaceState(null, '', `#/book?shop=${encodeURIComponent(slug)}&turn=${created.turn.id}&token=${encodeURIComponent(created.lookupToken)}`)
     } catch (exception) { setError(exception instanceof Error ? exception.message : 'No se pudo crear el turno.') } finally { setBusy(false) }
   }
 
@@ -66,8 +84,24 @@ export default function PublicBookingPage() {
     try {
       const response = await fetch(`${API_URL}/api/public/shops/${encodeURIComponent(slug)}/appointments`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ serviceId: data.get('serviceId'), barberId: slot.barberId, startsAt: slot.startsAtUtc, customerName: data.get('customerName'), customerPhone: data.get('customerPhone') || null, customerEmail: data.get('customerEmail') || null }) })
       const payload = await response.json(); if (!response.ok) throw new Error(payload.message ?? 'No se pudo reservar la cita.')
-      setAppointment(payload as AppointmentResult); setSlots([])
+      const created = payload as AppointmentResult
+      setAppointment(created); setSlots([])
+      history.replaceState(null, '', `#/book?shop=${encodeURIComponent(slug)}&appointment=${created.appointment.id}&token=${encodeURIComponent(created.lookupToken)}`)
     } catch (exception) { setError(exception instanceof Error ? exception.message : 'No se pudo reservar la cita.') } finally { setBusy(false) }
+  }
+
+  async function cancelSaved(kind: 'turn' | 'appointment') {
+    const saved = kind === 'turn' ? turn : appointment
+    if (!saved) return
+    setBusy(true); setError('')
+    const id = kind === 'turn' ? turn!.turn.id : appointment!.appointment.id
+    try {
+      const response = await fetch(`${API_URL}/api/public/shops/${encodeURIComponent(slug)}/${kind === 'turn' ? 'turns' : 'appointments'}/${id}?token=${encodeURIComponent(saved.lookupToken)}`, { method: 'DELETE' })
+      if (!response.ok) { const payload = await response.json().catch(() => null); throw new Error(payload?.message ?? 'No se pudo cancelar.') }
+      history.replaceState(null, '', `#/book?shop=${encodeURIComponent(slug)}`)
+      if (kind === 'turn') setTurn(null); else setAppointment(null)
+    } catch (exception) { setError(exception instanceof Error ? exception.message : 'No se pudo cancelar.') }
+    finally { setBusy(false) }
   }
 
   if (!slug) return <main className="public-booking"><section><h1>Falta identificar la barbería</h1><p>Abre el enlace o escanea el código QR proporcionado por la barbería.</p></section></main>
@@ -81,10 +115,10 @@ export default function PublicBookingPage() {
       {error && <p className="booking-error" role="alert">{error}</p>}
 
       {mode === 'queue' && !turn && <form className="booking-form" onSubmit={createTurn}><input name="customerName" placeholder="Tu nombre (opcional)" maxLength={120} /><input name="customerPhone" placeholder="Teléfono (opcional)" maxLength={40} /><select name="serviceId" required defaultValue=""><option value="" disabled>Selecciona un servicio</option>{shop?.services.map(item => <option key={item.id} value={item.id}>{item.name} · RD${item.price}</option>)}</select><select name="barberId" defaultValue=""><option value="">Próximo barbero disponible</option>{shop?.barbers.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select><button disabled={busy}>{busy ? 'Generando…' : 'Obtener mi turno'}</button></form>}
-      {mode === 'queue' && turn && <div className="ticket-result"><span>Tu turno</span><strong>{turn.turn.ticketNumber}</strong><p>Estado: {turn.turn.status}</p><p>Posición aproximada: {turn.position || 'En atención'}</p><p>Espera estimada: {turn.estimatedWaitMinutes} minutos</p><small>Conserva esta página abierta para recibir actualizaciones.</small></div>}
+      {mode === 'queue' && turn && <div className="ticket-result"><span>Tu turno</span><strong>{turn.turn.ticketNumber}</strong><p>Estado: {turn.turn.status}</p><p>Posición aproximada: {turn.position || 'En atención'}</p><p>Espera estimada: {turn.estimatedWaitMinutes} minutos</p><small>Conserva este enlace para recibir actualizaciones.</small>{['Waiting', 'Called'].includes(turn.turn.status) && <button disabled={busy} onClick={() => void cancelSaved('turn')}>Cancelar turno</button>}</div>}
 
       {mode === 'appointment' && !appointment && <form className="booking-form" onSubmit={findSlots}><input name="customerName" placeholder="Tu nombre" required maxLength={120} /><input name="customerPhone" placeholder="Teléfono" maxLength={40} /><input name="customerEmail" type="email" placeholder="Correo" maxLength={180} /><select name="serviceId" required defaultValue=""><option value="" disabled>Selecciona un servicio</option>{shop?.services.map(item => <option key={item.id} value={item.id}>{item.name} · {item.estimatedDurationMinutes} min</option>)}</select><select name="barberId" defaultValue=""><option value="">Cualquier barbero</option>{shop?.barbers.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select><input name="date" type="date" min={new Date().toISOString().slice(0, 10)} required /><button disabled={busy}>Buscar horarios</button>{slots.length > 0 && <div className="slot-grid">{slots.slice(0, 24).map(slot => <button type="button" key={`${slot.barberId}-${slot.startsAtUtc}`} onClick={event => void book(slot, event.currentTarget.form!)}>{new Date(slot.startsAtUtc).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}<small>{slot.barberName}</small></button>)}</div>}</form>}
-      {mode === 'appointment' && appointment && <div className="ticket-result appointment"><span>Cita confirmada</span><strong>{new Date(appointment.appointment.startsAtUtc).toLocaleString()}</strong><p>{appointment.appointment.serviceName} con {appointment.appointment.barberName}</p><small>Guarda esta página para consultar o cancelar la cita.</small></div>}
+      {mode === 'appointment' && appointment && <div className="ticket-result appointment"><span>Cita confirmada</span><strong>{new Date(appointment.appointment.startsAtUtc).toLocaleString()}</strong><p>{appointment.appointment.serviceName} con {appointment.appointment.barberName}</p><small>Guarda este enlace para consultar o cancelar la cita.</small>{appointment.appointment.status === 'Confirmed' && <button disabled={busy} onClick={() => void cancelSaved('appointment')}>Cancelar cita</button>}</div>}
     </section>
   </main>
 }

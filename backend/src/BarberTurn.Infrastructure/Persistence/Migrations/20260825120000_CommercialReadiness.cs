@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
+#pragma warning disable CA1861
 
 namespace BarberTurn.Infrastructure.Persistence.Migrations;
 
@@ -188,3 +189,4 @@ public sealed class CommercialReadiness : Migration
         migrationBuilder.DropColumn("Plan", "BarberShops"); migrationBuilder.DropColumn("SubscriptionStatus", "BarberShops"); migrationBuilder.DropColumn("TimeZoneId", "BarberShops"); migrationBuilder.DropColumn("TrialEndsAtUtc", "BarberShops");
     }
 }
+#pragma warning restore CA1861

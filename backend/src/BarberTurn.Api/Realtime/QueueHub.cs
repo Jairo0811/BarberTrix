@@ -16,7 +16,8 @@ public sealed class QueueHub(ApplicationDbContext dbContext) : Hub
 
     public async Task<bool> JoinPublicShop(string slug)
     {
-        var shopId = await dbContext.BarberShops.AsNoTracking().Where(x => x.Slug == slug.ToLower() && x.IsActive).Select(x => (Guid?)x.Id).SingleOrDefaultAsync();
+        var normalizedSlug = slug.Trim().ToLowerInvariant();
+        var shopId = await dbContext.BarberShops.AsNoTracking().Where(x => x.Slug == normalizedSlug && x.IsActive).Select(x => (Guid?)x.Id).SingleOrDefaultAsync();
         if (shopId is null)
             return false;
         await Groups.AddToGroupAsync(Context.ConnectionId, Group(shopId.Value));

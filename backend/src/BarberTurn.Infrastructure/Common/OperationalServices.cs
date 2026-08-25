@@ -82,11 +82,14 @@ internal sealed class HumanVerificationService(HttpClient httpClient, IConfigura
 
 internal sealed class ConfigurableEmailSender(IConfiguration configuration, ILogger<ConfigurableEmailSender> logger) : IEmailSender
 {
+    private static readonly Action<ILogger, string, string, Exception?> LogDisabledEmail =
+        LoggerMessage.Define<string, string>(LogLevel.Information, new EventId(1001, "TransactionalEmailDisabled"), "Transactional email disabled. Subject {Subject} intended for {Recipient}.");
+
     public async Task SendAsync(string recipient, string subject, string htmlBody, CancellationToken cancellationToken = default)
     {
         if (!configuration.GetValue<bool>("Email:Enabled"))
         {
-            logger.LogInformation("Transactional email disabled. Subject {Subject} intended for {Recipient}.", subject, recipient);
+            LogDisabledEmail(logger, subject, recipient, null);
             return;
         }
 

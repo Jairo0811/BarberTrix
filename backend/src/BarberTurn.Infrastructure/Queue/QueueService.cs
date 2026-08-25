@@ -163,7 +163,8 @@ internal sealed class QueueService(
 
     public async Task<PublicShopResponse?> GetPublicShopAsync(string slug, CancellationToken cancellationToken = default)
     {
-        var shop = await dbContext.BarberShops.AsNoTracking().SingleOrDefaultAsync(x => x.Slug == slug.ToLower() && x.IsActive, cancellationToken);
+        var normalizedSlug = NormalizeSlug(slug);
+        var shop = await dbContext.BarberShops.AsNoTracking().SingleOrDefaultAsync(x => x.Slug == normalizedSlug && x.IsActive, cancellationToken);
         if (shop is null)
             return null;
         var services = await GetServicesAsync(shop.Id, cancellationToken);
@@ -173,7 +174,8 @@ internal sealed class QueueService(
 
     public async Task<PublicTurnResponse> CreatePublicTurnAsync(string slug, PublicCreateTurnRequest request, CancellationToken cancellationToken = default)
     {
-        var shop = await dbContext.BarberShops.AsNoTracking().SingleOrDefaultAsync(x => x.Slug == slug.ToLower() && x.IsActive, cancellationToken)
+        var normalizedSlug = NormalizeSlug(slug);
+        var shop = await dbContext.BarberShops.AsNoTracking().SingleOrDefaultAsync(x => x.Slug == normalizedSlug && x.IsActive, cancellationToken)
             ?? throw new InvalidOperationException("The barbershop was not found.");
         var lookupToken = SecureToken.Create();
         var create = new CreateTurnRequest(request.ServiceId, request.CustomerName, request.BarberId, request.CustomerPhone, request.IdempotencyKey);
@@ -185,7 +187,8 @@ internal sealed class QueueService(
 
     public async Task<PublicQueueDisplayResponse?> GetPublicQueueAsync(string slug, CancellationToken cancellationToken = default)
     {
-        var shop = await dbContext.BarberShops.AsNoTracking().SingleOrDefaultAsync(x => x.Slug == slug.ToLower() && x.IsActive, cancellationToken);
+        var normalizedSlug = NormalizeSlug(slug);
+        var shop = await dbContext.BarberShops.AsNoTracking().SingleOrDefaultAsync(x => x.Slug == normalizedSlug && x.IsActive, cancellationToken);
         if (shop is null)
             return null;
         var queue = await GetQueueAsync(shop.Id, cancellationToken);
@@ -289,8 +292,11 @@ internal sealed class QueueService(
         return DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, timeZone).DateTime);
     }
 
-    private async Task<Guid?> GetShopIdBySlugAsync(string slug, CancellationToken cancellationToken) =>
-        await dbContext.BarberShops.AsNoTracking().Where(x => x.Slug == slug.ToLower() && x.IsActive).Select(x => (Guid?)x.Id).SingleOrDefaultAsync(cancellationToken);
+    private async Task<Guid?> GetShopIdBySlugAsync(string slug, CancellationToken cancellationToken)
+    {
+        var normalizedSlug = NormalizeSlug(slug);
+        return await dbContext.BarberShops.AsNoTracking().Where(x => x.Slug == normalizedSlug && x.IsActive).Select(x => (Guid?)x.Id).SingleOrDefaultAsync(cancellationToken);
+    }
 
     private async Task<int> GetPositionAsync(Guid barberShopId, Guid turnId, CancellationToken cancellationToken)
     {
@@ -314,6 +320,7 @@ internal sealed class QueueService(
     }
 
     private Task NotifyAsync(Guid barberShopId, string eventName, CancellationToken cancellationToken) => queueNotifier.QueueChangedAsync(barberShopId, eventName, cancellationToken);
+    private static string NormalizeSlug(string slug) => slug.Trim().ToLowerInvariant();
     private static BarberResponse MapBarber(Barber x) => new(x.Id, x.Name, x.ChairNumber, x.Status, x.IsActive);
     private static ServiceResponse MapService(BarberService x) => new(x.Id, x.Name, x.Description, x.Price, x.EstimatedDurationMinutes, x.IsActive);
     private static TurnResponse MapTurn(Turn turn, BarberService service, Barber? barber) => new(turn.Id, turn.TicketNumber, turn.CustomerName, turn.Status, service.Id, service.Name, barber?.Id, barber?.Name, barber?.ChairNumber, turn.CreatedAtUtc, turn.CalledAtUtc, turn.ServiceStartedAtUtc, turn.CompletedAtUtc);

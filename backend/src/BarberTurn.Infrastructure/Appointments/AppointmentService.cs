@@ -22,7 +22,8 @@ internal sealed class AppointmentService(
 
     public async Task<IReadOnlyList<AvailabilitySlotResponse>> GetAvailabilityAsync(string shopSlug, Guid serviceId, DateOnly localDate, Guid? barberId, CancellationToken cancellationToken = default)
     {
-        var shop = await dbContext.BarberShops.AsNoTracking().SingleOrDefaultAsync(x => x.Slug == shopSlug.ToLower() && x.IsActive, cancellationToken)
+        var normalizedSlug = NormalizeSlug(shopSlug);
+        var shop = await dbContext.BarberShops.AsNoTracking().SingleOrDefaultAsync(x => x.Slug == normalizedSlug && x.IsActive, cancellationToken)
             ?? throw new InvalidOperationException("The barbershop was not found.");
         var usage = await planLimitService.GetUsageAsync(shop.Id, cancellationToken);
         if (!usage.CanUseAppointments)
@@ -54,7 +55,8 @@ internal sealed class AppointmentService(
 
     public async Task<PublicAppointmentResponse> CreatePublicAsync(string shopSlug, CreateAppointmentRequest request, CancellationToken cancellationToken = default)
     {
-        var shop = await dbContext.BarberShops.SingleOrDefaultAsync(x => x.Slug == shopSlug.ToLower() && x.IsActive, cancellationToken)
+        var normalizedSlug = NormalizeSlug(shopSlug);
+        var shop = await dbContext.BarberShops.SingleOrDefaultAsync(x => x.Slug == normalizedSlug && x.IsActive, cancellationToken)
             ?? throw new InvalidOperationException("The barbershop was not found.");
         var usage = await planLimitService.GetUsageAsync(shop.Id, cancellationToken);
         if (!usage.CanUseAppointments)
@@ -80,7 +82,8 @@ internal sealed class AppointmentService(
 
     public async Task<AppointmentResponse?> GetPublicAsync(string shopSlug, Guid appointmentId, string lookupToken, CancellationToken cancellationToken = default)
     {
-        var shopId = await dbContext.BarberShops.AsNoTracking().Where(x => x.Slug == shopSlug.ToLower()).Select(x => (Guid?)x.Id).SingleOrDefaultAsync(cancellationToken);
+        var normalizedSlug = NormalizeSlug(shopSlug);
+        var shopId = await dbContext.BarberShops.AsNoTracking().Where(x => x.Slug == normalizedSlug).Select(x => (Guid?)x.Id).SingleOrDefaultAsync(cancellationToken);
         if (shopId is null)
             return null;
         var hash = SecureToken.Hash(lookupToken);
@@ -110,7 +113,8 @@ internal sealed class AppointmentService(
 
     public async Task<bool> CancelPublicAsync(string shopSlug, Guid appointmentId, string lookupToken, CancellationToken cancellationToken = default)
     {
-        var shopId = await dbContext.BarberShops.Where(x => x.Slug == shopSlug.ToLower()).Select(x => (Guid?)x.Id).SingleOrDefaultAsync(cancellationToken);
+        var normalizedSlug = NormalizeSlug(shopSlug);
+        var shopId = await dbContext.BarberShops.Where(x => x.Slug == normalizedSlug).Select(x => (Guid?)x.Id).SingleOrDefaultAsync(cancellationToken);
         if (shopId is null)
             return false;
         var appointment = await dbContext.Appointments.SingleOrDefaultAsync(x => x.Id == appointmentId && x.BarberShopId == shopId && x.PublicLookupTokenHash == SecureToken.Hash(lookupToken), cancellationToken);
@@ -188,6 +192,7 @@ internal sealed class AppointmentService(
         select new AppointmentJoin(appointment, service, barber);
 
     private static AppointmentResponse Map(AppointmentJoin x) => new(x.Appointment.Id, x.Service.Id, x.Service.Name, x.Barber.Id, x.Barber.Name, x.Appointment.StartsAtUtc, x.Appointment.EndsAtUtc, x.Appointment.CustomerName, x.Appointment.CustomerPhone, x.Appointment.CustomerEmail, x.Appointment.Status);
+    private static string NormalizeSlug(string slug) => slug.Trim().ToLowerInvariant();
     private static bool Overlaps(DateTimeOffset firstStart, DateTimeOffset firstEnd, DateTimeOffset secondStart, DateTimeOffset secondEnd) => firstStart < secondEnd && firstEnd > secondStart;
     private sealed record AppointmentJoin(Appointment Appointment, BarberService Service, Barber Barber);
 }

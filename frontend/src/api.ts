@@ -22,10 +22,10 @@ export function clearAuth() {
   sessionStorage.removeItem(authStorageKey)
 }
 
-async function refreshAuth(auth: Auth): Promise<Auth | null> {
-  if (!auth.refreshToken) return null
+async function refreshAuth(): Promise<Auth | null> {
   const response = await fetch(`${API_URL}/api/auth/refresh`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refreshToken: auth.refreshToken }),
+    method: 'POST',
+    credentials: 'include',
   })
   if (!response.ok) return null
   const next = await response.json() as Auth
@@ -38,10 +38,11 @@ export async function api<T>(path: string, init?: RequestInit, retry = true): Pr
   if (!auth) throw new Error('Tu sesión expiró. Inicia sesión nuevamente.')
   const response = await fetch(`${API_URL}${path}`, {
     ...init,
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${auth.accessToken}`, ...init?.headers },
   })
   if (response.status === 401 && retry) {
-    const refreshed = await refreshAuth(auth)
+    const refreshed = await refreshAuth()
     if (refreshed) return api<T>(path, init, false)
     clearAuth()
     window.location.hash = '#/login'

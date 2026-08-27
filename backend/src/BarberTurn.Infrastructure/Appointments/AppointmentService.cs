@@ -22,8 +22,10 @@ internal sealed class AppointmentService(
 
     public async Task<IReadOnlyList<AppointmentResponse>> GetAsync(Guid barberShopId, DateTimeOffset fromUtc, DateTimeOffset toUtc, CancellationToken cancellationToken = default)
     {
-        var rows = await Joined().Where(x => x.Appointment.BarberShopId == barberShopId && x.Appointment.StartsAtUtc >= fromUtc && x.Appointment.StartsAtUtc < toUtc)
-            .OrderBy(x => x.Appointment.StartsAtUtc).ToListAsync(cancellationToken);
+        var appointments = dbContext.Appointments.AsNoTracking()
+            .Where(x => x.BarberShopId == barberShopId && x.StartsAtUtc >= fromUtc && x.StartsAtUtc < toUtc)
+            .OrderBy(x => x.StartsAtUtc);
+        var rows = await Joined(appointments).ToListAsync(cancellationToken);
         return rows.Select(Map).ToList();
     }
 
@@ -250,12 +252,14 @@ internal sealed class AppointmentService(
 
     private async Task<AppointmentResponse?> GetOneAsync(Guid shopId, Guid id, CancellationToken ct)
     {
-        var row = await Joined().SingleOrDefaultAsync(x => x.Appointment.Id == id && x.Appointment.BarberShopId == shopId, ct);
+        var appointments = dbContext.Appointments.AsNoTracking()
+            .Where(x => x.Id == id && x.BarberShopId == shopId);
+        var row = await Joined(appointments).SingleOrDefaultAsync(ct);
         return row is null ? null : Map(row);
     }
 
-    private IQueryable<AppointmentJoin> Joined() =>
-        from appointment in dbContext.Appointments.AsNoTracking()
+    private IQueryable<AppointmentJoin> Joined(IQueryable<Appointment> appointments) =>
+        from appointment in appointments
         join service in dbContext.BarberServices.AsNoTracking() on appointment.ServiceId equals service.Id
         join barber in dbContext.Barbers.AsNoTracking() on appointment.BarberId equals barber.Id
         select new AppointmentJoin(appointment, service, barber);

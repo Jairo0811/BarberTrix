@@ -11,14 +11,14 @@ namespace BarberTurn.Api.Tests;
 
 public sealed class ApiSmokeTests : IClassFixture<BarberTurnFactory>, IDisposable
 {
+    private readonly BarberTurnFactory factory;
     private readonly HttpClient client;
 
-    public ApiSmokeTests(BarberTurnFactory factory) => client = factory.CreateClient(new WebApplicationFactoryClientOptions
+    public ApiSmokeTests(BarberTurnFactory factory)
     {
-        BaseAddress = new Uri("https://localhost"),
-        AllowAutoRedirect = false,
-        HandleCookies = true
-    });
+        this.factory = factory;
+        client = CreateClient();
+    }
 
     [Fact]
     public async Task DemoTenantCanReachAuthenticatedAndPublicFlows()
@@ -78,8 +78,53 @@ public sealed class ApiSmokeTests : IClassFixture<BarberTurnFactory>, IDisposabl
         Assert.Equal(HttpStatusCode.Unauthorized, refreshAfterLogout.StatusCode);
     }
 
+    [Fact]
+    public async Task TenantCannotUpdateAnotherTenantCustomer()
+    {
+        using var tenantA = CreateClient();
+        using var tenantB = CreateClient();
+
+        await RegisterAndAuthenticateAsync(tenantA, "Tenant A");
+        await RegisterAndAuthenticateAsync(tenantB, "Tenant B");
+
+        var created = await tenantA.PostAsJsonAsync("/api/customers", new { name = "Cliente A", phone = "809-555-0101", email = "cliente-a@example.com" });
+        created.EnsureSuccessStatusCode();
+        var customer = await created.Content.ReadFromJsonAsync<CustomerPayload>();
+        Assert.NotNull(customer);
+
+        var crossTenantUpdate = await tenantB.PutAsJsonAsync($"/api/customers/{customer.Id}", new { name = "Intruso", phone = "809-555-9999", email = "intruso@example.com" });
+        Assert.Equal(HttpStatusCode.NotFound, crossTenantUpdate.StatusCode);
+    }
+
+    private HttpClient CreateClient() => factory.CreateClient(new WebApplicationFactoryClientOptions
+    {
+        BaseAddress = new Uri("https://localhost"),
+        AllowAutoRedirect = false,
+        HandleCookies = true
+    });
+
+    private static async Task RegisterAndAuthenticateAsync(HttpClient httpClient, string shopName)
+    {
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var response = await httpClient.PostAsJsonAsync("/api/auth/register-owner", new
+        {
+            barberShopName = shopName,
+            barberShopSlug = $"{shopName.ToLowerInvariant().Replace(' ', '-')}-{suffix}",
+            name = $"Owner {suffix}",
+            email = $"owner-{suffix}@example.com",
+            password = "ValidPass123!",
+            timeZoneId = "America/Santo_Domingo",
+            acceptedTerms = true
+        });
+        response.EnsureSuccessStatusCode();
+        var auth = await response.Content.ReadFromJsonAsync<AuthPayload>();
+        Assert.NotNull(auth);
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth.AccessToken);
+    }
+
     private sealed record AuthPayload(string AccessToken);
     private sealed record ShopPayload(string Slug);
+    private sealed record CustomerPayload(Guid Id);
 
     public void Dispose() => client.Dispose();
 }

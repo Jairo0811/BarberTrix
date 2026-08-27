@@ -3,6 +3,7 @@ import { useI18n } from './i18n'
 import './auth-recovery.css'
 import { publicApi } from './api'
 import { apiErrorMessage } from './apiErrorMessages'
+import { isStrongPassword, passwordPolicyHint, passwordPolicyMessage } from './passwordPolicy'
 
 function getResetToken() {
   const query = window.location.hash.split('?')[1] ?? ''
@@ -27,8 +28,8 @@ export default function ResetPasswordPage() {
     const password = String(data.get('password') ?? '')
     const confirmPassword = String(data.get('confirmPassword') ?? '')
 
-    if (password.length < 10 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
-      setError(t('register.passwordLength'))
+    if (!isStrongPassword(password)) {
+      setError(passwordPolicyMessage(locale))
       setBusy(false)
       return
     }
@@ -79,14 +80,14 @@ export default function ResetPasswordPage() {
             <h1 id="reset-password-title">{t('reset.title')}</h1>
             <p className="recovery-description">{t('reset.description')}</p>
 
-            <span id="reset-password-requirements" className="visually-hidden">{t('register.passwordLength')}</span>
+            <span id="reset-password-requirements" className="visually-hidden">{passwordPolicyMessage(locale)}</span>
 
             <form className="recovery-form" onSubmit={resetPassword} aria-busy={busy} aria-describedby={error ? 'reset-password-error' : undefined}>
               <label>
                 <span>{t('reset.newPassword')}</span>
                 <div className="recovery-input-wrap">
                   <span aria-hidden="true">●</span>
-                  <input name="password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={10} aria-describedby="reset-password-requirements" placeholder={t('register.passwordHint')} required />
+                  <input name="password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={10} aria-describedby="reset-password-requirements" placeholder={passwordPolicyHint(locale)} required />
                   <button type="button" aria-label={showPassword ? t('common.hide') : t('common.show')} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}>{showPassword ? t('common.hide') : t('common.show')}</button>
                 </div>
               </label>

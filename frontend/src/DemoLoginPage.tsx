@@ -28,7 +28,7 @@ export default function DemoLoginPage() {
     setIsTakingLong(false)
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/demo-login`, { method: 'POST' })
+      const response = await fetch(`${API_URL}/api/auth/demo-login`, { method: 'POST', credentials: 'include' })
 
       if (!response.ok) {
         const payload = await response.json().catch(() => null)

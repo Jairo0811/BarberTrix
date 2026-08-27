@@ -21,6 +21,7 @@ export default function PublicBookingPage() {
   const [turn, setTurn] = useState<TurnResult | null>(null)
   const [appointment, setAppointment] = useState<AppointmentResult | null>(null)
   const [slots, setSlots] = useState<Slot[]>([])
+  const [turnIdempotencyKey, setTurnIdempotencyKey] = useState(() => crypto.randomUUID())
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -67,7 +68,7 @@ export default function PublicBookingPage() {
     event.preventDefault(); setBusy(true); setError('')
     const data = new FormData(event.currentTarget)
     try {
-      const response = await fetch(`${API_URL}/api/public/shops/${encodeURIComponent(slug)}/turns`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ serviceId: data.get('serviceId'), barberId: data.get('barberId') || null, customerName: data.get('customerName') || null, customerPhone: data.get('customerPhone') || null, idempotencyKey: crypto.randomUUID() }) })
+      const response = await fetch(`${API_URL}/api/public/shops/${encodeURIComponent(slug)}/turns`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ serviceId: data.get('serviceId'), barberId: data.get('barberId') || null, customerName: data.get('customerName') || null, customerPhone: data.get('customerPhone') || null, idempotencyKey: turnIdempotencyKey }) })
       const payload = await response.json(); if (!response.ok) throw new Error(payload.message ?? 'No se pudo crear el turno.')
       const created = payload as TurnResult
       setTurn(created)
@@ -105,7 +106,7 @@ export default function PublicBookingPage() {
       const response = await fetch(`${API_URL}/api/public/shops/${encodeURIComponent(slug)}/${kind === 'turn' ? 'turns' : 'appointments'}/${id}?token=${encodeURIComponent(saved.lookupToken)}`, { method: 'DELETE' })
       if (!response.ok) { const payload = await response.json().catch(() => null); throw new Error(payload?.message ?? 'No se pudo cancelar.') }
       history.replaceState(null, '', `#/book?shop=${encodeURIComponent(slug)}`)
-      if (kind === 'turn') setTurn(null); else setAppointment(null)
+      if (kind === 'turn') { setTurn(null); setTurnIdempotencyKey(crypto.randomUUID()) } else setAppointment(null)
     } catch (exception) { setError(exception instanceof Error ? exception.message : 'No se pudo cancelar.') }
     finally { setBusy(false) }
   }

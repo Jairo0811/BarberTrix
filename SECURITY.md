@@ -12,9 +12,17 @@ Se intentará confirmar la recepción en 72 horas y compartir una evaluación in
 
 ## Controles relevantes
 
-- tokens de acceso cortos y refresh tokens rotatorios/revocables;
-- aislamiento por `BarberShopId` derivado del JWT;
+- access tokens cortos y refresh tokens rotatorios/revocables en cookie `HttpOnly`, `Secure` bajo HTTPS y `SameSite=Lax`;
+- aislamiento por `BarberShopId` derivado del JWT y pruebas multi-tenant;
 - verificación de correo, roles y security stamp;
-- rate limiting, auditoría y encabezados de seguridad;
+- rate limiting, auditoría, correlation ID y encabezados de seguridad;
+- separación SignalR por audiencias `internal`, `public` y `tv`;
+- errores API estructurados mediante `code`, `message` y `correlationId`;
 - secretos por variables de entorno;
-- CodeQL, Dependabot y escaneo de secretos en CI.
+- identidad SQL de aplicación separada de la identidad de migraciones y del administrador de la instancia;
+- logs estructurados sin passwords, JWT, refresh tokens, cookies ni secretos de proveedores;
+- CodeQL, Dependabot, escaneo de secretos y gates de cobertura en CI.
+
+## Producción
+
+La API no debe ejecutarse con credenciales SQL administrativas. Consulta [`docs/production-operations.md`](docs/production-operations.md) para la estrategia de mínimo privilegio, migraciones, observabilidad, backups, secretos y checklist de lanzamiento.

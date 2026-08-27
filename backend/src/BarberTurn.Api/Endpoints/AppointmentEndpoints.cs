@@ -33,6 +33,10 @@ public static class AppointmentEndpoints
                 await limits.EnsureCanUseAsync(shopId.Value, PlanFeature.Appointments, ct);
                 return Results.Created($"/api/public/shops/{slug}/appointments", await service.CreatePublicAsync(slug, request, ct));
             }
+            catch (BusinessRuleException ex)
+            {
+                return ApiErrorResults.Conflict(context, ex.Code, ex.Message);
+            }
             catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
             {
                 return ApiErrorResults.BadRequest(context, ApiErrorCodes.AppointmentInvalid, ex.Message);
@@ -73,6 +77,7 @@ public static class AppointmentEndpoints
         group.MapPost("/blocks", async (CreateBlockedTimeRequest request, HttpContext context, IAppointmentService service, CancellationToken ct) =>
         {
             try { await service.CreateBlockAsync(ShopId(context), request, ct); return Results.NoContent(); }
+            catch (BusinessRuleException ex) { return ApiErrorResults.Conflict(context, ex.Code, ex.Message); }
             catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
             {
                 return ApiErrorResults.BadRequest(context, ApiErrorCodes.AppointmentInvalid, ex.Message);
@@ -86,6 +91,7 @@ public static class AppointmentEndpoints
     private static async Task<IResult> ExecuteAsync(HttpContext context, Func<Task<AppointmentResponse?>> operation)
     {
         try { return await operation() is { } response ? Results.Ok(response) : Results.NotFound(); }
+        catch (BusinessRuleException ex) { return ApiErrorResults.Conflict(context, ex.Code, ex.Message); }
         catch (InvalidOperationException ex) { return ApiErrorResults.Conflict(context, ApiErrorCodes.AppointmentConflict, ex.Message); }
     }
 }

@@ -72,6 +72,7 @@ app.UseCors("frontend");
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<RequestTelemetryMiddleware>();
 app.UseMiddleware<AuditMiddleware>();
 
 if (app.Environment.IsDevelopment())

@@ -7,11 +7,58 @@ using BarberTurn.Domain.Entities;
 using BarberTurn.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace BarberTurn.Infrastructure.Commercial;
 
-internal sealed class PayPalBillingService(HttpClient httpClient, ApplicationDbContext dbContext, IConfiguration configuration) : IBillingService
+internal sealed class PayPalBillingService(
+    HttpClient httpClient,
+    ApplicationDbContext dbContext,
+    IConfiguration configuration,
+    ILogger<PayPalBillingService> logger) : IBillingService
 {
+    private static readonly Action<ILogger, Guid, SubscriptionPlan, Exception?> LogCreatingCheckout =
+        LoggerMessage.Define<Guid, SubscriptionPlan>(
+            LogLevel.Information,
+            new EventId(1001, nameof(CreateCheckoutAsync)),
+            "Creating PayPal checkout for tenant {TenantId} and plan {Plan}");
+
+    private static readonly Action<ILogger, Guid, SubscriptionPlan, Exception?> LogSubscriptionActivated =
+        LoggerMessage.Define<Guid, SubscriptionPlan>(
+            LogLevel.Information,
+            new EventId(1002, nameof(CaptureCheckoutAsync)),
+            "Activated PayPal subscription for tenant {TenantId} on plan {Plan}");
+
+    private static readonly Action<ILogger, Guid, bool, Exception?> LogSubscriptionCancelled =
+        LoggerMessage.Define<Guid, bool>(
+            LogLevel.Information,
+            new EventId(1003, nameof(CancelAsync)),
+            "Cancelled PayPal subscription for tenant {TenantId}; at period end: {AtPeriodEnd}");
+
+    private static readonly Action<ILogger, Exception?> LogWebhookSignatureRejected =
+        LoggerMessage.Define(
+            LogLevel.Warning,
+            new EventId(1101, "PayPalWebhookSignatureRejected"),
+            "Rejected PayPal webhook because signature verification failed");
+
+    private static readonly Action<ILogger, string, Exception?> LogWebhookMissingProviderId =
+        LoggerMessage.Define<string>(
+            LogLevel.Warning,
+            new EventId(1102, "PayPalWebhookMissingProviderId"),
+            "Ignoring PayPal webhook {EventType} without a provider resource id");
+
+    private static readonly Action<ILogger, string, Exception?> LogWebhookSubscriptionNotFound =
+        LoggerMessage.Define<string>(
+            LogLevel.Warning,
+            new EventId(1103, "PayPalWebhookSubscriptionNotFound"),
+            "Ignoring PayPal webhook {EventType} because no local subscription matched");
+
+    private static readonly Action<ILogger, string, Guid, SubscriptionStatus, Exception?> LogWebhookProcessed =
+        LoggerMessage.Define<string, Guid, SubscriptionStatus>(
+            LogLevel.Information,
+            new EventId(1104, nameof(HandleWebhookAsync)),
+            "Processed PayPal webhook {EventType} for tenant {TenantId}; subscription status {SubscriptionStatus}");
+
     public async Task<CheckoutResponse> CreateCheckoutAsync(Guid barberShopId, CheckoutRequest request, CancellationToken cancellationToken = default)
     {
         _ = await dbContext.BarberShops.AsNoTracking().SingleAsync(x => x.Id == barberShopId, cancellationToken);
@@ -20,6 +67,9 @@ internal sealed class PayPalBillingService(HttpClient httpClient, ApplicationDbC
         var planId = configuration[$"PayPal:PlanIds:{request.Plan}"];
         if (string.IsNullOrWhiteSpace(planId))
             throw new InvalidOperationException($"PayPal plan {request.Plan} is not configured.");
+
+        LogCreatingCheckout(logger, barberShopId, request.Plan, null);
+
         using var message = await CreateRequestAsync(HttpMethod.Post, "/v1/billing/subscriptions", cancellationToken);
         message.Content = JsonContent.Create(new
         {
@@ -61,6 +111,9 @@ internal sealed class PayPalBillingService(HttpClient httpClient, ApplicationDbC
         var shop = await dbContext.BarberShops.SingleAsync(x => x.Id == barberShopId, cancellationToken);
         shop.ChangeSubscription(plan, SubscriptionStatus.Active);
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        LogSubscriptionActivated(logger, barberShopId, plan, null);
+
         return await GetSubscriptionAsync(barberShopId, cancellationToken);
     }
 
@@ -82,7 +135,7 @@ internal sealed class PayPalBillingService(HttpClient httpClient, ApplicationDbC
             using var message = await CreateRequestAsync(HttpMethod.Post, $"/v1/billing/subscriptions/{Uri.EscapeDataString(subscription.ProviderSubscriptionId)}/cancel", cancellationToken);
             message.Content = JsonContent.Create(new { reason = "Cancelled by BarberTurn account owner" });
             using var response = await httpClient.SendAsync(message, cancellationToken);
-            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            _ = await response.Content.ReadAsStringAsync(cancellationToken);
             EnsureSuccess(response);
         }
         subscription.Cancel(atPeriodEnd);
@@ -92,6 +145,9 @@ internal sealed class PayPalBillingService(HttpClient httpClient, ApplicationDbC
             shop.ChangeSubscription(shop.Plan, SubscriptionStatus.Cancelled);
         }
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        LogSubscriptionCancelled(logger, barberShopId, atPeriodEnd, null);
+
         return await GetSubscriptionAsync(barberShopId, cancellationToken);
     }
 
@@ -111,22 +167,33 @@ internal sealed class PayPalBillingService(HttpClient httpClient, ApplicationDbC
         EnsureSuccess(verificationResponse);
         using var verificationDocument = JsonDocument.Parse(verificationBody);
         if (verificationDocument.RootElement.GetProperty("verification_status").GetString() != "SUCCESS")
+        {
+            LogWebhookSignatureRejected(logger, null);
             throw new InvalidOperationException("Invalid PayPal webhook signature.");
+        }
 
-        var eventType = eventDocument.RootElement.GetProperty("event_type").GetString();
+        var eventType = eventDocument.RootElement.GetProperty("event_type").GetString() ?? "unknown";
         var resource = eventDocument.RootElement.GetProperty("resource");
         var providerId = resource.TryGetProperty("id", out var id) ? id.GetString() : null;
         if (providerId is null)
+        {
+            LogWebhookMissingProviderId(logger, eventType, null);
             return;
+        }
         var subscription = await dbContext.Subscriptions.OrderByDescending(x => x.CreatedAtUtc).FirstOrDefaultAsync(x => x.ProviderSubscriptionId == providerId, cancellationToken);
         if (subscription is null)
+        {
+            LogWebhookSubscriptionNotFound(logger, eventType, null);
             return;
+        }
         if (eventType is "BILLING.SUBSCRIPTION.PAYMENT.FAILED" or "BILLING.SUBSCRIPTION.SUSPENDED") subscription.MarkPastDue();
         if (eventType == "BILLING.SUBSCRIPTION.CANCELLED") subscription.Cancel(false);
         if (eventType == "BILLING.SUBSCRIPTION.ACTIVATED") subscription.Renew(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddMonths(1));
         var shop = await dbContext.BarberShops.SingleAsync(x => x.Id == subscription.BarberShopId, cancellationToken);
         shop.ChangeSubscription(subscription.Plan, subscription.Status);
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        LogWebhookProcessed(logger, eventType, subscription.BarberShopId, subscription.Status, null);
     }
 
     private async Task<HttpRequestMessage> CreateRequestAsync(HttpMethod method, string path, CancellationToken cancellationToken)

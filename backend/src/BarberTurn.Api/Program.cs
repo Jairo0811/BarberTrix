@@ -51,6 +51,9 @@ if (builder.Configuration.GetValue<bool>("Database:ApplyMigrations"))
     await dbContext.Database.MigrateAsync();
 }
 
+if (builder.Configuration.GetValue<bool>("Database:MigrationOnly"))
+    return;
+
 app.UseExceptionHandler();
 app.UseForwardedHeaders();
 if (!app.Environment.IsDevelopment()) app.UseHsts();

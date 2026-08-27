@@ -7,6 +7,45 @@ namespace BarberTurn.Infrastructure.Commercial;
 
 internal sealed class CommercialService(ApplicationDbContext dbContext) : ICommercialService
 {
+    public async Task<ShopSettingsResponse> GetShopSettingsAsync(Guid barberShopId, CancellationToken cancellationToken = default) =>
+        await dbContext.BarberShops.AsNoTracking()
+            .Where(x => x.Id == barberShopId)
+            .Select(x => new ShopSettingsResponse(x.Id, x.Name, x.Slug, x.TimeZoneId, x.Plan, x.SubscriptionStatus, x.TrialEndsAtUtc))
+            .SingleAsync(cancellationToken);
+
+    public async Task UpdateShopSettingsAsync(Guid barberShopId, UpdateShopSettingsRequest request, CancellationToken cancellationToken = default)
+    {
+        _ = TimeZoneInfo.FindSystemTimeZoneById(request.TimeZoneId);
+        var shop = await dbContext.BarberShops.SingleAsync(x => x.Id == barberShopId, cancellationToken);
+        shop.UpdateSettings(request.Name, request.TimeZoneId);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<ShopLocationResponse>> GetLocationsAsync(Guid barberShopId, CancellationToken cancellationToken = default) =>
+        await dbContext.ShopLocations.AsNoTracking()
+            .Where(x => x.BarberShopId == barberShopId)
+            .OrderBy(x => x.Name)
+            .Select(MapLocation())
+            .ToListAsync(cancellationToken);
+
+    public async Task<ShopLocationResponse> CreateLocationAsync(Guid barberShopId, UpsertLocationRequest request, CancellationToken cancellationToken = default)
+    {
+        var location = new ShopLocation(barberShopId, request.Name, request.Slug, request.Address, request.TimeZoneId);
+        dbContext.ShopLocations.Add(location);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return ToResponse(location);
+    }
+
+    public async Task<ShopLocationResponse?> UpdateLocationAsync(Guid barberShopId, Guid locationId, UpsertLocationRequest request, CancellationToken cancellationToken = default)
+    {
+        var location = await dbContext.ShopLocations.SingleOrDefaultAsync(x => x.Id == locationId && x.BarberShopId == barberShopId, cancellationToken);
+        if (location is null)
+            return null;
+        location.Update(request.Name, request.Slug, request.Address, request.TimeZoneId);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return ToResponse(location);
+    }
+
     public async Task<IReadOnlyList<CustomerResponse>> GetCustomersAsync(Guid barberShopId, string? search, int take, CancellationToken cancellationToken = default)
     {
         var query = dbContext.Customers.AsNoTracking().Where(x => x.BarberShopId == barberShopId);
@@ -81,6 +120,9 @@ internal sealed class CommercialService(ApplicationDbContext dbContext) : IComme
             throw new InvalidOperationException("A customer with that email already exists.");
     }
 
+    private static System.Linq.Expressions.Expression<Func<ShopLocation, ShopLocationResponse>> MapLocation() => x =>
+        new ShopLocationResponse(x.Id, x.BarberShopId, x.Name, x.Slug, x.Address, x.TimeZoneId, x.IsActive);
+    private static ShopLocationResponse ToResponse(ShopLocation x) => new(x.Id, x.BarberShopId, x.Name, x.Slug, x.Address, x.TimeZoneId, x.IsActive);
     private static System.Linq.Expressions.Expression<Func<Customer, CustomerResponse>> MapCustomer() => x => new CustomerResponse(x.Id, x.Name, x.Phone, x.Email, x.IsActive, x.CreatedAtUtc);
     private static CustomerResponse ToResponse(Customer x) => new(x.Id, x.Name, x.Phone, x.Email, x.IsActive, x.CreatedAtUtc);
     private static System.Linq.Expressions.Expression<Func<PaymentRecord, PaymentResponse>> MapPayment() => x => new PaymentResponse(x.Id, x.Amount, x.Currency, x.Method, x.Status, x.TurnId, x.AppointmentId, x.CustomerId, x.ExternalReference, x.PaidAtUtc);

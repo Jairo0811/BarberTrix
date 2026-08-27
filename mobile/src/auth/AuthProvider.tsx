@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
-import { createContext, PropsWithChildren, useContext, useMemo, useState } from 'react';
-import { login } from './authApi';
+import { createContext, PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
+import { login, logout, refreshSession } from './authApi';
 import { secureSessionStore } from './secureSessionStore';
 import type { AuthStatus, MobileSession } from './types';
 
@@ -15,21 +15,54 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const [session, setSession] = useState<MobileSession>();
-  const status: AuthStatus = session ? 'authenticated' : 'anonymous';
+  const [status, setStatus] = useState<AuthStatus>('loading');
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function restore() {
+      const refreshToken = await secureSessionStore.getRefreshToken();
+      if (!refreshToken) {
+        if (!cancelled) setStatus('anonymous');
+        return;
+      }
+
+      try {
+        const restored = await refreshSession(refreshToken);
+        if (cancelled) return;
+        setSession(restored);
+        setStatus('authenticated');
+        await secureSessionStore.setRefreshToken(restored.refreshToken);
+      } catch {
+        await secureSessionStore.clearRefreshToken();
+        if (!cancelled) setStatus('anonymous');
+      }
+    }
+
+    void restore();
+    return () => { cancelled = true; };
+  }, []);
 
   const value = useMemo<AuthContextValue>(() => ({
     status,
     session,
     async signIn(email, password) {
       const next = await login(email, password);
+      await secureSessionStore.setRefreshToken(next.refreshToken);
       setSession(next);
-      if (next.refreshToken) await secureSessionStore.setRefreshToken(next.refreshToken);
+      setStatus('authenticated');
       router.replace('/(app)');
     },
     async signOut() {
-      setSession(undefined);
-      await secureSessionStore.clearRefreshToken();
-      router.replace('/(auth)/login');
+      const refreshToken = session?.refreshToken ?? await secureSessionStore.getRefreshToken();
+      try {
+        if (refreshToken) await logout(refreshToken);
+      } finally {
+        setSession(undefined);
+        setStatus('anonymous');
+        await secureSessionStore.clearRefreshToken();
+        router.replace('/(auth)/login');
+      }
     },
   }), [session, status]);
 

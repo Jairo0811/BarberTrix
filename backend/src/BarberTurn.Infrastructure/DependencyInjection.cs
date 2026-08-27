@@ -39,6 +39,7 @@ public static class DependencyInjection
         services.AddScoped<ICommercialService, CommercialService>();
         services.AddScoped<IAuditService, AuditService>();
         services.AddScoped<IPlanLimitService, PlanLimitService>();
+        services.AddScoped<IShopLookupService, ShopLookupService>();
         services.AddScoped<IEmailSender, ConfigurableEmailSender>();
         services.AddHttpClient<IHumanVerificationService, HumanVerificationService>();
         services.AddHttpClient<IBillingService, PayPalBillingService>();

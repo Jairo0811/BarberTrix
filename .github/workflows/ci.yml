@@ -46,8 +46,18 @@ jobs:
         run: dotnet restore BarberTurn.sln
       - name: Build
         run: dotnet build BarberTurn.sln --configuration Release --no-restore
-      - name: Test
-        run: dotnet test BarberTurn.sln --configuration Release --no-build --no-restore --collect:"XPlat Code Coverage"
+      - name: Test with coverage
+        run: dotnet test BarberTurn.sln --configuration Release --no-build --no-restore --collect:"XPlat Code Coverage" --results-directory backend/TestResults
+      - name: Validate critical backend coverage
+        run: python3 backend/scripts/check_coverage.py --reports backend/TestResults --assembly BarberTurn.Domain --minimum 70
+      - name: Upload backend coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/TestResults
+          if-no-files-found: error
+          retention-days: 14
       - name: Validate migration script
         run: |
           dotnet tool install --global dotnet-ef --version "10.0.*"
@@ -72,8 +82,16 @@ jobs:
         run: npm ci
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
-      - name: Test
-        run: npm run test:run
+      - name: Test with coverage
+        run: npm run test:coverage
+      - name: Upload frontend coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage
+          if-no-files-found: error
+          retention-days: 14
       - name: Build
         run: npm run build
 

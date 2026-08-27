@@ -210,8 +210,13 @@ public sealed class ApiSmokeTests : IClassFixture<BarberTurnFactory>, IDisposabl
         });
 
         var responses = await Task.WhenAll(firstRequest, secondRequest);
-        Assert.Equal(1, responses.Count(response => response.StatusCode == HttpStatusCode.Created));
-        Assert.Equal(1, responses.Count(response => response.StatusCode == HttpStatusCode.Conflict));
+        var createdCount = responses.Count(response => response.StatusCode == HttpStatusCode.Created);
+        var conflictCount = responses.Count(response => response.StatusCode == HttpStatusCode.Conflict);
+        if (createdCount != 1 || conflictCount != 1)
+        {
+            var diagnostics = await Task.WhenAll(responses.Select(async response => $"{(int)response.StatusCode} {response.StatusCode}: {await response.Content.ReadAsStringAsync()}"));
+            Assert.Fail($"Expected one 201 Created and one 409 Conflict. Actual responses: {string.Join(" | ", diagnostics)}");
+        }
 
         var conflict = Assert.Single(responses, response => response.StatusCode == HttpStatusCode.Conflict);
         var payload = await conflict.Content.ReadFromJsonAsync<ApiErrorPayload>();

@@ -8,6 +8,7 @@ type Service = { id: string; name: string; price: number; estimatedDurationMinut
 type Barber = { id: string; name: string; chairNumber: number }
 type Shop = { name: string; slug: string; services: Service[]; barbers: Barber[] }
 type QueueDisplay = { estimatedWaitMinutes: number; turns: Array<{ ticketNumber: string; status: string }> }
+type PublicCapabilities = { canUseAppointments: boolean; canUseTv: boolean }
 
 function queryValue(name: string) {
   return new URLSearchParams((location.hash.split('?')[1] ?? '')).get(name) ?? ''
@@ -17,6 +18,7 @@ export default function CustomerPortalPage() {
   const slug = useMemo(() => queryValue('shop'), [])
   const [shop, setShop] = useState<Shop | null>(null)
   const [queue, setQueue] = useState<QueueDisplay | null>(null)
+  const [capabilities, setCapabilities] = useState<PublicCapabilities | null>(null)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -24,14 +26,18 @@ export default function CustomerPortalPage() {
     void Promise.all([
       fetch(`${API_URL}/api/public/shops/${encodeURIComponent(slug)}`),
       fetch(`${API_URL}/api/public/shops/${encodeURIComponent(slug)}/queue`),
-    ]).then(async ([shopResponse, queueResponse]) => {
+      fetch(`${API_URL}/api/public/shops/${encodeURIComponent(slug)}/capabilities`),
+    ]).then(async ([shopResponse, queueResponse, capabilitiesResponse]) => {
       if (!shopResponse.ok) throw new Error('No encontramos esta barbería.')
       setShop(await shopResponse.json() as Shop)
       if (queueResponse.ok) setQueue(await queueResponse.json() as QueueDisplay)
+      if (capabilitiesResponse.ok) setCapabilities(await capabilitiesResponse.json() as PublicCapabilities)
     }).catch(exception => setError(exception instanceof Error ? exception.message : 'No se pudo cargar la barbería.'))
   }, [slug])
 
   if (!slug) return <main className="customer-portal empty-portal"><section><h1>Falta identificar la barbería</h1><p>Abre el enlace compartido por tu barbería o escanea su código QR.</p><a href="#/">Volver a BarberTurn</a></section></main>
+
+  const appointmentsEnabled = capabilities?.canUseAppointments === true
 
   return <main className="customer-portal">
     <header className="customer-portal-header">
@@ -40,8 +46,8 @@ export default function CustomerPortalPage() {
     </header>
 
     <section className="customer-hero">
-      <div><span>BIENVENIDO A {shop?.name?.toUpperCase() || 'BARBERTURN'}</span><h1>Tu turno, tu cita y tu barbería en un solo lugar.</h1><p>No necesitas crear una cuenta para tomar un turno o reservar una cita.</p></div>
-      <div className="customer-hero-actions"><a className="portal-primary-link" href={`#/book?shop=${encodeURIComponent(slug)}`}>Tomar turno</a><a className="portal-secondary-link" href={`#/book?shop=${encodeURIComponent(slug)}`}>Reservar cita</a></div>
+      <div><span>BIENVENIDO A {shop?.name?.toUpperCase() || 'BARBERTURN'}</span><h1>{appointmentsEnabled ? 'Tu turno, tu cita y tu barbería en un solo lugar.' : 'Tu turno y tu barbería en un solo lugar.'}</h1><p>{appointmentsEnabled ? 'No necesitas crear una cuenta para tomar un turno o reservar una cita.' : 'No necesitas crear una cuenta para tomar un turno.'}</p></div>
+      <div className="customer-hero-actions"><a className="portal-primary-link" href={`#/book?shop=${encodeURIComponent(slug)}`}>Tomar turno</a>{appointmentsEnabled && <a className="portal-secondary-link" href={`#/book?shop=${encodeURIComponent(slug)}`}>Reservar cita</a>}</div>
     </section>
 
     {error && <p className="portal-error" role="alert">{error}</p>}
@@ -66,7 +72,7 @@ export default function CustomerPortalPage() {
 
     <section className="customer-cta portal-card">
       <FontAwesomeIcon icon={faCalendarCheck} />
-      <div><h2>¿Ya sabes lo que necesitas?</h2><p>Entra al autoservicio para tomar un turno ahora o consultar horarios para una cita.</p></div>
+      <div><h2>¿Ya sabes lo que necesitas?</h2><p>{appointmentsEnabled ? 'Entra al autoservicio para tomar un turno ahora o consultar horarios para una cita.' : 'Entra al autoservicio y toma tu turno ahora.'}</p></div>
       <a className="portal-primary-link" href={`#/book?shop=${encodeURIComponent(slug)}`}>Continuar</a>
     </section>
   </main>

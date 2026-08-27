@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
+#pragma warning disable CA1861
 
 namespace BarberTurn.Infrastructure.Persistence.Migrations;
 

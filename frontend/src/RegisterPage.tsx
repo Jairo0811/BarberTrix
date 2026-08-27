@@ -51,6 +51,7 @@ export default function RegisterPage() {
     try {
       const response = await fetch(`${API_URL}/api/auth/register-owner`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           barberShopName: shopName,

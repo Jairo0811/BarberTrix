@@ -8,10 +8,12 @@
     "userInterfaceStyle": "light",
     "plugins": ["expo-router", "expo-secure-store"],
     "experiments": { "typedRoutes": true },
-    "ios": { "supportsTablet": true, "bundleIdentifier": "com.jmsoftwaresolutions.barberturn" },
-    "android": { "package": "com.jmsoftwaresolutions.barberturn" },
-    "extra": {
-      "apiBaseUrl": "${EXPO_PUBLIC_API_BASE_URL}"
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.jmsoftwaresolutions.barberturn"
+    },
+    "android": {
+      "package": "com.jmsoftwaresolutions.barberturn"
     }
   }
 }

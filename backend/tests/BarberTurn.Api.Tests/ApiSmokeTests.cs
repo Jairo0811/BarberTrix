@@ -1,10 +1,18 @@
+using System.Data;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
+using BarberTurn.Domain.Entities;
+using BarberTurn.Infrastructure.Commercial;
+using BarberTurn.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace BarberTurn.Api.Tests;
@@ -156,6 +164,103 @@ public sealed class ApiSmokeTests : IClassFixture<BarberTurnFactory>, IDisposabl
         Assert.Equal(correlationId, payload.CorrelationId);
     }
 
+    [Fact]
+    public async Task ConcurrentPublicAppointmentsCannotDoubleBookBarber()
+    {
+        using var ownerClient = CreateClient();
+        var demo = await ownerClient.PostAsync("/api/auth/demo-login", null);
+        demo.EnsureSuccessStatusCode();
+        var authentication = await demo.Content.ReadFromJsonAsync<AuthPayload>();
+        Assert.NotNull(authentication);
+
+        ownerClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authentication.AccessToken);
+        var settings = await ownerClient.GetFromJsonAsync<ShopPayload>("/api/shop/settings");
+        Assert.NotNull(settings);
+        ownerClient.DefaultRequestHeaders.Authorization = null;
+
+        var publicShop = await ownerClient.GetFromJsonAsync<PublicShopPayload>($"/api/public/shops/{settings.Slug}");
+        Assert.NotNull(publicShop);
+        var service = Assert.Single(publicShop.Services.Take(1));
+        var barber = Assert.Single(publicShop.Barbers.Take(1));
+        var localDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(3));
+        var availability = await ownerClient.GetFromJsonAsync<List<AvailabilitySlotPayload>>(
+            $"/api/public/shops/{settings.Slug}/appointments/availability?serviceId={service.Id}&date={localDate:yyyy-MM-dd}&barberId={barber.Id}");
+        Assert.NotNull(availability);
+        var slot = Assert.Single(availability.Take(1));
+
+        using var firstClient = CreateClient();
+        using var secondClient = CreateClient();
+        var firstRequest = firstClient.PostAsJsonAsync($"/api/public/shops/{settings.Slug}/appointments", new
+        {
+            serviceId = service.Id,
+            barberId = barber.Id,
+            startsAt = slot.StartsAtUtc,
+            customerName = "Cliente simultáneo A",
+            customerPhone = "809-555-0201",
+            customerEmail = "simultaneo-a@example.com"
+        });
+        var secondRequest = secondClient.PostAsJsonAsync($"/api/public/shops/{settings.Slug}/appointments", new
+        {
+            serviceId = service.Id,
+            barberId = barber.Id,
+            startsAt = slot.StartsAtUtc,
+            customerName = "Cliente simultáneo B",
+            customerPhone = "809-555-0202",
+            customerEmail = "simultaneo-b@example.com"
+        });
+
+        var responses = await Task.WhenAll(firstRequest, secondRequest);
+        Assert.Equal(1, responses.Count(response => response.StatusCode == HttpStatusCode.Created));
+        Assert.Equal(1, responses.Count(response => response.StatusCode == HttpStatusCode.Conflict));
+
+        var conflict = Assert.Single(responses.Where(response => response.StatusCode == HttpStatusCode.Conflict));
+        var payload = await conflict.Content.ReadFromJsonAsync<ApiErrorPayload>();
+        Assert.NotNull(payload);
+        Assert.Equal("APPOINTMENT_TIME_UNAVAILABLE", payload.Code);
+    }
+
+    [Fact]
+    public async Task PayPalWebhooksAreIdempotentAndIgnoreOlderEvents()
+    {
+        await using var scope = factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var suffix = Guid.NewGuid().ToString("N");
+        var providerSubscriptionId = $"I-TEST-{suffix}";
+        var shop = new BarberShop($"PayPal Test {suffix[..8]}", $"paypal-test-{suffix}");
+        shop.ChangeSubscription(SubscriptionPlan.Pro, SubscriptionStatus.Active);
+        var subscription = new Subscription(shop.Id, SubscriptionPlan.Pro, "PayPal", providerSubscriptionId, DateTimeOffset.UtcNow.AddDays(-5), DateTimeOffset.UtcNow.AddDays(25));
+        db.BarberShops.Add(shop);
+        db.Subscriptions.Add(subscription);
+        await db.SaveChangesAsync();
+
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["PayPal:ClientId"] = "test-client",
+            ["PayPal:Secret"] = "test-secret",
+            ["PayPal:WebhookId"] = "test-webhook",
+            ["PayPal:Sandbox"] = "true"
+        }).Build();
+        using var httpClient = new HttpClient(new PayPalStubHandler());
+        var billing = new PayPalBillingService(httpClient, db, configuration, NullLogger<PayPalBillingService>.Instance);
+        var cancelledAt = DateTimeOffset.UtcNow.AddMinutes(-1);
+        var cancelledEvent = CreatePayPalWebhook("WH-CANCEL-" + suffix, "BILLING.SUBSCRIPTION.CANCELLED", providerSubscriptionId, cancelledAt);
+
+        await billing.HandleWebhookAsync("transmission-1", cancelledAt.ToString("O"), "https://example.test/cert", "SHA256withRSA", "signature", cancelledEvent);
+        await billing.HandleWebhookAsync("transmission-1", cancelledAt.ToString("O"), "https://example.test/cert", "SHA256withRSA", "signature", cancelledEvent);
+
+        var olderActivatedAt = cancelledAt.AddMinutes(-10);
+        var olderActivatedEvent = CreatePayPalWebhook("WH-ACTIVATE-" + suffix, "BILLING.SUBSCRIPTION.ACTIVATED", providerSubscriptionId, olderActivatedAt);
+        await billing.HandleWebhookAsync("transmission-2", olderActivatedAt.ToString("O"), "https://example.test/cert", "SHA256withRSA", "signature", olderActivatedEvent);
+
+        db.ChangeTracker.Clear();
+        var persisted = await db.Subscriptions.SingleAsync(x => x.ProviderSubscriptionId == providerSubscriptionId);
+        Assert.Equal(SubscriptionStatus.Cancelled, persisted.Status);
+
+        var receiptStats = await ReadWebhookReceiptStatsAsync(db, providerSubscriptionId);
+        Assert.Equal(2, receiptStats.Total);
+        Assert.Equal(1, receiptStats.Applied);
+    }
+
     private HttpClient CreateClient() => factory.CreateClient(new WebApplicationFactoryClientOptions
     {
         BaseAddress = new Uri("https://localhost"),
@@ -182,10 +287,65 @@ public sealed class ApiSmokeTests : IClassFixture<BarberTurnFactory>, IDisposabl
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth.AccessToken);
     }
 
+    private static string CreatePayPalWebhook(string eventId, string eventType, string providerSubscriptionId, DateTimeOffset occurredAt) =>
+        JsonSerializer.Serialize(new
+        {
+            id = eventId,
+            event_type = eventType,
+            create_time = occurredAt.ToString("O"),
+            resource = new
+            {
+                id = providerSubscriptionId,
+                start_time = occurredAt.ToString("O"),
+                billing_info = new { next_billing_time = occurredAt.AddMonths(1).ToString("O") }
+            }
+        });
+
+    private static async Task<WebhookReceiptStats> ReadWebhookReceiptStatsAsync(ApplicationDbContext db, string providerSubscriptionId)
+    {
+        var connection = db.Database.GetDbConnection();
+        if (connection.State != ConnectionState.Open)
+            await connection.OpenAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = "SELECT COUNT(*), COALESCE(SUM(CASE WHEN [WasApplied] = 1 THEN 1 ELSE 0 END), 0) FROM [PayPalWebhookReceipts] WHERE [ProviderResourceId] = @providerResourceId;";
+        var parameter = command.CreateParameter();
+        parameter.ParameterName = "@providerResourceId";
+        parameter.DbType = DbType.String;
+        parameter.Size = 180;
+        parameter.Value = providerSubscriptionId;
+        command.Parameters.Add(parameter);
+        await using var reader = await command.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+        return new WebhookReceiptStats(reader.GetInt32(0), reader.GetInt32(1));
+    }
+
     private sealed record AuthPayload(string AccessToken);
     private sealed record ShopPayload(string Slug);
     private sealed record CustomerPayload(Guid Id);
     private sealed record ApiErrorPayload(string Code, string Message, string CorrelationId);
+    private sealed record PublicShopPayload(IReadOnlyList<ServicePayload> Services, IReadOnlyList<BarberPayload> Barbers);
+    private sealed record ServicePayload(Guid Id);
+    private sealed record BarberPayload(Guid Id);
+    private sealed record AvailabilitySlotPayload(DateTimeOffset StartsAtUtc);
+    private sealed record WebhookReceiptStats(int Total, int Applied);
+
+    private sealed class PayPalStubHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var payload = request.RequestUri?.AbsolutePath switch
+            {
+                "/v1/oauth2/token" => "{\"access_token\":\"test-access-token\"}",
+                "/v1/notifications/verify-webhook-signature" => "{\"verification_status\":\"SUCCESS\"}",
+                _ => throw new InvalidOperationException($"Unexpected PayPal test request: {request.RequestUri}")
+            };
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(payload, Encoding.UTF8, "application/json")
+            });
+        }
+    }
 
     public void Dispose() => client.Dispose();
 }

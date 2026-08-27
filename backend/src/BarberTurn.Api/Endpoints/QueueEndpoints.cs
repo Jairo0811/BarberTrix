@@ -1,5 +1,7 @@
 using System.Security.Claims;
+using BarberTurn.Application.Common;
 using BarberTurn.Application.Queue;
+using BarberTurn.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace BarberTurn.Api.Endpoints;
@@ -11,6 +13,14 @@ public static class QueueEndpoints
         var publicGroup = endpoints.MapGroup("/api/public/shops/{slug}").WithTags("Public queue").RequireRateLimiting("publicQueue");
         publicGroup.MapGet("/", async (string slug, IQueueService service, CancellationToken ct) =>
             await service.GetPublicShopAsync(slug, ct) is { } shop ? Results.Ok(shop) : Results.NotFound());
+        publicGroup.MapGet("/capabilities", async (string slug, ApplicationDbContext db, IPlanLimitService limits, CancellationToken ct) =>
+        {
+            var normalized = slug.Trim().ToLowerInvariant();
+            var shopId = await db.BarberShops.AsNoTracking().Where(x => x.Slug == normalized && x.IsActive).Select(x => (Guid?)x.Id).SingleOrDefaultAsync(ct);
+            if (shopId is null) return Results.NotFound();
+            var usage = await limits.GetUsageAsync(shopId.Value, ct);
+            return Results.Ok(new { usage.CanUseAppointments, usage.CanUseTv });
+        });
         publicGroup.MapGet("/queue", async (string slug, IQueueService service, CancellationToken ct) =>
             await service.GetPublicQueueAsync(slug, ct) is { } queue ? Results.Ok(queue) : Results.NotFound());
         publicGroup.MapPost("/turns", async (string slug, PublicCreateTurnRequest request, IQueueService service, CancellationToken ct) =>

@@ -45,7 +45,7 @@ const routeLabelKeys: Record<PublicRoute, string> = {
 }
 
 function getRoute(): PublicRoute {
-  if (window.location.hash === '#/login') return 'login'
+  if (window.location.hash === '#/login' || window.location.hash === '#billing-section') return 'login'
   if (window.location.hash === '#/register') return 'register'
   if (window.location.hash === '#/forgot-password') return 'forgot-password'
   if (window.location.hash.startsWith('#/reset-password')) return 'reset-password'
@@ -95,9 +95,12 @@ function Root() {
       : `${route === 'customer' ? 'Portal del cliente' : routeLabel} | BarberTurn`
 
     const frame = window.requestAnimationFrame(() => {
+      if (window.location.hash === '#billing-section') {
+        document.getElementById('billing-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        return
+      }
       const main = document.querySelector<HTMLElement>('main')
       if (!main) return
-
       main.id = 'main-content'
       main.tabIndex = -1
       main.focus({ preventScroll: true })

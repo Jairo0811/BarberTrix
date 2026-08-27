@@ -1,8 +1,8 @@
 import { FormEvent, useMemo, useState } from 'react'
 import { useI18n } from './i18n'
 import './auth-recovery.css'
-
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
+import { publicApi } from './api'
+import { apiErrorMessage } from './apiErrorMessages'
 
 function getResetToken() {
   const query = window.location.hash.split('?')[1] ?? ''
@@ -10,7 +10,7 @@ function getResetToken() {
 }
 
 export default function ResetPasswordPage() {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const token = useMemo(getResetToken, [])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -27,7 +27,7 @@ export default function ResetPasswordPage() {
     const password = String(data.get('password') ?? '')
     const confirmPassword = String(data.get('confirmPassword') ?? '')
 
-    if (password.length < 8) {
+    if (password.length < 10 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
       setError(t('register.passwordLength'))
       setBusy(false)
       return
@@ -40,21 +40,13 @@ export default function ResetPasswordPage() {
     }
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/reset-password`, {
+      await publicApi<{ message: string }>('/api/auth/reset-password', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, newPassword: password }),
       })
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => null)
-        const validationMessage = payload?.errors?.token?.[0] ?? payload?.errors?.credentials?.[0]
-        throw new Error(validationMessage ?? t('login.genericError'))
-      }
-
       setSuccess(true)
     } catch (exception) {
-      setError(exception instanceof Error ? exception.message : t('login.genericError'))
+      setError(apiErrorMessage(exception, locale, t('login.genericError')))
     } finally {
       setBusy(false)
     }
@@ -94,7 +86,7 @@ export default function ResetPasswordPage() {
                 <span>{t('reset.newPassword')}</span>
                 <div className="recovery-input-wrap">
                   <span aria-hidden="true">●</span>
-                  <input name="password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={8} aria-describedby="reset-password-requirements" placeholder={t('register.passwordHint')} required />
+                  <input name="password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={10} aria-describedby="reset-password-requirements" placeholder={t('register.passwordHint')} required />
                   <button type="button" aria-label={showPassword ? t('common.hide') : t('common.show')} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}>{showPassword ? t('common.hide') : t('common.show')}</button>
                 </div>
               </label>
@@ -103,7 +95,7 @@ export default function ResetPasswordPage() {
                 <span>{t('common.confirmPassword')}</span>
                 <div className="recovery-input-wrap">
                   <span aria-hidden="true">●</span>
-                  <input name="confirmPassword" type={showConfirmation ? 'text' : 'password'} autoComplete="new-password" minLength={8} aria-describedby="reset-password-requirements" placeholder={t('register.confirmPlaceholder')} required />
+                  <input name="confirmPassword" type={showConfirmation ? 'text' : 'password'} autoComplete="new-password" minLength={10} aria-describedby="reset-password-requirements" placeholder={t('register.confirmPlaceholder')} required />
                   <button type="button" aria-label={showConfirmation ? t('common.hide') : t('common.show')} aria-pressed={showConfirmation} onClick={() => setShowConfirmation(value => !value)}>{showConfirmation ? t('common.hide') : t('common.show')}</button>
                 </div>
               </label>

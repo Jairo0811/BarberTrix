@@ -21,6 +21,8 @@ secrets.json
 # Test / coverage
 coverage/
 TestResults/
+playwright-report/
+test-results/
 
 # IDE
 .idea/

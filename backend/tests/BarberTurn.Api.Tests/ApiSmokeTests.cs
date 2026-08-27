@@ -165,6 +165,59 @@ public sealed class ApiSmokeTests : IClassFixture<BarberTurnFactory>, IDisposabl
     }
 
     [Fact]
+    public async Task PublicTurnRetriesAreIdempotentAndLookupTokenRemainsValid()
+    {
+        using var ownerClient = CreateClient();
+        var demo = await ownerClient.PostAsync("/api/auth/demo-login", null);
+        demo.EnsureSuccessStatusCode();
+        var authentication = await demo.Content.ReadFromJsonAsync<AuthPayload>();
+        Assert.NotNull(authentication);
+
+        ownerClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authentication.AccessToken);
+        var settings = await ownerClient.GetFromJsonAsync<ShopPayload>("/api/shop/settings");
+        Assert.NotNull(settings);
+        ownerClient.DefaultRequestHeaders.Authorization = null;
+
+        var publicShop = await ownerClient.GetFromJsonAsync<PublicShopPayload>($"/api/public/shops/{settings.Slug}");
+        Assert.NotNull(publicShop);
+        var service = Assert.Single(publicShop.Services.Take(1));
+        var idempotencyKey = Guid.NewGuid();
+        var request = new
+        {
+            serviceId = service.Id,
+            barberId = (Guid?)null,
+            customerName = "Cliente idempotente",
+            customerPhone = "809-555-0301",
+            idempotencyKey = idempotencyKey.ToString()
+        };
+
+        using var firstClient = CreateClient();
+        using var secondClient = CreateClient();
+        var responses = await Task.WhenAll(
+            firstClient.PostAsJsonAsync($"/api/public/shops/{settings.Slug}/turns", request),
+            secondClient.PostAsJsonAsync($"/api/public/shops/{settings.Slug}/turns", request));
+
+        Assert.All(responses, response => Assert.Equal(HttpStatusCode.Created, response.StatusCode));
+        var first = await responses[0].Content.ReadFromJsonAsync<PublicTurnPayload>();
+        var second = await responses[1].Content.ReadFromJsonAsync<PublicTurnPayload>();
+        Assert.NotNull(first);
+        Assert.NotNull(second);
+        Assert.Equal(first.Turn.Id, second.Turn.Id);
+        Assert.Equal(idempotencyKey.ToString("N"), first.LookupToken);
+        Assert.Equal(first.LookupToken, second.LookupToken);
+
+        var validLookup = await firstClient.GetAsync($"/api/public/shops/{settings.Slug}/turns/{first.Turn.Id}?token={first.LookupToken}");
+        Assert.Equal(HttpStatusCode.OK, validLookup.StatusCode);
+        var invalidLookup = await firstClient.GetAsync($"/api/public/shops/{settings.Slug}/turns/{first.Turn.Id}?token={Guid.NewGuid():N}");
+        Assert.Equal(HttpStatusCode.NotFound, invalidLookup.StatusCode);
+
+        await using var scope = factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var persistedCount = await db.Turns.CountAsync(x => x.IdempotencyKey == idempotencyKey.ToString("N"));
+        Assert.Equal(1, persistedCount);
+    }
+
+    [Fact]
     public async Task ConcurrentPublicAppointmentsCannotDoubleBookBarber()
     {
         using var ownerClient = CreateClient();
@@ -332,6 +385,8 @@ public sealed class ApiSmokeTests : IClassFixture<BarberTurnFactory>, IDisposabl
     private sealed record ServicePayload(Guid Id);
     private sealed record BarberPayload(Guid Id);
     private sealed record AvailabilitySlotPayload(DateTimeOffset StartsAtUtc);
+    private sealed record PublicTurnPayload(PublicTurnIdentityPayload Turn, string LookupToken);
+    private sealed record PublicTurnIdentityPayload(Guid Id);
     private sealed record WebhookReceiptStats(int Total, int Applied);
 
     private sealed class PayPalStubHandler : HttpMessageHandler

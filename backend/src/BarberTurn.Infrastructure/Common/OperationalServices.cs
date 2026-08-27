@@ -10,6 +10,18 @@ using Microsoft.Extensions.Logging;
 
 namespace BarberTurn.Infrastructure.Common;
 
+internal sealed class ShopLookupService(ApplicationDbContext dbContext) : IShopLookupService
+{
+    public async Task<Guid?> GetActiveShopIdBySlugAsync(string slug, CancellationToken cancellationToken = default)
+    {
+        var normalized = slug.Trim().ToLowerInvariant();
+        return await dbContext.BarberShops.AsNoTracking()
+            .Where(shop => shop.Slug == normalized && shop.IsActive)
+            .Select(shop => (Guid?)shop.Id)
+            .SingleOrDefaultAsync(cancellationToken);
+    }
+}
+
 internal sealed class PlanLimitService(ApplicationDbContext dbContext) : IPlanLimitService
 {
     public async Task EnsureCanAddBarberAsync(Guid barberShopId, CancellationToken cancellationToken = default)

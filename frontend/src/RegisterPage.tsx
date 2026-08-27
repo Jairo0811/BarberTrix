@@ -2,7 +2,8 @@ import { FormEvent, useState } from 'react'
 import { useI18n } from './i18n'
 import './register.css'
 import type { Auth } from './types'
-import { API_URL, writeAuth } from './api'
+import { publicApi, writeAuth } from './api'
+import { apiErrorMessage } from './apiErrorMessages'
 
 function buildShopSlug(name: string) {
   const normalized = name
@@ -17,7 +18,7 @@ function buildShopSlug(name: string) {
 }
 
 export default function RegisterPage() {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -49,10 +50,8 @@ export default function RegisterPage() {
     }
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/register-owner`, {
+      const auth = await publicApi<Auth>('/api/auth/register-owner', {
         method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           barberShopName: shopName,
           barberShopSlug: buildShopSlug(shopName),
@@ -64,17 +63,11 @@ export default function RegisterPage() {
         }),
       })
 
-      if (!response.ok) {
-        const payload = await response.json().catch(() => null)
-        throw new Error(payload?.message ?? t('register.genericError'))
-      }
-
-      const auth = await response.json() as Auth
       writeAuth(auth, true)
       window.location.hash = '#/login'
       window.location.reload()
     } catch (exception) {
-      setError(exception instanceof Error ? exception.message : t('register.genericError'))
+      setError(apiErrorMessage(exception, locale, t('register.genericError')))
     } finally {
       setBusy(false)
     }

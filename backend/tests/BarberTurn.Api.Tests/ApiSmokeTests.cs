@@ -130,6 +130,32 @@ public sealed class ApiSmokeTests : IClassFixture<BarberTurnFactory>, IDisposabl
         Assert.Equal(correlationId, Assert.Single(response.Headers.GetValues("X-Correlation-ID")));
     }
 
+    [Fact]
+    public async Task DuplicateCustomerReturnsStableErrorCodeAndCorrelationId()
+    {
+        using var tenant = CreateClient();
+        await RegisterAndAuthenticateAsync(tenant, "Duplicate Customer Tenant");
+
+        var customer = new { name = "Cliente", phone = "809-555-0110", email = "duplicate-customer@example.com" };
+        var created = await tenant.PostAsJsonAsync("/api/customers", customer);
+        created.EnsureSuccessStatusCode();
+
+        const string correlationId = "barberturn-customer-error-001";
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/customers")
+        {
+            Content = JsonContent.Create(customer)
+        };
+        request.Headers.Add("X-Correlation-ID", correlationId);
+
+        var duplicate = await tenant.SendAsync(request);
+        Assert.Equal(HttpStatusCode.Conflict, duplicate.StatusCode);
+
+        var payload = await duplicate.Content.ReadFromJsonAsync<ApiErrorPayload>();
+        Assert.NotNull(payload);
+        Assert.Equal("CUSTOMER_ALREADY_EXISTS", payload.Code);
+        Assert.Equal(correlationId, payload.CorrelationId);
+    }
+
     private HttpClient CreateClient() => factory.CreateClient(new WebApplicationFactoryClientOptions
     {
         BaseAddress = new Uri("https://localhost"),

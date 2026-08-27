@@ -7,201 +7,105 @@
   <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=111827" alt="React 19" />
   <img src="https://img.shields.io/badge/SQL_Server-2022-CC2927?style=flat-square&logo=microsoftsqlserver&logoColor=white" alt="SQL Server 2022" />
   <img src="https://img.shields.io/badge/CI-GitHub_Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white" alt="GitHub Actions" />
+  <img src="https://img.shields.io/badge/Tests-Vitest%20%7C%20Playwright-22C55E?style=flat-square" alt="Vitest y Playwright" />
   <img src="https://img.shields.io/badge/i18n-es--419%20%7C%20en%20%7C%20es--ES-0EA5E9?style=flat-square" alt="Idiomas: Español Latino, Inglés y Español de España" />
-  <img src="https://img.shields.io/badge/Accesibilidad-NORTIC_B2%20%2F%20WCAG-22C55E?style=flat-square" alt="Accesibilidad basada en NORTIC B2 y WCAG" />
-  <img src="https://img.shields.io/badge/Fases_1--6-Completadas-22C55E?style=flat-square" alt="Fases 1 a 6 completadas" />
-  <img src="https://img.shields.io/badge/CI_y_Seguridad-Verde-22C55E?style=flat-square" alt="CI y seguridad en verde" />
+  <img src="https://img.shields.io/badge/CI_y_Seguridad-Verde-22C55E?style=flat-square" alt="CI y seguridad" />
 </p>
 
-**BarberTurn** es una plataforma web para gestionar turnos de barberías con el menor nivel de fricción posible para el negocio y sus clientes.
+# BarberTurn 💈
+
+**BarberTurn** es una plataforma SaaS multi-tenant para gestionar la operación diaria de barberías: turnos por llegada, citas, barberos, servicios, clientes, caja, reportes, BarberTurn TV y suscripciones comerciales.
 
 > **Tu turno. Tu estilo. Tu tiempo.**
 
-El producto nace de una premisa simple: la tecnología debe adaptarse a la forma de trabajar de la barbería, no obligar a la barbería a transformar toda su operación para poder usar el software.
+La premisa del producto es simple: la tecnología debe adaptarse a la forma de trabajar de la barbería, no al revés.
 
-## 🎯 Visión
+## 🚀 Estado del proyecto
 
-BarberTurn combina fila digital, citas, clientes, caja, reportes, BarberTurn TV y funciones SaaS en una plataforma multi-tenant.
+BarberTurn se encuentra en etapa de **hardening y preparación para una v1 comercial**. El núcleo funcional está implementado y `main` se mantiene protegido mediante CI, pruebas automatizadas, análisis de seguridad y gates progresivos de cobertura.
 
-La experiencia inicial está diseñada para barberías que:
+### Operación principal
 
-- 💈 trabajan por orden de llegada;
-- 👤 no quieren registrar obligatoriamente a todos los clientes;
-- ✂️ utilizan varios barberos en paralelo;
-- 🎯 permiten elegir un barbero específico;
-- 📅 combinan clientes espontáneos con citas;
-- 🌎 necesitan operar en distintos mercados e idiomas.
-
-## 🚀 Estado actual
-
-BarberTurn cuenta con una base funcional de operación comercial. La rama principal permanece estable; las funciones descritas aquí se validan mediante CI antes de cada fusión.
-
-### ✅ Fase 1 — Fundación técnica
-
-- 🧱 solución .NET 10 con separación `Domain / Application / Infrastructure / API`;
-- 🌐 ASP.NET Core Web API;
-- 🗄️ Entity Framework Core + SQL Server;
-- 🧬 migraciones iniciales;
-- 🔐 autenticación JWT;
-- 👑 registro inicial del propietario de una barbería;
-- 🔑 login;
-- 🔄 recuperación y restablecimiento seguro de contraseña;
-- ❤️ health check;
-- 📘 OpenAPI en Development;
-- ⚛️ React 19 + TypeScript + Vite 8;
-- 🐳 Dockerfiles para API y frontend;
-- 🧩 Docker Compose con SQL Server;
-- 🌍 Nginx para servir el frontend;
-- ⚙️ configuración mediante variables de entorno;
-- 🤖 GitHub Actions para validar backend, frontend y tests.
-
-### ✅ Fase 2 — Núcleo de turnos
-
-- ✂️ gestión de barberos;
-- 🧴 gestión de servicios;
-- 🎟️ generación de turnos;
-- 🔢 numeración diaria tipo `A-001`, `A-002`, etc.;
-- 👥 cola por barbería;
-- 🎯 selección de barbero específico o flujo operativo por disponibilidad;
-- 🔄 ciclo de estados `Waiting`, `Called`, `InService`, `Completed`, `Cancelled`, `NoShow`;
-- ✂️ estados de barbero `Available`, `Busy`, `Break`, `Offline`;
-- 🔐 endpoints operativos protegidos con JWT;
-- 🏪 aislamiento por `BarberShopId` obtenido desde el token;
+- 🚶 fila digital por orden de llegada;
+- 📅 agenda de citas y operación híbrida;
+- ✂️ gestión de barberos y disponibilidad;
+- 🧴 catálogo de servicios, duración y precios;
+- 🎟️ ciclo completo `Waiting → Called → InService → Completed`;
+- ❌ estados alternativos `Cancelled` y `NoShow`;
 - 📊 métricas operativas de la cola;
-- 🧪 pruebas de dominio para transiciones válidas e inválidas.
+- ⚡ SignalR para actualización en tiempo real;
+- 📺 BarberTurn TV;
+- 🌐 autoservicio público con tokens opacos.
 
-### ✅ Operación comercial
+### Gestión comercial
 
-- 🌐 autoservicio público para tomar turno y consultar/cancelar con token opaco;
-- ⚡ actualizaciones en tiempo real con SignalR y pantalla BarberTurn TV;
-- 📅 disponibilidad, reservas, reprogramación, bloqueos, check-in y no-show;
-- 👥 clientes, caja y reportes de negocio;
-- 🧑‍🤝‍🧑 invitaciones, roles y cuentas vinculadas a barberos;
-- 🔄 access tokens cortos, refresh token rotation, cierre de sesión y revocación;
-- ✉️ verificación de correo y correo transaccional configurable;
-- 💳 planes, límites, sucursales y suscripciones PayPal con webhook verificado;
-- 🧪 demo temporal e independiente para cada visita;
-- 🧾 auditoría, rate limits, health checks y encabezados de seguridad.
+- 👥 CRM básico de clientes;
+- 💵 registro de pagos/caja;
+- 📈 reportes de negocio;
+- 🧑‍🤝‍🧑 equipo, invitaciones y roles;
+- 🏪 sucursales y configuración por barbería;
+- 🧾 auditoría de operaciones;
+- 💳 planes Starter / Pro / Business;
+- 💰 suscripciones SaaS mediante PayPal;
+- 🔒 capacidades y límites aplicados también en backend.
 
-### 🎨 Experiencia web actual
+### Portales y demo
 
-- 🏠 Home público responsive con branding BarberTurn;
-- 🔐 login rediseñado con iconografía consistente, mostrar/ocultar contraseña y opción `Recordarme`;
-- 📝 registro de barbería/propietario;
-- 🔄 recuperación y restablecimiento de contraseña;
-- 👤 acceso mediante Usuario Demo en Development;
-- 📊 Dashboard V2 con sidebar, topbar, KPIs, cola y accesos rápidos;
-- 💈 gestión visual de turnos, barberos y servicios;
-- 🧭 navegación interna preparada para módulos futuros;
-- 🧪 onboarding y señalización persistente cuando se utiliza el modo demo;
-- 📱 interfaz responsive para escritorio, tablet y móvil;
-- 📨 sección de soporte y contacto;
-- 🎯 iconografía normalizada y centrada visualmente;
-- 📅 footer con año dinámico.
+- 👑 **Owner / Administrator / Receptionist:** panel administrativo según permisos;
+- ✂️ **Barber Portal:** jornada, cola asignada, estado y citas propias sin ruido administrativo;
+- 👤 **Customer Portal:** autoservicio público sin requerir cuenta;
+- 🧪 **Demo comercial limitada:** permite probar el núcleo y mantiene visibles las funciones premium mediante paywalls/CTA sin exponer operaciones sensibles.
 
-### ♿ Accesibilidad
+Los clientes pueden tomar turnos y reservar citas sin crear una cuenta. Una cuenta de cliente registrada no forma parte todavía del alcance actual.
 
-La interfaz incorpora una base técnica de accesibilidad alineada con buenas prácticas de **NORTIC B2 / WCAG** sin alterar la identidad visual oscura del producto.
+## 💳 Capacidades por plan
 
-- ⌨️ navegación mediante teclado;
-- 🎯 foco visible consistente;
-- ⏭️ enlace global **«Saltar al contenido principal»**;
-- 🔊 uso de `aria-live`, `aria-describedby`, `aria-busy` y `aria-pressed` donde corresponde;
-- 🧭 gestión de foco al cambiar de vista;
-- 🏷️ títulos de página dinámicos;
-- 🧑‍🦯 mejoras semánticas para lectores de pantalla;
-- 🎞️ respeto de `prefers-reduced-motion`;
-- 📝 formularios con errores e instrucciones asociados programáticamente.
+Las capacidades se validan en servidor; ocultar o bloquear una opción en React nunca es el único control.
 
-> Esta base mejora la accesibilidad del producto, pero no implica por sí sola certificación formal de conformidad sin una auditoría completa.
+| Capacidad | Starter | Pro | Business |
+|---|:---:|:---:|:---:|
+| Cola por llegada | ✅ | ✅ | ✅ |
+| Gestión básica de barberos/servicios | ✅ | ✅ | ✅ |
+| Citas | ❌ | ✅ | ✅ |
+| BarberTurn TV | ❌ | ✅ | ✅ |
+| Reportes avanzados | ❌ | ❌ | ✅ |
+| Suscripción y límites de uso | ✅ | ✅ | ✅ |
 
-### 🌐 Multidioma
-
-BarberTurn soporta actualmente tres locales:
-
-| Locale | Idioma |
-|---|---|
-| `es-419` | Español Latino |
-| `en` | English |
-| `es-ES` | Español de España |
-
-Características de internacionalización:
-
-- 🌍 detección automática del idioma del navegador;
-- 💾 persistencia de la selección en `localStorage`;
-- 🔁 cambio de idioma sin recargar la aplicación;
-- 🧑‍🦯 actualización dinámica de `<html lang>`;
-- 🗓️ fechas adaptadas al locale seleccionado;
-- 🧩 Home, Login, Registro, Recuperación, Demo y Dashboard localizados;
-- 🎛️ selector global de idioma accesible y responsive;
-- 🇪🇸 diferenciación entre `es-419` y `es-ES` solo cuando el uso regional realmente lo requiere.
-
-La convención del proyecto es **no forzar diferencias artificiales entre variantes del español**: los textos se mantienen iguales cuando son naturales en ambos mercados.
+Las reglas comerciales pueden evolucionar antes de la salida pública; el backend es la fuente de verdad para entitlements.
 
 ## 🧰 Stack tecnológico
 
-### 🟣 Backend
+### Backend
 
-<p align="left">
-  <img src="https://skillicons.dev/icons?i=dotnet&theme=dark" height="48" alt=".NET" />
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/csharp/csharp-original.svg" height="48" alt="C#" />
-</p>
+- .NET 10
+- ASP.NET Core Web API
+- Entity Framework Core
+- SQL Server 2022
+- JWT
+- SignalR
+- OpenAPI en Development
+- PayPal REST API
 
-<p align="left">
-  <img src="https://img.shields.io/badge/ASP.NET_Core-Web_API-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt="ASP.NET Core" />
-  <img src="https://img.shields.io/badge/Entity_Framework_Core-ORM-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt="Entity Framework Core" />
-  <img src="https://img.shields.io/badge/JWT-Authentication-000000?style=flat-square&logo=jsonwebtokens&logoColor=white" alt="JWT" />
-  <img src="https://img.shields.io/badge/OpenAPI-Documentation-6BA539?style=flat-square&logo=openapiinitiative&logoColor=white" alt="OpenAPI" />
-</p>
+### Frontend
 
-- 🧠 reglas de negocio separadas del framework;
-- 🧩 inyección de dependencias;
-- 🔒 autenticación Bearer con JWT;
-- 🏪 contexto de barbería derivado del token autenticado;
-- 📘 contrato HTTP documentado mediante OpenAPI.
+- React 19
+- TypeScript
+- Vite 8
+- CSS modularizado por experiencia/feature
+- Font Awesome
+- QRCode
+- SweetAlert2
 
-### 🔵 Frontend
+### Calidad e infraestructura
 
-<p align="left">
-  <img src="https://skillicons.dev/icons?i=react,ts,vite,html,css&theme=dark" height="48" alt="React, TypeScript, Vite, HTML y CSS" />
-</p>
-
-<p align="left">
-  <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=111827" alt="React 19" />
-  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript 5" />
-  <img src="https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite 8" />
-  <img src="https://img.shields.io/badge/UI-Responsive-0EA5E9?style=flat-square" alt="Responsive UI" />
-  <img src="https://img.shields.io/badge/Icons-Font_Awesome-528DD7?style=flat-square&logo=fontawesome&logoColor=white" alt="Font Awesome" />
-</p>
-
-- ⚛️ React 19;
-- 🟦 TypeScript;
-- ⚡ Vite 8;
-- 🎨 estilos organizados por experiencia/pantalla;
-- 📱 diseño responsive;
-- ♿ accesibilidad transversal;
-- 🌐 internacionalización propia y tipada;
-- 🔐 persistencia de sesión mediante `localStorage` o `sessionStorage`;
-- 🎯 Font Awesome para iconografía consistente.
-
-### 🗄️ Datos e infraestructura
-
-<p align="left">
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/microsoftsqlserver/microsoftsqlserver-original.svg" height="48" alt="SQL Server" />
-  <img src="https://skillicons.dev/icons?i=docker,nginx,github&theme=dark" height="48" alt="Docker, Nginx y GitHub" />
-</p>
-
-<p align="left">
-  <img src="https://img.shields.io/badge/SQL_Server-2022-CC2927?style=flat-square&logo=microsoftsqlserver&logoColor=white" alt="SQL Server 2022" />
-  <img src="https://img.shields.io/badge/Docker_Compose-Orchestration-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker Compose" />
-  <img src="https://img.shields.io/badge/Nginx-Frontend-009639?style=flat-square&logo=nginx&logoColor=white" alt="Nginx" />
-  <img src="https://img.shields.io/badge/GitHub_Actions-CI-2088FF?style=flat-square&logo=githubactions&logoColor=white" alt="GitHub Actions" />
-</p>
-
-- 🗃️ SQL Server 2022;
-- 🐳 Docker y Docker Compose;
-- 🌍 Nginx para servir el frontend;
-- 🤖 GitHub Actions para CI.
+- Docker + Docker Compose
+- Nginx
+- GitHub Actions
+- CodeQL
+- Gitleaks
+- Vitest + React Testing Library
+- Playwright
+- cobertura backend/frontend con gates progresivos
 
 ## 🏗️ Arquitectura
 
@@ -217,259 +121,277 @@ BarberTurn
 │       ├── BarberTurn.Domain.Tests
 │       └── BarberTurn.Api.Tests
 ├── frontend
+│   ├── e2e
 │   └── src
-│       ├── i18n.ts
-│       ├── LanguageSwitcher.tsx
+│       ├── features
+│       ├── portals
+│       ├── i18n
+│       ├── shared
 │       └── ...
+├── deploy
+│   └── sql
 ├── docs
 ├── .github
 │   └── workflows
 ├── BarberTurn.sln
-└── docker-compose.yml
+├── docker-compose.yml
+└── docker-compose.production.yml
 ```
 
-### 🧩 Responsabilidades
+### Responsabilidades
 
-- 🧠 **Domain:** entidades, estados y reglas de negocio sin depender de infraestructura.
-- 📋 **Application:** contratos y casos de uso.
-- 🗄️ **Infrastructure:** EF Core, SQL Server, seguridad, persistencia y servicios externos.
-- 🌐 **Api:** endpoints HTTP y configuración del host ASP.NET Core.
-- ⚛️ **Frontend:** experiencia pública, autenticación, accesibilidad, internacionalización y operación diaria.
-- 🧪 **Tests:** reglas críticas del dominio y flujo integrado API + SQL Server.
+- **Domain:** entidades, estados e invariantes de negocio.
+- **Application:** contratos, DTOs y casos de uso sin depender de EF Core.
+- **Infrastructure:** persistencia, SQL Server, servicios externos y adaptadores.
+- **API:** transporte HTTP, autenticación/autorización, middleware y composición.
+- **Frontend:** portales y features desacoplados por responsabilidad.
 
-## 💈 Modelo operativo
-
-BarberTurn contempla tres modalidades:
-
-| Modalidad | Estado | Descripción |
-|---|---|---|
-| 🚶 Por llegada | ✅ MVP actual | El cliente entra a una fila y espera su turno. |
-| 📅 Por cita | ✅ Disponible | El cliente reserva fecha, hora, servicio y barbero. |
-| 🔀 Híbrida | ✅ Disponible | La barbería combina citas y clientes por orden de llegada. |
-
-La base de datos es la fuente de verdad y SignalR propaga los cambios a paneles públicos, dashboard y TV.
-
-## 🔄 Flujo principal del MVP
+La dirección buscada es:
 
 ```text
-Barbería
-   ↓
-Usuario autenticado
-   ↓
-Barberos + Servicios
-   ↓
-Nuevo turno
-   ↓
-Waiting
-   ↓
-Called
-   ↓
-InService
-   ↓
-Completed
+API
+ ↓
+Application
+ ↓
+Infrastructure
+ ↓
+SQL Server / proveedores externos
 ```
 
-También se contemplan los estados `Cancelled` y `NoShow`.
-
-## 👥 Roles iniciales
-
-- 👑 **Owner:** propietario de la barbería.
-- 🛠️ **Administrator:** administración general.
-- 🛎️ **Receptionist:** creación y gestión operativa de turnos.
-- ✂️ **Barber:** atención de clientes y control de su flujo.
-
-Los clientes pueden generar turnos o reservar citas sin crear una cuenta. La consulta y cancelación utilizan tokens opacos separados del identificador público.
+Los endpoints no deben convertirse en una segunda capa de persistencia ni consultar `ApplicationDbContext` para lógica de negocio que corresponda a Application/Infrastructure.
 
 ## 🔐 Seguridad
 
-- 🔑 access tokens JWT de 15 minutos y refresh tokens rotatorios;
-- 🔒 contraseñas almacenadas mediante hashing;
-- 🧾 secretos fuera del repositorio;
-- 🏪 aislamiento operativo por `BarberShopId`;
-- 🛡️ endpoints administrativos protegidos por rol;
-- 🔄 recuperación de contraseña con token temporal y propósito específico;
-- 🕵️ respuesta genérica en recuperación para evitar enumeración de usuarios;
-- ✉️ verificación de correo configurable;
-- 🚦 rate limiting para autenticación, registro, autoservicio y webhooks;
-- 🧾 auditoría de mutaciones autenticadas;
-- 🧪 cada sesión demo usa un tenant temporal independiente.
+Controles relevantes:
 
-BarberTurn no almacena claves de base de datos, secretos JWT ni contraseñas demo reales en el repositorio.
+- access tokens JWT de vida corta;
+- refresh token rotatorio en cookie `HttpOnly` y `SameSite=Lax`, `Secure` bajo HTTPS;
+- revocación de sesión y security stamp;
+- hashing de contraseñas;
+- política de contraseña de 10+ caracteres con mayúscula, minúscula, número y símbolo;
+- aislamiento multi-tenant por `BarberShopId`;
+- autorización por roles;
+- verificación de correo;
+- recuperación de contraseña sin enumeración de usuarios;
+- rate limiting para autenticación, registro, autoservicio y webhooks;
+- separación SignalR por audiencias `internal`, `public` y `tv`;
+- encabezados HTTP de seguridad;
+- validación de firma de webhooks PayPal;
+- secretos exclusivamente por configuración externa;
+- CodeQL y Gitleaks en CI.
 
-La aplicación recibe configuración sensible mediante variables de entorno, entre ellas:
+Los errores API utilizan un contrato estable:
 
-- `ConnectionStrings__DefaultConnection`
-- `Jwt__Key`
-- `Auth__RequireVerifiedEmail`
-- `Email__Smtp__*`
-- `HumanVerification__SecretKey`
-- `PayPal__*`
+```json
+{
+  "code": "AUTH_INVALID_CREDENTIALS",
+  "message": "...",
+  "correlationId": "..."
+}
+```
 
-El JWT debe utilizar una clave de al menos 32 caracteres.
+El frontend puede localizar el mensaje por `code` y el `correlationId` permite rastrear el incidente sin revelar detalles internos.
 
-## 👤 Usuario Demo
+Consulta [`SECURITY.md`](SECURITY.md) para el proceso de reporte y los controles vigentes.
 
-Cuando `Demo__Enabled=true`, el endpoint demo crea una barbería independiente con equipo, servicios, clientes, turnos, cita y pago de ejemplo. No usa credenciales compartidas y elimina tenants demo con más de cuatro horas. En producción se recomienda mantenerlo desactivado salvo en un entorno de demostración dedicado.
+## 🔭 Observabilidad
 
-## 🐳 Ejecutar con Docker
+BarberTurn incorpora:
 
-1. Copia el archivo de entorno de ejemplo:
+- `X-Correlation-ID` por request;
+- logs JSON en Production;
+- contexto estructurado de tenant/usuario cuando existe;
+- método, path, status code y duración de requests;
+- logging específico de eventos de billing/webhooks sin registrar tokens, firmas ni secretos;
+- health check de base de datos.
+
+La arquitectura queda preparada para incorporar OpenTelemetry, métricas y tracing cuando exista infraestructura real de observabilidad.
+
+Nunca deben registrarse passwords, JWT, refresh tokens, cookies, secretos SMTP/PayPal ni cuerpos completos de webhooks.
+
+## 🗄️ SQL Server y mínimo privilegio
+
+`docker-compose.production.yml` separa las identidades de base de datos:
+
+```text
+sa
+└─ bootstrap inicial de la instancia
+
+barberturn_migrator
+└─ aplica migraciones
+
+barberturn_app
+└─ runtime de la API
+```
+
+La API **no se conecta como `sa`**. `barberturn_app` recibe únicamente permisos de lectura/escritura requeridos por la aplicación, mientras `barberturn_migrator` ejecuta el job de migraciones antes del arranque de la API.
+
+Variables adicionales de producción:
+
+```text
+BARBERTURN_DB_PASSWORD
+BARBERTURN_DB_MIGRATOR_PASSWORD
+BARBERTURN_DB_APP_PASSWORD
+```
+
+Consulta [`docs/production-operations.md`](docs/production-operations.md) para backups, alertas, secretos, TLS y checklist de lanzamiento.
+
+## 🧪 Testing
+
+### Backend
+
+- pruebas de dominio;
+- integración API + SQL Server;
+- autenticación, refresh/logout y cookies;
+- aislamiento multi-tenant;
+- error codes y correlation IDs;
+- validación de migraciones;
+- gates progresivos sobre lógica crítica.
+
+### Frontend
+
+Vitest + React Testing Library cubren, entre otros:
+
+- autenticación;
+- demo;
+- roles y redirecciones;
+- Barber Portal;
+- paywalls/capabilities;
+- política de contraseñas;
+- errores localizados.
+
+### E2E
+
+Playwright cubre flujos críticos de navegador:
+
+```text
+Registro
+→ Login
+→ Dashboard
+→ Crear turno
+→ Llamar
+→ Iniciar servicio
+→ Completar
+```
+
+También valida demo comercial, Barber Portal, Customer Portal, restricciones por rol, Starter vs funciones premium y acceso a billing del Owner.
+
+Los artifacts de Playwright se publican desde CI para diagnóstico cuando una ejecución falla.
+
+## 🌐 Internacionalización
+
+Locales soportados:
+
+| Locale | Idioma |
+|---|---|
+| `es-419` | Español Latino |
+| `en` | English |
+| `es-ES` | Español de España |
+
+Las traducciones están modularizadas por locale y dominio (`common`, `auth`, `dashboard`, `billing`, `customer`, etc.). No se fuerzan diferencias artificiales entre `es-419` y `es-ES` cuando una traducción es natural en ambos mercados.
+
+## ♿ Accesibilidad
+
+La interfaz incorpora una base técnica alineada con buenas prácticas de NORTIC B2 / WCAG:
+
+- navegación por teclado;
+- foco visible;
+- skip link;
+- `aria-live`, `aria-describedby`, `aria-busy`, `aria-pressed`;
+- gestión de foco al cambiar de vista;
+- semántica para lectores de pantalla;
+- `prefers-reduced-motion`;
+- formularios con errores asociados.
+
+Esto **no constituye certificación formal** sin una auditoría completa.
+
+## 🐳 Desarrollo local
 
 ```bash
 cp .env.example .env
-```
-
-2. Sustituye los valores de ejemplo por secretos locales propios.
-
-3. Levanta la solución:
-
-```bash
 docker compose up --build
 ```
 
-### 🌐 Servicios locales
+Servicios por defecto:
 
-- 🖥️ Frontend: `http://localhost:8081`
-- 🔌 API: `http://localhost:8080/api`
-- ❤️ Health check: `http://localhost:8080/health`
-- 📘 OpenAPI en Development: `http://localhost:8080/openapi/v1.json`
-- 🗄️ SQL Server: `localhost:1433`
+- Frontend: `http://localhost:8081`
+- API: `http://localhost:8080/api`
+- Health: `http://localhost:8080/health`
+- OpenAPI Development: `http://localhost:8080/openapi/v1.json`
+- SQL Server: `localhost:1433`
 
-Docker configura `Database__ApplyMigrations=true`, por lo que la API puede aplicar las migraciones al iniciar el entorno local. Para producción, copia `.env.production.example` y usa:
+El entorno local puede aplicar migraciones al arrancar. Producción utiliza un job separado.
+
+## 🚀 Producción
 
 ```bash
+cp .env.production.example .env.production
+# Configurar secretos reales
 docker compose --env-file .env.production -f docker-compose.production.yml up -d --build
 ```
 
-Termina TLS en un proxy o balanceador externo y mantén SQL Server fuera de Internet. Revisa [seguridad](SECURITY.md), [privacidad](docs/privacy.md) y [términos](docs/terms.md) antes de publicar.
-
-## 🔌 Autenticación inicial
-
-### 📝 Registrar la primera barbería
-
-`POST /api/auth/register-owner`
-
-```json
-{
-  "barberShopName": "BarberTurn Central",
-  "barberShopSlug": "barberturn-central",
-  "name": "Administrador",
-  "email": "admin@example.com",
-  "password": "ChangeThisPassword123!",
-  "timeZoneId": "America/Santo_Domingo",
-  "acceptedTerms": true,
-  "captchaToken": null
-}
-```
-
-### 🔐 Iniciar sesión
-
-`POST /api/auth/login`
-
-```json
-{
-  "email": "admin@example.com",
-  "password": "ChangeThisPassword123!"
-}
-```
-
-### 🔄 Recuperar contraseña
+Orden de arranque:
 
 ```text
-POST /api/auth/forgot-password
-POST /api/auth/reset-password
+SQL Server
+→ bootstrap de identidades
+→ migraciones
+→ API
+→ frontend
 ```
 
-En producción, el enlace de recuperación deberá entregarse mediante un proveedor transaccional de correo. En `Development` el flujo puede exponerse temporalmente para facilitar pruebas locales.
+Requisitos externos antes de un lanzamiento comercial:
 
-## ✅ Principios del proyecto
-
-- 🧼 Clean Code
-- 🧱 SOLID
-- ♻️ DRY
-- 🎯 KISS
-- 🧩 separación de responsabilidades
-- 🏢 multi-tenancy preparado desde el dominio
-- 🔐 configuración segura por entorno
-- 📱 diseño responsive
-- ♿ accesibilidad desde la interfaz
-- 🌐 internacionalización preparada para crecimiento comercial
-- 🧪 reglas críticas cubiertas mediante tests
-- 🤖 automatización mediante CI
+- DNS y TLS;
+- gestor de secretos;
+- SMTP transaccional;
+- Turnstile;
+- PayPal Live + webhook;
+- backups y restauración probada;
+- métricas/alertas centralizadas;
+- revisión legal;
+- auditoría formal de accesibilidad según alcance.
 
 ## 🗺️ Roadmap
 
-### ✅ Fase 1 — Fundación técnica
+### ✅ Fases 1–6
 
-Completada.
+Fundación técnica, núcleo de turnos, tiempo real, citas, gestión comercial y SaaS completados.
 
-### ✅ Fase 2 — Núcleo de turnos
+### 🟢 Hardening v1
 
-Completada.
+- ✅ refresh token HttpOnly y rotación segura;
+- ✅ aislamiento multi-tenant reforzado;
+- ✅ SignalR por audiencias;
+- ✅ demo comercial limitada y portales por rol;
+- ✅ error codes y correlation IDs;
+- ✅ frontend modular por features;
+- ✅ Vitest + Testing Library;
+- ✅ Playwright E2E;
+- ✅ i18n modular;
+- ✅ cobertura y gates progresivos en CI;
+- ✅ migraciones desacopladas;
+- ✅ logging estructurado;
+- ✅ SQL mínimo privilegio.
 
-### ✅ Fase 3 — Tiempo real
+### ⏳ Puesta en infraestructura real
 
-- 📡 SignalR;
-- 🔄 actualización automática de la fila;
-- ✂️ sincronización de estados de barberos;
-- ⏱️ estimaciones de espera;
-- 📺 BarberTurn TV;
-- 🔔 eventos operativos en tiempo real.
-
-Completada.
-
-### ✅ Fase 4 — Citas
-
-- 🗓️ calendario;
-- 🟢 disponibilidad;
-- 📌 reservas;
-- 🔁 reprogramaciones;
-- ❌ cancelaciones;
-- 🚫 bloqueo de horarios;
-- 🔀 convivencia con la fila por llegada.
-
-Completada.
-
-### ✅ Fase 5 — Gestión comercial
-
-- 👤 clientes;
-- 📚 historial;
-- 💳 pagos;
-- 🧾 caja;
-- 📊 reportes;
-- 📈 indicadores del negocio.
-
-Completada.
-
-### ✅ Fase 6 — SaaS
-
-- ⚙️ configuración avanzada por barbería;
-- 🔐 aislamiento completo por tenant;
-- 💳 planes y suscripciones;
-- 🏪 administración de establecimientos;
-- 📦 límites y capacidades por plan.
-
-Completada.
-
-### 🟡 Fase 7 — Puesta en producción
-
-- ✅ suite de pruebas de dominio e integración;
-- ✅ hardening, rate limiting, CodeQL y escaneo de secretos;
-- ✅ contenedores, health checks y configuración de producción;
-- ⏳ despliegue en infraestructura real con DNS y TLS;
-- ⏳ credenciales/proveedores reales para correo, Turnstile y PayPal;
-- ⏳ auditoría formal de accesibilidad y revisión legal;
-- ⏳ observabilidad centralizada, alertas y estrategia de respaldo.
+- DNS/TLS;
+- proveedores reales de correo, Turnstile y PayPal;
+- observabilidad centralizada y alertas;
+- backups/restauración;
+- auditoría de accesibilidad;
+- revisión legal y operativa previa al lanzamiento.
 
 ## 📚 Documentación
 
-- 🏗️ [`docs/architecture.md`](docs/architecture.md): decisiones y estructura arquitectónica.
-- 🎯 [`docs/mvp.md`](docs/mvp.md): alcance funcional del MVP.
-- 🚀 [`docs/phase-1.md`](docs/phase-1.md): fundación técnica del proyecto.
-- 🔐 [`SECURITY.md`](SECURITY.md): reporte de vulnerabilidades y prácticas de seguridad.
-- 🤝 [`CONTRIBUTING.md`](CONTRIBUTING.md): guía de contribución y validaciones requeridas.
-- 🧾 [`CHANGELOG.md`](CHANGELOG.md): historial de cambios relevantes.
-- ⚖️ [`docs/privacy.md`](docs/privacy.md) y [`docs/terms.md`](docs/terms.md): borradores legales para revisión antes del lanzamiento.
+- [`docs/architecture.md`](docs/architecture.md) — arquitectura y decisiones técnicas.
+- [`docs/mvp.md`](docs/mvp.md) — alcance funcional.
+- [`docs/production-operations.md`](docs/production-operations.md) — operación, mínimo privilegio, observabilidad, backups y checklist.
+- [`SECURITY.md`](SECURITY.md) — política y controles de seguridad.
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — guía de contribución.
+- [`CHANGELOG.md`](CHANGELOG.md) — historial relevante.
+- [`docs/privacy.md`](docs/privacy.md) / [`docs/terms.md`](docs/terms.md) — borradores legales para revisión.
 
 ---
 

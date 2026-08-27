@@ -18,13 +18,14 @@ const ForgotPasswordPage = lazy(() => import('./ForgotPasswordPage'))
 const ResetPasswordPage = lazy(() => import('./ResetPasswordPage'))
 const DemoLoginPage = lazy(() => import('./DemoLoginPage'))
 const PublicBookingPage = lazy(() => import('./PublicBookingPage'))
+const CustomerPortalPage = lazy(() => import('./CustomerPortalPage'))
 const TvPage = lazy(() => import('./TvPage'))
 const AcceptInvitationPage = lazy(() => import('./AcceptInvitationPage'))
 const VerifyEmailPage = lazy(() => import('./VerifyEmailPage'))
 const BillingSuccessPage = lazy(() => import('./BillingSuccessPage'))
 const LegalPage = lazy(() => import('./LegalPage'))
 
-type PublicRoute = 'home' | 'login' | 'register' | 'forgot-password' | 'reset-password' | 'demo' | 'book' | 'tv' | 'accept-invitation' | 'verify-email' | 'billing-success' | 'terms' | 'privacy'
+type PublicRoute = 'home' | 'login' | 'register' | 'forgot-password' | 'reset-password' | 'demo' | 'book' | 'customer' | 'tv' | 'accept-invitation' | 'verify-email' | 'billing-success' | 'terms' | 'privacy'
 
 const routeLabelKeys: Record<PublicRoute, string> = {
   home: 'route.home',
@@ -34,6 +35,7 @@ const routeLabelKeys: Record<PublicRoute, string> = {
   'reset-password': 'route.reset',
   demo: 'route.demo',
   book: 'route.register',
+  customer: 'route.home',
   tv: 'route.demo',
   'accept-invitation': 'route.register',
   'verify-email': 'route.login',
@@ -43,12 +45,13 @@ const routeLabelKeys: Record<PublicRoute, string> = {
 }
 
 function getRoute(): PublicRoute {
-  if (window.location.hash === '#/login') return 'login'
+  if (window.location.hash === '#/login' || window.location.hash === '#billing-section') return 'login'
   if (window.location.hash === '#/register') return 'register'
   if (window.location.hash === '#/forgot-password') return 'forgot-password'
   if (window.location.hash.startsWith('#/reset-password')) return 'reset-password'
   if (window.location.hash === '#/demo') return 'demo'
   if (window.location.hash.startsWith('#/book')) return 'book'
+  if (window.location.hash.startsWith('#/customer')) return 'customer'
   if (window.location.hash.startsWith('#/tv')) return 'tv'
   if (window.location.hash.startsWith('#/accept-invitation')) return 'accept-invitation'
   if (window.location.hash.startsWith('#/verify-email')) return 'verify-email'
@@ -65,6 +68,7 @@ function RouteContent({ route }: { route: PublicRoute }) {
   if (route === 'reset-password') return <ResetPasswordPage />
   if (route === 'demo') return <DemoLoginPage />
   if (route === 'book') return <PublicBookingPage />
+  if (route === 'customer') return <CustomerPortalPage />
   if (route === 'tv') return <TvPage />
   if (route === 'accept-invitation') return <AcceptInvitationPage />
   if (route === 'verify-email') return <VerifyEmailPage />
@@ -88,12 +92,15 @@ function Root() {
     const routeLabel = t(routeLabelKeys[route])
     document.title = route === 'home'
       ? 'BarberTurn | Tu Turno, Tu Estilo, Tu Tiempo'
-      : `${routeLabel} | BarberTurn`
+      : `${route === 'customer' ? 'Portal del cliente' : routeLabel} | BarberTurn`
 
     const frame = window.requestAnimationFrame(() => {
+      if (window.location.hash === '#billing-section') {
+        document.getElementById('billing-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        return
+      }
       const main = document.querySelector<HTMLElement>('main')
       if (!main) return
-
       main.id = 'main-content'
       main.tabIndex = -1
       main.focus({ preventScroll: true })
@@ -108,7 +115,7 @@ function Root() {
     <>
       <a className="skip-link" href="#main-content">{t('accessibility.skip')}</a>
       <div className="visually-hidden" role="status" aria-live="polite" aria-atomic="true">
-        {t('accessibility.currentView', { view: routeLabel })}
+        {t('accessibility.currentView', { view: route === 'customer' ? 'Portal del cliente' : routeLabel })}
       </div>
       <LanguageSwitcher />
       <Suspense fallback={<main><p>Cargando BarberTurn…</p></main>}><RouteContent route={route} /></Suspense>

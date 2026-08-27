@@ -24,14 +24,26 @@ internal sealed class PlanLimitService(ApplicationDbContext dbContext) : IPlanLi
         var shop = await dbContext.BarberShops.AsNoTracking().SingleAsync(x => x.Id == barberShopId, cancellationToken);
         var activeBarbers = await dbContext.Barbers.CountAsync(x => x.BarberShopId == barberShopId && x.IsActive, cancellationToken);
         var activeLocations = await dbContext.ShopLocations.CountAsync(x => x.BarberShopId == barberShopId && x.IsActive, cancellationToken);
+        var isDemo = shop.Slug.StartsWith("demo-", StringComparison.OrdinalIgnoreCase);
         var status = shop.SubscriptionStatus == SubscriptionStatus.Trialing && shop.TrialEndsAtUtc <= DateTimeOffset.UtcNow ? SubscriptionStatus.PastDue : shop.SubscriptionStatus;
         var entitled = status is SubscriptionStatus.Active or SubscriptionStatus.Trialing;
-        var limit = entitled ? shop.Plan switch { SubscriptionPlan.Starter => 3, SubscriptionPlan.Pro => 10, _ => int.MaxValue } : 0;
-        var locationLimit = shop.Plan == SubscriptionPlan.Business ? 3 : 1;
-        return new PlanUsageResponse(shop.Plan, status, activeBarbers, limit, activeLocations, entitled ? locationLimit : 0,
-            entitled && (shop.Plan is SubscriptionPlan.Pro or SubscriptionPlan.Business),
-            entitled && (shop.Plan is SubscriptionPlan.Pro or SubscriptionPlan.Business),
-            entitled && shop.Plan == SubscriptionPlan.Business);
+        var limit = isDemo ? 3 : entitled ? shop.Plan switch { SubscriptionPlan.Starter => 3, SubscriptionPlan.Pro => 10, _ => int.MaxValue } : 0;
+        var locationLimit = isDemo ? 1 : entitled ? shop.Plan == SubscriptionPlan.Business ? 3 : 1 : 0;
+        var canUseAppointments = isDemo || entitled && (shop.Plan is SubscriptionPlan.Pro or SubscriptionPlan.Business);
+        var canUseTv = isDemo || entitled && (shop.Plan is SubscriptionPlan.Pro or SubscriptionPlan.Business);
+        var canUseAdvancedReports = !isDemo && entitled && shop.Plan == SubscriptionPlan.Business;
+
+        return new PlanUsageResponse(
+            shop.Plan,
+            status,
+            activeBarbers,
+            limit,
+            activeLocations,
+            locationLimit,
+            canUseAppointments,
+            canUseTv,
+            canUseAdvancedReports,
+            isDemo);
     }
 
     public async Task EnsureCanAddLocationAsync(Guid barberShopId, CancellationToken cancellationToken = default)
@@ -39,6 +51,21 @@ internal sealed class PlanLimitService(ApplicationDbContext dbContext) : IPlanLi
         var usage = await GetUsageAsync(barberShopId, cancellationToken);
         if (usage.ActiveLocations >= usage.LocationLimit)
             throw new InvalidOperationException($"The {usage.Plan} plan allows up to {usage.LocationLimit} active locations.");
+    }
+
+    public async Task EnsureCanUseAsync(Guid barberShopId, PlanFeature feature, CancellationToken cancellationToken = default)
+    {
+        var usage = await GetUsageAsync(barberShopId, cancellationToken);
+        var allowed = feature switch
+        {
+            PlanFeature.Appointments => usage.CanUseAppointments,
+            PlanFeature.Tv => usage.CanUseTv,
+            PlanFeature.AdvancedReports => usage.CanUseAdvancedReports,
+            _ => false
+        };
+
+        if (!allowed)
+            throw new InvalidOperationException($"The {feature} feature is not available for the current BarberTurn plan.");
     }
 }
 

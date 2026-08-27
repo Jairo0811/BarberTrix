@@ -4,19 +4,25 @@ import { api } from './api'
 import { showError, showSuccessToast } from './alerts'
 import QRCode from 'qrcode'
 import './business-modules.css'
+import './role-portals.css'
 
 type Customer = { id: string; name: string; phone?: string; email?: string }
 type Appointment = { id: string; serviceName: string; barberName: string; startsAtUtc: string; customerName: string; status: string }
 type Report = { completedTurns: number; cancelledTurns: number; noShows: number; appointments: number; grossRevenue: number }
 type TeamMember = { id: string; name: string; email: string; role: string; isActive: boolean }
 type Subscription = { plan: string; status: string; provider: string; periodEndsAtUtc?: string; cancelAtPeriodEnd: boolean }
-type Usage = { activeBarbers: number; barberLimit: number; activeLocations: number; locationLimit: number; canUseAppointments: boolean; canUseTv: boolean; canUseAdvancedReports: boolean }
+type Capabilities = { plan: string; status: string; activeBarbers: number; barberLimit: number; activeLocations: number; locationLimit: number; canUseAppointments: boolean; canUseTv: boolean; canUseAdvancedReports: boolean; isDemo: boolean }
 type Shop = { name: string; slug: string; timeZoneId: string }
 type Location = { id: string; name: string; slug: string; address?: string; timeZoneId: string; isActive: boolean }
 type Payment = { id: string; amount: number; currency: string; method: string; status: string; paidAtUtc?: string }
 type BarberOption = { id: string; name: string; isActive: boolean }
 
+function LockedFeature({ title, text, plan = 'Pro' }: { title: string; text: string; plan?: string }) {
+  return <div className="locked-feature-card"><strong>🔒 {title}</strong><span>{text}</span><a href="#billing-section">Disponible con BarberTurn {plan}</a></div>
+}
+
 export default function BusinessModules({ auth }: { auth: Auth }) {
+  const isDemo = sessionStorage.getItem('barberturn.demo') === 'true'
   const elevated = auth.role === 'Owner' || auth.role === 'Administrator'
   const [customers, setCustomers] = useState<Customer[]>([])
   const [appointments, setAppointments] = useState<Appointment[]>([])
@@ -25,7 +31,7 @@ export default function BusinessModules({ auth }: { auth: Auth }) {
   const [barbers, setBarbers] = useState<BarberOption[]>([])
   const [report, setReport] = useState<Report | null>(null)
   const [subscription, setSubscription] = useState<Subscription | null>(null)
-  const [usage, setUsage] = useState<Usage | null>(null)
+  const [capabilities, setCapabilities] = useState<Capabilities | null>(null)
   const [shop, setShop] = useState<Shop | null>(null)
   const [locations, setLocations] = useState<Location[]>([])
   const [busy, setBusy] = useState(false)
@@ -36,28 +42,42 @@ export default function BusinessModules({ auth }: { auth: Auth }) {
     const future = new Date(now.getTime() + 30 * 86400000)
     const end = now.toISOString().slice(0, 10)
     const startDate = new Date(now.getTime() - 30 * 86400000).toISOString().slice(0, 10)
-    const base = await Promise.all([
-      api<Customer[]>('/api/customers?take=100'),
-      api<Appointment[]>(`/api/appointments?from=${encodeURIComponent(now.toISOString())}&to=${encodeURIComponent(future.toISOString())}`),
+
+    const [nextShop, nextBarbers, nextCapabilities] = await Promise.all([
       api<Shop>('/api/shop/settings'),
       api<BarberOption[]>('/api/queue/barbers'),
-      api<Location[]>('/api/locations'),
+      api<Capabilities>('/api/capabilities'),
     ])
-    setCustomers(base[0]); setAppointments(base[1]); setShop(base[2]); setBarbers(base[3]); setLocations(base[4])
-    if (elevated) {
-      const [nextTeam, nextReport, nextSubscription, nextUsage, nextPayments] = await Promise.all([
-        api<TeamMember[]>('/api/team'), api<Report>(`/api/reports/business?from=${startDate}&to=${end}`),
-        api<Subscription>('/api/billing/subscription'), api<Usage>('/api/billing/usage'),
-        api<Payment[]>(`/api/payments?from=${encodeURIComponent(new Date(now.getTime() - 30 * 86400000).toISOString())}&to=${encodeURIComponent(future.toISOString())}`),
-      ])
-      setTeam(nextTeam); setReport(nextReport); setSubscription(nextSubscription); setUsage(nextUsage); setPayments(nextPayments)
+    setShop(nextShop); setBarbers(nextBarbers); setCapabilities(nextCapabilities)
+
+    if (nextCapabilities.canUseAppointments) {
+      setAppointments(await api<Appointment[]>(`/api/appointments?from=${encodeURIComponent(now.toISOString())}&to=${encodeURIComponent(future.toISOString())}`))
+    } else setAppointments([])
+
+    if (!isDemo) {
+      setCustomers(await api<Customer[]>('/api/customers?take=100'))
+    } else setCustomers([])
+
+    if (elevated && !isDemo) {
+      const tasks: Promise<unknown>[] = [
+        api<TeamMember[]>('/api/team').then(setTeam),
+        api<Payment[]>(`/api/payments?from=${encodeURIComponent(new Date(now.getTime() - 30 * 86400000).toISOString())}&to=${encodeURIComponent(future.toISOString())}`).then(setPayments),
+      ]
+      if (auth.role === 'Owner') {
+        tasks.push(api<Subscription>('/api/billing/subscription').then(setSubscription))
+        tasks.push(api<Location[]>('/api/locations').then(setLocations))
+      }
+      if (nextCapabilities.canUseAdvancedReports) tasks.push(api<Report>(`/api/reports/business?from=${startDate}&to=${end}`).then(setReport))
+      await Promise.all(tasks)
+    } else {
+      setTeam([]); setPayments([]); setReport(null); setLocations([]); setSubscription(null)
     }
-  }, [elevated])
+  }, [auth.role, elevated, isDemo])
 
   useEffect(() => { void load().catch(() => undefined) }, [load])
   useEffect(() => {
     if (!shop) return
-    void QRCode.toDataURL(`${location.origin}/#/book?shop=${encodeURIComponent(shop.slug)}`, { width: 320, margin: 2, color: { dark: '#09111f', light: '#ffffff' } }).then(setBookingQr)
+    void QRCode.toDataURL(`${location.origin}/#/customer?shop=${encodeURIComponent(shop.slug)}`, { width: 320, margin: 2, color: { dark: '#09111f', light: '#ffffff' } }).then(setBookingQr)
   }, [shop])
 
   async function submit(event: FormEvent<HTMLFormElement>, path: string, success: string) {
@@ -108,51 +128,43 @@ export default function BusinessModules({ auth }: { auth: Auth }) {
     finally { setBusy(false) }
   }
 
-  return (
-    <>
-      <section className="panel dashboard-section" id="appointments-section">
-        <div className="panel-heading"><div><p className="eyebrow">AGENDA HÍBRIDA</p><h2>Próximas citas</h2></div>{shop && <a className="secondary-link" href={`#/book?shop=${shop.slug}`}>Página pública de reservas</a>}</div>
-        {bookingQr && <div className="booking-qr"><img src={bookingQr} alt="Código QR para turnos y reservas" /><div><strong>QR de autoservicio</strong><span>Descárgalo, imprímelo o colócalo en la entrada.</span><a href={bookingQr} download={`barberturn-${shop?.slug ?? 'reservas'}-qr.png`}>Descargar QR</a></div></div>}
-        <div className="business-list">{appointments.length ? appointments.map(item => <article key={item.id}><strong>{item.customerName}</strong><span>{item.serviceName} · {item.barberName}</span><small>{new Date(item.startsAtUtc).toLocaleString()} · {item.status}</small><div className="billing-actions">{item.status === 'Confirmed' && <><button disabled={busy} onClick={() => void appointmentAction(item.id, 'check-in')}>Check-in</button><button disabled={busy} onClick={() => void appointmentAction(item.id, 'no-show')}>No llegó</button><button disabled={busy} onClick={() => void appointmentAction(item.id, 'cancel')}>Cancelar</button></>}{item.status === 'CheckedIn' && <button disabled={busy} onClick={() => void appointmentAction(item.id, 'complete')}>Completar</button>}</div></article>) : <p>No hay citas próximas.</p>}</div>
-      </section>
+  return <>
+    <section className="panel dashboard-section" id="appointments-section">
+      <div className="panel-heading"><div><p className="eyebrow">AGENDA HÍBRIDA</p><h2>Próximas citas</h2></div>{shop && capabilities?.canUseAppointments && <a className="secondary-link" href={`#/customer?shop=${shop.slug}`}>Portal del cliente</a>}</div>
+      {!capabilities?.canUseAppointments ? <LockedFeature title="Citas y agenda híbrida" text="Reserva horarios, combina citas con turnos por llegada y gestiona la agenda del equipo." /> : <>
+        {bookingQr && <div className="booking-qr"><img src={bookingQr} alt="Código QR del portal de clientes" /><div><strong>QR de autoservicio</strong><span>Lleva al portal del cliente para tomar turnos o reservar.</span><a href={bookingQr} download={`barberturn-${shop?.slug ?? 'clientes'}-qr.png`}>Descargar QR</a></div></div>}
+        <div className="business-list">{appointments.length ? appointments.map(item => <article key={item.id}><strong>{item.customerName}</strong><span>{item.serviceName} · {item.barberName}</span><small>{new Date(item.startsAtUtc).toLocaleString()} · {item.status}</small>{!isDemo && <div className="billing-actions">{item.status === 'Confirmed' && <><button disabled={busy} onClick={() => void appointmentAction(item.id, 'check-in')}>Check-in</button><button disabled={busy} onClick={() => void appointmentAction(item.id, 'no-show')}>No llegó</button><button disabled={busy} onClick={() => void appointmentAction(item.id, 'cancel')}>Cancelar</button></>}{item.status === 'CheckedIn' && <button disabled={busy} onClick={() => void appointmentAction(item.id, 'complete')}>Completar</button>}</div>}</article>) : <p>No hay citas próximas.</p>}</div>
+      </>}
+    </section>
 
-      <section className="panel dashboard-section" id="customers-section">
-        <p className="eyebrow">CLIENTES</p><h2>Directorio</h2>
-        <form className="business-form" onSubmit={event => void submit(event, '/api/customers', 'Cliente agregado')}><input name="name" placeholder="Nombre" required /><input name="phone" placeholder="Teléfono" /><input name="email" type="email" placeholder="Correo" /><button disabled={busy}>Agregar</button></form>
-        <div className="business-list compact">{customers.map(item => <article key={item.id}><strong>{item.name}</strong><span>{item.phone || item.email || 'Sin contacto'}</span></article>)}</div>
-      </section>
+    <section className="panel dashboard-section" id="customers-section">
+      <p className="eyebrow">CLIENTES</p><h2>Directorio</h2>
+      {isDemo ? <LockedFeature title="CRM de clientes" text="El historial real, datos de contacto y seguimiento de clientes están reservados para cuentas activas." /> : <><form className="business-form" onSubmit={event => void submit(event, '/api/customers', 'Cliente agregado')}><input name="name" placeholder="Nombre" required /><input name="phone" placeholder="Teléfono" /><input name="email" type="email" placeholder="Correo" /><button disabled={busy}>Agregar</button></form><div className="business-list compact">{customers.map(item => <article key={item.id}><strong>{item.name}</strong><span>{item.phone || item.email || 'Sin contacto'}</span></article>)}</div></>}
+    </section>
 
-      {elevated && <section className="panel dashboard-section" id="payments-section">
-        <p className="eyebrow">CAJA</p><h2>Pagos</h2>
-        <form className="business-form" onSubmit={event => void submit(event, '/api/payments', 'Pago registrado')}><input name="amount" type="number" min="0.01" step="0.01" placeholder="Monto" required /><select name="currency" defaultValue="DOP"><option>DOP</option><option>USD</option></select><select name="method"><option>Cash</option><option>Card</option><option>Transfer</option><option>Other</option></select><button disabled={busy}>Registrar</button></form>
-        <div className="business-list compact">{payments.slice(0, 10).map(item => <article key={item.id}><strong>{item.currency} {item.amount.toFixed(2)}</strong><span>{item.method} · {item.status}</span></article>)}</div>
-      </section>}
+    {elevated && <section className="panel dashboard-section" id="payments-section">
+      <p className="eyebrow">CAJA</p><h2>Pagos del negocio</h2>
+      {isDemo ? <LockedFeature title="Caja y registro de pagos" text="La demo no expone operaciones financieras reales. Activa una cuenta para administrar la caja." /> : <><form className="business-form" onSubmit={event => void submit(event, '/api/payments', 'Pago registrado')}><input name="amount" type="number" min="0.01" step="0.01" placeholder="Monto" required /><select name="currency" defaultValue="DOP"><option>DOP</option><option>USD</option></select><select name="method"><option>Cash</option><option>Card</option><option>Transfer</option><option>Other</option></select><button disabled={busy}>Registrar</button></form><div className="business-list compact">{payments.slice(0, 10).map(item => <article key={item.id}><strong>{item.currency} {item.amount.toFixed(2)}</strong><span>{item.method} · {item.status}</span></article>)}</div></>}
+    </section>}
 
-      {elevated && <section className="panel dashboard-section" id="reports-section">
-        <p className="eyebrow">REPORTES</p><h2>Últimos 30 días</h2>
-        <div className="business-metrics"><span><strong>{report?.completedTurns ?? 0}</strong> turnos completados</span><span><strong>{report?.appointments ?? 0}</strong> citas</span><span><strong>{report?.noShows ?? 0}</strong> no presentados</span><span><strong>RD${(report?.grossRevenue ?? 0).toFixed(2)}</strong> ingresos</span></div>
-      </section>}
+    {elevated && <section className="panel dashboard-section" id="reports-section">
+      <p className="eyebrow">REPORTES</p><h2>Analítica del negocio</h2>
+      {isDemo ? <LockedFeature title="Reportes avanzados" text="Los indicadores históricos y financieros completos se reservan para clientes de BarberTurn." plan="Business" /> : !capabilities?.canUseAdvancedReports ? <LockedFeature title="Reportes avanzados" text="Desbloquea métricas históricas, ingresos y comportamiento operativo." plan="Business" /> : <div className="business-metrics"><span><strong>{report?.completedTurns ?? 0}</strong> turnos completados</span><span><strong>{report?.appointments ?? 0}</strong> citas</span><span><strong>{report?.noShows ?? 0}</strong> no presentados</span><span><strong>RD${(report?.grossRevenue ?? 0).toFixed(2)}</strong> ingresos</span></div>}
+    </section>}
 
-      {elevated && <section className="panel dashboard-section" id="team-section">
-        <p className="eyebrow">EQUIPO Y PERMISOS</p><h2>Usuarios</h2>
-        <form className="business-form" onSubmit={event => void submit(event, '/api/team/invitations', 'Invitación creada')}><input name="name" placeholder="Nombre" required /><input name="email" type="email" placeholder="Correo" required /><select name="role"><option>Administrator</option><option>Receptionist</option><option>Barber</option></select><select name="barberId" defaultValue=""><option value="">Sin vínculo de barbero</option>{barbers.filter(x => x.isActive).map(x => <option key={x.id} value={x.id}>{x.name}</option>)}</select><button disabled={busy}>Invitar</button></form>
-        <div className="business-list compact">{team.map(item => <article key={item.id}><strong>{item.name}</strong><span>{item.role} · {item.isActive ? 'Activo' : 'Inactivo'}</span>{auth.role === 'Owner' && item.role !== 'Owner' && item.isActive && <button disabled={busy} onClick={() => void deactivateMember(item.id)}>Desactivar</button>}</article>)}</div>
-      </section>}
+    {elevated && <section className="panel dashboard-section" id="team-section">
+      <p className="eyebrow">EQUIPO Y PERMISOS</p><h2>Usuarios</h2>
+      {isDemo ? <LockedFeature title="Equipo y permisos" text="Las invitaciones y cuentas de empleados están bloqueadas en la demostración." /> : <><form className="business-form" onSubmit={event => void submit(event, '/api/team/invitations', 'Invitación creada')}><input name="name" placeholder="Nombre" required /><input name="email" type="email" placeholder="Correo" required /><select name="role"><option>Administrator</option><option>Receptionist</option><option>Barber</option></select><select name="barberId" defaultValue=""><option value="">Sin vínculo de barbero</option>{barbers.filter(x => x.isActive).map(x => <option key={x.id} value={x.id}>{x.name}</option>)}</select><button disabled={busy}>Invitar</button></form><div className="business-list compact">{team.map(item => <article key={item.id}><strong>{item.name}</strong><span>{item.role} · {item.isActive ? 'Activo' : 'Inactivo'}</span>{auth.role === 'Owner' && item.role !== 'Owner' && item.isActive && <button disabled={busy} onClick={() => void deactivateMember(item.id)}>Desactivar</button>}</article>)}</div></>}
+    </section>}
 
-      {auth.role === 'Owner' && <section className="panel dashboard-section" id="locations-section">
-        <p className="eyebrow">CONFIGURACIÓN Y SUCURSALES</p><h2>Mi barbería</h2>
-        {shop && <form className="business-form" onSubmit={updateShop}><input name="name" defaultValue={shop.name} required /><input name="timeZoneId" defaultValue={shop.timeZoneId} required /><button disabled={busy}>Guardar configuración</button></form>}
-        <h3>Ubicaciones</h3>
-        <form className="business-form" onSubmit={event => void submit(event, '/api/locations', 'Sucursal agregada')}><input name="name" placeholder="Nombre" required /><input name="slug" placeholder="Identificador (ej. centro)" pattern="[a-z0-9-]+" required /><input name="address" placeholder="Dirección" /><input name="timeZoneId" defaultValue={shop?.timeZoneId ?? Intl.DateTimeFormat().resolvedOptions().timeZone} required /><button disabled={busy}>Agregar</button></form>
-        <div className="business-list compact">{locations.map(item => <article key={item.id}><strong>{item.name}</strong><span>{item.address || item.slug} · {item.timeZoneId}</span></article>)}</div>
-      </section>}
+    {auth.role === 'Owner' && <section className="panel dashboard-section" id="locations-section">
+      <p className="eyebrow">CONFIGURACIÓN Y SUCURSALES</p><h2>Mi barbería</h2>
+      {isDemo ? <LockedFeature title="Configuración comercial y sucursales" text="La demo usa una barbería temporal y no permite alterar su configuración comercial." plan="Business" /> : <>{shop && <form className="business-form" onSubmit={updateShop}><input name="name" defaultValue={shop.name} required /><input name="timeZoneId" defaultValue={shop.timeZoneId} required /><button disabled={busy}>Guardar configuración</button></form>}<h3>Ubicaciones</h3><form className="business-form" onSubmit={event => void submit(event, '/api/locations', 'Sucursal agregada')}><input name="name" placeholder="Nombre" required /><input name="slug" placeholder="Identificador (ej. centro)" pattern="[a-z0-9-]+" required /><input name="address" placeholder="Dirección" /><input name="timeZoneId" defaultValue={shop?.timeZoneId ?? Intl.DateTimeFormat().resolvedOptions().timeZone} required /><button disabled={busy}>Agregar</button></form><div className="business-list compact">{locations.map(item => <article key={item.id}><strong>{item.name}</strong><span>{item.address || item.slug} · {item.timeZoneId}</span></article>)}</div></>}
+    </section>}
 
-      {auth.role === 'Owner' && <section className="panel dashboard-section" id="billing-section">
-        <p className="eyebrow">SUSCRIPCIÓN</p><h2>{subscription?.plan ?? 'Pro'} · {subscription?.status ?? 'Trialing'}</h2>
-        <p>{usage ? `${usage.activeBarbers} de ${usage.barberLimit > 1000 ? 'ilimitados' : usage.barberLimit} barberos activos` : 'Cargando uso…'}</p>
-        {usage && <p>{usage.activeLocations} de {usage.locationLimit} sucursales activas</p>}
-        <div className="billing-actions"><button disabled={busy} onClick={() => void checkout('Starter')}>Starter · US$20</button><button disabled={busy} onClick={() => void checkout('Pro')}>Pro · US$40</button><button disabled={busy} onClick={() => void checkout('Business')}>Business · US$70</button>{subscription?.status === 'Active' && <button disabled={busy} onClick={() => void cancelSubscription()}>Cancelar suscripción</button>}{shop && usage?.canUseTv && <a href={`#/tv?shop=${shop.slug}`}>Abrir BarberTurn TV</a>}</div>
-      </section>}
-    </>
-  )
+    {auth.role === 'Owner' && <section className="panel dashboard-section" id="billing-section">
+      <p className="eyebrow">SUSCRIPCIÓN</p>
+      {isDemo ? <LockedFeature title="Planes y suscripción" text="La demostración no permite iniciar pagos. Crea una cuenta real para elegir un plan." /> : <><h2>{subscription?.plan ?? capabilities?.plan ?? 'Starter'} · {subscription?.status ?? capabilities?.status ?? 'Trialing'}</h2><p>{capabilities ? `${capabilities.activeBarbers} de ${capabilities.barberLimit > 1000 ? 'ilimitados' : capabilities.barberLimit} barberos activos` : 'Cargando uso…'}</p>{capabilities && <p>{capabilities.activeLocations} de {capabilities.locationLimit} sucursales activas</p>}<div className="billing-actions"><button disabled={busy} onClick={() => void checkout('Starter')}>Starter · US$20</button><button disabled={busy} onClick={() => void checkout('Pro')}>Pro · US$40</button><button disabled={busy} onClick={() => void checkout('Business')}>Business · US$70</button>{subscription?.status === 'Active' && <button disabled={busy} onClick={() => void cancelSubscription()}>Cancelar suscripción</button>}{shop && capabilities?.canUseTv && <a href={`#/tv?shop=${shop.slug}`}>Abrir BarberTurn TV</a>}</div></>}
+    </section>}
+  </>
 }

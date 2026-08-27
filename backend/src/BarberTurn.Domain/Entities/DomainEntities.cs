@@ -24,7 +24,7 @@ public sealed class BarberShop : BaseEntity
     public string Name { get; private set; } = string.Empty;
     public string Slug { get; private set; } = string.Empty;
     public string TimeZoneId { get; private set; } = "America/Santo_Domingo";
-    public SubscriptionPlan Plan { get; private set; } = SubscriptionPlan.Pro;
+    public SubscriptionPlan Plan { get; private set; } = SubscriptionPlan.Starter;
     public SubscriptionStatus SubscriptionStatus { get; private set; } = SubscriptionStatus.Trialing;
     public DateTimeOffset? TrialEndsAtUtc { get; private set; }
     public bool IsActive { get; private set; } = true;

@@ -4,9 +4,11 @@ import { faArrowLeft, faEnvelope, faEye, faEyeSlash, faFlask, faLock } from '@fo
 import type { Auth } from './types'
 import { useI18n } from './i18n'
 import { API_URL, api, clearAuth, readAuth, writeAuth } from './api'
+import SubscriptionBanner from './SubscriptionBanner'
 
 const demoStorageKey = 'barberturn.demo'
 const DashboardView = lazy(() => import('./DashboardView'))
+const BarberPortal = lazy(() => import('./BarberPortal'))
 
 function BarberTurnLogo() {
   return (
@@ -26,7 +28,7 @@ export default function App() {
   const isDemo = sessionStorage.getItem(demoStorageKey) === 'true'
 
   useEffect(() => {
-    if (auth) document.title = `${isDemo ? t('route.demo') : 'Panel'} | BarberTurn`
+    if (auth) document.title = `${isDemo ? t('route.demo') : auth.role === 'Barber' ? 'Mi jornada' : 'Panel'} | BarberTurn`
   }, [auth, isDemo, t])
 
   async function login(event: FormEvent<HTMLFormElement>) {
@@ -81,7 +83,12 @@ export default function App() {
     {error && <p className="login-error" role="status">{error}</p>}
   </section></main>
 
-  if (auth) return <Suspense fallback={<main className="login-shell"><p>Cargando panel…</p></main>}><DashboardView auth={auth} isDemo={isDemo} onLogout={logout} /></Suspense>
+  if (auth?.role === 'Barber') return <Suspense fallback={<main className="login-shell"><p>Cargando portal del barbero…</p></main>}><BarberPortal auth={auth} onLogout={logout} /></Suspense>
+
+  if (auth) return <>
+    <SubscriptionBanner auth={auth} isDemo={isDemo} />
+    <Suspense fallback={<main className="login-shell"><p>Cargando panel…</p></main>}><DashboardView auth={auth} isDemo={isDemo} onLogout={logout} /></Suspense>
+  </>
 
   return (
     <main className="login-shell login-split" aria-labelledby="login-title">

@@ -1,3 +1,4 @@
+using BarberTurn.Api.Filters;
 using BarberTurn.Application.Commercial;
 using BarberTurn.Application.Common;
 using BarberTurn.Infrastructure.Persistence;
@@ -16,6 +17,7 @@ public static class CommercialEndpoints
             var shop = await db.BarberShops.AsNoTracking().Where(x => x.Id == shopId).Select(x => new { x.Id, x.Name, x.Slug, x.TimeZoneId, x.Plan, x.SubscriptionStatus, x.TrialEndsAtUtc }).SingleAsync(ct);
             return Results.Ok(shop);
         }).WithTags("Settings").RequireAuthorization("VerifiedUser");
+
         endpoints.MapPut("/api/shop/settings", async (UpdateShopSettingsRequest request, HttpContext context, ApplicationDbContext db, CancellationToken ct) =>
         {
             try
@@ -27,9 +29,14 @@ public static class CommercialEndpoints
                 return Results.NoContent();
             }
             catch (Exception ex) when (ex is ArgumentException or TimeZoneNotFoundException or InvalidTimeZoneException) { return Results.BadRequest(new { message = ex.Message }); }
-        }).WithTags("Settings").RequireAuthorization("VerifiedUser").RequireAuthorization(policy => policy.RequireRole("Owner"));
+        }).WithTags("Settings").RequireAuthorization("VerifiedUser").RequireAuthorization(policy => policy.RequireRole("Owner")).AddEndpointFilter<NonDemoTenantFilter>();
 
-        var locations = endpoints.MapGroup("/api/locations").WithTags("Locations").RequireAuthorization("VerifiedUser");
+        endpoints.MapGet("/api/capabilities", async (HttpContext context, IPlanLimitService service, CancellationToken ct) =>
+            Results.Ok(await service.GetUsageAsync(ShopId(context), ct)))
+            .WithTags("Capabilities")
+            .RequireAuthorization("VerifiedUser");
+
+        var locations = endpoints.MapGroup("/api/locations").WithTags("Locations").RequireAuthorization("VerifiedUser").AddEndpointFilter<NonDemoTenantFilter>();
         locations.MapGet("/", async (HttpContext context, ApplicationDbContext db, CancellationToken ct) =>
             Results.Ok(await db.ShopLocations.AsNoTracking().Where(x => x.BarberShopId == ShopId(context)).OrderBy(x => x.Name).ToListAsync(ct)));
         locations.MapPost("/", async (UpsertLocationRequest request, HttpContext context, ApplicationDbContext db, IPlanLimitService limits, CancellationToken ct) =>
@@ -56,7 +63,7 @@ public static class CommercialEndpoints
             catch (Exception ex) when (ex is ArgumentException or TimeZoneNotFoundException or InvalidTimeZoneException or DbUpdateException) { return Results.BadRequest(new { message = ex.Message }); }
         }).RequireAuthorization(policy => policy.RequireRole("Owner"));
 
-        var customers = endpoints.MapGroup("/api/customers").WithTags("Customers").RequireAuthorization("VerifiedUser");
+        var customers = endpoints.MapGroup("/api/customers").WithTags("Customers").RequireAuthorization("VerifiedUser").AddEndpointFilter<NonDemoTenantFilter>();
         customers.MapGet("/", async (string? search, int? take, HttpContext context, ICommercialService service, CancellationToken ct) => Results.Ok(await service.GetCustomersAsync(ShopId(context), search, take ?? 100, ct)));
         customers.MapPost("/", async (UpsertCustomerRequest request, HttpContext context, ICommercialService service, CancellationToken ct) =>
         {
@@ -69,7 +76,7 @@ public static class CommercialEndpoints
             catch (Exception ex) when (ex is ArgumentException or InvalidOperationException) { return Results.BadRequest(new { message = ex.Message }); }
         });
 
-        var payments = endpoints.MapGroup("/api/payments").WithTags("Payments").RequireAuthorization("VerifiedUser").RequireAuthorization(policy => policy.RequireRole("Owner", "Administrator", "Receptionist"));
+        var payments = endpoints.MapGroup("/api/payments").WithTags("Payments").RequireAuthorization("VerifiedUser").RequireAuthorization(policy => policy.RequireRole("Owner", "Administrator", "Receptionist")).AddEndpointFilter<NonDemoTenantFilter>();
         payments.MapGet("/", async (DateTimeOffset? from, DateTimeOffset? to, HttpContext context, ICommercialService service, CancellationToken ct) =>
             Results.Ok(await service.GetPaymentsAsync(ShopId(context), from ?? DateTimeOffset.UtcNow.AddDays(-30), to ?? DateTimeOffset.UtcNow.AddDays(1), ct)));
         payments.MapPost("/", async (CreatePaymentRequest request, HttpContext context, ICommercialService service, CancellationToken ct) =>
@@ -78,14 +85,20 @@ public static class CommercialEndpoints
             catch (Exception ex) when (ex is ArgumentException or InvalidOperationException) { return Results.BadRequest(new { message = ex.Message }); }
         });
 
-        var reports = endpoints.MapGroup("/api/reports").WithTags("Reports").RequireAuthorization("VerifiedUser").RequireAuthorization(policy => policy.RequireRole("Owner", "Administrator"));
-        reports.MapGet("/business", async (DateOnly? from, DateOnly? to, HttpContext context, ICommercialService service, CancellationToken ct) =>
+        var reports = endpoints.MapGroup("/api/reports").WithTags("Reports").RequireAuthorization("VerifiedUser").RequireAuthorization(policy => policy.RequireRole("Owner", "Administrator")).AddEndpointFilter<NonDemoTenantFilter>();
+        reports.MapGet("/business", async (DateOnly? from, DateOnly? to, HttpContext context, ICommercialService service, IPlanLimitService limits, CancellationToken ct) =>
         {
-            var end = to ?? DateOnly.FromDateTime(DateTime.UtcNow);
-            return Results.Ok(await service.GetReportAsync(ShopId(context), from ?? end.AddDays(-30), end, ct));
+            try
+            {
+                var shopId = ShopId(context);
+                await limits.EnsureCanUseAsync(shopId, PlanFeature.AdvancedReports, ct);
+                var end = to ?? DateOnly.FromDateTime(DateTime.UtcNow);
+                return Results.Ok(await service.GetReportAsync(shopId, from ?? end.AddDays(-30), end, ct));
+            }
+            catch (InvalidOperationException ex) { return Results.StatusCode(StatusCodes.Status403Forbidden); }
         });
 
-        var billing = endpoints.MapGroup("/api/billing").WithTags("Billing").RequireAuthorization("VerifiedUser").RequireAuthorization(policy => policy.RequireRole("Owner"));
+        var billing = endpoints.MapGroup("/api/billing").WithTags("Billing").RequireAuthorization("VerifiedUser").RequireAuthorization(policy => policy.RequireRole("Owner")).AddEndpointFilter<NonDemoTenantFilter>();
         billing.MapGet("/subscription", async (HttpContext context, IBillingService service, CancellationToken ct) => Results.Ok(await service.GetSubscriptionAsync(ShopId(context), ct)));
         billing.MapGet("/usage", async (HttpContext context, IPlanLimitService service, CancellationToken ct) => Results.Ok(await service.GetUsageAsync(ShopId(context), ct)));
         billing.MapPost("/checkout", async (CheckoutRequest request, HttpContext context, IBillingService service, CancellationToken ct) =>
@@ -119,7 +132,7 @@ public static class CommercialEndpoints
             catch (InvalidOperationException) { return Results.Unauthorized(); }
         }).WithTags("Billing webhooks").RequireRateLimiting("webhooks");
 
-        var audit = endpoints.MapGroup("/api/audit").WithTags("Audit").RequireAuthorization("VerifiedUser").RequireAuthorization(policy => policy.RequireRole("Owner", "Administrator"));
+        var audit = endpoints.MapGroup("/api/audit").WithTags("Audit").RequireAuthorization("VerifiedUser").RequireAuthorization(policy => policy.RequireRole("Owner", "Administrator")).AddEndpointFilter<NonDemoTenantFilter>();
         audit.MapGet("/", async (int? take, HttpContext context, IAuditService service, CancellationToken ct) => Results.Ok(await service.GetAsync(ShopId(context), take ?? 100, ct)));
         return endpoints;
     }

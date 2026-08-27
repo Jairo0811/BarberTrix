@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCalendarCheck, faClock, faScissors, faUserTie } from '@fortawesome/free-solid-svg-icons'
 import { API_URL } from './api'
+import { useI18n } from './i18n'
 import './role-portals.css'
 
 type Service = { id: string; name: string; price: number; estimatedDurationMinutes: number }
@@ -15,6 +16,7 @@ function queryValue(name: string) {
 }
 
 export default function CustomerPortalPage() {
+  const { t } = useI18n()
   const slug = useMemo(() => queryValue('shop'), [])
   const [shop, setShop] = useState<Shop | null>(null)
   const [queue, setQueue] = useState<QueueDisplay | null>(null)
@@ -42,12 +44,12 @@ export default function CustomerPortalPage() {
   return <main className="customer-portal">
     <header className="customer-portal-header">
       <a href="#/"><img src="/branding/barberturn-logo.png" alt="BarberTurn" /></a>
-      <span>Portal del cliente</span>
+      <span>{t('customer.portalTitle')}</span>
     </header>
 
     <section className="customer-hero">
       <div><span>BIENVENIDO A {shop?.name?.toUpperCase() || 'BARBERTURN'}</span><h1>{appointmentsEnabled ? 'Tu turno, tu cita y tu barbería en un solo lugar.' : 'Tu turno y tu barbería en un solo lugar.'}</h1><p>{appointmentsEnabled ? 'No necesitas crear una cuenta para tomar un turno o reservar una cita.' : 'No necesitas crear una cuenta para tomar un turno.'}</p></div>
-      <div className="customer-hero-actions"><a className="portal-primary-link" href={`#/book?shop=${encodeURIComponent(slug)}`}>Tomar turno</a>{appointmentsEnabled && <a className="portal-secondary-link" href={`#/book?shop=${encodeURIComponent(slug)}`}>Reservar cita</a>}</div>
+      <div className="customer-hero-actions"><a className="portal-primary-link" href={`#/book?shop=${encodeURIComponent(slug)}`}>{t('customer.takeTurn')}</a>{appointmentsEnabled && <a className="portal-secondary-link" href={`#/book?shop=${encodeURIComponent(slug)}`}>{t('customer.bookAppointment')}</a>}</div>
     </section>
 
     {error && <p className="portal-error" role="alert">{error}</p>}

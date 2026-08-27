@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using BarberTurn.Api.Filters;
 using BarberTurn.Application.Auth;
 
 namespace BarberTurn.Api.Endpoints;
@@ -83,7 +84,7 @@ public static class AuthEndpoints
             catch (Exception ex) when (ex is ArgumentException or InvalidOperationException) { return Results.BadRequest(new { message = ex.Message }); }
         }).RequireRateLimiting("registration");
 
-        var team = endpoints.MapGroup("/api/team").WithTags("Team").RequireAuthorization("VerifiedUser");
+        var team = endpoints.MapGroup("/api/team").WithTags("Team").RequireAuthorization("VerifiedUser").AddEndpointFilter<NonDemoTenantFilter>();
         team.MapGet("/", async (HttpContext context, IAuthService service, CancellationToken ct) => Results.Ok(await service.GetTeamAsync(GetShopId(context), ct)))
             .RequireAuthorization(policy => policy.RequireRole("Owner", "Administrator"));
         team.MapPost("/invitations", async (CreateInvitationRequest request, HttpContext context, IAuthService service, IConfiguration config, IHostEnvironment environment, CancellationToken ct) =>

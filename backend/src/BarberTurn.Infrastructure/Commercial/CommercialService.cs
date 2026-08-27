@@ -1,4 +1,5 @@
 using BarberTurn.Application.Commercial;
+using BarberTurn.Application.Common;
 using BarberTurn.Domain.Entities;
 using BarberTurn.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;

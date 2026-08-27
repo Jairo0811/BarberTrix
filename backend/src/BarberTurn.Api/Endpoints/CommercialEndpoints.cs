@@ -17,7 +17,6 @@ public static class CommercialEndpoints
             var shop = await db.BarberShops.AsNoTracking().Where(x => x.Id == shopId).Select(x => new { x.Id, x.Name, x.Slug, x.TimeZoneId, x.Plan, x.SubscriptionStatus, x.TrialEndsAtUtc }).SingleAsync(ct);
             return Results.Ok(shop);
         }).WithTags("Settings").RequireAuthorization("VerifiedUser");
-
         endpoints.MapPut("/api/shop/settings", async (UpdateShopSettingsRequest request, HttpContext context, ApplicationDbContext db, CancellationToken ct) =>
         {
             try
@@ -95,7 +94,7 @@ public static class CommercialEndpoints
                 var end = to ?? DateOnly.FromDateTime(DateTime.UtcNow);
                 return Results.Ok(await service.GetReportAsync(shopId, from ?? end.AddDays(-30), end, ct));
             }
-            catch (InvalidOperationException ex) { return Results.StatusCode(StatusCodes.Status403Forbidden); }
+            catch (InvalidOperationException) { return Results.StatusCode(StatusCodes.Status403Forbidden); }
         });
 
         var billing = endpoints.MapGroup("/api/billing").WithTags("Billing").RequireAuthorization("VerifiedUser").RequireAuthorization(policy => policy.RequireRole("Owner")).AddEndpointFilter<NonDemoTenantFilter>();

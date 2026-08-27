@@ -1,28 +1,53 @@
 import { apiRequest } from '@/api/httpClient';
 import type { MobileSession } from './types';
 
-type LoginResponse = {
-  accessToken?: string;
-  token?: string;
-  refreshToken?: string;
-  name?: string;
-  userName?: string;
-  role?: string;
-  barberShopId?: string;
+type MobileAuthResponse = {
+  accessToken: string;
+  expiresAtUtc: string;
+  refreshToken: string;
+  refreshTokenExpiresAtUtc: string;
+  userId: string;
+  barberShopId: string;
+  barberId?: string | null;
+  name: string;
+  role: string;
+  isEmailVerified: boolean;
 };
 
-export async function login(email: string, password: string): Promise<MobileSession> {
-  const response = await apiRequest<LoginResponse>('/api/auth/login', {
-    method: 'POST',
-    body: JSON.stringify({ email, password, rememberMe: true }),
-  });
-  const accessToken = response.accessToken ?? response.token;
-  if (!accessToken) throw new Error('El servidor no devolvió un access token.');
+function mapSession(response: MobileAuthResponse): MobileSession {
   return {
-    accessToken,
+    accessToken: response.accessToken,
+    expiresAtUtc: response.expiresAtUtc,
     refreshToken: response.refreshToken,
-    userName: response.userName ?? response.name,
-    role: response.role,
+    refreshTokenExpiresAtUtc: response.refreshTokenExpiresAtUtc,
+    userId: response.userId,
     barberShopId: response.barberShopId,
+    barberId: response.barberId ?? undefined,
+    userName: response.name,
+    role: response.role,
+    isEmailVerified: response.isEmailVerified,
   };
+}
+
+export async function login(email: string, password: string): Promise<MobileSession> {
+  const response = await apiRequest<MobileAuthResponse>('/api/auth/mobile/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  });
+  return mapSession(response);
+}
+
+export async function refreshSession(refreshToken: string): Promise<MobileSession> {
+  const response = await apiRequest<MobileAuthResponse>('/api/auth/mobile/refresh', {
+    method: 'POST',
+    body: JSON.stringify({ refreshToken }),
+  });
+  return mapSession(response);
+}
+
+export async function logout(refreshToken: string): Promise<void> {
+  await apiRequest<void>('/api/auth/mobile/logout', {
+    method: 'POST',
+    body: JSON.stringify({ refreshToken }),
+  });
 }

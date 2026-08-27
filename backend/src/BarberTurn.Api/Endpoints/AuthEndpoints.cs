@@ -133,10 +133,12 @@ public static class AuthEndpoints
                 var frontend = config["PasswordReset:FrontendBaseUrl"] ?? "http://localhost:5173";
                 return Results.Created("/api/team/invitations", await service.CreateInvitationAsync(GetShopId(context), request, frontend, environment.IsDevelopment(), ct));
             }
-            catch (Exception ex) when (ex is ArgumentException or InvalidOperationException) { return Results.BadRequest(new { message = ex.Message }); }
+            catch (Exception ex) when (ex is ArgumentException or InvalidOperationException) { return ApiErrorResults.BadRequest(context, ApiErrorCodes.TeamInvalid, ex.Message); }
         }).RequireAuthorization(policy => policy.RequireRole("Owner", "Administrator"));
         team.MapDelete("/{userId:guid}", async (Guid userId, HttpContext context, IAuthService service, CancellationToken ct) =>
-            await service.DeactivateTeamMemberAsync(GetShopId(context), userId, ct) ? Results.NoContent() : Results.BadRequest())
+            await service.DeactivateTeamMemberAsync(GetShopId(context), userId, ct)
+                ? Results.NoContent()
+                : ApiErrorResults.BadRequest(context, ApiErrorCodes.TeamOperationInvalid, "The team member could not be deactivated."))
             .RequireAuthorization(policy => policy.RequireRole("Owner"));
 
         return endpoints;

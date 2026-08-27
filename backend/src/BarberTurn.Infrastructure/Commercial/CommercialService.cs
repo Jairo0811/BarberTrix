@@ -1,4 +1,5 @@
 using BarberTurn.Application.Commercial;
+using BarberTurn.Application.Common;
 using BarberTurn.Domain.Entities;
 using BarberTurn.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -115,9 +116,9 @@ internal sealed class CommercialService(ApplicationDbContext dbContext) : IComme
         var normalizedPhone = string.IsNullOrWhiteSpace(phone) ? null : phone.Trim();
         var normalizedEmail = string.IsNullOrWhiteSpace(email) ? null : email.Trim().ToLowerInvariant();
         if (normalizedPhone is not null && await dbContext.Customers.AnyAsync(x => x.BarberShopId == shopId && x.Id != excludedId && x.Phone == normalizedPhone, ct))
-            throw new InvalidOperationException("A customer with that phone already exists.");
+            throw new BusinessRuleException(ApplicationErrorCodes.CustomerAlreadyExists, "A customer with that phone already exists.");
         if (normalizedEmail is not null && await dbContext.Customers.AnyAsync(x => x.BarberShopId == shopId && x.Id != excludedId && x.Email == normalizedEmail, ct))
-            throw new InvalidOperationException("A customer with that email already exists.");
+            throw new BusinessRuleException(ApplicationErrorCodes.CustomerAlreadyExists, "A customer with that email already exists.");
     }
 
     private static System.Linq.Expressions.Expression<Func<ShopLocation, ShopLocationResponse>> MapLocation() => x =>

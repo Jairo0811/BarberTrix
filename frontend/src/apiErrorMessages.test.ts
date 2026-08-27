@@ -8,6 +8,11 @@ describe('localized API errors', () => {
     expect(apiErrorMessage(error, 'es-419', 'fallback')).toBe('Tu sesión expiró. Inicia sesión nuevamente.')
     expect(apiErrorMessage(error, 'en', 'fallback')).toBe('Your session expired. Sign in again.')
     expect(apiErrorMessage(error, 'es-ES', 'fallback')).toBe('Tu sesión ha caducado. Inicia sesión de nuevo.')
+
+    const businessError = new ApiClientError('backend text', 409, 'CUSTOMER_ALREADY_EXISTS', 'corr-124')
+    expect(apiErrorMessage(businessError, 'es-419', 'fallback')).toBe('Ya existe un cliente con ese teléfono o correo.')
+    expect(apiErrorMessage(businessError, 'en', 'fallback')).toBe('A customer with that phone number or email already exists.')
+    expect(apiErrorMessage(businessError, 'es-ES', 'fallback')).toBe('Ya existe un cliente con ese teléfono o correo.')
   })
 
   it('keeps the structured backend message when a code is unknown', () => {

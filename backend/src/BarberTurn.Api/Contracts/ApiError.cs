@@ -1,3 +1,5 @@
+using BarberTurn.Application.Common;
+
 namespace BarberTurn.Api.Contracts;
 
 public static class ApiErrorCodes
@@ -21,7 +23,7 @@ public static class ApiErrorCodes
     public const string ShopSettingsInvalid = "SHOP_SETTINGS_INVALID";
     public const string LocationInvalid = "LOCATION_INVALID";
     public const string CustomerInvalid = "CUSTOMER_INVALID";
-    public const string CustomerAlreadyExists = "CUSTOMER_ALREADY_EXISTS";
+    public const string CustomerAlreadyExists = ApplicationErrorCodes.CustomerAlreadyExists;
     public const string PaymentInvalid = "PAYMENT_INVALID";
     public const string BillingInvalid = "BILLING_INVALID";
     public const string BillingWebhookInvalid = "BILLING_WEBHOOK_INVALID";

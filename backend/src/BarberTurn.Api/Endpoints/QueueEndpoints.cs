@@ -89,8 +89,10 @@ public static class QueueEndpoints
             await ExecuteTransitionAsync(context, () => service.CancelTurnAsync(GetShopId(context), turnId, ct)))
             .RequireAuthorization(policy => policy.RequireRole("Owner", "Administrator", "Receptionist"));
         group.MapPost("/turns/{turnId:guid}/no-show", async (Guid turnId, HttpContext context, IQueueService service, CancellationToken ct) =>
-            await ExecuteTransitionAsync(context, () => service.MarkNoShowAsync(GetShopId(context), turnId, ct)))
-            .RequireAuthorization(policy => policy.RequireRole("Owner", "Administrator", "Receptionist", "Barber"));
+        {
+            if (!await CanOperateTurnAsync(context, turnId, service, ct)) return Results.Forbid();
+            return await ExecuteTransitionAsync(context, () => service.MarkNoShowAsync(GetShopId(context), turnId, ct));
+        }).RequireAuthorization(policy => policy.RequireRole("Owner", "Administrator", "Receptionist", "Barber"));
 
         return endpoints;
     }

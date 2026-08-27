@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
@@ -15,7 +16,8 @@ public sealed class ApiSmokeTests : IClassFixture<BarberTurnFactory>, IDisposabl
     public ApiSmokeTests(BarberTurnFactory factory) => client = factory.CreateClient(new WebApplicationFactoryClientOptions
     {
         BaseAddress = new Uri("https://localhost"),
-        AllowAutoRedirect = false
+        AllowAutoRedirect = false,
+        HandleCookies = true
     });
 
     [Fact]
@@ -36,6 +38,44 @@ public sealed class ApiSmokeTests : IClassFixture<BarberTurnFactory>, IDisposabl
         client.DefaultRequestHeaders.Authorization = null;
         var publicShop = await client.GetAsync($"/api/public/shops/{settings.Slug}");
         publicShop.EnsureSuccessStatusCode();
+    }
+
+    [Fact]
+    public async Task RefreshTokenIsHttpOnlyAndNeverReturnedToJavascript()
+    {
+        var demo = await client.PostAsync("/api/auth/demo-login", null);
+        demo.EnsureSuccessStatusCode();
+
+        var json = await demo.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.False(json.TryGetProperty("refreshToken", out _));
+        Assert.False(json.TryGetProperty("refreshTokenExpiresAtUtc", out _));
+
+        var setCookie = Assert.Single(demo.Headers.GetValues("Set-Cookie"));
+        Assert.Contains("barberturn.refresh=", setCookie, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("httponly", setCookie, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("samesite=lax", setCookie, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("secure", setCookie, StringComparison.OrdinalIgnoreCase);
+
+        var refresh = await client.PostAsync("/api/auth/refresh", null);
+        refresh.EnsureSuccessStatusCode();
+        var refreshedJson = await refresh.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.False(refreshedJson.TryGetProperty("refreshToken", out _));
+    }
+
+    [Fact]
+    public async Task LogoutRevokesCookieBackedRefreshSession()
+    {
+        var demo = await client.PostAsync("/api/auth/demo-login", null);
+        demo.EnsureSuccessStatusCode();
+
+        var refreshBeforeLogout = await client.PostAsync("/api/auth/refresh", null);
+        refreshBeforeLogout.EnsureSuccessStatusCode();
+
+        var logout = await client.PostAsync("/api/auth/logout", null);
+        Assert.Equal(HttpStatusCode.NoContent, logout.StatusCode);
+
+        var refreshAfterLogout = await client.PostAsync("/api/auth/refresh", null);
+        Assert.Equal(HttpStatusCode.Unauthorized, refreshAfterLogout.StatusCode);
     }
 
     private sealed record AuthPayload(string AccessToken);

@@ -3,6 +3,25 @@ import type { Auth } from './types'
 export const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
 export const authStorageKey = 'barberturn.auth'
 
+export class ApiClientError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+    public readonly code?: string,
+    public readonly correlationId?: string,
+  ) {
+    super(message)
+    this.name = 'ApiClientError'
+  }
+}
+
+type ApiErrorPayload = {
+  code?: string
+  message?: string
+  correlationId?: string
+  errors?: Record<string, string[]>
+}
+
 export function readAuth(): Auth | null {
   const raw = localStorage.getItem(authStorageKey) ?? sessionStorage.getItem(authStorageKey)
   if (!raw) return null
@@ -22,6 +41,14 @@ export function clearAuth() {
   sessionStorage.removeItem(authStorageKey)
 }
 
+async function readError(response: Response): Promise<ApiClientError> {
+  const payload = await response.json().catch(() => null) as ApiErrorPayload | null
+  const validation = payload?.errors ? Object.values(payload.errors).flat().join(' ') : null
+  const correlationId = payload?.correlationId ?? response.headers.get('X-Correlation-ID') ?? undefined
+  const message = payload?.message ?? validation ?? `Error ${response.status}`
+  return new ApiClientError(message, response.status, payload?.code, correlationId)
+}
+
 async function refreshAuth(): Promise<Auth | null> {
   const response = await fetch(`${API_URL}/api/auth/refresh`, {
     method: 'POST',
@@ -35,25 +62,35 @@ async function refreshAuth(): Promise<Auth | null> {
 
 export async function api<T>(path: string, init?: RequestInit, retry = true): Promise<T> {
   const auth = readAuth()
-  if (!auth) throw new Error('Tu sesión expiró. Inicia sesión nuevamente.')
+  if (!auth) throw new ApiClientError('Tu sesión expiró. Inicia sesión nuevamente.', 401, 'AUTH_SESSION_EXPIRED')
+
   const response = await fetch(`${API_URL}${path}`, {
     ...init,
     credentials: 'include',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${auth.accessToken}`, ...init?.headers },
   })
+
   if (response.status === 401 && retry) {
     const refreshed = await refreshAuth()
     if (refreshed) return api<T>(path, init, false)
     clearAuth()
     window.location.hash = '#/login'
     window.location.reload()
-    throw new Error('Tu sesión expiró. Inicia sesión nuevamente.')
+    throw new ApiClientError('Tu sesión expiró. Inicia sesión nuevamente.', 401, 'AUTH_SESSION_EXPIRED')
   }
-  if (!response.ok) {
-    const error = await response.json().catch(() => null)
-    const validation = error?.errors ? Object.values(error.errors).flat().join(' ') : null
-    throw new Error(error?.message ?? validation ?? `Error ${response.status}`)
-  }
+
+  if (!response.ok) throw await readError(response)
+  if (response.status === 204) return undefined as T
+  return response.json() as Promise<T>
+}
+
+export async function publicApi<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${API_URL}${path}`, {
+    ...init,
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json', ...init?.headers },
+  })
+  if (!response.ok) throw await readError(response)
   if (response.status === 204) return undefined as T
   return response.json() as Promise<T>
 }

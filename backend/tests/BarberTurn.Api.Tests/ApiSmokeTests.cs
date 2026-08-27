@@ -213,7 +213,7 @@ public sealed class ApiSmokeTests : IClassFixture<BarberTurnFactory>, IDisposabl
         Assert.Equal(1, responses.Count(response => response.StatusCode == HttpStatusCode.Created));
         Assert.Equal(1, responses.Count(response => response.StatusCode == HttpStatusCode.Conflict));
 
-        var conflict = Assert.Single(responses.Where(response => response.StatusCode == HttpStatusCode.Conflict));
+        var conflict = Assert.Single(responses, response => response.StatusCode == HttpStatusCode.Conflict);
         var payload = await conflict.Content.ReadFromJsonAsync<ApiErrorPayload>();
         Assert.NotNull(payload);
         Assert.Equal("APPOINTMENT_TIME_UNAVAILABLE", payload.Code);

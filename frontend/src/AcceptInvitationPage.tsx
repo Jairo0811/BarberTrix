@@ -2,6 +2,7 @@ import { FormEvent, useMemo, useState } from 'react'
 import { publicApi, writeAuth } from './api'
 import { apiErrorMessage } from './apiErrorMessages'
 import { useI18n } from './i18n'
+import { isStrongPassword, passwordPolicyMessage } from './passwordPolicy'
 import type { Auth } from './types'
 
 function queryToken() {
@@ -21,8 +22,8 @@ export default function AcceptInvitationPage() {
     const data = new FormData(event.currentTarget)
     const password = String(data.get('password') ?? '')
 
-    if (password.length < 10 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
-      setError('La contraseña debe tener al menos 10 caracteres e incluir mayúscula, minúscula, número y símbolo.')
+    if (!isStrongPassword(password)) {
+      setError(passwordPolicyMessage(locale))
       setBusy(false)
       return
     }

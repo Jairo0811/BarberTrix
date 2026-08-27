@@ -20,6 +20,7 @@ function renderApp() {
 
 describe('App authentication and role routing', () => {
   beforeEach(() => {
+    localStorage.setItem('barberturn.locale', 'es-419')
     vi.stubGlobal('fetch', vi.fn())
   })
 

@@ -67,7 +67,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
       <BarbersSection barbers={queue.barbers} canManage={canManageCatalog} copy={copy} onRefresh={queue.refresh} onError={queue.setError} />
       {canManageCatalog && <ServicesSection services={queue.services} copy={copy} onRefresh={queue.refresh} onError={queue.setError} />}
 
-      <BusinessModules auth={auth} />
+      <BusinessModules auth={auth} barbers={queue.barbers} isDemo={isDemo} />
       <footer className="dashboard-footer"><span>© {currentYear} BarberTurn. {copy.rights}</span><span>Tu turno. Tu estilo. Tu tiempo.</span></footer>
     </AdminDashboardLayout>
   )

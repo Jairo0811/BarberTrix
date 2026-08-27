@@ -1,3 +1,4 @@
+using BarberTurn.Api.Contracts;
 using BarberTurn.Api.Filters;
 using BarberTurn.Application.Commercial;
 using BarberTurn.Application.Common;
@@ -23,7 +24,7 @@ public static class CommercialEndpoints
             }
             catch (Exception ex) when (ex is ArgumentException or TimeZoneNotFoundException or InvalidTimeZoneException)
             {
-                return Results.BadRequest(new { message = ex.Message });
+                return ApiErrorResults.BadRequest(context, ApiErrorCodes.ShopSettingsInvalid, ex.Message);
             }
         }).WithTags("Settings")
           .RequireAuthorization("VerifiedUser")
@@ -54,7 +55,7 @@ public static class CommercialEndpoints
             }
             catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or TimeZoneNotFoundException or InvalidTimeZoneException)
             {
-                return Results.BadRequest(new { message = ex.Message });
+                return ApiErrorResults.BadRequest(context, ApiErrorCodes.LocationInvalid, ex.Message);
             }
         }).RequireAuthorization(policy => policy.RequireRole("Owner"));
 
@@ -67,7 +68,7 @@ public static class CommercialEndpoints
             }
             catch (Exception ex) when (ex is ArgumentException or TimeZoneNotFoundException or InvalidTimeZoneException)
             {
-                return Results.BadRequest(new { message = ex.Message });
+                return ApiErrorResults.BadRequest(context, ApiErrorCodes.LocationInvalid, ex.Message);
             }
         }).RequireAuthorization(policy => policy.RequireRole("Owner"));
 
@@ -76,12 +77,14 @@ public static class CommercialEndpoints
         customers.MapPost("/", async (UpsertCustomerRequest request, HttpContext context, ICommercialService service, CancellationToken ct) =>
         {
             try { return Results.Created("/api/customers", await service.CreateCustomerAsync(ShopId(context), request, ct)); }
-            catch (Exception ex) when (ex is ArgumentException or InvalidOperationException) { return Results.BadRequest(new { message = ex.Message }); }
+            catch (BusinessRuleException ex) { return ApiErrorResults.Conflict(context, ex.Code, ex.Message); }
+            catch (Exception ex) when (ex is ArgumentException or InvalidOperationException) { return ApiErrorResults.BadRequest(context, ApiErrorCodes.CustomerInvalid, ex.Message); }
         });
         customers.MapPut("/{id:guid}", async (Guid id, UpsertCustomerRequest request, HttpContext context, ICommercialService service, CancellationToken ct) =>
         {
             try { return await service.UpdateCustomerAsync(ShopId(context), id, request, ct) is { } customer ? Results.Ok(customer) : Results.NotFound(); }
-            catch (Exception ex) when (ex is ArgumentException or InvalidOperationException) { return Results.BadRequest(new { message = ex.Message }); }
+            catch (BusinessRuleException ex) { return ApiErrorResults.Conflict(context, ex.Code, ex.Message); }
+            catch (Exception ex) when (ex is ArgumentException or InvalidOperationException) { return ApiErrorResults.BadRequest(context, ApiErrorCodes.CustomerInvalid, ex.Message); }
         });
 
         var payments = endpoints.MapGroup("/api/payments").WithTags("Payments").RequireAuthorization("VerifiedUser").RequireAuthorization(policy => policy.RequireRole("Owner", "Administrator", "Receptionist")).AddEndpointFilter<NonDemoTenantFilter>();
@@ -90,7 +93,7 @@ public static class CommercialEndpoints
         payments.MapPost("/", async (CreatePaymentRequest request, HttpContext context, ICommercialService service, CancellationToken ct) =>
         {
             try { return Results.Created("/api/payments", await service.CreatePaymentAsync(ShopId(context), request, ct)); }
-            catch (Exception ex) when (ex is ArgumentException or InvalidOperationException) { return Results.BadRequest(new { message = ex.Message }); }
+            catch (Exception ex) when (ex is ArgumentException or InvalidOperationException) { return ApiErrorResults.BadRequest(context, ApiErrorCodes.PaymentInvalid, ex.Message); }
         });
 
         var reports = endpoints.MapGroup("/api/reports").WithTags("Reports").RequireAuthorization("VerifiedUser").RequireAuthorization(policy => policy.RequireRole("Owner", "Administrator")).AddEndpointFilter<NonDemoTenantFilter>();
@@ -103,7 +106,7 @@ public static class CommercialEndpoints
                 var end = to ?? DateOnly.FromDateTime(DateTime.UtcNow);
                 return Results.Ok(await service.GetReportAsync(shopId, from ?? end.AddDays(-30), end, ct));
             }
-            catch (InvalidOperationException) { return Results.StatusCode(StatusCodes.Status403Forbidden); }
+            catch (InvalidOperationException ex) { return ApiErrorResults.Forbidden(context, ApiErrorCodes.PlanFeatureUnavailable, ex.Message); }
         });
 
         var billing = endpoints.MapGroup("/api/billing").WithTags("Billing").RequireAuthorization("VerifiedUser").RequireAuthorization(policy => policy.RequireRole("Owner")).AddEndpointFilter<NonDemoTenantFilter>();
@@ -112,17 +115,17 @@ public static class CommercialEndpoints
         billing.MapPost("/checkout", async (CheckoutRequest request, HttpContext context, IBillingService service, CancellationToken ct) =>
         {
             try { return Results.Ok(await service.CreateCheckoutAsync(ShopId(context), request, ct)); }
-            catch (InvalidOperationException ex) { return Results.BadRequest(new { message = ex.Message }); }
+            catch (InvalidOperationException ex) { return ApiErrorResults.BadRequest(context, ApiErrorCodes.BillingInvalid, ex.Message); }
         });
         billing.MapPost("/capture", async (CaptureCheckoutRequest request, HttpContext context, IBillingService service, CancellationToken ct) =>
         {
             try { return Results.Ok(await service.CaptureCheckoutAsync(ShopId(context), request, ct)); }
-            catch (InvalidOperationException ex) { return Results.BadRequest(new { message = ex.Message }); }
+            catch (InvalidOperationException ex) { return ApiErrorResults.BadRequest(context, ApiErrorCodes.BillingInvalid, ex.Message); }
         });
         billing.MapPost("/cancel", async (bool? atPeriodEnd, HttpContext context, IBillingService service, CancellationToken ct) =>
         {
             try { return Results.Ok(await service.CancelAsync(ShopId(context), atPeriodEnd ?? true, ct)); }
-            catch (InvalidOperationException ex) { return Results.BadRequest(new { message = ex.Message }); }
+            catch (InvalidOperationException ex) { return ApiErrorResults.BadRequest(context, ApiErrorCodes.BillingInvalid, ex.Message); }
         });
 
         endpoints.MapPost("/api/webhooks/paypal", async (HttpContext context, IBillingService service, CancellationToken ct) =>
@@ -137,7 +140,7 @@ public static class CommercialEndpoints
                     context.Request.Headers["PAYPAL-TRANSMISSION-SIG"].ToString(), body, ct);
                 return Results.NoContent();
             }
-            catch (InvalidOperationException) { return Results.Unauthorized(); }
+            catch (InvalidOperationException) { return ApiErrorResults.Unauthorized(context, ApiErrorCodes.BillingWebhookInvalid, "The PayPal webhook could not be verified."); }
         }).WithTags("Billing webhooks").RequireRateLimiting("webhooks");
 
         var audit = endpoints.MapGroup("/api/audit").WithTags("Audit").RequireAuthorization("VerifiedUser").RequireAuthorization(policy => policy.RequireRole("Owner", "Administrator")).AddEndpointFilter<NonDemoTenantFilter>();

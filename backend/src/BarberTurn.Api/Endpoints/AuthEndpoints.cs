@@ -42,6 +42,32 @@ public static class AuthEndpoints
             return Results.Ok(ToClientResponse(response));
         }).RequireRateLimiting("auth");
 
+        group.MapPost("/mobile/login", async (LoginRequest request, HttpContext context, IAuthService authService, CancellationToken cancellationToken) =>
+        {
+            var response = await authService.LoginAsync(request, UserAgent(context), Ip(context), cancellationToken);
+            return response is null
+                ? Results.Json(ApiError.From(context, ApiErrorCodes.AuthInvalidCredentials, "Correo o contraseña incorrectos."), statusCode: StatusCodes.Status401Unauthorized)
+                : Results.Ok(ToMobileClientResponse(response));
+        }).RequireRateLimiting("auth");
+
+        group.MapPost("/mobile/refresh", async (RefreshTokenRequest request, HttpContext context, IAuthService authService, CancellationToken cancellationToken) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.RefreshToken))
+                return Results.Json(ApiError.From(context, ApiErrorCodes.AuthRefreshRequired, "La sesión debe renovarse."), statusCode: StatusCodes.Status401Unauthorized);
+
+            var response = await authService.RefreshAsync(request, UserAgent(context), Ip(context), cancellationToken);
+            return response is null
+                ? Results.Json(ApiError.From(context, ApiErrorCodes.AuthRefreshInvalid, "La sesión ya no es válida."), statusCode: StatusCodes.Status401Unauthorized)
+                : Results.Ok(ToMobileClientResponse(response));
+        }).RequireRateLimiting("auth");
+
+        group.MapPost("/mobile/logout", async (LogoutRequest request, IAuthService authService, CancellationToken cancellationToken) =>
+        {
+            if (!string.IsNullOrWhiteSpace(request.RefreshToken))
+                await authService.LogoutAsync(request, cancellationToken);
+            return Results.NoContent();
+        }).RequireRateLimiting("auth");
+
         group.MapPost("/refresh", async (HttpContext context, IAuthService authService, CancellationToken cancellationToken) =>
         {
             if (!context.Request.Cookies.TryGetValue(RefreshCookieName, out var refreshToken) || string.IsNullOrWhiteSpace(refreshToken))
@@ -154,6 +180,18 @@ public static class AuthEndpoints
         response.Role,
         response.IsEmailVerified);
 
+    private static MobileAuthSessionResponse ToMobileClientResponse(AuthResponse response) => new(
+        response.AccessToken,
+        response.ExpiresAtUtc,
+        response.RefreshToken,
+        response.RefreshTokenExpiresAtUtc,
+        response.UserId,
+        response.BarberShopId,
+        response.BarberId,
+        response.Name,
+        response.Role,
+        response.IsEmailVerified);
+
     private static void WriteRefreshCookie(HttpContext context, AuthResponse response)
     {
         context.Response.Cookies.Append(RefreshCookieName, response.RefreshToken, new CookieOptions
@@ -184,6 +222,18 @@ public static class AuthEndpoints
     private sealed record AuthSessionResponse(
         string AccessToken,
         DateTimeOffset ExpiresAtUtc,
+        Guid UserId,
+        Guid BarberShopId,
+        Guid? BarberId,
+        string Name,
+        string Role,
+        bool IsEmailVerified);
+
+    private sealed record MobileAuthSessionResponse(
+        string AccessToken,
+        DateTimeOffset ExpiresAtUtc,
+        string RefreshToken,
+        DateTimeOffset RefreshTokenExpiresAtUtc,
         Guid UserId,
         Guid BarberShopId,
         Guid? BarberId,

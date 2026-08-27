@@ -1,3 +1,5 @@
+using System.Data;
+using System.Data.Common;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
@@ -6,6 +8,7 @@ using BarberTurn.Application.Commercial;
 using BarberTurn.Domain.Entities;
 using BarberTurn.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -58,6 +61,24 @@ internal sealed class PayPalBillingService(
             LogLevel.Information,
             new EventId(1104, nameof(HandleWebhookAsync)),
             "Processed PayPal webhook {EventType} for tenant {TenantId}; subscription status {SubscriptionStatus}");
+
+    private static readonly Action<ILogger, string, string, Exception?> LogWebhookDuplicate =
+        LoggerMessage.Define<string, string>(
+            LogLevel.Information,
+            new EventId(1105, "PayPalWebhookDuplicate"),
+            "Ignoring duplicate PayPal webhook {EventType} with event id {EventId}");
+
+    private static readonly Action<ILogger, string, string, Exception?> LogWebhookStale =
+        LoggerMessage.Define<string, string>(
+            LogLevel.Information,
+            new EventId(1106, "PayPalWebhookStale"),
+            "Ignoring stale PayPal webhook {EventType} with event id {EventId}");
+
+    private static readonly Action<ILogger, string, Exception?> LogWebhookUnsupported =
+        LoggerMessage.Define<string>(
+            LogLevel.Information,
+            new EventId(1107, "PayPalWebhookUnsupported"),
+            "Ignoring unsupported PayPal webhook event type {EventType}");
 
     public async Task<CheckoutResponse> CreateCheckoutAsync(Guid barberShopId, CheckoutRequest request, CancellationToken cancellationToken = default)
     {
@@ -172,26 +193,66 @@ internal sealed class PayPalBillingService(
             throw new InvalidOperationException("Invalid PayPal webhook signature.");
         }
 
-        var eventType = eventDocument.RootElement.GetProperty("event_type").GetString() ?? "unknown";
-        var resource = eventDocument.RootElement.GetProperty("resource");
-        var providerId = resource.TryGetProperty("id", out var id) ? id.GetString() : null;
-        if (providerId is null)
+        var root = eventDocument.RootElement;
+        var eventId = root.TryGetProperty("id", out var eventIdValue) ? eventIdValue.GetString() : null;
+        var eventType = root.TryGetProperty("event_type", out var eventTypeValue) ? eventTypeValue.GetString() : null;
+        var occurredAt = root.TryGetProperty("create_time", out var occurredAtValue) && DateTimeOffset.TryParse(occurredAtValue.GetString(), out var parsedOccurredAt)
+            ? parsedOccurredAt.ToUniversalTime()
+            : (DateTimeOffset?)null;
+        if (string.IsNullOrWhiteSpace(eventId) || string.IsNullOrWhiteSpace(eventType) || occurredAt is null)
+            throw new InvalidOperationException("PayPal webhook metadata is incomplete.");
+
+        var resource = root.TryGetProperty("resource", out var resourceValue) ? resourceValue : default;
+        var providerId = resource.ValueKind == JsonValueKind.Object && resource.TryGetProperty("id", out var id) ? id.GetString() : null;
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        if (await WebhookReceiptExistsAsync(eventId, cancellationToken))
         {
+            await transaction.CommitAsync(cancellationToken);
+            LogWebhookDuplicate(logger, eventType, eventId, null);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(providerId))
+        {
+            await InsertWebhookReceiptAsync(eventId, eventType, null, occurredAt.Value, false, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
             LogWebhookMissingProviderId(logger, eventType, null);
             return;
         }
+
+        var latestAppliedAt = await GetLatestAppliedWebhookOccurredAtAsync(providerId, cancellationToken);
+        if (latestAppliedAt is DateTimeOffset latest && occurredAt.Value < latest)
+        {
+            await InsertWebhookReceiptAsync(eventId, eventType, providerId, occurredAt.Value, false, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            LogWebhookStale(logger, eventType, eventId, null);
+            return;
+        }
+
+        if (!IsSupportedWebhookEvent(eventType))
+        {
+            await InsertWebhookReceiptAsync(eventId, eventType, providerId, occurredAt.Value, false, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            LogWebhookUnsupported(logger, eventType, null);
+            return;
+        }
+
         var subscription = await dbContext.Subscriptions.OrderByDescending(x => x.CreatedAtUtc).FirstOrDefaultAsync(x => x.ProviderSubscriptionId == providerId, cancellationToken);
         if (subscription is null)
         {
+            await InsertWebhookReceiptAsync(eventId, eventType, providerId, occurredAt.Value, false, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
             LogWebhookSubscriptionNotFound(logger, eventType, null);
             return;
         }
-        if (eventType is "BILLING.SUBSCRIPTION.PAYMENT.FAILED" or "BILLING.SUBSCRIPTION.SUSPENDED") subscription.MarkPastDue();
-        if (eventType == "BILLING.SUBSCRIPTION.CANCELLED") subscription.Cancel(false);
-        if (eventType == "BILLING.SUBSCRIPTION.ACTIVATED") subscription.Renew(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddMonths(1));
+
+        ApplyWebhookEvent(subscription, eventType, resource, occurredAt.Value);
         var shop = await dbContext.BarberShops.SingleAsync(x => x.Id == subscription.BarberShopId, cancellationToken);
         shop.ChangeSubscription(subscription.Plan, subscription.Status);
+        await InsertWebhookReceiptAsync(eventId, eventType, providerId, occurredAt.Value, true, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         LogWebhookProcessed(logger, eventType, subscription.BarberShopId, subscription.Status, null);
     }
@@ -213,6 +274,96 @@ internal sealed class PayPalBillingService(
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         return request;
+    }
+
+    private async Task<bool> WebhookReceiptExistsAsync(string eventId, CancellationToken cancellationToken)
+    {
+        var transaction = dbContext.Database.CurrentTransaction ?? throw new InvalidOperationException("A database transaction is required for webhook processing.");
+        var connection = dbContext.Database.GetDbConnection();
+        if (connection.State != ConnectionState.Open)
+            await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction.GetDbTransaction();
+        command.CommandText = "SELECT TOP (1) 1 FROM [PayPalWebhookReceipts] WITH (UPDLOCK, HOLDLOCK) WHERE [EventId] = @eventId;";
+        AddParameter(command, "@eventId", eventId, DbType.String, 128);
+        return await command.ExecuteScalarAsync(cancellationToken) is not null;
+    }
+
+    private async Task<DateTimeOffset?> GetLatestAppliedWebhookOccurredAtAsync(string providerResourceId, CancellationToken cancellationToken)
+    {
+        var transaction = dbContext.Database.CurrentTransaction ?? throw new InvalidOperationException("A database transaction is required for webhook processing.");
+        var connection = dbContext.Database.GetDbConnection();
+        if (connection.State != ConnectionState.Open)
+            await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction.GetDbTransaction();
+        command.CommandText = "SELECT MAX([OccurredAtUtc]) FROM [PayPalWebhookReceipts] WITH (UPDLOCK, HOLDLOCK) WHERE [ProviderResourceId] = @providerResourceId AND [WasApplied] = 1;";
+        AddParameter(command, "@providerResourceId", providerResourceId, DbType.String, 180);
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return result is DateTimeOffset value ? value : null;
+    }
+
+    private async Task InsertWebhookReceiptAsync(string eventId, string eventType, string? providerResourceId, DateTimeOffset occurredAtUtc, bool wasApplied, CancellationToken cancellationToken)
+    {
+        var transaction = dbContext.Database.CurrentTransaction ?? throw new InvalidOperationException("A database transaction is required for webhook processing.");
+        var connection = dbContext.Database.GetDbConnection();
+        if (connection.State != ConnectionState.Open)
+            await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction.GetDbTransaction();
+        command.CommandText = "INSERT INTO [PayPalWebhookReceipts] ([EventId], [EventType], [ProviderResourceId], [OccurredAtUtc], [ProcessedAtUtc], [WasApplied]) VALUES (@eventId, @eventType, @providerResourceId, @occurredAtUtc, @processedAtUtc, @wasApplied);";
+        AddParameter(command, "@eventId", eventId, DbType.String, 128);
+        AddParameter(command, "@eventType", eventType, DbType.String, 120);
+        AddParameter(command, "@providerResourceId", providerResourceId ?? (object)DBNull.Value, DbType.String, 180);
+        AddParameter(command, "@occurredAtUtc", occurredAtUtc, DbType.DateTimeOffset);
+        AddParameter(command, "@processedAtUtc", DateTimeOffset.UtcNow, DbType.DateTimeOffset);
+        AddParameter(command, "@wasApplied", wasApplied, DbType.Boolean);
+        _ = await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    private static void ApplyWebhookEvent(Subscription subscription, string eventType, JsonElement resource, DateTimeOffset occurredAtUtc)
+    {
+        switch (eventType)
+        {
+            case "BILLING.SUBSCRIPTION.PAYMENT.FAILED":
+            case "BILLING.SUBSCRIPTION.SUSPENDED":
+                subscription.MarkPastDue();
+                break;
+            case "BILLING.SUBSCRIPTION.CANCELLED":
+                subscription.Cancel(false);
+                break;
+            case "BILLING.SUBSCRIPTION.ACTIVATED":
+                var start = resource.ValueKind == JsonValueKind.Object && resource.TryGetProperty("start_time", out var startValue) && DateTimeOffset.TryParse(startValue.GetString(), out var parsedStart)
+                    ? parsedStart.ToUniversalTime()
+                    : occurredAtUtc;
+                var next = resource.ValueKind == JsonValueKind.Object && resource.TryGetProperty("billing_info", out var billing) && billing.TryGetProperty("next_billing_time", out var nextValue) && DateTimeOffset.TryParse(nextValue.GetString(), out var parsedNext)
+                    ? parsedNext.ToUniversalTime()
+                    : start.AddMonths(1);
+                subscription.Renew(start, next);
+                break;
+            default:
+                throw new InvalidOperationException("Unsupported PayPal webhook event type.");
+        }
+    }
+
+    private static bool IsSupportedWebhookEvent(string eventType) => eventType is
+        "BILLING.SUBSCRIPTION.PAYMENT.FAILED" or
+        "BILLING.SUBSCRIPTION.SUSPENDED" or
+        "BILLING.SUBSCRIPTION.CANCELLED" or
+        "BILLING.SUBSCRIPTION.ACTIVATED";
+
+    private static void AddParameter(DbCommand command, string name, object value, DbType dbType, int? size = null)
+    {
+        var parameter = command.CreateParameter();
+        parameter.ParameterName = name;
+        parameter.DbType = dbType;
+        parameter.Value = value;
+        if (size is int parameterSize)
+            parameter.Size = parameterSize;
+        command.Parameters.Add(parameter);
     }
 
     private void ValidateRedirect(string value)

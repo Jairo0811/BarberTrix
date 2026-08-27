@@ -1,8 +1,6 @@
 using BarberTurn.Api.Filters;
 using BarberTurn.Application.Commercial;
 using BarberTurn.Application.Common;
-using BarberTurn.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
 using BarberTurn.Domain.Entities;
 
 namespace BarberTurn.Api.Endpoints;
@@ -11,55 +9,66 @@ public static class CommercialEndpoints
 {
     public static IEndpointRouteBuilder MapCommercialEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGet("/api/shop/settings", async (HttpContext context, ApplicationDbContext db, CancellationToken ct) =>
-        {
-            var shopId = ShopId(context);
-            var shop = await db.BarberShops.AsNoTracking().Where(x => x.Id == shopId).Select(x => new { x.Id, x.Name, x.Slug, x.TimeZoneId, x.Plan, x.SubscriptionStatus, x.TrialEndsAtUtc }).SingleAsync(ct);
-            return Results.Ok(shop);
-        }).WithTags("Settings").RequireAuthorization("VerifiedUser");
-        endpoints.MapPut("/api/shop/settings", async (UpdateShopSettingsRequest request, HttpContext context, ApplicationDbContext db, CancellationToken ct) =>
+        endpoints.MapGet("/api/shop/settings", async (HttpContext context, ICommercialService service, CancellationToken ct) =>
+            Results.Ok(await service.GetShopSettingsAsync(ShopId(context), ct)))
+            .WithTags("Settings")
+            .RequireAuthorization("VerifiedUser");
+
+        endpoints.MapPut("/api/shop/settings", async (UpdateShopSettingsRequest request, HttpContext context, ICommercialService service, CancellationToken ct) =>
         {
             try
             {
-                _ = TimeZoneInfo.FindSystemTimeZoneById(request.TimeZoneId);
-                var shop = await db.BarberShops.SingleAsync(x => x.Id == ShopId(context), ct);
-                shop.UpdateSettings(request.Name, request.TimeZoneId);
-                await db.SaveChangesAsync(ct);
+                await service.UpdateShopSettingsAsync(ShopId(context), request, ct);
                 return Results.NoContent();
             }
-            catch (Exception ex) when (ex is ArgumentException or TimeZoneNotFoundException or InvalidTimeZoneException) { return Results.BadRequest(new { message = ex.Message }); }
-        }).WithTags("Settings").RequireAuthorization("VerifiedUser").RequireAuthorization(policy => policy.RequireRole("Owner")).AddEndpointFilter<NonDemoTenantFilter>();
+            catch (Exception ex) when (ex is ArgumentException or TimeZoneNotFoundException or InvalidTimeZoneException)
+            {
+                return Results.BadRequest(new { message = ex.Message });
+            }
+        }).WithTags("Settings")
+          .RequireAuthorization("VerifiedUser")
+          .RequireAuthorization(policy => policy.RequireRole("Owner"))
+          .AddEndpointFilter<NonDemoTenantFilter>();
 
         endpoints.MapGet("/api/capabilities", async (HttpContext context, IPlanLimitService service, CancellationToken ct) =>
             Results.Ok(await service.GetUsageAsync(ShopId(context), ct)))
             .WithTags("Capabilities")
             .RequireAuthorization("VerifiedUser");
 
-        var locations = endpoints.MapGroup("/api/locations").WithTags("Locations").RequireAuthorization("VerifiedUser").AddEndpointFilter<NonDemoTenantFilter>();
-        locations.MapGet("/", async (HttpContext context, ApplicationDbContext db, CancellationToken ct) =>
-            Results.Ok(await db.ShopLocations.AsNoTracking().Where(x => x.BarberShopId == ShopId(context)).OrderBy(x => x.Name).ToListAsync(ct)));
-        locations.MapPost("/", async (UpsertLocationRequest request, HttpContext context, ApplicationDbContext db, IPlanLimitService limits, CancellationToken ct) =>
+        var locations = endpoints.MapGroup("/api/locations")
+            .WithTags("Locations")
+            .RequireAuthorization("VerifiedUser")
+            .AddEndpointFilter<NonDemoTenantFilter>();
+
+        locations.MapGet("/", async (HttpContext context, ICommercialService service, CancellationToken ct) =>
+            Results.Ok(await service.GetLocationsAsync(ShopId(context), ct)));
+
+        locations.MapPost("/", async (UpsertLocationRequest request, HttpContext context, ICommercialService service, IPlanLimitService limits, CancellationToken ct) =>
         {
             try
             {
                 var shopId = ShopId(context);
                 await limits.EnsureCanAddLocationAsync(shopId, ct);
-                var location = new ShopLocation(shopId, request.Name, request.Slug, request.Address, request.TimeZoneId);
-                db.ShopLocations.Add(location); await db.SaveChangesAsync(ct);
+                var location = await service.CreateLocationAsync(shopId, request, ct);
                 return Results.Created($"/api/locations/{location.Id}", location);
             }
-            catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or TimeZoneNotFoundException or InvalidTimeZoneException or DbUpdateException) { return Results.BadRequest(new { message = ex.Message }); }
+            catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or TimeZoneNotFoundException or InvalidTimeZoneException)
+            {
+                return Results.BadRequest(new { message = ex.Message });
+            }
         }).RequireAuthorization(policy => policy.RequireRole("Owner"));
-        locations.MapPut("/{id:guid}", async (Guid id, UpsertLocationRequest request, HttpContext context, ApplicationDbContext db, CancellationToken ct) =>
+
+        locations.MapPut("/{id:guid}", async (Guid id, UpsertLocationRequest request, HttpContext context, ICommercialService service, CancellationToken ct) =>
         {
             try
             {
-                var location = await db.ShopLocations.SingleOrDefaultAsync(x => x.Id == id && x.BarberShopId == ShopId(context), ct);
-                if (location is null) return Results.NotFound();
-                location.Update(request.Name, request.Slug, request.Address, request.TimeZoneId); await db.SaveChangesAsync(ct);
-                return Results.Ok(location);
+                var location = await service.UpdateLocationAsync(ShopId(context), id, request, ct);
+                return location is null ? Results.NotFound() : Results.Ok(location);
             }
-            catch (Exception ex) when (ex is ArgumentException or TimeZoneNotFoundException or InvalidTimeZoneException or DbUpdateException) { return Results.BadRequest(new { message = ex.Message }); }
+            catch (Exception ex) when (ex is ArgumentException or TimeZoneNotFoundException or InvalidTimeZoneException)
+            {
+                return Results.BadRequest(new { message = ex.Message });
+            }
         }).RequireAuthorization(policy => policy.RequireRole("Owner"));
 
         var customers = endpoints.MapGroup("/api/customers").WithTags("Customers").RequireAuthorization("VerifiedUser").AddEndpointFilter<NonDemoTenantFilter>();
@@ -138,6 +147,3 @@ public static class CommercialEndpoints
 
     private static Guid ShopId(HttpContext context) => Guid.TryParse(context.User.FindFirst("barbershop_id")?.Value, out var id) ? id : throw new InvalidOperationException("Invalid barbershop context.");
 }
-
-public sealed record UpdateShopSettingsRequest(string Name, string TimeZoneId);
-public sealed record UpsertLocationRequest(string Name, string Slug, string? Address, string TimeZoneId);

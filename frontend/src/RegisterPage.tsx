@@ -2,7 +2,9 @@ import { FormEvent, useState } from 'react'
 import { useI18n } from './i18n'
 import './register.css'
 import type { Auth } from './types'
-import { API_URL, writeAuth } from './api'
+import { publicApi, writeAuth } from './api'
+import { apiErrorMessage } from './apiErrorMessages'
+import { isStrongPassword, passwordPolicyHint, passwordPolicyMessage } from './passwordPolicy'
 
 function buildShopSlug(name: string) {
   const normalized = name
@@ -17,7 +19,7 @@ function buildShopSlug(name: string) {
 }
 
 export default function RegisterPage() {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -36,8 +38,8 @@ export default function RegisterPage() {
     const password = String(data.get('password') ?? '')
     const confirmPassword = String(data.get('confirmPassword') ?? '')
 
-    if (password.length < 10 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
-      setError(t('register.passwordLength'))
+    if (!isStrongPassword(password)) {
+      setError(passwordPolicyMessage(locale))
       setBusy(false)
       return
     }
@@ -49,10 +51,8 @@ export default function RegisterPage() {
     }
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/register-owner`, {
+      const auth = await publicApi<Auth>('/api/auth/register-owner', {
         method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           barberShopName: shopName,
           barberShopSlug: buildShopSlug(shopName),
@@ -64,17 +64,11 @@ export default function RegisterPage() {
         }),
       })
 
-      if (!response.ok) {
-        const payload = await response.json().catch(() => null)
-        throw new Error(payload?.message ?? t('register.genericError'))
-      }
-
-      const auth = await response.json() as Auth
       writeAuth(auth, true)
       window.location.hash = '#/login'
       window.location.reload()
     } catch (exception) {
-      setError(exception instanceof Error ? exception.message : t('register.genericError'))
+      setError(apiErrorMessage(exception, locale, t('register.genericError')))
     } finally {
       setBusy(false)
     }
@@ -108,7 +102,7 @@ export default function RegisterPage() {
             <p>{t('register.subtitle')}</p>
           </header>
 
-          <span id="register-password-requirements" className="visually-hidden">{t('register.passwordLength')}</span>
+          <span id="register-password-requirements" className="visually-hidden">{passwordPolicyMessage(locale)}</span>
 
           <form className="register-form" onSubmit={register} aria-busy={busy} aria-describedby={error ? 'register-error' : undefined}>
             <label>
@@ -138,7 +132,7 @@ export default function RegisterPage() {
               <span>{t('common.password')}</span>
               <div className="register-input-wrap">
                 <span className="register-field-icon" aria-hidden="true">♙</span>
-                <input name="password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={10} aria-describedby="register-password-requirements" placeholder={t('register.passwordHint')} required />
+                <input name="password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={10} aria-describedby="register-password-requirements" placeholder={passwordPolicyHint(locale)} required />
                 <button type="button" className="register-password-toggle" aria-label={showPassword ? t('common.hide') : t('common.show')} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}>
                   {showPassword ? t('common.hide') : t('common.show')}
                 </button>

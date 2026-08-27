@@ -54,8 +54,9 @@ if (builder.Configuration.GetValue<bool>("Database:ApplyMigrations"))
 if (builder.Configuration.GetValue<bool>("Database:MigrationOnly"))
     return;
 
-app.UseExceptionHandler();
 app.UseForwardedHeaders();
+app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseExceptionHandler();
 if (!app.Environment.IsDevelopment()) app.UseHsts();
 app.UseHttpsRedirection();
 app.Use(async (context, next) =>

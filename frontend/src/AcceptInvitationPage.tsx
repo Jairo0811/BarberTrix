@@ -1,5 +1,8 @@
 import { FormEvent, useMemo, useState } from 'react'
-import { API_URL, writeAuth } from './api'
+import { publicApi, writeAuth } from './api'
+import { apiErrorMessage } from './apiErrorMessages'
+import { useI18n } from './i18n'
+import { isStrongPassword, passwordPolicyMessage } from './passwordPolicy'
 import type { Auth } from './types'
 
 function queryToken() {
@@ -7,6 +10,7 @@ function queryToken() {
 }
 
 export default function AcceptInvitationPage() {
+  const { locale } = useI18n()
   const token = useMemo(queryToken, [])
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -17,6 +21,13 @@ export default function AcceptInvitationPage() {
     setError('')
     const data = new FormData(event.currentTarget)
     const password = String(data.get('password') ?? '')
+
+    if (!isStrongPassword(password)) {
+      setError(passwordPolicyMessage(locale))
+      setBusy(false)
+      return
+    }
+
     if (password !== String(data.get('confirmation') ?? '')) {
       setError('Las contraseñas no coinciden.')
       setBusy(false)
@@ -24,19 +35,15 @@ export default function AcceptInvitationPage() {
     }
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/accept-invitation`, {
+      const auth = await publicApi<Auth>('/api/auth/accept-invitation', {
         method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, password, acceptedTerms: data.get('acceptedTerms') === 'on' }),
       })
-      const payload = await response.json().catch(() => null)
-      if (!response.ok) throw new Error(payload?.message ?? 'La invitación no es válida o ya expiró.')
-      writeAuth(payload as Auth, true)
+      writeAuth(auth, true)
       location.hash = '#/login'
       location.reload()
     } catch (exception) {
-      setError(exception instanceof Error ? exception.message : 'No se pudo aceptar la invitación.')
+      setError(apiErrorMessage(exception, locale, 'No se pudo aceptar la invitación.'))
     } finally {
       setBusy(false)
     }

@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using BarberTurn.Api.Contracts;
 using BarberTurn.Api.Filters;
 using BarberTurn.Application.Auth;
 
@@ -21,15 +22,22 @@ public static class AuthEndpoints
                 WriteRefreshCookie(context, response);
                 return Results.Ok(ToClientResponse(response));
             }
-            catch (InvalidOperationException ex) { return Results.Conflict(new { message = ex.Message }); }
+            catch (InvalidOperationException ex)
+            {
+                return Results.Conflict(ApiError.From(context, ApiErrorCodes.AuthRegistrationConflict, ex.Message));
+            }
             catch (Exception ex) when (ex is ArgumentException or TimeZoneNotFoundException or InvalidTimeZoneException)
-            { return Results.ValidationProblem(new Dictionary<string, string[]> { ["registration"] = [ex.Message] }); }
+            {
+                return Results.BadRequest(ApiError.From(context, ApiErrorCodes.AuthRegistrationInvalid, ex.Message));
+            }
         }).RequireRateLimiting("registration");
 
         group.MapPost("/login", async (LoginRequest request, HttpContext context, IAuthService authService, CancellationToken cancellationToken) =>
         {
             var response = await authService.LoginAsync(request, UserAgent(context), Ip(context), cancellationToken);
-            if (response is null) return Results.Unauthorized();
+            if (response is null)
+                return Results.Json(ApiError.From(context, ApiErrorCodes.AuthInvalidCredentials, "Correo o contraseña incorrectos."), statusCode: StatusCodes.Status401Unauthorized);
+
             WriteRefreshCookie(context, response);
             return Results.Ok(ToClientResponse(response));
         }).RequireRateLimiting("auth");
@@ -37,13 +45,13 @@ public static class AuthEndpoints
         group.MapPost("/refresh", async (HttpContext context, IAuthService authService, CancellationToken cancellationToken) =>
         {
             if (!context.Request.Cookies.TryGetValue(RefreshCookieName, out var refreshToken) || string.IsNullOrWhiteSpace(refreshToken))
-                return Results.Unauthorized();
+                return Results.Json(ApiError.From(context, ApiErrorCodes.AuthRefreshRequired, "La sesión debe renovarse."), statusCode: StatusCodes.Status401Unauthorized);
 
             var response = await authService.RefreshAsync(new RefreshTokenRequest(refreshToken), UserAgent(context), Ip(context), cancellationToken);
             if (response is null)
             {
                 DeleteRefreshCookie(context);
-                return Results.Unauthorized();
+                return Results.Json(ApiError.From(context, ApiErrorCodes.AuthRefreshInvalid, "La sesión ya no es válida."), statusCode: StatusCodes.Status401Unauthorized);
             }
 
             WriteRefreshCookie(context, response);
@@ -66,9 +74,11 @@ public static class AuthEndpoints
             return Results.Ok(ToClientResponse(response));
         }).RequireRateLimiting("auth");
 
-        group.MapPost("/forgot-password", async (ForgotPasswordRequest request, IAuthService authService, IConfiguration configuration, IHostEnvironment environment, CancellationToken cancellationToken) =>
+        group.MapPost("/forgot-password", async (ForgotPasswordRequest request, HttpContext context, IAuthService authService, IConfiguration configuration, IHostEnvironment environment, CancellationToken cancellationToken) =>
         {
-            if (string.IsNullOrWhiteSpace(request.Email)) return Results.ValidationProblem(new Dictionary<string, string[]> { ["email"] = ["El correo electrónico es obligatorio."] });
+            if (string.IsNullOrWhiteSpace(request.Email))
+                return Results.BadRequest(ApiError.From(context, ApiErrorCodes.AuthEmailRequired, "El correo electrónico es obligatorio."));
+
             var token = await authService.CreatePasswordResetTokenAsync(request, cancellationToken);
             string? developmentResetUrl = null;
             if (environment.IsDevelopment() && configuration.GetValue("Email:ExposeDevelopmentLinks", true) && token is not null)
@@ -79,15 +89,18 @@ public static class AuthEndpoints
             return Results.Ok(new ForgotPasswordResponse(PasswordResetMessage, developmentResetUrl));
         }).RequireRateLimiting("auth");
 
-        group.MapPost("/reset-password", async (ResetPasswordRequest request, IAuthService authService, CancellationToken cancellationToken) =>
+        group.MapPost("/reset-password", async (ResetPasswordRequest request, HttpContext context, IAuthService authService, CancellationToken cancellationToken) =>
         {
             var changed = await authService.ResetPasswordAsync(request, cancellationToken);
-            return changed ? Results.Ok(new { message = "Tu contraseña se actualizó correctamente." })
-                : Results.ValidationProblem(new Dictionary<string, string[]> { ["token"] = ["El enlace o la contraseña no son válidos."] });
+            return changed
+                ? Results.Ok(new { message = "Tu contraseña se actualizó correctamente." })
+                : Results.BadRequest(ApiError.From(context, ApiErrorCodes.AuthPasswordResetInvalid, "El enlace o la contraseña no son válidos."));
         }).RequireRateLimiting("auth");
 
-        group.MapPost("/verify-email", async (VerifyEmailRequest request, IAuthService authService, CancellationToken cancellationToken) =>
-            await authService.VerifyEmailAsync(request, cancellationToken) ? Results.Ok(new { message = "Correo verificado." }) : Results.BadRequest(new { message = "El enlace es inválido o expiró." }))
+        group.MapPost("/verify-email", async (VerifyEmailRequest request, HttpContext context, IAuthService authService, CancellationToken cancellationToken) =>
+            await authService.VerifyEmailAsync(request, cancellationToken)
+                ? Results.Ok(new { message = "Correo verificado." })
+                : Results.BadRequest(ApiError.From(context, ApiErrorCodes.AuthEmailVerificationInvalid, "El enlace es inválido o expiró.")))
             .RequireRateLimiting("auth");
 
         group.MapPost("/send-verification", async (HttpContext context, IAuthService authService, CancellationToken cancellationToken) =>
@@ -104,7 +117,10 @@ public static class AuthEndpoints
                 WriteRefreshCookie(context, response);
                 return Results.Ok(ToClientResponse(response));
             }
-            catch (Exception ex) when (ex is ArgumentException or InvalidOperationException) { return Results.BadRequest(new { message = ex.Message }); }
+            catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+            {
+                return Results.BadRequest(ApiError.From(context, ApiErrorCodes.AuthInvitationInvalid, ex.Message));
+            }
         }).RequireRateLimiting("registration");
 
         var team = endpoints.MapGroup("/api/team").WithTags("Team").RequireAuthorization("VerifiedUser").AddEndpointFilter<NonDemoTenantFilter>();

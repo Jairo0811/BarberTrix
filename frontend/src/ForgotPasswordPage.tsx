@@ -1,8 +1,8 @@
 import { FormEvent, useState } from 'react'
 import { useI18n } from './i18n'
 import './auth-recovery.css'
-
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
+import { publicApi } from './api'
+import { apiErrorMessage } from './apiErrorMessages'
 
 type ForgotPasswordResponse = {
   message: string
@@ -10,7 +10,7 @@ type ForgotPasswordResponse = {
 }
 
 export default function ForgotPasswordPage() {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState<ForgotPasswordResponse | null>(null)
@@ -25,20 +25,13 @@ export default function ForgotPasswordPage() {
     const email = String(data.get('email') ?? '').trim()
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
+      const response = await publicApi<ForgotPasswordResponse>('/api/auth/forgot-password', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       })
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => null)
-        throw new Error(payload?.message ?? t('login.genericError'))
-      }
-
-      setResult(await response.json() as ForgotPasswordResponse)
+      setResult(response)
     } catch (exception) {
-      setError(exception instanceof Error ? exception.message : t('login.genericError'))
+      setError(apiErrorMessage(exception, locale, t('login.genericError')))
     } finally {
       setBusy(false)
     }

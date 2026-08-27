@@ -96,6 +96,40 @@ public sealed class ApiSmokeTests : IClassFixture<BarberTurnFactory>, IDisposabl
         Assert.Equal(HttpStatusCode.NotFound, crossTenantUpdate.StatusCode);
     }
 
+    [Fact]
+    public async Task ResponsesPreserveCorrelationId()
+    {
+        const string correlationId = "barberturn-test-correlation-001";
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api");
+        request.Headers.Add("X-Correlation-ID", correlationId);
+
+        var response = await client.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        Assert.True(response.Headers.TryGetValues("X-Correlation-ID", out var values));
+        Assert.Equal(correlationId, Assert.Single(values));
+    }
+
+    [Fact]
+    public async Task InvalidLoginReturnsStableErrorCodeAndCorrelationId()
+    {
+        const string correlationId = "barberturn-auth-error-001";
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/auth/login")
+        {
+            Content = JsonContent.Create(new { email = "missing@example.com", password = "WrongPass123!" })
+        };
+        request.Headers.Add("X-Correlation-ID", correlationId);
+
+        var response = await client.SendAsync(request);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+
+        var payload = await response.Content.ReadFromJsonAsync<ApiErrorPayload>();
+        Assert.NotNull(payload);
+        Assert.Equal("AUTH_INVALID_CREDENTIALS", payload.Code);
+        Assert.Equal(correlationId, payload.CorrelationId);
+        Assert.Equal(correlationId, Assert.Single(response.Headers.GetValues("X-Correlation-ID")));
+    }
+
     private HttpClient CreateClient() => factory.CreateClient(new WebApplicationFactoryClientOptions
     {
         BaseAddress = new Uri("https://localhost"),
@@ -125,6 +159,7 @@ public sealed class ApiSmokeTests : IClassFixture<BarberTurnFactory>, IDisposabl
     private sealed record AuthPayload(string AccessToken);
     private sealed record ShopPayload(string Slug);
     private sealed record CustomerPayload(Guid Id);
+    private sealed record ApiErrorPayload(string Code, string Message, string CorrelationId);
 
     public void Dispose() => client.Dispose();
 }

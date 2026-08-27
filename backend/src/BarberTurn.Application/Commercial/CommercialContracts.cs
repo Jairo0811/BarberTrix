@@ -2,6 +2,10 @@ using BarberTurn.Domain.Entities;
 
 namespace BarberTurn.Application.Commercial;
 
+public sealed record ShopSettingsResponse(Guid Id, string Name, string Slug, string TimeZoneId, SubscriptionPlan Plan, SubscriptionStatus SubscriptionStatus, DateTimeOffset? TrialEndsAtUtc);
+public sealed record UpdateShopSettingsRequest(string Name, string TimeZoneId);
+public sealed record ShopLocationResponse(Guid Id, Guid BarberShopId, string Name, string Slug, string? Address, string TimeZoneId, bool IsActive);
+public sealed record UpsertLocationRequest(string Name, string Slug, string? Address, string TimeZoneId);
 public sealed record CustomerResponse(Guid Id, string Name, string? Phone, string? Email, bool IsActive, DateTimeOffset CreatedAtUtc);
 public sealed record UpsertCustomerRequest(string Name, string? Phone, string? Email);
 public sealed record CreatePaymentRequest(decimal Amount, string Currency, PaymentMethod Method, Guid? TurnId, Guid? AppointmentId, Guid? CustomerId, string? ExternalReference);
@@ -10,6 +14,11 @@ public sealed record BusinessReportResponse(DateOnly From, DateOnly To, int Comp
 
 public interface ICommercialService
 {
+    Task<ShopSettingsResponse> GetShopSettingsAsync(Guid barberShopId, CancellationToken cancellationToken = default);
+    Task UpdateShopSettingsAsync(Guid barberShopId, UpdateShopSettingsRequest request, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<ShopLocationResponse>> GetLocationsAsync(Guid barberShopId, CancellationToken cancellationToken = default);
+    Task<ShopLocationResponse> CreateLocationAsync(Guid barberShopId, UpsertLocationRequest request, CancellationToken cancellationToken = default);
+    Task<ShopLocationResponse?> UpdateLocationAsync(Guid barberShopId, Guid locationId, UpsertLocationRequest request, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<CustomerResponse>> GetCustomersAsync(Guid barberShopId, string? search, int take, CancellationToken cancellationToken = default);
     Task<CustomerResponse> CreateCustomerAsync(Guid barberShopId, UpsertCustomerRequest request, CancellationToken cancellationToken = default);
     Task<CustomerResponse?> UpdateCustomerAsync(Guid barberShopId, Guid customerId, UpsertCustomerRequest request, CancellationToken cancellationToken = default);

@@ -17,6 +17,20 @@ services:
       retries: 15
       start_period: 30s
 
+  db-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    restart: "no"
+    environment:
+      BARBERTURN_DB_PASSWORD: ${BARBERTURN_DB_PASSWORD:?Set BARBERTURN_DB_PASSWORD}
+      BARBERTURN_DB_APP_PASSWORD: ${BARBERTURN_DB_APP_PASSWORD:?Set BARBERTURN_DB_APP_PASSWORD}
+      BARBERTURN_DB_MIGRATOR_PASSWORD: ${BARBERTURN_DB_MIGRATOR_PASSWORD:?Set BARBERTURN_DB_MIGRATOR_PASSWORD}
+    volumes:
+      - ./deploy/sql:/bootstrap:ro
+    command: ["/bin/bash", "/bootstrap/bootstrap.sh"]
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+
   migrate:
     build:
       context: .
@@ -24,15 +38,15 @@ services:
     restart: "no"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=BarberTurnDb;User Id=sa;Password=${BARBERTURN_DB_PASSWORD};Encrypt=True;TrustServerCertificate=True"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=BarberTurnDb;User Id=barberturn_migrator;Password=${BARBERTURN_DB_MIGRATOR_PASSWORD};Encrypt=True;TrustServerCertificate=True"
       Jwt__Issuer: BarberTurn.Api
       Jwt__Audience: BarberTurn.Web
       Jwt__Key: ${BARBERTURN_JWT_KEY:?Set BARBERTURN_JWT_KEY}
       Database__ApplyMigrations: "true"
       Database__MigrationOnly: "true"
     depends_on:
-      sqlserver:
-        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
 
   api:
     build:
@@ -41,7 +55,7 @@ services:
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=BarberTurnDb;User Id=sa;Password=${BARBERTURN_DB_PASSWORD};Encrypt=True;TrustServerCertificate=True"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=BarberTurnDb;User Id=barberturn_app;Password=${BARBERTURN_DB_APP_PASSWORD};Encrypt=True;TrustServerCertificate=True"
       Jwt__Issuer: BarberTurn.Api
       Jwt__Audience: BarberTurn.Web
       Jwt__Key: ${BARBERTURN_JWT_KEY:?Set BARBERTURN_JWT_KEY}

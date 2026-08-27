@@ -3,7 +3,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft, faEnvelope, faEye, faEyeSlash, faFlask, faLock } from '@fortawesome/free-solid-svg-icons'
 import type { Auth } from './types'
 import { useI18n } from './i18n'
-import { API_URL, api, clearAuth, readAuth, writeAuth } from './api'
+import { api, clearAuth, publicApi, readAuth, writeAuth } from './api'
+import { apiErrorMessage } from './apiErrorMessages'
 import SubscriptionBanner from './SubscriptionBanner'
 
 const demoStorageKey = 'barberturn.demo'
@@ -19,7 +20,7 @@ function BarberTurnLogo() {
 }
 
 export default function App() {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const [auth, setAuth] = useState<Auth | null>(readAuth)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -39,30 +40,24 @@ export default function App() {
     const data = new FormData(event.currentTarget)
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
+      const nextAuth = await publicApi<Auth>('/api/auth/login', {
         method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: data.get('email'), password: data.get('password') }),
       })
-
-      if (!response.ok) throw new Error(t('login.invalid'))
-
-      const nextAuth = await response.json() as Auth
       const remember = data.get('remember') === 'on'
 
       sessionStorage.removeItem(demoStorageKey)
       writeAuth(nextAuth, remember)
       setAuth(nextAuth)
     } catch (exception) {
-      setError(exception instanceof Error ? exception.message : t('login.genericError'))
+      setError(apiErrorMessage(exception, locale, t('login.genericError')))
     } finally {
       setBusy(false)
     }
   }
 
   function logout() {
-    void fetch(`${API_URL}/api/auth/logout`, { method: 'POST', credentials: 'include' })
+    void publicApi<void>('/api/auth/logout', { method: 'POST' }).catch(() => undefined)
     clearAuth()
     sessionStorage.removeItem(demoStorageKey)
     setAuth(null)
@@ -72,7 +67,7 @@ export default function App() {
   async function resendVerification() {
     setBusy(true); setError('')
     try { await api('/api/auth/send-verification', { method: 'POST' }); setError('Te enviamos un enlace nuevo. Revisa también tu carpeta de spam.') }
-    catch (exception) { setError(exception instanceof Error ? exception.message : 'No se pudo reenviar el enlace.') }
+    catch (exception) { setError(apiErrorMessage(exception, locale, 'No se pudo reenviar el enlace.')) }
     finally { setBusy(false) }
   }
 

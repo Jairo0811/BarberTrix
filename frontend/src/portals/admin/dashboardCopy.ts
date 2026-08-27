@@ -9,4 +9,4 @@ export const dashboardCopy = {
   'es-ES': esEsDashboard,
 } satisfies Record<Locale, Record<string, string>>
 
-export type DashboardCopy = typeof dashboardCopy['es-419']
+export type DashboardCopy = Record<keyof typeof es419Dashboard, string>

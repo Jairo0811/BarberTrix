@@ -19,7 +19,7 @@ test('registration, login and full queue lifecycle', async ({ page }) => {
     localStorage.removeItem('barberturn.auth')
     sessionStorage.removeItem('barberturn.auth')
   })
-  await page.goto('/#/login')
+  await page.goto('/?e2e=login#/login')
   await page.getByPlaceholder('ejemplo@barberia.com').fill('jairo@example.com')
   await page.getByPlaceholder('••••••••••••').fill('Secure123!')
   await page.getByRole('button', { name: 'Iniciar sesión' }).click()

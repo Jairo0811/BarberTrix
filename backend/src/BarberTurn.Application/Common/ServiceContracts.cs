@@ -47,6 +47,11 @@ public sealed record PlanUsageResponse(
     bool CanUseAdvancedReports,
     bool IsDemo);
 
+public interface IShopLookupService
+{
+    Task<Guid?> GetActiveShopIdBySlugAsync(string slug, CancellationToken cancellationToken = default);
+}
+
 public interface IQueueNotifier
 {
     Task QueueChangedAsync(Guid barberShopId, string eventName, CancellationToken cancellationToken = default);

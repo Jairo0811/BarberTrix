@@ -20,14 +20,32 @@ public interface IAuditService
 
 public sealed record AuditLogResponse(Guid Id, Guid? UserId, string Action, string ResourceType, string? ResourceId, string? Metadata, string? IpAddress, DateTimeOffset CreatedAtUtc);
 
+public enum PlanFeature
+{
+    Appointments,
+    Tv,
+    AdvancedReports
+}
+
 public interface IPlanLimitService
 {
     Task EnsureCanAddBarberAsync(Guid barberShopId, CancellationToken cancellationToken = default);
     Task EnsureCanAddLocationAsync(Guid barberShopId, CancellationToken cancellationToken = default);
+    Task EnsureCanUseAsync(Guid barberShopId, PlanFeature feature, CancellationToken cancellationToken = default);
     Task<PlanUsageResponse> GetUsageAsync(Guid barberShopId, CancellationToken cancellationToken = default);
 }
 
-public sealed record PlanUsageResponse(SubscriptionPlan Plan, SubscriptionStatus Status, int ActiveBarbers, int BarberLimit, int ActiveLocations, int LocationLimit, bool CanUseAppointments, bool CanUseTv, bool CanUseAdvancedReports);
+public sealed record PlanUsageResponse(
+    SubscriptionPlan Plan,
+    SubscriptionStatus Status,
+    int ActiveBarbers,
+    int BarberLimit,
+    int ActiveLocations,
+    int LocationLimit,
+    bool CanUseAppointments,
+    bool CanUseTv,
+    bool CanUseAdvancedReports,
+    bool IsDemo);
 
 public interface IQueueNotifier
 {

@@ -7,6 +7,7 @@ namespace BarberTurn.Api.Endpoints;
 public static class AuthEndpoints
 {
     private const string PasswordResetMessage = "Si existe una cuenta asociada a ese correo, recibirás instrucciones para restablecer tu contraseña.";
+    private const string RefreshCookieName = "barberturn.refresh";
 
     public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder endpoints)
     {
@@ -17,7 +18,8 @@ public static class AuthEndpoints
             try
             {
                 var response = await authService.RegisterOwnerAsync(request, UserAgent(context), Ip(context), cancellationToken);
-                return Results.Ok(response);
+                WriteRefreshCookie(context, response);
+                return Results.Ok(ToClientResponse(response));
             }
             catch (InvalidOperationException ex) { return Results.Conflict(new { message = ex.Message }); }
             catch (Exception ex) when (ex is ArgumentException or TimeZoneNotFoundException or InvalidTimeZoneException)
@@ -27,25 +29,41 @@ public static class AuthEndpoints
         group.MapPost("/login", async (LoginRequest request, HttpContext context, IAuthService authService, CancellationToken cancellationToken) =>
         {
             var response = await authService.LoginAsync(request, UserAgent(context), Ip(context), cancellationToken);
-            return response is null ? Results.Unauthorized() : Results.Ok(response);
+            if (response is null) return Results.Unauthorized();
+            WriteRefreshCookie(context, response);
+            return Results.Ok(ToClientResponse(response));
         }).RequireRateLimiting("auth");
 
-        group.MapPost("/refresh", async (RefreshTokenRequest request, HttpContext context, IAuthService authService, CancellationToken cancellationToken) =>
+        group.MapPost("/refresh", async (HttpContext context, IAuthService authService, CancellationToken cancellationToken) =>
         {
-            var response = await authService.RefreshAsync(request, UserAgent(context), Ip(context), cancellationToken);
-            return response is null ? Results.Unauthorized() : Results.Ok(response);
+            if (!context.Request.Cookies.TryGetValue(RefreshCookieName, out var refreshToken) || string.IsNullOrWhiteSpace(refreshToken))
+                return Results.Unauthorized();
+
+            var response = await authService.RefreshAsync(new RefreshTokenRequest(refreshToken), UserAgent(context), Ip(context), cancellationToken);
+            if (response is null)
+            {
+                DeleteRefreshCookie(context);
+                return Results.Unauthorized();
+            }
+
+            WriteRefreshCookie(context, response);
+            return Results.Ok(ToClientResponse(response));
         }).RequireRateLimiting("auth");
 
-        group.MapPost("/logout", async (LogoutRequest request, IAuthService authService, CancellationToken cancellationToken) =>
+        group.MapPost("/logout", async (HttpContext context, IAuthService authService, CancellationToken cancellationToken) =>
         {
-            await authService.LogoutAsync(request, cancellationToken);
+            if (context.Request.Cookies.TryGetValue(RefreshCookieName, out var refreshToken) && !string.IsNullOrWhiteSpace(refreshToken))
+                await authService.LogoutAsync(new LogoutRequest(refreshToken), cancellationToken);
+            DeleteRefreshCookie(context);
             return Results.NoContent();
         }).RequireRateLimiting("auth");
 
         group.MapPost("/demo-login", async (HttpContext context, IAuthService authService, IConfiguration configuration, CancellationToken cancellationToken) =>
         {
             if (!configuration.GetValue<bool>("Demo:Enabled")) return Results.NotFound();
-            return Results.Ok(await authService.CreateDemoSessionAsync(UserAgent(context), Ip(context), cancellationToken));
+            var response = await authService.CreateDemoSessionAsync(UserAgent(context), Ip(context), cancellationToken);
+            WriteRefreshCookie(context, response);
+            return Results.Ok(ToClientResponse(response));
         }).RequireRateLimiting("auth");
 
         group.MapPost("/forgot-password", async (ForgotPasswordRequest request, IAuthService authService, IConfiguration configuration, IHostEnvironment environment, CancellationToken cancellationToken) =>
@@ -80,7 +98,12 @@ public static class AuthEndpoints
 
         group.MapPost("/accept-invitation", async (AcceptInvitationRequest request, HttpContext context, IAuthService authService, CancellationToken cancellationToken) =>
         {
-            try { return Results.Ok(await authService.AcceptInvitationAsync(request, UserAgent(context), Ip(context), cancellationToken)); }
+            try
+            {
+                var response = await authService.AcceptInvitationAsync(request, UserAgent(context), Ip(context), cancellationToken);
+                WriteRefreshCookie(context, response);
+                return Results.Ok(ToClientResponse(response));
+            }
             catch (Exception ex) when (ex is ArgumentException or InvalidOperationException) { return Results.BadRequest(new { message = ex.Message }); }
         }).RequireRateLimiting("registration");
 
@@ -103,8 +126,50 @@ public static class AuthEndpoints
         return endpoints;
     }
 
+    private static AuthSessionResponse ToClientResponse(AuthResponse response) => new(
+        response.AccessToken,
+        response.ExpiresAtUtc,
+        response.UserId,
+        response.BarberShopId,
+        response.BarberId,
+        response.Name,
+        response.Role,
+        response.IsEmailVerified);
+
+    private static void WriteRefreshCookie(HttpContext context, AuthResponse response)
+    {
+        context.Response.Cookies.Append(RefreshCookieName, response.RefreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = context.Request.IsHttps,
+            SameSite = SameSiteMode.Lax,
+            Path = "/api/auth",
+            Expires = response.RefreshTokenExpiresAtUtc,
+            IsEssential = true
+        });
+    }
+
+    private static void DeleteRefreshCookie(HttpContext context) =>
+        context.Response.Cookies.Delete(RefreshCookieName, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = context.Request.IsHttps,
+            SameSite = SameSiteMode.Lax,
+            Path = "/api/auth"
+        });
+
     private static string? UserAgent(HttpContext context) => context.Request.Headers.UserAgent.ToString();
     private static string? Ip(HttpContext context) => context.Connection.RemoteIpAddress?.ToString();
     private static Guid GetUserId(HttpContext context) => Guid.TryParse(context.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? context.User.FindFirstValue("sub"), out var id) ? id : throw new InvalidOperationException("Invalid user context.");
     private static Guid GetShopId(HttpContext context) => Guid.TryParse(context.User.FindFirstValue("barbershop_id"), out var id) ? id : throw new InvalidOperationException("Invalid barbershop context.");
+
+    private sealed record AuthSessionResponse(
+        string AccessToken,
+        DateTimeOffset ExpiresAtUtc,
+        Guid UserId,
+        Guid BarberShopId,
+        Guid? BarberId,
+        string Name,
+        string Role,
+        bool IsEmailVerified);
 }

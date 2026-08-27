@@ -41,6 +41,7 @@ export default function App() {
     try {
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: data.get('email'), password: data.get('password') }),
       })
@@ -61,8 +62,7 @@ export default function App() {
   }
 
   function logout() {
-    const current = readAuth()
-    if (current?.refreshToken) void fetch(`${API_URL}/api/auth/logout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refreshToken: current.refreshToken }) })
+    void fetch(`${API_URL}/api/auth/logout`, { method: 'POST', credentials: 'include' })
     clearAuth()
     sessionStorage.removeItem(demoStorageKey)
     setAuth(null)

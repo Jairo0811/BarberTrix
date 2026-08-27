@@ -17,6 +17,23 @@ services:
       retries: 15
       start_period: 30s
 
+  migrate:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: "no"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=BarberTurnDb;User Id=sa;Password=${BARBERTURN_DB_PASSWORD};Encrypt=True;TrustServerCertificate=True"
+      Jwt__Issuer: BarberTurn.Api
+      Jwt__Audience: BarberTurn.Web
+      Jwt__Key: ${BARBERTURN_JWT_KEY:?Set BARBERTURN_JWT_KEY}
+      Database__ApplyMigrations: "true"
+      Database__MigrationOnly: "true"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+
   api:
     build:
       context: .
@@ -28,7 +45,8 @@ services:
       Jwt__Issuer: BarberTurn.Api
       Jwt__Audience: BarberTurn.Web
       Jwt__Key: ${BARBERTURN_JWT_KEY:?Set BARBERTURN_JWT_KEY}
-      Database__ApplyMigrations: "true"
+      Database__ApplyMigrations: "false"
+      Database__MigrationOnly: "false"
       Demo__Enabled: "false"
       Auth__RequireVerifiedEmail: "true"
       PasswordReset__FrontendBaseUrl: ${BARBERTURN_PUBLIC_ORIGIN:?Set BARBERTURN_PUBLIC_ORIGIN}
@@ -50,8 +68,8 @@ services:
       PayPal__PlanIds__Pro: ${BARBERTURN_PAYPAL_PRO_PLAN_ID}
       PayPal__PlanIds__Business: ${BARBERTURN_PAYPAL_BUSINESS_PLAN_ID}
     depends_on:
-      sqlserver:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     read_only: true
     tmpfs:
       - /tmp

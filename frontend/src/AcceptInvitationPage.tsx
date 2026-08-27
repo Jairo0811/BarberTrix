@@ -26,6 +26,7 @@ export default function AcceptInvitationPage() {
     try {
       const response = await fetch(`${API_URL}/api/auth/accept-invitation`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, password, acceptedTerms: data.get('acceptedTerms') === 'on' }),
       })

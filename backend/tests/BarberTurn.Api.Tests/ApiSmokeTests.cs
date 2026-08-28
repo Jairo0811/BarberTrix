@@ -17,7 +17,8 @@ using Xunit;
 
 namespace BarberTurn.Api.Tests;
 
-public sealed class ApiSmokeTests : IClassFixture<BarberTurnFactory>, IDisposable
+[Collection(ApiIntegrationCollection.Name)]
+public sealed class ApiSmokeTests : IDisposable
 {
     private readonly BarberTurnFactory factory;
     private readonly HttpClient client;

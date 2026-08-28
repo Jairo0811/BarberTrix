@@ -16,6 +16,7 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<Appointment> Appointments => Set<Appointment>();
+    public DbSet<TurnRequest> TurnRequests => Set<TurnRequest>();
     public DbSet<BlockedTime> BlockedTimes => Set<BlockedTime>();
     public DbSet<PaymentRecord> Payments => Set<PaymentRecord>();
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
@@ -187,6 +188,27 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
             entity.HasOne<BarberService>().WithMany().HasForeignKey(x => x.ServiceId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<Barber>().WithMany().HasForeignKey(x => x.BarberId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<Customer>().WithMany().HasForeignKey(x => x.CustomerId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<TurnRequest>(entity =>
+        {
+            entity.ToTable("TurnRequests");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CustomerName).HasMaxLength(120).IsRequired();
+            entity.Property(x => x.CustomerPhone).HasMaxLength(40);
+            entity.Property(x => x.CustomerEmail).HasMaxLength(180);
+            entity.Property(x => x.Notes).HasMaxLength(500);
+            entity.Property(x => x.PublicLookupTokenHash).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.Status).HasConversion<string>().HasMaxLength(30).IsRequired();
+            entity.Property(x => x.RowVersion).IsRowVersion();
+            entity.HasIndex(x => x.PublicLookupTokenHash).IsUnique();
+            entity.HasIndex(x => new { x.BarberShopId, x.BarberId, x.Status, x.CreatedAtUtc });
+            entity.HasIndex(x => new { x.BarberShopId, x.ExpiresAtUtc });
+            entity.HasOne<BarberShop>().WithMany().HasForeignKey(x => x.BarberShopId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<BarberService>().WithMany().HasForeignKey(x => x.ServiceId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Barber>().WithMany().HasForeignKey(x => x.BarberId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Customer>().WithMany().HasForeignKey(x => x.CustomerId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne<Appointment>().WithMany().HasForeignKey(x => x.AppointmentId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<BlockedTime>(entity =>

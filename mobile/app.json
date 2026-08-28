@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "BarberTurn",
+    "slug": "barberturn",
+    "scheme": "barberturn",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "plugins": [
+      "expo-router",
+      [
+        "expo-secure-store",
+        {
+          "configureAndroidBackup": true
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.jmsoftwaresolutions.barberturn"
+    },
+    "android": {
+      "package": "com.jmsoftwaresolutions.barberturn"
+    }
+  }
+}

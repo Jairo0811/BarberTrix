@@ -3,12 +3,18 @@
 </p>
 
 <p align="center">
+  <img src="https://skillicons.dev/icons?i=dotnet,react,ts,vite,docker,nginx,github&theme=dark" alt="Tecnologías principales de BarberTurn" />
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/.NET-10-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt=".NET 10" />
   <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=111827" alt="React 19" />
   <img src="https://img.shields.io/badge/SQL_Server-2022-CC2927?style=flat-square&logo=microsoftsqlserver&logoColor=white" alt="SQL Server 2022" />
   <img src="https://img.shields.io/badge/CI-GitHub_Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white" alt="GitHub Actions" />
   <img src="https://img.shields.io/badge/Tests-Vitest%20%7C%20Playwright-22C55E?style=flat-square" alt="Vitest y Playwright" />
   <img src="https://img.shields.io/badge/i18n-es--419%20%7C%20en%20%7C%20es--ES-0EA5E9?style=flat-square" alt="Idiomas: Español Latino, Inglés y Español de España" />
+  <img src="https://img.shields.io/badge/Accesibilidad-NORTIC_B2%20%2F%20WCAG-22C55E?style=flat-square" alt="Base de accesibilidad alineada con NORTIC B2 y WCAG" />
+  <img src="https://img.shields.io/badge/Fases_1--6-Completadas-22C55E?style=flat-square" alt="Fases 1 a 6 completadas" />
   <img src="https://img.shields.io/badge/CI_y_Seguridad-Verde-22C55E?style=flat-square" alt="CI y seguridad" />
 </p>
 
@@ -22,7 +28,9 @@ La premisa del producto es simple: la tecnología debe adaptarse a la forma de t
 
 ## 🚀 Estado del proyecto
 
-BarberTurn se encuentra en etapa de **hardening y preparación para una v1 comercial**. El núcleo funcional está implementado y `main` se mantiene protegido mediante CI, pruebas automatizadas, análisis de seguridad y gates progresivos de cobertura.
+BarberTurn se encuentra en **cierre de la web v1 y preparación para una salida comercial controlada**. El núcleo funcional está implementado y `main` se mantiene validado mediante CI, pruebas automatizadas, análisis de seguridad y gates progresivos de cobertura.
+
+El checklist de cierre está documentado en [`docs/web-v1-finalization.md`](docs/web-v1-finalization.md). La aplicación móvil se retomará después de completar este cierre web.
 
 ### Operación principal
 
@@ -75,37 +83,78 @@ Las reglas comerciales pueden evolucionar antes de la salida pública; el backen
 
 ## 🧰 Stack tecnológico
 
-### Backend
+### 🟣 Backend
 
-- .NET 10
-- ASP.NET Core Web API
-- Entity Framework Core
-- SQL Server 2022
-- JWT
-- SignalR
-- OpenAPI en Development
-- PayPal REST API
+<p align="left">
+  <img src="https://skillicons.dev/icons?i=dotnet&theme=dark" height="48" alt=".NET" />
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/csharp/csharp-original.svg" height="48" alt="C#" />
+</p>
 
-### Frontend
+<p align="left">
+  <img src="https://img.shields.io/badge/ASP.NET_Core-Web_API-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt="ASP.NET Core" />
+  <img src="https://img.shields.io/badge/Entity_Framework_Core-ORM-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt="Entity Framework Core" />
+  <img src="https://img.shields.io/badge/JWT-Authentication-000000?style=flat-square&logo=jsonwebtokens&logoColor=white" alt="JWT" />
+  <img src="https://img.shields.io/badge/SignalR-Realtime-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt="SignalR" />
+  <img src="https://img.shields.io/badge/OpenAPI-Documentation-6BA539?style=flat-square&logo=openapiinitiative&logoColor=white" alt="OpenAPI" />
+  <img src="https://img.shields.io/badge/PayPal-REST_API-003087?style=flat-square&logo=paypal&logoColor=white" alt="PayPal REST API" />
+</p>
 
-- React 19
-- TypeScript
-- Vite 8
-- CSS modularizado por experiencia/feature
-- Font Awesome
-- QRCode
-- SweetAlert2
+- .NET 10;
+- ASP.NET Core Web API;
+- Entity Framework Core;
+- SQL Server 2022;
+- JWT;
+- SignalR;
+- OpenAPI en Development;
+- PayPal REST API.
 
-### Calidad e infraestructura
+### 🔵 Frontend
 
-- Docker + Docker Compose
-- Nginx
-- GitHub Actions
-- CodeQL
-- Gitleaks
-- Vitest + React Testing Library
-- Playwright
-- cobertura backend/frontend con gates progresivos
+<p align="left">
+  <img src="https://skillicons.dev/icons?i=react,ts,vite,html,css&theme=dark" height="48" alt="React, TypeScript, Vite, HTML y CSS" />
+</p>
+
+<p align="left">
+  <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=111827" alt="React 19" />
+  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript 5" />
+  <img src="https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite 8" />
+  <img src="https://img.shields.io/badge/UI-Responsive-0EA5E9?style=flat-square" alt="Responsive UI" />
+  <img src="https://img.shields.io/badge/Icons-Font_Awesome-528DD7?style=flat-square&logo=fontawesome&logoColor=white" alt="Font Awesome" />
+  <img src="https://img.shields.io/badge/Tests-Vitest-6E9F18?style=flat-square&logo=vitest&logoColor=white" alt="Vitest" />
+  <img src="https://img.shields.io/badge/E2E-Playwright-2EAD33?style=flat-square&logo=playwright&logoColor=white" alt="Playwright" />
+</p>
+
+- React 19;
+- TypeScript;
+- Vite 8;
+- CSS modularizado por experiencia/feature;
+- Font Awesome;
+- QRCode;
+- SweetAlert2;
+- Vitest + React Testing Library;
+- Playwright.
+
+### 🗄️ Datos e infraestructura
+
+<p align="left">
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/microsoftsqlserver/microsoftsqlserver-original.svg" height="48" alt="SQL Server" />
+  <img src="https://skillicons.dev/icons?i=docker,nginx,github&theme=dark" height="48" alt="Docker, Nginx y GitHub" />
+</p>
+
+<p align="left">
+  <img src="https://img.shields.io/badge/SQL_Server-2022-CC2927?style=flat-square&logo=microsoftsqlserver&logoColor=white" alt="SQL Server 2022" />
+  <img src="https://img.shields.io/badge/Docker_Compose-Orchestration-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker Compose" />
+  <img src="https://img.shields.io/badge/Nginx-Frontend-009639?style=flat-square&logo=nginx&logoColor=white" alt="Nginx" />
+  <img src="https://img.shields.io/badge/GitHub_Actions-CI-2088FF?style=flat-square&logo=githubactions&logoColor=white" alt="GitHub Actions" />
+  <img src="https://img.shields.io/badge/CodeQL-Security-181717?style=flat-square&logo=github&logoColor=white" alt="CodeQL" />
+</p>
+
+- Docker + Docker Compose;
+- Nginx;
+- GitHub Actions;
+- CodeQL;
+- Gitleaks;
+- cobertura backend/frontend con gates progresivos.
 
 ## 🏗️ Arquitectura
 
@@ -158,7 +207,7 @@ Infrastructure
 SQL Server / proveedores externos
 ```
 
-Los endpoints no deben convertirse en una segunda capa de persistencia ni consultar `ApplicationDbContext` para lógica de negocio que corresponda a Application/Infrastructure.
+Los endpoints no deben convertirse en una segunda capa de persistencia ni consultar el DbContext para lógica de negocio que corresponda a Application/Infrastructure.
 
 ## 🔐 Seguridad
 
@@ -276,6 +325,8 @@ Registro
 
 También valida demo comercial, Barber Portal, Customer Portal, restricciones por rol, Starter vs funciones premium y acceso a billing del Owner.
 
+La suite actual de Playwright utiliza un backend simulado para validar la experiencia del navegador. El cierre web v1 incluye añadir E2E de stack real contra API + SQL Server para los flujos críticos.
+
 Los artifacts de Playwright se publican desde CI para diagnóstico cuando una ejecución falla.
 
 ## 🌐 Internacionalización
@@ -358,7 +409,7 @@ Requisitos externos antes de un lanzamiento comercial:
 
 Fundación técnica, núcleo de turnos, tiempo real, citas, gestión comercial y SaaS completados.
 
-### 🟢 Hardening v1
+### 🟢 Hardening web v1
 
 - ✅ refresh token HttpOnly y rotación segura;
 - ✅ aislamiento multi-tenant reforzado;
@@ -367,12 +418,13 @@ Fundación técnica, núcleo de turnos, tiempo real, citas, gestión comercial y
 - ✅ error codes y correlation IDs;
 - ✅ frontend modular por features;
 - ✅ Vitest + Testing Library;
-- ✅ Playwright E2E;
+- ✅ Playwright E2E de navegador;
 - ✅ i18n modular;
 - ✅ cobertura y gates progresivos en CI;
 - ✅ migraciones desacopladas;
 - ✅ logging estructurado;
-- ✅ SQL mínimo privilegio.
+- ✅ SQL mínimo privilegio;
+- ⏳ E2E de stack real y pruebas de concurrencia/PayPal pendientes de cierre.
 
 ### ⏳ Puesta en infraestructura real
 
@@ -383,15 +435,24 @@ Fundación técnica, núcleo de turnos, tiempo real, citas, gestión comercial y
 - auditoría de accesibilidad;
 - revisión legal y operativa previa al lanzamiento.
 
+### 📱 Después del cierre web
+
+- React Native + Expo;
+- sesiones móviles seguras;
+- solicitudes cliente → barbero;
+- notificaciones push;
+- experiencia Android/iOS.
+
 ## 📚 Documentación
 
-- [`docs/architecture.md`](docs/architecture.md) — arquitectura y decisiones técnicas.
-- [`docs/mvp.md`](docs/mvp.md) — alcance funcional.
-- [`docs/production-operations.md`](docs/production-operations.md) — operación, mínimo privilegio, observabilidad, backups y checklist.
-- [`SECURITY.md`](SECURITY.md) — política y controles de seguridad.
-- [`CONTRIBUTING.md`](CONTRIBUTING.md) — guía de contribución.
-- [`CHANGELOG.md`](CHANGELOG.md) — historial relevante.
-- [`docs/privacy.md`](docs/privacy.md) / [`docs/terms.md`](docs/terms.md) — borradores legales para revisión.
+- 🏗️ [`docs/architecture.md`](docs/architecture.md) — arquitectura y decisiones técnicas.
+- 🎯 [`docs/mvp.md`](docs/mvp.md) — alcance funcional.
+- ✅ [`docs/web-v1-finalization.md`](docs/web-v1-finalization.md) — checklist de cierre web v1.
+- 🚀 [`docs/production-operations.md`](docs/production-operations.md) — operación, mínimo privilegio, observabilidad, backups y checklist.
+- 🛡️ [`SECURITY.md`](SECURITY.md) — política y controles de seguridad.
+- 🤝 [`CONTRIBUTING.md`](CONTRIBUTING.md) — guía de contribución.
+- 📝 [`CHANGELOG.md`](CHANGELOG.md) — historial relevante.
+- ⚖️ [`docs/privacy.md`](docs/privacy.md) / [`docs/terms.md`](docs/terms.md) — borradores legales para revisión.
 
 ---
 

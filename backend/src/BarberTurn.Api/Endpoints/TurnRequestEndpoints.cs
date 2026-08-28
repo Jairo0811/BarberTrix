@@ -70,7 +70,7 @@ public static class TurnRequestEndpoints
                 barberId = ownBarberId;
             }
             return Results.Ok(await service.GetForStaffAsync(GetShopId(context), barberId, ct));
-        });
+        }).RequireAuthorization(policy => policy.RequireRole("Owner", "Administrator", "Receptionist", "Barber"));
 
         group.MapPost("/{requestId:guid}/accept", async (Guid requestId, HttpContext context, ITurnRequestService service, CancellationToken ct) =>
         {

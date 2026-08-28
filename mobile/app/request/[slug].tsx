@@ -9,7 +9,10 @@ import { publicRequestStore } from '@/turnRequests/publicRequestStore';
 function localDate(offset: number) {
   const date = new Date();
   date.setDate(date.getDate() + offset);
-  return date.toISOString().slice(0, 10);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function formatSlot(value: string) {
@@ -62,6 +65,7 @@ export default function RequestTurnScreen() {
 
   if (!slug) return <SafeAreaView style={styles.safe}><View style={styles.center}><Text>Enlace inválido.</Text></View></SafeAreaView>;
   if (shopQuery.isLoading) return <SafeAreaView style={styles.safe}><View style={styles.center}><ActivityIndicator /></View></SafeAreaView>;
+  if (shopQuery.isError) return <SafeAreaView style={styles.safe}><View style={styles.center}><Text>No pudimos cargar esta barbería.</Text><Pressable accessibilityRole="button" onPress={() => shopQuery.refetch()} style={styles.retry}><Text style={styles.retryText}>Reintentar</Text></Pressable></View></SafeAreaView>;
   if (!shop) return <SafeAreaView style={styles.safe}><View style={styles.center}><Text>No pudimos encontrar esta barbería.</Text></View></SafeAreaView>;
 
   const canSubmit = Boolean(serviceId && barberId && startsAt && name.trim()) && !createMutation.isPending;
@@ -76,7 +80,7 @@ export default function RequestTurnScreen() {
         <Text style={styles.sectionTitle}>1. Servicio</Text>
         <View style={styles.wrap}>
           {activeServices.map(service => (
-            <Pressable key={service.id} onPress={() => { setServiceId(service.id); setStartsAt(''); }} style={[styles.choice, serviceId === service.id && styles.choiceSelected]}>
+            <Pressable accessibilityRole="button" accessibilityState={{ selected: serviceId === service.id }} key={service.id} onPress={() => { setServiceId(service.id); setStartsAt(''); }} style={[styles.choice, serviceId === service.id && styles.choiceSelected]}>
               <Text style={styles.choiceTitle}>{service.name}</Text>
               <Text style={styles.choiceMeta}>{service.estimatedDurationMinutes} min · {service.price}</Text>
             </Pressable>
@@ -86,7 +90,7 @@ export default function RequestTurnScreen() {
         <Text style={styles.sectionTitle}>2. Barbero</Text>
         <View style={styles.wrap}>
           {activeBarbers.map(barber => (
-            <Pressable key={barber.id} onPress={() => { setBarberId(barber.id); setStartsAt(''); }} style={[styles.choice, barberId === barber.id && styles.choiceSelected]}>
+            <Pressable accessibilityRole="button" accessibilityState={{ selected: barberId === barber.id }} key={barber.id} onPress={() => { setBarberId(barber.id); setStartsAt(''); }} style={[styles.choice, barberId === barber.id && styles.choiceSelected]}>
               <Text style={styles.choiceTitle}>{barber.name}</Text>
               <Text style={styles.choiceMeta}>Silla {barber.chairNumber}</Text>
             </Pressable>
@@ -97,7 +101,7 @@ export default function RequestTurnScreen() {
         <View style={styles.row}>
           {[1, 2, 3].map(offset => {
             const value = localDate(offset);
-            return <Pressable key={value} onPress={() => { setDate(value); setStartsAt(''); }} style={[styles.day, date === value && styles.choiceSelected]}><Text>{value}</Text></Pressable>;
+            return <Pressable accessibilityRole="button" accessibilityState={{ selected: date === value }} key={value} onPress={() => { setDate(value); setStartsAt(''); }} style={[styles.day, date === value && styles.choiceSelected]}><Text>{value}</Text></Pressable>;
           })}
         </View>
 
@@ -105,11 +109,12 @@ export default function RequestTurnScreen() {
         {availabilityQuery.isFetching ? <ActivityIndicator /> : null}
         <View style={styles.wrap}>
           {(availabilityQuery.data ?? []).map(slot => (
-            <Pressable key={slot.startsAtUtc} onPress={() => setStartsAt(slot.startsAtUtc)} style={[styles.slot, startsAt === slot.startsAtUtc && styles.choiceSelected]}>
+            <Pressable accessibilityRole="button" accessibilityState={{ selected: startsAt === slot.startsAtUtc }} key={slot.startsAtUtc} onPress={() => setStartsAt(slot.startsAtUtc)} style={[styles.slot, startsAt === slot.startsAtUtc && styles.choiceSelected]}>
               <Text style={styles.choiceTitle}>{formatSlot(slot.startsAtUtc)}</Text>
             </Pressable>
           ))}
         </View>
+        {availabilityQuery.isError ? <Text accessibilityRole="alert" style={styles.error}>No pudimos consultar los horarios. Cambia el día o inténtalo de nuevo.</Text> : null}
         {serviceId && barberId && !availabilityQuery.isFetching && availabilityQuery.data?.length === 0 ? <Text style={styles.notice}>No hay horarios disponibles para ese día.</Text> : null}
 
         <Text style={styles.sectionTitle}>5. Tus datos</Text>
@@ -119,7 +124,7 @@ export default function RequestTurnScreen() {
         <TextInput value={notes} onChangeText={setNotes} placeholder="Nota para el barbero (opcional)" style={[styles.input, styles.multiline]} multiline maxLength={500} />
 
         {createMutation.error ? <Text accessibilityRole="alert" style={styles.error}>{createMutation.error instanceof Error ? createMutation.error.message : 'No pudimos enviar la solicitud.'}</Text> : null}
-        <Pressable disabled={!canSubmit} onPress={() => createMutation.mutate()} style={[styles.submit, !canSubmit && styles.disabled]}>
+        <Pressable accessibilityRole="button" accessibilityState={{ disabled: !canSubmit }} disabled={!canSubmit} onPress={() => createMutation.mutate()} style={[styles.submit, !canSubmit && styles.disabled]}>
           <Text style={styles.submitText}>{createMutation.isPending ? 'Enviando…' : 'Solicitar turno'}</Text>
         </Pressable>
       </ScrollView>
@@ -147,6 +152,8 @@ const styles = StyleSheet.create({
   input: { minHeight: 50, borderWidth: 1, borderColor: '#d7d7d0', borderRadius: 12, paddingHorizontal: 14, backgroundColor: '#fff' },
   multiline: { minHeight: 92, paddingTop: 14, textAlignVertical: 'top' },
   error: { color: '#a21414', fontWeight: '700' },
+  retry: { minHeight: 48, borderRadius: 12, borderWidth: 1, borderColor: '#111', paddingHorizontal: 18, alignItems: 'center', justifyContent: 'center', marginTop: 14 },
+  retryText: { color: '#111', fontWeight: '800' },
   submit: { minHeight: 54, borderRadius: 14, backgroundColor: '#111', alignItems: 'center', justifyContent: 'center', marginTop: 8 },
   disabled: { opacity: 0.4 },
   submitText: { color: '#fff', fontWeight: '900', fontSize: 16 },

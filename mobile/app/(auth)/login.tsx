@@ -40,7 +40,7 @@ export default function LoginScreen() {
           <Pressable accessibilityRole="button" accessibilityState={{ disabled: submitting || !email.trim() || !password }} disabled={submitting || !email.trim() || !password} onPress={submit} style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}>
             <Text style={styles.buttonText}>{submitting ? 'Entrando…' : 'Iniciar sesión'}</Text>
           </Pressable>
-          <Text style={styles.customerHint}>El acceso de clientes seguirá siendo sin cuenta obligatoria y se incorporará en M2.</Text>
+          <Text style={styles.customerHint}>Los clientes pueden solicitar un turno sin crear una cuenta mediante el enlace de su barbería.</Text>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

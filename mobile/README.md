@@ -34,9 +34,10 @@ La bandeja autenticada `/(app)/turn-requests` permite aceptar, rechazar o contra
 1. Usa Node.js 22.13 o superior.
 2. Copia `.env.example` a `.env`.
 3. Configura `EXPO_PUBLIC_API_BASE_URL` con una URL alcanzable desde el emulador o dispositivo.
-4. Ejecuta `npm install`.
-5. Ejecuta `npx expo install --fix` para alinear módulos Expo con el SDK antes del primer build local.
-6. Ejecuta `npm run start`.
+4. Ejecuta `npm ci`.
+5. Ejecuta `npx expo install --check` para verificar la alineación de los módulos con Expo SDK 57.
+6. Ejecuta `npm run typecheck`.
+7. Ejecuta `npm run start`.
 
 En Android Emulator, una API levantada en el host suele requerir `http://10.0.2.2:8080`; en un dispositivo físico usa la IP LAN del equipo de desarrollo. En producción la API debe exponerse exclusivamente por HTTPS.
 

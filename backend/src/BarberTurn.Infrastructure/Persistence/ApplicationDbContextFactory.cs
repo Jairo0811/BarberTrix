@@ -5,7 +5,7 @@ namespace BarberTurn.Infrastructure.Persistence;
 
 public sealed class ApplicationDbContextFactory : IDesignTimeDbContextFactory<ApplicationDbContext>
 {
-    private const string FallbackConnection = "Server=localhost,1433;Database=BarberTurnDesignTime;User Id=sa;Password=BarberTurn_DesignTime_2026!;Encrypt=True;TrustServerCertificate=True";
+    private const string FallbackConnection = "Server=(localdb)\\MSSQLLocalDB;Database=BarberTurnDesignTime;Integrated Security=True;TrustServerCertificate=True";
 
     public ApplicationDbContext CreateDbContext(string[] args)
     {

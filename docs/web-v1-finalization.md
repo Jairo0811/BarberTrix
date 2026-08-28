@@ -1,6 +1,6 @@
 # Cierre de BarberTurn Web v1
 
-Este documento separa el cierre técnico del repositorio de las dependencias externas necesarias para una salida comercial pública. BarberTurn Mobile queda fuera de este alcance y se retomará después del cierre web.
+Este documento separa el cierre técnico de la web de las dependencias externas necesarias para una salida comercial pública. BarberTurn Mobile queda fuera de este checklist y evoluciona como una línea de producto independiente sobre la misma API.
 
 ## Estado actual
 
@@ -69,4 +69,4 @@ Una salida comercial pública requiere además:
 
 ## Fuera del alcance de este cierre
 
-BarberTurn Mobile (React Native + Expo), solicitudes cliente → barbero y notificaciones push se mantienen como la siguiente línea de producto una vez cerrado el código/QA de la web v1.
+BarberTurn Mobile (React Native + Expo) no forma parte de la Definition of Done de la web v1. M0/M1 y el flujo M2 de solicitudes cliente → barbero se desarrollan y validan por separado; las notificaciones push corresponden a M3.

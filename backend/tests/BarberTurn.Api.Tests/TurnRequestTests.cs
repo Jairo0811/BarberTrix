@@ -1,7 +1,10 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using BarberTurn.Application.Auth;
+using BarberTurn.Domain.Entities;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace BarberTurn.Api.Tests;
@@ -112,6 +115,64 @@ public sealed class TurnRequestTests
         Assert.NotNull(result?.AppointmentId);
     }
 
+    [Fact]
+    public async Task BarberCannotSeeOrOperateRequestsAssignedToAnotherBarber()
+    {
+        using var ownerClient = CreateClient();
+        var owner = await CreateDemoSessionAsync(ownerClient);
+        ownerClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", owner.AccessToken);
+        var settings = await ownerClient.GetFromJsonAsync<ShopPayload>("/api/shop/settings");
+        Assert.NotNull(settings);
+
+        ownerClient.DefaultRequestHeaders.Authorization = null;
+        var shop = await ownerClient.GetFromJsonAsync<PublicShopPayload>($"/api/public/shops/{settings.Slug}");
+        Assert.NotNull(shop);
+        Assert.True(shop.Barbers.Count >= 2);
+        var ownBarber = shop.Barbers[0];
+        var otherBarber = shop.Barbers[1];
+        var service = shop.Services[0];
+        var slot = await FirstAvailableSlotAsync(ownerClient, settings.Slug, service.Id, otherBarber.Id);
+
+        var created = await ownerClient.PostAsJsonAsync($"/api/public/shops/{settings.Slug}/turn-requests", new
+        {
+            serviceId = service.Id,
+            barberId = otherBarber.Id,
+            requestedStartsAt = slot.StartsAtUtc,
+            customerName = "Cliente protegido"
+        });
+        created.EnsureSuccessStatusCode();
+        var publicRequest = await created.Content.ReadFromJsonAsync<PublicTurnRequestPayload>();
+        Assert.NotNull(publicRequest);
+
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        await using var scope = factory.Services.CreateAsyncScope();
+        var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
+        var invitation = await authService.CreateInvitationAsync(
+            owner.BarberShopId,
+            new CreateInvitationRequest($"Barber M2 {suffix}", $"barber-m2-{suffix}@example.com", UserRole.Barber, ownBarber.Id),
+            "https://example.test",
+            true);
+        Assert.NotNull(invitation.DevelopmentAcceptanceUrl);
+
+        using var barberClient = CreateClient();
+        var accepted = await barberClient.PostAsJsonAsync("/api/auth/accept-invitation", new
+        {
+            token = ExtractToken(invitation.DevelopmentAcceptanceUrl),
+            password = "BarberTest123!",
+            acceptedTerms = true
+        });
+        accepted.EnsureSuccessStatusCode();
+        var barberSession = await accepted.Content.ReadFromJsonAsync<AuthPayload>();
+        Assert.NotNull(barberSession);
+        barberClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", barberSession.AccessToken);
+
+        var inbox = await barberClient.GetFromJsonAsync<List<TurnRequestPayload>>("/api/turn-requests");
+        Assert.DoesNotContain(inbox!, request => request.Id == publicRequest.Request.Id);
+
+        var forbidden = await barberClient.PostAsync($"/api/turn-requests/{publicRequest.Request.Id}/accept", null);
+        Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
+    }
+
     private HttpClient CreateClient() => factory.CreateClient(new WebApplicationFactoryClientOptions
     {
         BaseAddress = new Uri("https://localhost"),
@@ -140,7 +201,15 @@ public sealed class TurnRequestTests
         throw new InvalidOperationException("No test availability was found.");
     }
 
-    private sealed record AuthPayload(string AccessToken);
+    private static string ExtractToken(string url)
+    {
+        const string marker = "token=";
+        var index = url.IndexOf(marker, StringComparison.Ordinal);
+        Assert.True(index >= 0);
+        return Uri.UnescapeDataString(url[(index + marker.Length)..]);
+    }
+
+    private sealed record AuthPayload(string AccessToken, Guid BarberShopId);
     private sealed record ShopPayload(string Slug);
     private sealed record PublicShopPayload(List<ServicePayload> Services, List<BarberPayload> Barbers);
     private sealed record ServicePayload(Guid Id);

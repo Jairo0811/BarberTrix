@@ -33,16 +33,19 @@ test('owner registration persists through the real API and SQL Server', async ({
     sessionStorage.clear()
   })
   await page.goto('/#/login')
+  await page.reload()
 
-  await page.locator('input[name="email"]').fill(email)
-  await page.locator('input[name="password"]').fill(password)
+  const loginForm = page.locator('form.login-form')
+  await expect(loginForm).toBeVisible()
+  await loginForm.locator('input[name="email"]').fill(email)
+  await loginForm.locator('input[name="password"]').fill(password)
 
   const loginResponse = page.waitForResponse(response =>
     response.url().endsWith('/api/auth/login') && response.request().method() === 'POST')
   const persistedMetricsResponse = page.waitForResponse(response =>
     response.url().endsWith('/api/queue/metrics') && response.request().method() === 'GET')
 
-  await page.locator('button.login-submit').click()
+  await loginForm.locator('button.login-submit').click()
 
   expect((await loginResponse).ok()).toBeTruthy()
   expect((await persistedMetricsResponse).ok()).toBeTruthy()

@@ -9,7 +9,8 @@ using Xunit;
 
 namespace BarberTurn.Api.Tests;
 
-public sealed class QueueAuthorizationTests : IClassFixture<BarberTurnFactory>
+[Collection(ApiIntegrationCollection.Name)]
+public sealed class QueueAuthorizationTests
 {
     private readonly BarberTurnFactory factory;
 

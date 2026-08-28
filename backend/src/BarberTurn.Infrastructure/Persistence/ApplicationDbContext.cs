@@ -17,6 +17,8 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<Appointment> Appointments => Set<Appointment>();
     public DbSet<TurnRequest> TurnRequests => Set<TurnRequest>();
+    public DbSet<PushSubscription> PushSubscriptions => Set<PushSubscription>();
+    public DbSet<PushNotificationOutbox> PushNotificationOutbox => Set<PushNotificationOutbox>();
     public DbSet<BlockedTime> BlockedTimes => Set<BlockedTime>();
     public DbSet<PaymentRecord> Payments => Set<PaymentRecord>();
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
@@ -209,6 +211,36 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
             entity.HasOne<Barber>().WithMany().HasForeignKey(x => x.BarberId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<Customer>().WithMany().HasForeignKey(x => x.CustomerId).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne<Appointment>().WithMany().HasForeignKey(x => x.AppointmentId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<PushSubscription>(entity =>
+        {
+            entity.ToTable("PushSubscriptions", table => table.HasCheckConstraint(
+                "CK_PushSubscriptions_ExactlyOneOwner",
+                "([UserId] IS NOT NULL AND [TurnRequestId] IS NULL) OR ([UserId] IS NULL AND [TurnRequestId] IS NOT NULL)"));
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.ExpoPushToken).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.Platform).HasConversion<string>().HasMaxLength(20).IsRequired();
+            entity.HasIndex(x => new { x.UserId, x.InstallationId }).IsUnique().HasFilter("[UserId] IS NOT NULL");
+            entity.HasIndex(x => new { x.TurnRequestId, x.InstallationId }).IsUnique().HasFilter("[TurnRequestId] IS NOT NULL");
+            entity.HasIndex(x => new { x.BarberShopId, x.IsActive });
+            entity.HasOne<BarberShop>().WithMany().HasForeignKey(x => x.BarberShopId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<TurnRequest>().WithMany().HasForeignKey(x => x.TurnRequestId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<PushNotificationOutbox>(entity =>
+        {
+            entity.ToTable("PushNotificationOutbox");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Title).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.Body).HasMaxLength(240).IsRequired();
+            entity.Property(x => x.Route).HasMaxLength(300).IsRequired();
+            entity.Property(x => x.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
+            entity.Property(x => x.ExpoTicketId).HasMaxLength(120);
+            entity.Property(x => x.LastError).HasMaxLength(500);
+            entity.HasIndex(x => new { x.Status, x.AvailableAtUtc });
+            entity.HasOne<PushSubscription>().WithMany().HasForeignKey(x => x.PushSubscriptionId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<BlockedTime>(entity =>

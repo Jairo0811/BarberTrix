@@ -2,9 +2,12 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useAuth } from '@/auth/AuthProvider';
+import { PushOptInCard } from '@/notifications/PushOptInCard';
+import { usePushNotifications } from '@/notifications/PushNotificationsProvider';
 
 export default function HomeScreen() {
   const { session, signOut } = useAuth();
+  const push = usePushNotifications();
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -12,11 +15,18 @@ export default function HomeScreen() {
         <Text style={styles.eyebrow}>BARBERTURN MOBILE</Text>
         <Text style={styles.title}>Hola, {session?.user.name ?? 'equipo'}.</Text>
         <Text style={styles.role}>{session?.user.role ?? ''}</Text>
-        <Text style={styles.body}>M2 conecta las solicitudes cliente → barbero con aceptación, rechazo, contraoferta y creación segura de citas.</Text>
+        <Text style={styles.body}>M3 mantiene al equipo al tanto de nuevas solicitudes, incluso cuando BarberTurn está en segundo plano.</Text>
         <Pressable accessibilityRole="button" onPress={() => router.push('/(app)/turn-requests')} style={styles.card}>
           <Text style={styles.cardTitle}>Solicitudes de turno</Text>
           <Text style={styles.cardText}>Gestiona solicitudes pendientes y recibe cambios en tiempo real.</Text>
         </Pressable>
+        <PushOptInCard
+          status={push.status}
+          message={push.message}
+          title="No pierdas nuevas solicitudes"
+          body="Activa avisos del sistema para responder a tiempo. El contenido visible no incluye datos personales del cliente."
+          onEnable={() => push.enableForStaff()}
+        />
         <Pressable accessibilityRole="button" onPress={signOut} style={styles.button}>
           <Text style={styles.buttonText}>Cerrar sesión</Text>
         </Pressable>

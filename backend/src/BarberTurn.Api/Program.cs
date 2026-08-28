@@ -85,6 +85,7 @@ app.MapAuthEndpoints();
 app.MapQueueEndpoints();
 app.MapAppointmentEndpoints();
 app.MapTurnRequestEndpoints();
+app.MapPushEndpoints();
 app.MapCommercialEndpoints();
 app.MapHub<QueueHub>("/hubs/queue");
 

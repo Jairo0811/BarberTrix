@@ -3,6 +3,7 @@ import { createContext, PropsWithChildren, useCallback, useContext, useEffect, u
 import { MobileApiError } from '@/api/httpClient';
 import { login, logout, refreshSession } from './authApi';
 import { secureSessionStore } from './secureSessionStore';
+import { disableStaffPush } from '@/notifications/pushLifecycle';
 import type { AuthStatus, MobileAuthResponse, MobileSession } from './types';
 
 type AuthContextValue = {
@@ -101,12 +102,15 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const signOut = useCallback(async () => {
     const stored = await secureSessionStore.read();
+    if (session) {
+      try { await disableStaffPush(session.accessToken, session.user.id); } catch { /* Push cleanup is best effort. */ }
+    }
     if (stored) {
       try { await logout(stored.refreshToken); } catch { /* Local sign-out must still succeed. */ }
     }
     await clearSession();
     router.replace('/(auth)/login');
-  }, [clearSession]);
+  }, [clearSession, session]);
 
   const value = useMemo<AuthContextValue>(() => ({ status, session, signIn, signOut, refresh }), [refresh, session, signIn, signOut, status]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

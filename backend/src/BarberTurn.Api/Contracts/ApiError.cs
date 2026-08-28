@@ -21,6 +21,7 @@ public static class ApiErrorCodes
     public const string AppointmentConflict = "APPOINTMENT_CONFLICT";
     public const string TurnRequestInvalid = "TURN_REQUEST_INVALID";
     public const string TurnRequestConflict = "TURN_REQUEST_CONFLICT";
+    public const string PushSubscriptionInvalid = "PUSH_SUBSCRIPTION_INVALID";
     public const string PlanFeatureUnavailable = "PLAN_FEATURE_UNAVAILABLE";
     public const string ShopSettingsInvalid = "SHOP_SETTINGS_INVALID";
     public const string LocationInvalid = "LOCATION_INVALID";

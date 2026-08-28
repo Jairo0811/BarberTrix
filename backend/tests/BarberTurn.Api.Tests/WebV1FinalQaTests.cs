@@ -1,4 +1,5 @@
 using System.Data;
+using System.Globalization;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -333,7 +334,7 @@ public sealed class WebV1FinalQaTests
         parameter.Size = 180;
         parameter.Value = providerSubscriptionId;
         command.Parameters.Add(parameter);
-        return Convert.ToInt32(await command.ExecuteScalarAsync());
+        return Convert.ToInt32(await command.ExecuteScalarAsync(), CultureInfo.InvariantCulture);
     }
 
     private sealed record PublicShopSetup(string Slug, Guid ServiceId, Guid BarberId, string TimeZoneId);

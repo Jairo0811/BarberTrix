@@ -58,7 +58,7 @@ app.UseForwardedHeaders();
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseExceptionHandler();
 if (!app.Environment.IsDevelopment()) app.UseHsts();
-app.UseHttpsRedirection();
+if (!app.Environment.IsEnvironment("Testing")) app.UseHttpsRedirection();
 app.Use(async (context, next) =>
 {
     context.Response.Headers["X-Content-Type-Options"] = "nosniff";

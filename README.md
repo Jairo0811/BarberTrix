@@ -311,23 +311,12 @@ Vitest + React Testing Library cubren, entre otros:
 
 ### E2E
 
-Playwright cubre flujos críticos de navegador:
+BarberTurn mantiene dos niveles de Playwright deliberadamente separados:
 
-```text
-Registro
-→ Login
-→ Dashboard
-→ Crear turno
-→ Llamar
-→ Iniciar servicio
-→ Completar
-```
+1. **E2E de navegador con backend simulado**, para validar de forma determinista los flujos de UX: registro, login, dashboard, ciclo de turnos, demo comercial, Barber Portal, Customer Portal, restricciones por rol, Starter vs funciones premium y billing del Owner.
+2. **E2E full-stack real**, que levanta React + ASP.NET Core + SQL Server 2022 y valida registro de Owner, carga del dashboard y posterior login contra datos persistidos realmente en SQL Server.
 
-También valida demo comercial, Barber Portal, Customer Portal, restricciones por rol, Starter vs funciones premium y acceso a billing del Owner.
-
-La suite actual de Playwright utiliza un backend simulado para validar la experiencia del navegador. El cierre web v1 incluye añadir E2E de stack real contra API + SQL Server para los flujos críticos.
-
-Los artifacts de Playwright se publican desde CI para diagnóstico cuando una ejecución falla.
+El job `Full-stack E2E (React + API + SQL Server)` forma parte del CI y es requisito previo para construir las imágenes de producción. Las dos suites publican artifacts de Playwright para diagnóstico cuando una ejecución falla.
 
 ## 🌐 Internacionalización
 
@@ -418,13 +407,16 @@ Fundación técnica, núcleo de turnos, tiempo real, citas, gestión comercial y
 - ✅ error codes y correlation IDs;
 - ✅ frontend modular por features;
 - ✅ Vitest + Testing Library;
-- ✅ Playwright E2E de navegador;
+- ✅ Playwright E2E de navegador con backend simulado;
+- ✅ E2E full-stack React + ASP.NET Core + SQL Server;
 - ✅ i18n modular;
 - ✅ cobertura y gates progresivos en CI;
 - ✅ migraciones desacopladas;
 - ✅ logging estructurado;
 - ✅ SQL mínimo privilegio;
-- ⏳ E2E de stack real y pruebas de concurrencia/PayPal pendientes de cierre.
+- ✅ concurrencia crítica de citas y cola;
+- ✅ replay/idempotencia y orden de eventos PayPal;
+- ⏳ regresión visual/responsive y cierre de configuración operativa externa.
 
 ### ⏳ Puesta en infraestructura real
 

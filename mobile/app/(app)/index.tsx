@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import { useAuth } from '@/auth/AuthProvider';
 
 export default function HomeScreen() {
@@ -11,11 +12,11 @@ export default function HomeScreen() {
         <Text style={styles.eyebrow}>BARBERTURN MOBILE</Text>
         <Text style={styles.title}>Hola, {session?.user.name ?? 'equipo'}.</Text>
         <Text style={styles.role}>{session?.user.role ?? ''}</Text>
-        <Text style={styles.body}>M0 + M1 están conectados a la API. El próximo bloque será la solicitud cliente → barbero y su flujo en tiempo real.</Text>
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Próximo módulo</Text>
-          <Text style={styles.cardText}>TurnRequest · Pending → Accepted / Rejected / CounterProposed → Appointment</Text>
-        </View>
+        <Text style={styles.body}>M2 conecta las solicitudes cliente → barbero con aceptación, rechazo, contraoferta y creación segura de citas.</Text>
+        <Pressable accessibilityRole="button" onPress={() => router.push('/(app)/turn-requests')} style={styles.card}>
+          <Text style={styles.cardTitle}>Solicitudes de turno</Text>
+          <Text style={styles.cardText}>Gestiona solicitudes pendientes y recibe cambios en tiempo real.</Text>
+        </Pressable>
         <Pressable accessibilityRole="button" onPress={signOut} style={styles.button}>
           <Text style={styles.buttonText}>Cerrar sesión</Text>
         </Pressable>
@@ -31,8 +32,8 @@ const styles = StyleSheet.create({
   title: { fontSize: 34, lineHeight: 40, fontWeight: '900', color: '#111' },
   role: { alignSelf: 'flex-start', backgroundColor: '#e9e9e4', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6, fontWeight: '800' },
   body: { fontSize: 17, lineHeight: 25, color: '#383833' },
-  card: { padding: 18, borderWidth: 1, borderColor: '#d9d9d3', borderRadius: 16, backgroundColor: '#fff', gap: 6 },
-  cardTitle: { fontWeight: '900', fontSize: 16 },
+  card: { padding: 18, borderWidth: 1, borderColor: '#111', borderRadius: 16, backgroundColor: '#fff', gap: 6 },
+  cardTitle: { fontWeight: '900', fontSize: 18 },
   cardText: { lineHeight: 21, color: '#55554f' },
   button: { marginTop: 8, minHeight: 52, borderRadius: 14, borderWidth: 1, borderColor: '#111', alignItems: 'center', justifyContent: 'center' },
   buttonText: { fontWeight: '800' },

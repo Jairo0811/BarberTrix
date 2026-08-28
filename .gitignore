@@ -8,6 +8,8 @@
 # Node / React
 **/node_modules/
 **/dist/
+**/dist-*/
+**/.expo/
 **/.vite/
 
 # Environment and secrets

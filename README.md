@@ -28,9 +28,9 @@ La premisa del producto es simple: la tecnología debe adaptarse a la forma de t
 
 ## 🚀 Estado del proyecto
 
-BarberTurn se encuentra en **cierre de la web v1 y preparación para una salida comercial controlada**. El núcleo funcional está implementado y `main` se mantiene validado mediante CI, pruebas automatizadas, análisis de seguridad y gates progresivos de cobertura.
+BarberTurn tiene la **web v1 cerrada técnicamente** y continúa en preparación para una salida comercial controlada. El núcleo web está implementado y `main` se mantiene validado mediante CI, pruebas automatizadas, análisis de seguridad y gates progresivos de cobertura.
 
-El checklist de cierre está documentado en [`docs/web-v1-finalization.md`](docs/web-v1-finalization.md). La aplicación móvil se retomará después de completar este cierre web.
+El checklist de cierre está documentado en [`docs/web-v1-finalization.md`](docs/web-v1-finalization.md). La línea móvil ya está activa con React Native + Expo: M0/M1 establecen la base y las sesiones nativas seguras; M2 incorpora solicitudes cliente → barbero y su conversión transaccional en citas.
 
 ### Operación principal
 
@@ -427,19 +427,21 @@ Fundación técnica, núcleo de turnos, tiempo real, citas, gestión comercial y
 - auditoría de accesibilidad;
 - revisión legal y operativa previa al lanzamiento.
 
-### 📱 Después del cierre web
+### 📱 Línea móvil activa
 
-- React Native + Expo;
-- sesiones móviles seguras;
-- solicitudes cliente → barbero;
-- notificaciones push;
-- experiencia Android/iOS.
+- ✅ React Native + Expo SDK 57 y Expo Router;
+- ✅ sesiones móviles seguras con refresh token rotatorio en SecureStore;
+- ✅ solicitudes cliente → barbero con aceptación, rechazo y contraoferta;
+- ✅ realtime con SignalR mientras la aplicación está abierta;
+- ⏳ notificaciones push de sistema en M3;
+- ⏳ preparación de distribución Android/iOS.
 
 ## 📚 Documentación
 
 - 🏗️ [`docs/architecture.md`](docs/architecture.md) — arquitectura y decisiones técnicas.
 - 🎯 [`docs/mvp.md`](docs/mvp.md) — alcance funcional.
 - ✅ [`docs/web-v1-finalization.md`](docs/web-v1-finalization.md) — checklist de cierre web v1.
+- 📱 [`mobile/README.md`](mobile/README.md) — arquitectura, seguridad y ejecución de BarberTurn Mobile.
 - 🚀 [`docs/production-operations.md`](docs/production-operations.md) — operación, mínimo privilegio, observabilidad, backups y checklist.
 - 🛡️ [`SECURITY.md`](SECURITY.md) — política y controles de seguridad.
 - 🤝 [`CONTRIBUTING.md`](CONTRIBUTING.md) — guía de contribución.

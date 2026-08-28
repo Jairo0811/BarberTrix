@@ -107,22 +107,22 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22.13.1
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
       - name: Validate Expo dependency alignment
         run: npx expo install --check
       - name: Typecheck
         env:
           EXPO_PUBLIC_API_BASE_URL: https://api.example.test
         run: npm run typecheck
-      - name: Upload generated lockfile
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: mobile-package-lock
-          path: mobile/package-lock.json
-          if-no-files-found: ignore
-          retention-days: 2
+      - name: Bundle Android
+        env:
+          EXPO_PUBLIC_API_BASE_URL: https://api.example.test
+        run: npx expo export --platform android --output-dir dist-android
 
   frontend-e2e:
     name: Playwright E2E

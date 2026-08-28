@@ -62,33 +62,80 @@ internal sealed class AppointmentService(
         return slots.OrderBy(x => x.StartsAtUtc).ThenBy(x => x.BarberName).ToList();
     }
 
+    public async Task EnsureSlotAvailableAsync(Guid barberShopId, Guid serviceId, Guid barberId, DateTimeOffset startsAt, CancellationToken cancellationToken = default)
+    {
+        var shop = await dbContext.BarberShops.AsNoTracking().SingleOrDefaultAsync(x => x.Id == barberShopId && x.IsActive, cancellationToken)
+            ?? throw new InvalidOperationException("The barbershop was not found.");
+        var service = await dbContext.BarberServices.AsNoTracking().SingleOrDefaultAsync(x => x.Id == serviceId && x.BarberShopId == barberShopId && x.IsActive, cancellationToken)
+            ?? throw new InvalidOperationException("The service was not found.");
+        if (!await dbContext.Barbers.AsNoTracking().AnyAsync(x => x.Id == barberId && x.BarberShopId == barberShopId && x.IsActive, cancellationToken))
+            throw new InvalidOperationException("The barber was not found or is inactive.");
+
+        var start = startsAt.ToUniversalTime();
+        var end = start.AddMinutes(service.EstimatedDurationMinutes);
+        ValidateAppointmentWindow(shop.TimeZoneId, start, end);
+        await EnsureAvailableAsync(barberShopId, barberId, start, end, null, cancellationToken);
+    }
+
+    public async Task<AppointmentResponse> CreateFromTurnRequestAsync(
+        Guid barberShopId,
+        Guid serviceId,
+        Guid barberId,
+        DateTimeOffset startsAt,
+        string customerName,
+        string? customerPhone,
+        string? customerEmail,
+        string publicLookupTokenHash,
+        CancellationToken cancellationToken = default)
+    {
+        var ownsTransaction = dbContext.Database.CurrentTransaction is null;
+        await using var transaction = ownsTransaction ? await dbContext.Database.BeginTransactionAsync(cancellationToken) : null;
+
+        var shop = await dbContext.BarberShops.SingleOrDefaultAsync(x => x.Id == barberShopId && x.IsActive, cancellationToken)
+            ?? throw new InvalidOperationException("The barbershop was not found.");
+        var service = await dbContext.BarberServices.SingleOrDefaultAsync(x => x.Id == serviceId && x.BarberShopId == barberShopId && x.IsActive, cancellationToken)
+            ?? throw new InvalidOperationException("The service was not found.");
+        var start = startsAt.ToUniversalTime();
+        var end = start.AddMinutes(service.EstimatedDurationMinutes);
+        ValidateAppointmentWindow(shop.TimeZoneId, start, end);
+
+        await AcquireBarberScheduleLockAsync(barberShopId, barberId, cancellationToken);
+        await EnsureAvailableAsync(barberShopId, barberId, start, end, null, cancellationToken);
+        var customer = await FindOrCreateCustomerAsync(barberShopId, customerName, customerPhone, customerEmail, cancellationToken);
+        var appointment = new Appointment(barberShopId, serviceId, barberId, start, end, customerName, customerPhone, customerEmail, publicLookupTokenHash, customer?.Id);
+        dbContext.Appointments.Add(appointment);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        if (transaction is not null)
+            await transaction.CommitAsync(cancellationToken);
+
+        return await GetOneAsync(barberShopId, appointment.Id, cancellationToken)
+            ?? throw new InvalidOperationException("Appointment could not be loaded.");
+    }
+
     public async Task<PublicAppointmentResponse> CreatePublicAsync(string shopSlug, CreateAppointmentRequest request, CancellationToken cancellationToken = default)
     {
         var normalizedSlug = NormalizeSlug(shopSlug);
-        var shop = await dbContext.BarberShops.SingleOrDefaultAsync(x => x.Slug == normalizedSlug && x.IsActive, cancellationToken)
+        var shop = await dbContext.BarberShops.AsNoTracking().SingleOrDefaultAsync(x => x.Slug == normalizedSlug && x.IsActive, cancellationToken)
             ?? throw new InvalidOperationException("The barbershop was not found.");
         var usage = await planLimitService.GetUsageAsync(shop.Id, cancellationToken);
         if (!usage.CanUseAppointments)
             throw new InvalidOperationException("Appointments require the Pro or Business plan.");
-        var service = await dbContext.BarberServices.SingleOrDefaultAsync(x => x.Id == request.ServiceId && x.BarberShopId == shop.Id && x.IsActive, cancellationToken)
-            ?? throw new InvalidOperationException("The service was not found.");
-        var start = request.StartsAt.ToUniversalTime();
-        var end = start.AddMinutes(service.EstimatedDurationMinutes);
-        ValidateAppointmentWindow(shop.TimeZoneId, start, end);
 
-        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
-        await AcquireBarberScheduleLockAsync(shop.Id, request.BarberId, cancellationToken);
-        await EnsureAvailableAsync(shop.Id, request.BarberId, start, end, null, cancellationToken);
-
-        var customer = await FindOrCreateCustomerAsync(shop.Id, request.CustomerName, request.CustomerPhone, request.CustomerEmail, cancellationToken);
         var raw = SecureToken.Create();
-        var appointment = new Appointment(shop.Id, request.ServiceId, request.BarberId, start, end, request.CustomerName, request.CustomerPhone, request.CustomerEmail, SecureToken.Hash(raw), customer?.Id);
-        dbContext.Appointments.Add(appointment);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
+        var appointment = await CreateFromTurnRequestAsync(
+            shop.Id,
+            request.ServiceId,
+            request.BarberId,
+            request.StartsAt,
+            request.CustomerName,
+            request.CustomerPhone,
+            request.CustomerEmail,
+            SecureToken.Hash(raw),
+            cancellationToken);
 
         await queueNotifier.QueueChangedAsync(shop.Id, "appointment-created", cancellationToken);
-        return new PublicAppointmentResponse(await GetOneAsync(shop.Id, appointment.Id, cancellationToken) ?? throw new InvalidOperationException("Appointment could not be loaded."), raw);
+        return new PublicAppointmentResponse(appointment, raw);
     }
 
     public async Task<AppointmentResponse?> GetPublicAsync(string shopSlug, Guid appointmentId, string lookupToken, CancellationToken cancellationToken = default)

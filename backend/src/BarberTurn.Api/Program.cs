@@ -84,6 +84,7 @@ app.MapGet("/api", () => Results.Ok(new { name = "BarberTurn API", status = "ok"
 app.MapAuthEndpoints();
 app.MapQueueEndpoints();
 app.MapAppointmentEndpoints();
+app.MapTurnRequestEndpoints();
 app.MapCommercialEndpoints();
 app.MapHub<QueueHub>("/hubs/queue");
 

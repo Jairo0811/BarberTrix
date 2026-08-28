@@ -126,10 +126,67 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+  fullstack-e2e:
+    name: Full-stack E2E (React + API + SQL Server)
+    runs-on: ubuntu-latest
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_PID: Developer
+          MSSQL_SA_PASSWORD: BarberTurn_CI_2026!Secure
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "bash -c 'cat < /dev/null > /dev/tcp/localhost/1433'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 15
+          --health-start-period 20s
+    env:
+      BARBERTURN_FULLSTACK_CONNECTION: "Server=localhost,1433;Database=BarberTurnFullstackCi;User Id=sa;Password=BarberTurn_CI_2026!Secure;Encrypt=True;TrustServerCertificate=True"
+      BARBERTURN_FULLSTACK_JWT_KEY: "ci-only-fullstack-jwt-key-with-more-than-thirty-two-characters-2026"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Restore backend
+        run: dotnet restore BarberTurn.sln
+      - name: Build backend
+        run: dotnet build BarberTurn.sln --configuration Release --no-restore
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Install Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+      - name: Run real full-stack E2E
+        working-directory: frontend
+        run: npm run e2e:fullstack
+      - name: Upload full-stack Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-fullstack-report
+          path: |
+            frontend/playwright-report-fullstack
+            frontend/test-results-fullstack
+          if-no-files-found: ignore
+          retention-days: 14
+
   containers:
     name: Production containers
     runs-on: ubuntu-latest
-    needs: [backend, frontend, frontend-e2e]
+    needs: [backend, frontend, frontend-e2e, fullstack-e2e]
     steps:
       - uses: actions/checkout@v4
       - run: docker build -f backend/Dockerfile -t barberturn-api:ci .

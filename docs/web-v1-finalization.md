@@ -6,15 +6,17 @@ Este documento define el trabajo restante para declarar la experiencia web de Ba
 
 La web ya dispone de autenticación, multi-tenancy, cola, citas, clientes, caja, reportes, equipo, sucursales, Barber Portal, Customer Portal, BarberTurn TV, demo comercial, planes, capacidades, PayPal SaaS, SignalR, i18n, accesibilidad base, CI, análisis de seguridad, cobertura progresiva, observabilidad estructurada y SQL Server con mínimo privilegio.
 
+El cierre de integridad crítica ya incluye protección frente a doble reserva concurrente, replay/duplicados y eventos fuera de orden de PayPal, idempotencia de reintentos de la cola pública y autorización del barbero sobre sus propios turnos. CI también ejecuta un E2E real de React + ASP.NET Core + SQL Server, separado de la suite determinista con backend simulado.
+
 El objetivo de esta etapa no es añadir módulos indiscriminadamente, sino cerrar riesgos de regresión, operación y lanzamiento.
 
 ## Bloqueantes de código y QA
 
-- [ ] Añadir E2E de stack real que ejercite frontend + API + SQL Server sin sustituir el backend por mocks.
-- [ ] Añadir pruebas de PayPal para firma de webhook, idempotencia, eventos repetidos y estados fuera de orden.
-- [ ] Añadir pruebas de citas para doble reserva, concurrencia, límites de horario y zonas horarias.
-- [ ] Añadir pruebas de cola para transiciones concurrentes, autorización por rol y aislamiento entre tenants.
-- [ ] Añadir pruebas del autoservicio público para token opaco, consulta/cancelación y no exposición de identificadores internos.
+- [x] Añadir E2E de stack real que ejercite frontend + API + SQL Server sin sustituir el backend por mocks.
+- [ ] Completar pruebas de PayPal para firma de webhook, además de la cobertura ya existente de idempotencia, eventos repetidos y estados fuera de orden.
+- [ ] Completar pruebas de citas para límites de horario y zonas horarias, además de la cobertura ya existente de doble reserva y concurrencia.
+- [ ] Completar pruebas de cola para transiciones concurrentes y aislamiento entre tenants, además de la cobertura ya existente de autorización del barbero e idempotencia pública.
+- [ ] Completar pruebas del autoservicio público para cancelación y no exposición de identificadores internos, además de la cobertura ya existente de token opaco y consulta con token válido/inválido.
 - [ ] Revisar los principales estados vacíos, carga y error del frontend en Owner, Administrator, Receptionist, Barber y Customer Portal.
 - [ ] Ejecutar una regresión responsive final en desktop, tablet y móvil web.
 

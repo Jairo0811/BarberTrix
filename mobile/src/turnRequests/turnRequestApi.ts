@@ -1,8 +1,14 @@
 import { apiRequest } from '@/api/httpClient';
-import type { CreateTurnRequestInput, PublicShop, PublicTurnRequestResponse, TurnRequest } from './types';
+import type { AvailabilitySlot, CreateTurnRequestInput, PublicShop, PublicTurnRequestResponse, TurnRequest } from './types';
 
 export function getPublicShop(slug: string) {
   return apiRequest<PublicShop>(`/api/public/shops/${encodeURIComponent(slug)}`);
+}
+
+export function getAvailability(slug: string, serviceId: string, date: string, barberId?: string) {
+  const params = new URLSearchParams({ serviceId, date });
+  if (barberId) params.set('barberId', barberId);
+  return apiRequest<AvailabilitySlot[]>(`/api/public/shops/${encodeURIComponent(slug)}/appointments/availability?${params.toString()}`);
 }
 
 export function createPublicTurnRequest(slug: string, input: CreateTurnRequestInput) {

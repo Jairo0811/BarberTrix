@@ -32,6 +32,13 @@ export type PublicShop = {
   barbers: PublicBarber[];
 };
 
+export type AvailabilitySlot = {
+  startsAtUtc: string;
+  endsAtUtc: string;
+  barberId: string;
+  barberName: string;
+};
+
 export type TurnRequest = {
   id: string;
   serviceId: string;

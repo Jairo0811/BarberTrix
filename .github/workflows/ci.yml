@@ -213,10 +213,14 @@ jobs:
           retention-days: 14
 
   snapshot-export:
-    name: EF snapshot export
+    name: EF snapshot synchronize
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -229,13 +233,18 @@ jobs:
         run: |
           dotnet tool install --global dotnet-ef --version "10.0.*"
           dotnet ef migrations add MobileM2SnapshotExport --project backend/src/BarberTurn.Infrastructure --startup-project backend/src/BarberTurn.Api --output-dir Persistence/Migrations
-      - name: Upload canonical snapshot
-        uses: actions/upload-artifact@v4
-        with:
-          name: mobile-m2-ef-snapshot
-          path: backend/src/BarberTurn.Infrastructure/Persistence/Migrations/ApplicationDbContextModelSnapshot.cs
-          if-no-files-found: error
-          retention-days: 2
+      - name: Commit canonical snapshot if changed
+        run: |
+          SNAPSHOT=backend/src/BarberTurn.Infrastructure/Persistence/Migrations/ApplicationDbContextModelSnapshot.cs
+          if git diff --quiet -- "$SNAPSHOT"; then
+            echo "Snapshot is already synchronized."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$SNAPSHOT"
+          git commit -m "chore(ef): synchronize M2 model snapshot"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
 
   containers:
     name: Production containers

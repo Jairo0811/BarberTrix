@@ -177,8 +177,9 @@ internal sealed class QueueService(
         var normalizedSlug = NormalizeSlug(slug);
         var shop = await dbContext.BarberShops.AsNoTracking().SingleOrDefaultAsync(x => x.Slug == normalizedSlug && x.IsActive, cancellationToken)
             ?? throw new InvalidOperationException("The barbershop was not found.");
-        var lookupToken = SecureToken.Create();
-        var create = new CreateTurnRequest(request.ServiceId, request.CustomerName, request.BarberId, request.CustomerPhone, request.IdempotencyKey);
+        var publicIdempotencyKey = NormalizePublicIdempotencyKey(request.IdempotencyKey);
+        var lookupToken = publicIdempotencyKey ?? SecureToken.Create();
+        var create = new CreateTurnRequest(request.ServiceId, request.CustomerName, request.BarberId, request.CustomerPhone, publicIdempotencyKey);
         var result = await CreateTurnCoreAsync(shop.Id, create, SecureToken.Hash(lookupToken), cancellationToken);
         var position = await GetPositionAsync(shop.Id, result.Turn.Id, cancellationToken);
         var wait = await EstimateWaitAsync(shop.Id, await GetLocalDateAsync(shop.Id, cancellationToken), result.Turn.Id, cancellationToken);
@@ -220,35 +221,67 @@ internal sealed class QueueService(
         if (turn is null)
             return false;
         turn.Cancel();
-        await dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw new InvalidOperationException("The turn was changed by another operation. Refresh and try again.");
+        }
         await NotifyAsync(shopId.Value, "turn-cancelled", cancellationToken);
         return true;
     }
 
     private async Task<(TurnResponse Turn, bool Existing)> CreateTurnCoreAsync(Guid barberShopId, CreateTurnRequest request, string? publicTokenHash, CancellationToken cancellationToken)
     {
-        if (!string.IsNullOrWhiteSpace(request.IdempotencyKey))
-        {
-            var existing = await dbContext.Turns.AsNoTracking().SingleOrDefaultAsync(x => x.BarberShopId == barberShopId && x.IdempotencyKey == request.IdempotencyKey, cancellationToken);
-            if (existing is not null)
-                return (await GetTurnResponseAsync(barberShopId, existing.Id, cancellationToken) ?? throw new InvalidOperationException("Existing turn could not be loaded."), true);
-        }
-
         if (!await dbContext.BarberServices.AnyAsync(x => x.Id == request.ServiceId && x.BarberShopId == barberShopId && x.IsActive, cancellationToken))
             throw new InvalidOperationException("The selected service does not exist or is inactive.");
         if (request.BarberId is Guid barberId && !await dbContext.Barbers.AnyAsync(x => x.Id == barberId && x.BarberShopId == barberShopId && x.IsActive, cancellationToken))
             throw new InvalidOperationException("The selected barber does not exist or is inactive.");
 
+        var idempotencyKey = NormalizeIdempotencyKey(request.IdempotencyKey);
         var today = await GetLocalDateAsync(barberShopId, cancellationToken);
         await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+        if (idempotencyKey is not null)
+        {
+            await AcquireIdempotencyLockAsync(barberShopId, idempotencyKey, cancellationToken);
+            var existingId = await dbContext.Turns.AsNoTracking()
+                .Where(x => x.BarberShopId == barberShopId && x.IdempotencyKey == idempotencyKey)
+                .Select(x => (Guid?)x.Id)
+                .SingleOrDefaultAsync(cancellationToken);
+            if (existingId is Guid id)
+            {
+                var existing = await GetTurnResponseAsync(barberShopId, id, cancellationToken)
+                    ?? throw new InvalidOperationException("Existing turn could not be loaded.");
+                await transaction.CommitAsync(cancellationToken);
+                return (existing, true);
+            }
+        }
+
         var lastSequence = await dbContext.Turns.Where(x => x.BarberShopId == barberShopId && x.QueueDate == today).MaxAsync(x => (int?)x.SequenceNumber, cancellationToken) ?? 0;
-        var turn = new Turn(barberShopId, request.ServiceId, today, lastSequence + 1, request.CustomerName, request.BarberId, request.CustomerPhone, publicTokenHash, request.IdempotencyKey, request.AppointmentId);
+        var turn = new Turn(barberShopId, request.ServiceId, today, lastSequence + 1, request.CustomerName, request.BarberId, request.CustomerPhone, publicTokenHash, idempotencyKey, request.AppointmentId);
         dbContext.Turns.Add(turn);
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         var response = await GetTurnResponseAsync(barberShopId, turn.Id, cancellationToken) ?? throw new InvalidOperationException("The turn could not be loaded after creation.");
         await NotifyAsync(barberShopId, "turn-created", cancellationToken);
         return (response, false);
+    }
+
+    private async Task AcquireIdempotencyLockAsync(Guid barberShopId, string idempotencyKey, CancellationToken cancellationToken)
+    {
+        var resource = $"barberturn:turn:{barberShopId:N}:{idempotencyKey}";
+        var affected = await dbContext.Database.ExecuteSqlInterpolatedAsync($"""
+            DECLARE @lockResult int;
+            EXEC @lockResult = sys.sp_getapplock
+                @Resource = {resource},
+                @LockMode = 'Exclusive',
+                @LockOwner = 'Transaction',
+                @LockTimeout = 10000;
+            IF @lockResult < 0 THROW 51000, 'Could not acquire the turn idempotency lock.', 1;
+            """, cancellationToken);
+        _ = affected;
     }
 
     private async Task<TurnResponse?> MutateTurnAsync(Guid barberShopId, Guid turnId, Func<Turn, Task> mutation, string eventName, CancellationToken cancellationToken)
@@ -320,6 +353,26 @@ internal sealed class QueueService(
     }
 
     private Task NotifyAsync(Guid barberShopId, string eventName, CancellationToken cancellationToken) => queueNotifier.QueueChangedAsync(barberShopId, eventName, cancellationToken);
+
+    private static string? NormalizeIdempotencyKey(string? idempotencyKey)
+    {
+        if (string.IsNullOrWhiteSpace(idempotencyKey))
+            return null;
+        var normalized = idempotencyKey.Trim();
+        if (normalized.Length > 100)
+            throw new ArgumentException("The idempotency key cannot exceed 100 characters.", nameof(idempotencyKey));
+        return normalized;
+    }
+
+    private static string? NormalizePublicIdempotencyKey(string? idempotencyKey)
+    {
+        if (string.IsNullOrWhiteSpace(idempotencyKey))
+            return null;
+        if (!Guid.TryParse(idempotencyKey.Trim(), out var parsed))
+            throw new ArgumentException("The public idempotency key must be a UUID.", nameof(idempotencyKey));
+        return parsed.ToString("N");
+    }
+
     private static string NormalizeSlug(string slug) => slug.Trim().ToLowerInvariant();
     private static BarberResponse MapBarber(Barber x) => new(x.Id, x.Name, x.ChairNumber, x.Status, x.IsActive);
     private static ServiceResponse MapService(BarberService x) => new(x.Id, x.Name, x.Description, x.Price, x.EstimatedDurationMinutes, x.IsActive);

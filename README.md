@@ -30,7 +30,7 @@ La premisa del producto es simple: la tecnología debe adaptarse a la forma de t
 
 BarberTurn tiene la **web v1 cerrada técnicamente** y continúa en preparación para una salida comercial controlada. El núcleo web está implementado y `main` se mantiene validado mediante CI, pruebas automatizadas, análisis de seguridad y gates progresivos de cobertura.
 
-El checklist de cierre está documentado en [`docs/web-v1-finalization.md`](docs/web-v1-finalization.md). La línea móvil ya está activa con React Native + Expo: M0/M1 establecen la base y las sesiones nativas seguras; M2 incorpora solicitudes cliente → barbero y su conversión transaccional en citas.
+El checklist de cierre está documentado en [`docs/web-v1-finalization.md`](docs/web-v1-finalization.md). La línea móvil ya está activa con React Native + Expo: M0/M1 establecen la base y las sesiones nativas seguras; M2 incorpora solicitudes cliente → barbero y M3 añade notificaciones push transaccionales para personal y clientes.
 
 ### Operación principal
 

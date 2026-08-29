@@ -1,5 +1,6 @@
 using BarberTurn.Application.Appointments;
 using BarberTurn.Application.Common;
+using BarberTurn.Application.Push;
 using BarberTurn.Application.TurnRequests;
 using BarberTurn.Domain.Entities;
 using BarberTurn.Infrastructure.Persistence;
@@ -12,6 +13,7 @@ internal sealed class TurnRequestService(
     IAppointmentService appointmentService,
     IPlanLimitService planLimitService,
     IShopLookupService shopLookupService,
+    ITurnRequestPushNotifier pushNotifier,
     IQueueNotifier queueNotifier) : ITurnRequestService
 {
     private static readonly TimeSpan RequestLifetime = TimeSpan.FromHours(24);
@@ -58,6 +60,7 @@ internal sealed class TurnRequestService(
             expiresAtUtc);
 
         dbContext.TurnRequests.Add(entity);
+        await pushNotifier.QueueForStaffAsync(shopId, entity.BarberId, entity.Id, TurnRequestPushEvent.Created, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
         await queueNotifier.QueueChangedAsync(shopId, "turn-request-created", cancellationToken);
 
@@ -86,6 +89,7 @@ internal sealed class TurnRequestService(
             return false;
         await EnsureNotExpiredAsync(entity, cancellationToken);
         entity.Cancel(DateTimeOffset.UtcNow);
+        await pushNotifier.QueueForStaffAsync(entity.BarberShopId, entity.BarberId, entity.Id, TurnRequestPushEvent.Cancelled, cancellationToken);
         await SaveTransitionAsync(entity.BarberShopId, "turn-request-cancelled", cancellationToken);
         return true;
     }
@@ -115,6 +119,7 @@ internal sealed class TurnRequestService(
             entity.PublicLookupTokenHash,
             cancellationToken);
         entity.Accept(appointment.Id, DateTimeOffset.UtcNow);
+        await pushNotifier.QueueForStaffAsync(entity.BarberShopId, entity.BarberId, entity.Id, TurnRequestPushEvent.CounterAccepted, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         await queueNotifier.QueueChangedAsync(entity.BarberShopId, "turn-request-accepted", cancellationToken);
@@ -145,6 +150,7 @@ internal sealed class TurnRequestService(
             entity.PublicLookupTokenHash,
             cancellationToken);
         entity.Accept(appointment.Id, DateTimeOffset.UtcNow);
+        await pushNotifier.QueueForCustomerAsync(entity.Id, TurnRequestPushEvent.Accepted, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         await queueNotifier.QueueChangedAsync(barberShopId, "turn-request-accepted", cancellationToken);
@@ -158,6 +164,7 @@ internal sealed class TurnRequestService(
             return null;
         await EnsureNotExpiredAsync(entity, cancellationToken);
         entity.Reject(DateTimeOffset.UtcNow);
+        await pushNotifier.QueueForCustomerAsync(entity.Id, TurnRequestPushEvent.Rejected, cancellationToken);
         await SaveTransitionAsync(barberShopId, "turn-request-rejected", cancellationToken);
         return await GetAsync(barberShopId, requestId, cancellationToken);
     }
@@ -170,6 +177,7 @@ internal sealed class TurnRequestService(
         await EnsureNotExpiredAsync(entity, cancellationToken);
         await appointmentService.EnsureSlotAvailableAsync(barberShopId, entity.ServiceId, entity.BarberId, request.StartsAt, cancellationToken);
         entity.CounterPropose(request.StartsAt.ToUniversalTime(), DateTimeOffset.UtcNow);
+        await pushNotifier.QueueForCustomerAsync(entity.Id, TurnRequestPushEvent.CounterProposed, cancellationToken);
         await SaveTransitionAsync(barberShopId, "turn-request-counter-proposed", cancellationToken);
         return await GetAsync(barberShopId, requestId, cancellationToken);
     }

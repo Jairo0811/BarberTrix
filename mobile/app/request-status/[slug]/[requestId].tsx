@@ -6,6 +6,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { acceptCounterProposal, cancelPublicTurnRequest, getPublicTurnRequest } from '@/turnRequests/turnRequestApi';
 import { publicRequestStore } from '@/turnRequests/publicRequestStore';
 import type { TurnRequestStatus } from '@/turnRequests/types';
+import { PushOptInCard } from '@/notifications/PushOptInCard';
+import { usePushNotifications } from '@/notifications/PushNotificationsProvider';
 
 const labels: Record<TurnRequestStatus, string> = {
   Pending: 'Esperando respuesta del barbero',
@@ -26,6 +28,7 @@ export default function RequestStatusScreen() {
   const requestId = Array.isArray(params.requestId) ? params.requestId[0] : params.requestId;
   const [lookupToken, setLookupToken] = useState<string | null | undefined>(undefined);
   const queryClient = useQueryClient();
+  const push = usePushNotifications();
 
   useEffect(() => {
     if (!requestId) return;
@@ -51,6 +54,13 @@ export default function RequestStatusScreen() {
       await queryClient.invalidateQueries({ queryKey });
     },
   });
+
+  useEffect(() => {
+    const current = requestQuery.data;
+    if (!slug || !requestId || !lookupToken || !current) return;
+    if (current.status === 'Pending' || current.status === 'CounterProposed') return;
+    push.disableForRequest(slug, requestId, lookupToken).catch(() => undefined);
+  }, [lookupToken, push.disableForRequest, requestId, requestQuery.data, slug]);
 
   if (lookupToken === undefined || requestQuery.isLoading) {
     return <SafeAreaView style={styles.safe}><View style={styles.center}><ActivityIndicator /></View></SafeAreaView>;
@@ -82,6 +92,16 @@ export default function RequestStatusScreen() {
           {request.counterProposedStartsAtUtc ? <Text style={styles.counter}>Nueva propuesta: {formatDate(request.counterProposedStartsAtUtc)}</Text> : null}
           {request.notes ? <Text style={styles.notes}>“{request.notes}”</Text> : null}
         </View>
+
+        {actionable ? (
+          <PushOptInCard
+            status={push.status}
+            message={push.message}
+            title="Recibe la respuesta al instante"
+            body="Te avisaremos si aceptan, rechazan o proponen otra hora."
+            onEnable={() => push.enableForRequest(slug!, requestId!, lookupToken)}
+          />
+        ) : null}
 
         {request.status === 'CounterProposed' ? (
           <Pressable disabled={acceptMutation.isPending} onPress={() => acceptMutation.mutate()} style={styles.primary}>

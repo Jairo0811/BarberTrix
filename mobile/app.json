@@ -3,11 +3,12 @@
     "name": "BarberTurn",
     "slug": "barberturn",
     "scheme": "barberturn",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "plugins": [
       "expo-router",
+      "expo-notifications",
       [
         "expo-secure-store",
         {

@@ -568,6 +568,128 @@ namespace BarberTurn.Infrastructure.Persistence.Migrations
                     b.ToTable("ShopLocations", (string)null);
                 });
 
+            modelBuilder.Entity("BarberTurn.Domain.Entities.PushNotificationOutbox", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("AcceptedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("AvailableAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(240)
+                        .HasColumnType("nvarchar(240)");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ExpoTicketId")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTimeOffset?>("ProcessingStartedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("PushSubscriptionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Route")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PushSubscriptionId");
+
+                    b.HasIndex("Status", "AvailableAtUtc");
+
+                    b.ToTable("PushNotificationOutbox", (string)null);
+                });
+
+            modelBuilder.Entity("BarberTurn.Domain.Entities.PushSubscription", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BarberShopId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ExpoPushToken")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid>("InstallationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset>("LastSeenAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Platform")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<Guid?>("TurnRequestId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BarberShopId", "IsActive");
+
+                    b.HasIndex("TurnRequestId", "InstallationId")
+                        .IsUnique()
+                        .HasFilter("[TurnRequestId] IS NOT NULL");
+
+                    b.HasIndex("UserId", "InstallationId")
+                        .IsUnique()
+                        .HasFilter("[UserId] IS NOT NULL");
+
+                    b.ToTable("PushSubscriptions", (string)null, t =>
+                        {
+                            t.HasCheckConstraint("CK_PushSubscriptions_ExactlyOneOwner", "([UserId] IS NOT NULL AND [TurnRequestId] IS NULL) OR ([UserId] IS NULL AND [TurnRequestId] IS NOT NULL)");
+                        });
+                });
+
             modelBuilder.Entity("BarberTurn.Domain.Entities.Subscription", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1032,6 +1154,34 @@ namespace BarberTurn.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("TurnId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("BarberTurn.Domain.Entities.PushNotificationOutbox", b =>
+                {
+                    b.HasOne("BarberTurn.Domain.Entities.PushSubscription", null)
+                        .WithMany()
+                        .HasForeignKey("PushSubscriptionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BarberTurn.Domain.Entities.PushSubscription", b =>
+                {
+                    b.HasOne("BarberTurn.Domain.Entities.BarberShop", null)
+                        .WithMany()
+                        .HasForeignKey("BarberShopId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BarberTurn.Domain.Entities.TurnRequest", null)
+                        .WithMany()
+                        .HasForeignKey("TurnRequestId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("BarberTurn.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("BarberTurn.Domain.Entities.RefreshSession", b =>

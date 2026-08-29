@@ -4,6 +4,7 @@ using BarberTurn.Application.Appointments;
 using BarberTurn.Application.Commercial;
 using BarberTurn.Application.Common;
 using BarberTurn.Application.Queue;
+using BarberTurn.Application.Push;
 using BarberTurn.Application.TurnRequests;
 using BarberTurn.Domain.Entities;
 using BarberTurn.Infrastructure.Auth;
@@ -12,6 +13,7 @@ using BarberTurn.Infrastructure.Commercial;
 using BarberTurn.Infrastructure.Common;
 using BarberTurn.Infrastructure.Persistence;
 using BarberTurn.Infrastructure.Queue;
+using BarberTurn.Infrastructure.Push;
 using BarberTurn.Infrastructure.TurnRequests;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -39,6 +41,9 @@ public static class DependencyInjection
         services.AddScoped<IQueueService, QueueService>();
         services.AddScoped<IAppointmentService, AppointmentService>();
         services.AddScoped<ITurnRequestService, TurnRequestService>();
+        services.AddScoped<IPushSubscriptionService, PushSubscriptionService>();
+        services.AddScoped<ITurnRequestPushNotifier, TurnRequestPushNotifier>();
+        services.AddScoped<PushDeliveryProcessor>();
         services.AddScoped<ICommercialService, CommercialService>();
         services.AddScoped<IAuditService, AuditService>();
         services.AddScoped<IPlanLimitService, PlanLimitService>();
@@ -46,6 +51,9 @@ public static class DependencyInjection
         services.AddScoped<IEmailSender, ConfigurableEmailSender>();
         services.AddHttpClient<IHumanVerificationService, HumanVerificationService>();
         services.AddHttpClient<IBillingService, PayPalBillingService>();
+        services.AddHttpClient<IExpoPushGateway, ExpoPushGateway>();
+        if (configuration.GetValue<bool>("Push:Enabled"))
+            services.AddHostedService<PushDeliveryWorker>();
         services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
         services.AddScoped<DevelopmentDataSeeder>();
 

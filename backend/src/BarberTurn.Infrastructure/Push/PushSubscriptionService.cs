@@ -127,12 +127,13 @@ internal sealed partial class PushSubscriptionService(ApplicationDbContext dbCon
         if (string.IsNullOrWhiteSpace(shopSlug) || string.IsNullOrWhiteSpace(lookupToken))
             return Task.FromResult<TurnRequest?>(null);
 
+        var normalizedShopSlug = shopSlug.Trim().ToLowerInvariant();
         var tokenHash = SecureToken.Hash(lookupToken);
         return (
             from request in dbContext.TurnRequests
             join shop in dbContext.BarberShops on request.BarberShopId equals shop.Id
             where request.Id == turnRequestId
-                && shop.Slug == shopSlug.ToLowerInvariant()
+                && shop.Slug == normalizedShopSlug
                 && shop.IsActive
                 && request.PublicLookupTokenHash == tokenHash
             select request).SingleOrDefaultAsync(cancellationToken);

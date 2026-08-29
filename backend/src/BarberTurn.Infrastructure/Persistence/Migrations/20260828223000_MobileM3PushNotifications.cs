@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
+#pragma warning disable CA1861
 
 namespace BarberTurn.Infrastructure.Persistence.Migrations;
 
@@ -96,3 +97,4 @@ public sealed class MobileM3PushNotifications : Migration
         migrationBuilder.DropTable(name: "PushSubscriptions");
     }
 }
+#pragma warning restore CA1861

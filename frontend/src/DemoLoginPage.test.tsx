@@ -7,6 +7,7 @@ import type { Auth } from './types'
 const demoAuth: Auth = {
   accessToken: 'demo-token', expiresAtUtc: '2099-01-01T00:00:00Z',
   userId: 'demo-user', barberShopId: 'demo-shop', name: 'Demo', role: 'Owner', isEmailVerified: true,
+  sessionScope: 'Tenant',
 }
 
 describe('DemoLoginPage', () => {

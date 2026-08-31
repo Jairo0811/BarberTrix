@@ -47,7 +47,9 @@ jobs:
         with:
           node-version: 22.13.1
       - name: Apply Stage D changes
-        run: python3 .github/scripts/stage_d_bootstrap.py
+        run: |
+          python3 .github/scripts/stage_d_bootstrap.py
+          python3 .github/scripts/stage_d_validation_fix.py
       - name: Restore backend
         run: dotnet restore backend/src/BarberTurn.Api/BarberTurn.Api.csproj
       - name: Generate EF migration

@@ -25,7 +25,19 @@ jobs:
           node-version: '24'
 
       - name: Apply stage C changes
-        run: python3 .github/scripts/stage_c_bootstrap.py
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('.github/scripts/stage_c_bootstrap.py')
+          text = path.read_text()
+          old = ': this(barberShopId == Guid.Empty ? throw new ArgumentException("Barbershop is required.", nameof(barberShopId)) : barberShopId,'
+          new = ': this(barberShopId == Guid.Empty ? throw new ArgumentException("Barbershop is required.", nameof(barberShopId)) : (Guid?)barberShopId,'
+          if old not in text:
+              raise SystemExit('Constructor delegation marker missing')
+          path.write_text(text.replace(old, new, 1))
+          PY
+          python3 .github/scripts/stage_c_bootstrap.py
 
       - name: Generate EF migration
         shell: bash

@@ -18,6 +18,7 @@ import './dashboard.css'
 import BusinessModules from './BusinessModules'
 import AdminDashboardLayout, { type DashboardNavItem } from './portals/admin/components/AdminDashboardLayout'
 import { isBusinessPage, type AdminPageId } from './portals/admin/adminRoutes'
+import type { Capabilities, Shop } from './portals/admin/commercialTypes'
 import { dashboardCopy, type DashboardCopy } from './portals/admin/dashboardCopy'
 import { useDashboardNavigation } from './portals/admin/hooks/useDashboardNavigation'
 import { useCommercialContext } from './portals/admin/hooks/useCommercialContext'
@@ -29,6 +30,28 @@ import ServicesSection from './features/services/components/ServicesSection'
 
 type DashboardViewProps = { auth: Auth; isDemo: boolean; onLogout: () => void }
 type AdminNavItem = DashboardNavItem & { requiresCatalogAccess?: boolean; requiresOwner?: boolean }
+type QueueBackedPageId = Extract<AdminPageId, 'overview' | 'queue' | 'barbers' | 'services' | 'team'>
+
+type QueueBackedPageProps = {
+  page: QueueBackedPageId
+  auth: Auth
+  isDemo: boolean
+  canManageCatalog: boolean
+  copy: DashboardCopy
+  today: string
+  isSystemAdmin: boolean
+  shop: Shop | null
+  capabilities: Capabilities | null
+  onShopUpdated: () => Promise<void>
+  onNavigate: (page: AdminPageId) => void
+  formatRole: (role: string) => string
+}
+
+const queueBackedPageIds = new Set<AdminPageId>(['overview', 'queue', 'barbers', 'services', 'team'])
+
+function isQueueBackedPage(page: AdminPageId): page is QueueBackedPageId {
+  return queueBackedPageIds.has(page)
+}
 
 function formatRole(role: string, copy: DashboardCopy) {
   if (role === 'Owner') return copy.owner
@@ -36,11 +59,39 @@ function formatRole(role: string, copy: DashboardCopy) {
   return role
 }
 
+function QueueBackedPageContent({ page, auth, isDemo, canManageCatalog, copy, today, isSystemAdmin, shop, capabilities, onShopUpdated, onNavigate, formatRole: localizeRole }: QueueBackedPageProps) {
+  const queue = useQueueSnapshot(copy.loadOperationError)
+
+  if (page === 'overview') return <DashboardOverviewSection auth={auth} isDemo={isDemo} canManageCatalog={canManageCatalog} copy={copy} today={today}
+    barbers={queue.barbers} services={queue.services} turns={queue.turns} overview={queue.overview}
+    loading={queue.loading} error={queue.error} onRefresh={() => { void queue.refresh() }}
+    onNavigate={onNavigate} formatRole={localizeRole} />
+
+  if (page === 'queue') return <QueueSection barbers={queue.barbers} services={queue.services} turns={queue.turns} overview={queue.overview}
+    loading={queue.loading} copy={copy} onRefresh={queue.refresh} onError={queue.setError} />
+
+  if (page === 'barbers') return <BarbersSection barbers={queue.barbers} canManage={canManageCatalog} copy={copy} onRefresh={queue.refresh} onError={queue.setError} />
+
+  if (page === 'services') return canManageCatalog
+    ? <ServicesSection services={queue.services} copy={copy} onRefresh={queue.refresh} onError={queue.setError} />
+    : null
+
+  return <BusinessModules
+    page="team"
+    auth={auth}
+    barbers={queue.barbers}
+    isDemo={isDemo}
+    isSystemAdmin={isSystemAdmin}
+    shop={shop}
+    capabilities={capabilities}
+    onShopUpdated={onShopUpdated}
+  />
+}
+
 export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewProps) {
   const { locale } = useI18n()
   const copy = dashboardCopy[locale]
   const canManageCatalog = auth.role === 'Owner' || auth.role === 'Administrator'
-  const queue = useQueueSnapshot(copy.loadOperationError)
   const commercial = useCommercialContext()
   const isSystemAdmin = commercial.capabilities?.isSystemAdmin === true
   const hasOwnerAccess = auth.role === 'Owner' || isSystemAdmin
@@ -89,24 +140,25 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
       return <section className="panel dashboard-section"><p>{copy.loadingOperation}</p></section>
     }
 
-    if (page === 'overview') return <DashboardOverviewSection auth={auth} isDemo={isDemo} canManageCatalog={canManageCatalog} copy={copy} today={today}
-      barbers={queue.barbers} services={queue.services} turns={queue.turns} overview={queue.overview}
-      loading={queue.loading} error={queue.error} onRefresh={() => { void queue.refresh() }}
-      onNavigate={navigation.navigateToPage} formatRole={localizeRole} />
-
-    if (page === 'queue') return <QueueSection barbers={queue.barbers} services={queue.services} turns={queue.turns} overview={queue.overview}
-      loading={queue.loading} copy={copy} onRefresh={queue.refresh} onError={queue.setError} />
-
-    if (page === 'barbers') return <BarbersSection barbers={queue.barbers} canManage={canManageCatalog} copy={copy} onRefresh={queue.refresh} onError={queue.setError} />
-
-    if (page === 'services') return canManageCatalog
-      ? <ServicesSection services={queue.services} copy={copy} onRefresh={queue.refresh} onError={queue.setError} />
-      : null
+    if (isQueueBackedPage(page)) return <QueueBackedPageContent
+      page={page}
+      auth={auth}
+      isDemo={isDemo}
+      canManageCatalog={canManageCatalog}
+      copy={copy}
+      today={today}
+      isSystemAdmin={isSystemAdmin}
+      shop={commercial.shop}
+      capabilities={commercial.capabilities}
+      onShopUpdated={commercial.refresh}
+      onNavigate={navigation.navigateToPage}
+      formatRole={localizeRole}
+    />
 
     if (isBusinessPage(page)) return <BusinessModules
       page={page}
       auth={auth}
-      barbers={queue.barbers}
+      barbers={[]}
       isDemo={isDemo}
       isSystemAdmin={isSystemAdmin}
       shop={commercial.shop}

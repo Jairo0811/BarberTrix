@@ -15,11 +15,11 @@ public sealed class DevelopmentDataSeeder(
         if (!configuration.GetValue<bool>("DemoAdmin:Enabled"))
             return;
 
-        var email = configuration["DemoAdmin:Email"];
+        var email = configuration["SystemAdmin:Email"] ?? configuration["DemoAdmin:Email"];
         var password = configuration["DemoAdmin:Password"];
 
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
-            throw new InvalidOperationException("DemoAdmin credentials must be configured when demo seeding is enabled.");
+            throw new InvalidOperationException("System administrator credentials must be configured when administrator seeding is enabled.");
 
         var normalizedEmail = email.Trim().ToLowerInvariant();
         var existingUser = await dbContext.Users
@@ -29,9 +29,7 @@ public sealed class DevelopmentDataSeeder(
         {
             var verification = passwordHasher.VerifyHashedPassword(existingUser, existingUser.PasswordHash, password);
             if (verification != PasswordVerificationResult.Success)
-            {
                 existingUser.ChangePasswordHash(passwordHasher.HashPassword(existingUser, password));
-            }
 
             if (existingUser.Role != UserRole.Administrator)
                 existingUser.ChangeRole(UserRole.Administrator, null);
@@ -39,36 +37,49 @@ public sealed class DevelopmentDataSeeder(
             if (!existingUser.IsEmailVerified)
                 existingUser.MarkEmailVerified();
 
+            var existingShop = await dbContext.BarberShops.SingleAsync(x => x.Id == existingUser.BarberShopId, cancellationToken);
+            existingShop.ChangeSubscription(SubscriptionPlan.Business, SubscriptionStatus.Active);
+
             await dbContext.SaveChangesAsync(cancellationToken);
             return;
         }
 
         var barberShop = await dbContext.BarberShops
-            .SingleOrDefaultAsync(shop => shop.Slug == "barberturn-demo", cancellationToken);
+            .SingleOrDefaultAsync(shop => shop.Slug == "barberturn-admin", cancellationToken);
 
         if (barberShop is null)
         {
-            barberShop = new BarberShop("BarberTurn Demo", "barberturn-demo");
+            barberShop = new BarberShop("BarberTurn Administración", "barberturn-admin");
+            barberShop.ChangeSubscription(SubscriptionPlan.Business, SubscriptionStatus.Active);
             dbContext.BarberShops.Add(barberShop);
+            dbContext.ShopLocations.Add(new ShopLocation(
+                barberShop.Id,
+                "Administración",
+                "principal",
+                null,
+                barberShop.TimeZoneId));
+        }
+        else
+        {
+            barberShop.ChangeSubscription(SubscriptionPlan.Business, SubscriptionStatus.Active);
         }
 
-        var user = new User(
+        var userShell = new User(
             barberShop.Id,
-            "Administrador Demo",
+            "Administrador BarberTurn",
             normalizedEmail,
             string.Empty,
             UserRole.Administrator);
 
-        var passwordHash = passwordHasher.HashPassword(user, password);
+        var passwordHash = passwordHasher.HashPassword(userShell, password);
         var seededUser = new User(
             barberShop.Id,
-            "Administrador Demo",
+            "Administrador BarberTurn",
             normalizedEmail,
             passwordHash,
             UserRole.Administrator);
 
         seededUser.MarkEmailVerified();
-
         dbContext.Users.Add(seededUser);
         await dbContext.SaveChangesAsync(cancellationToken);
     }

@@ -15,9 +15,16 @@ export function useDashboardNavigation() {
   }, [])
 
   useEffect(() => {
-    if (window.location.hash === '#/login' || window.location.hash === '#billing-section') {
+    if (['#/login', '#billing-section', '#/app', '#/app/'].includes(window.location.hash)) {
       window.history.replaceState(null, '', adminPageHref(activePage))
     }
+  }, [activePage])
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById('admin-page-content')?.focus({ preventScroll: true })
+    })
+    return () => window.cancelAnimationFrame(frame)
   }, [activePage])
 
   useEffect(() => {

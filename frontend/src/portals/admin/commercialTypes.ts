@@ -1,5 +1,17 @@
 export type Customer = { id: string; name: string; phone?: string; email?: string }
-export type Appointment = { id: string; serviceName: string; barberName: string; startsAtUtc: string; customerName: string; status: string }
+export type Appointment = {
+  id: string
+  serviceId: string
+  serviceName: string
+  barberId: string
+  barberName: string
+  startsAtUtc: string
+  endsAtUtc: string
+  customerName: string
+  customerPhone?: string | null
+  customerEmail?: string | null
+  status: string
+}
 export type Report = { completedTurns: number; cancelledTurns: number; noShows: number; appointments: number; grossRevenue: number }
 export type TeamMember = { id: string; name: string; email: string; role: string; isActive: boolean }
 export type Subscription = { plan: string; status: string; provider: string; periodEndsAtUtc?: string; cancelAtPeriodEnd: boolean }

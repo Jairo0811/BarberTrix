@@ -66,14 +66,10 @@ const publicRouteByPath: Record<string, PublicRoute> = {
 const landingSectionIds = new Set(['inicio', 'caracteristicas', 'precios', 'contacto'])
 let initialLandingSection: string | null = null
 
-if (window.location.hash === '#billing-section') {
-  window.history.replaceState(null, '', '#/app/billing')
-} else {
-  const legacySection = window.location.hash.slice(1)
-  if (landingSectionIds.has(legacySection)) {
-    initialLandingSection = legacySection
-    window.history.replaceState(null, '', '#/')
-  }
+const legacySection = window.location.hash.slice(1)
+if (landingSectionIds.has(legacySection)) {
+  initialLandingSection = legacySection
+  window.history.replaceState(null, '', '#/')
 }
 
 function InPageAnchorCompatibility() {
@@ -151,6 +147,7 @@ function AppRoutes() {
       <Suspense fallback={<main><p>Cargando BarberTurn…</p></main>}>
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/billing-section" element={<Navigate to="/app/billing" replace />} />
           <Route path="/login" element={<App />} />
           <Route path="/app/*" element={<App />} />
           <Route path="/register" element={<RegisterPage />} />

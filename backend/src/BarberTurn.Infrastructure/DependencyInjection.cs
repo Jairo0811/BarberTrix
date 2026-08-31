@@ -90,10 +90,28 @@ public static class DependencyInjection
                             context.Fail("Invalid session.");
                             return;
                         }
+
                         var db = context.HttpContext.RequestServices.GetRequiredService<ApplicationDbContext>();
-                        var valid = await db.Users.AsNoTracking().AnyAsync(x => x.Id == userId && x.IsActive && x.SecurityStamp == securityStamp, context.HttpContext.RequestAborted);
-                        if (!valid)
+                        var user = await db.Users.AsNoTracking()
+                            .Where(x => x.Id == userId && x.IsActive && x.SecurityStamp == securityStamp)
+                            .Select(x => new { x.Email })
+                            .SingleOrDefaultAsync(context.HttpContext.RequestAborted);
+                        if (user is null)
+                        {
                             context.Fail("Session revoked.");
+                            return;
+                        }
+
+                        var systemAdminEmail = configuration["SystemAdmin:Email"] ?? configuration["DemoAdmin:Email"];
+                        if (!string.IsNullOrWhiteSpace(systemAdminEmail)
+                            && string.Equals(user.Email, systemAdminEmail.Trim(), StringComparison.OrdinalIgnoreCase)
+                            && context.Principal?.Identity is System.Security.Claims.ClaimsIdentity identity
+                            && !context.Principal.IsInRole(UserRole.Owner.ToString()))
+                        {
+                            identity.AddClaim(new System.Security.Claims.Claim(
+                                System.Security.Claims.ClaimTypes.Role,
+                                UserRole.Owner.ToString()));
+                        }
                     }
                 };
             });

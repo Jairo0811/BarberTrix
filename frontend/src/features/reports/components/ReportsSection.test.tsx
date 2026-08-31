@@ -7,9 +7,14 @@ import type { Capabilities } from '../../../portals/admin/commercialTypes'
 vi.mock('../../../api', () => ({ api: vi.fn() }))
 
 const starterCapabilities: Capabilities = {
-  plan: 'Starter', status: 'Active', activeBarbers: 1, barberLimit: 2,
-  activeLocations: 1, locationLimit: 1, canUseAppointments: false, canUseTv: false,
-  canUseAdvancedReports: false, isDemo: false, isSystemAdmin: false,
+  plan: 'Starter', status: 'Active', activeBarbers: 1, barberLimit: 5,
+  activeServices: 3, serviceLimit: Number.MAX_SAFE_INTEGER,
+  activeLocations: 1, locationLimit: 1,
+  turnsThisMonth: 20, monthlyTurnLimit: 1000, monthlyTurnGraceLimit: 1050,
+  historyRetentionDays: 90,
+  canUseAppointments: false, canUseTv: false,
+  canUseAdvancedReports: false, canUseAdvancedAutomation: false,
+  isDemo: false, isSystemAdmin: false,
 }
 
 describe('Reports capability paywall', () => {

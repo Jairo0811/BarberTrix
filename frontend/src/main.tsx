@@ -1,9 +1,10 @@
-import { lazy, StrictMode, Suspense, useEffect, useState } from 'react'
+import { lazy, StrictMode, Suspense, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
+import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import HomePage from './HomePage'
 import LanguageSwitcher from './LanguageSwitcher'
 import { I18nProvider, useI18n } from './i18n'
-import { isAdminAppHash } from './portals/admin/adminRoutes'
+import { isAdminAppPath } from './portals/admin/adminRoutes'
 import './styles.css'
 import './login.css'
 import './support.css'
@@ -45,57 +46,76 @@ const routeLabelKeys: Record<PublicRoute, string> = {
   privacy: 'route.register',
 }
 
-function getRoute(): PublicRoute {
-  if (window.location.hash === '#/login' || isAdminAppHash()) return 'login'
-  if (window.location.hash === '#/register') return 'register'
-  if (window.location.hash === '#/forgot-password') return 'forgot-password'
-  if (window.location.hash.startsWith('#/reset-password')) return 'reset-password'
-  if (window.location.hash === '#/demo') return 'demo'
-  if (window.location.hash.startsWith('#/book')) return 'book'
-  if (window.location.hash.startsWith('#/customer')) return 'customer'
-  if (window.location.hash.startsWith('#/tv')) return 'tv'
-  if (window.location.hash.startsWith('#/accept-invitation')) return 'accept-invitation'
-  if (window.location.hash.startsWith('#/verify-email')) return 'verify-email'
-  if (window.location.hash.startsWith('#/billing-success')) return 'billing-success'
-  if (window.location.hash === '#/terms') return 'terms'
-  if (window.location.hash === '#/privacy') return 'privacy'
-  return 'home'
+const publicRouteByPath: Record<string, PublicRoute> = {
+  '/': 'home',
+  '/login': 'login',
+  '/register': 'register',
+  '/forgot-password': 'forgot-password',
+  '/reset-password': 'reset-password',
+  '/demo': 'demo',
+  '/book': 'book',
+  '/customer': 'customer',
+  '/tv': 'tv',
+  '/accept-invitation': 'accept-invitation',
+  '/verify-email': 'verify-email',
+  '/billing-success': 'billing-success',
+  '/terms': 'terms',
+  '/privacy': 'privacy',
 }
 
-function RouteContent({ route }: { route: PublicRoute }) {
-  if (route === 'login') return <App />
-  if (route === 'register') return <RegisterPage />
-  if (route === 'forgot-password') return <ForgotPasswordPage />
-  if (route === 'reset-password') return <ResetPasswordPage />
-  if (route === 'demo') return <DemoLoginPage />
-  if (route === 'book') return <PublicBookingPage />
-  if (route === 'customer') return <CustomerPortalPage />
-  if (route === 'tv') return <TvPage />
-  if (route === 'accept-invitation') return <AcceptInvitationPage />
-  if (route === 'verify-email') return <VerifyEmailPage />
-  if (route === 'billing-success') return <BillingSuccessPage />
-  if (route === 'terms') return <LegalPage kind="terms" />
-  if (route === 'privacy') return <LegalPage kind="privacy" />
-  return <HomePage />
+const landingSectionIds = new Set(['inicio', 'caracteristicas', 'precios', 'contacto'])
+let initialLandingSection: string | null = null
+
+const legacySection = window.location.hash.slice(1)
+if (landingSectionIds.has(legacySection)) {
+  initialLandingSection = legacySection
+  window.history.replaceState(null, '', '#/')
 }
 
-function Root() {
-  const [route, setRoute] = useState<PublicRoute>(getRoute)
-  const { t } = useI18n()
-
+function InPageAnchorCompatibility() {
   useEffect(() => {
-    const onHashChange = () => setRoute(getRoute())
-    window.addEventListener('hashchange', onHashChange)
-    return () => window.removeEventListener('hashchange', onHashChange)
+    if (initialLandingSection) {
+      const sectionId = initialLandingSection
+      initialLandingSection = null
+      window.requestAnimationFrame(() => document.getElementById(sectionId)?.scrollIntoView())
+    }
+
+    const handleAnchorClick = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+      const target = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>('a[href^="#"]') : null
+      const href = target?.getAttribute('href')
+      if (!href || href.startsWith('#/') || href === '#') return
+
+      const elementId = decodeURIComponent(href.slice(1))
+      const destination = document.getElementById(elementId)
+      if (!destination) return
+
+      event.preventDefault()
+      destination.scrollIntoView()
+      if (elementId === 'main-content') destination.focus({ preventScroll: true })
+    }
+
+    document.addEventListener('click', handleAnchorClick)
+    return () => document.removeEventListener('click', handleAnchorClick)
   }, [])
 
+  return null
+}
+
+function RouteEffects() {
+  const location = useLocation()
+  const { t } = useI18n()
+  const isAdminRoute = isAdminAppPath(location.pathname)
+  const route = publicRouteByPath[location.pathname] ?? (isAdminRoute ? 'login' : 'home')
+  const routeLabel = t(routeLabelKeys[route])
+  const currentView = route === 'customer' ? 'Portal del cliente' : routeLabel
+
   useEffect(() => {
-    const routeLabel = t(routeLabelKeys[route])
-    if (!isAdminAppHash()) {
-      document.title = route === 'home'
-        ? 'BarberTurn | Tu Turno, Tu Estilo, Tu Tiempo'
-        : `${route === 'customer' ? 'Portal del cliente' : routeLabel} | BarberTurn`
-    }
+    if (isAdminRoute) return
+
+    document.title = route === 'home'
+      ? 'BarberTurn | Tu Turno, Tu Estilo, Tu Tiempo'
+      : `${currentView} | BarberTurn`
 
     const frame = window.requestAnimationFrame(() => {
       const main = document.querySelector<HTMLElement>('main')
@@ -106,18 +126,45 @@ function Root() {
     })
 
     return () => window.cancelAnimationFrame(frame)
-  }, [route, t])
-
-  const routeLabel = t(routeLabelKeys[route])
+  }, [currentView, isAdminRoute, location.key, route])
 
   return (
     <>
       <a className="skip-link" href="#main-content">{t('accessibility.skip')}</a>
       <div className="visually-hidden" role="status" aria-live="polite" aria-atomic="true">
-        {t('accessibility.currentView', { view: route === 'customer' ? 'Portal del cliente' : routeLabel })}
+        {t('accessibility.currentView', { view: currentView })}
       </div>
+    </>
+  )
+}
+
+function AppRoutes() {
+  return (
+    <>
+      <InPageAnchorCompatibility />
+      <RouteEffects />
       <LanguageSwitcher />
-      <Suspense fallback={<main><p>Cargando BarberTurn…</p></main>}><RouteContent route={route} /></Suspense>
+      <Suspense fallback={<main><p>Cargando BarberTurn…</p></main>}>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/billing-section" element={<Navigate to="/app/billing" replace />} />
+          <Route path="/login" element={<App />} />
+          <Route path="/app/*" element={<App />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/demo" element={<DemoLoginPage />} />
+          <Route path="/book" element={<PublicBookingPage />} />
+          <Route path="/customer" element={<CustomerPortalPage />} />
+          <Route path="/tv" element={<TvPage />} />
+          <Route path="/accept-invitation" element={<AcceptInvitationPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/billing-success" element={<BillingSuccessPage />} />
+          <Route path="/terms" element={<LegalPage kind="terms" />} />
+          <Route path="/privacy" element={<LegalPage kind="privacy" />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
     </>
   )
 }
@@ -125,7 +172,9 @@ function Root() {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <I18nProvider>
-      <Root />
+      <HashRouter>
+        <AppRoutes />
+      </HashRouter>
     </I18nProvider>
   </StrictMode>,
 )

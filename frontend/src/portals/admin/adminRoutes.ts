@@ -29,23 +29,26 @@ export type BusinessPageId = typeof businessPageIds[number]
 const adminPageIdSet = new Set<string>(adminPageIds)
 const businessPageIdSet = new Set<string>(businessPageIds)
 
-export function adminPageHref(page: AdminPageId) {
-  return `#/app/${page}`
+export function adminPagePath(page: AdminPageId) {
+  return `/app/${page}`
 }
 
-export function readAdminPage(hash = window.location.hash): AdminPageId {
-  if (hash === '#billing-section') return 'billing'
-  if (hash === '#/app' || hash === '#/app/') return 'overview'
+export function adminPageHref(page: AdminPageId) {
+  return `#${adminPagePath(page)}`
+}
 
-  const match = hash.match(/^#\/app\/([^/?#]+)/)
+export function parseAdminPagePath(pathname: string): AdminPageId | null {
+  if (pathname === '/app' || pathname === '/app/') return 'overview'
+
+  const match = pathname.match(/^\/app\/([^/?#]+)\/?$/)
   const candidate = match?.[1]
-  return candidate && adminPageIdSet.has(candidate) ? candidate as AdminPageId : 'overview'
+  return candidate && adminPageIdSet.has(candidate) ? candidate as AdminPageId : null
+}
+
+export function isAdminAppPath(pathname: string) {
+  return pathname === '/app' || pathname === '/app/' || pathname.startsWith('/app/')
 }
 
 export function isBusinessPage(page: AdminPageId): page is BusinessPageId {
   return businessPageIdSet.has(page)
-}
-
-export function isAdminAppHash(hash = window.location.hash) {
-  return hash === '#/app' || hash.startsWith('#/app/') || hash === '#billing-section'
 }

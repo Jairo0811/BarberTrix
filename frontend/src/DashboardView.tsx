@@ -7,6 +7,7 @@ import BusinessModules from './BusinessModules'
 import AdminDashboardLayout from './portals/admin/components/AdminDashboardLayout'
 import { dashboardCopy, type DashboardCopy } from './portals/admin/dashboardCopy'
 import { useDashboardNavigation } from './portals/admin/hooks/useDashboardNavigation'
+import { useCommercialContext } from './portals/admin/hooks/useCommercialContext'
 import DashboardOverviewSection from './features/queue/components/DashboardOverviewSection'
 import QueueSection from './features/queue/components/QueueSection'
 import { useQueueSnapshot } from './features/queue/hooks/useQueueSnapshot'
@@ -26,6 +27,9 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
   const copy = dashboardCopy[locale]
   const canManageCatalog = auth.role === 'Owner' || auth.role === 'Administrator'
   const queue = useQueueSnapshot(copy.loadOperationError)
+  const commercial = useCommercialContext()
+  const isSystemAdmin = commercial.capabilities?.isSystemAdmin === true
+  const hasOwnerAccess = auth.role === 'Owner' || isSystemAdmin
 
   const navItems = useMemo(() => [
     { id: 'dashboard-overview', label: copy.dashboard, icon: faHouse },
@@ -41,8 +45,8 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
     { id: 'billing-section', label: 'Suscripción', icon: faTv, requiresOwner: true },
   ], [copy])
   const visibleNavItems = useMemo(
-    () => navItems.filter(item => (!item.requiresCatalogAccess || canManageCatalog) && (!item.requiresOwner || auth.role === 'Owner')),
-    [auth.role, canManageCatalog, navItems],
+    () => navItems.filter(item => (!item.requiresCatalogAccess || canManageCatalog) && (!item.requiresOwner || hasOwnerAccess)),
+    [canManageCatalog, hasOwnerAccess, navItems],
   )
   const sectionIds = useMemo(() => visibleNavItems.map(item => item.id), [visibleNavItems])
   const navigation = useDashboardNavigation(sectionIds)
@@ -67,7 +71,15 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
       <BarbersSection barbers={queue.barbers} canManage={canManageCatalog} copy={copy} onRefresh={queue.refresh} onError={queue.setError} />
       {canManageCatalog && <ServicesSection services={queue.services} copy={copy} onRefresh={queue.refresh} onError={queue.setError} />}
 
-      <BusinessModules auth={auth} barbers={queue.barbers} isDemo={isDemo} />
+      <BusinessModules
+        auth={auth}
+        barbers={queue.barbers}
+        isDemo={isDemo}
+        isSystemAdmin={isSystemAdmin}
+        shop={commercial.shop}
+        capabilities={commercial.capabilities}
+        onShopUpdated={commercial.refresh}
+      />
       <footer className="dashboard-footer"><span>© {currentYear} BarberTurn. {copy.rights}</span><span>Tu turno. Tu estilo. Tu tiempo.</span></footer>
     </AdminDashboardLayout>
   )

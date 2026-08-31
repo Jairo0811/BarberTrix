@@ -72,6 +72,7 @@ jobs:
             --output-dir Persistence/Migrations \
             --configuration Release \
             --no-build
+          dotnet build BarberTurn.sln --configuration Release --no-restore
 
       - name: Validate stage C
         shell: bash

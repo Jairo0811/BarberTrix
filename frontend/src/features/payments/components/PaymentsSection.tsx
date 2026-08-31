@@ -7,13 +7,14 @@ import type { Payment } from '../../../portals/admin/commercialTypes'
 export default function PaymentsSection({ isDemo }: { isDemo: boolean }) {
   const [payments, setPayments] = useState<Payment[]>([])
   const [busy, setBusy] = useState(false)
+
   const load = useCallback(async () => {
     if (isDemo) { setPayments([]); return }
-    const now = new Date()
-    const future = new Date(now.getTime() + 30 * 86400000)
-    const from = new Date(now.getTime() - 30 * 86400000)
-    setPayments(await api<Payment[]>(`/api/payments?from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(future.toISOString())}`))
+    const to = new Date()
+    const from = new Date(to.getTime() - 30 * 86400000)
+    setPayments(await api<Payment[]>(`/api/payments?from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`))
   }, [isDemo])
+
   useEffect(() => { void load().catch(() => undefined) }, [load])
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -29,7 +30,18 @@ export default function PaymentsSection({ isDemo }: { isDemo: boolean }) {
   return (
     <section className="panel dashboard-section" id="payments-section">
       <p className="eyebrow">CAJA</p><h2>Pagos del negocio</h2>
-      {isDemo ? <LockedFeature title="Caja y registro de pagos" text="La demo no expone operaciones financieras reales. Activa una cuenta para administrar la caja." /> : <><form className="business-form" onSubmit={submit}><input name="amount" type="number" min="0.01" step="0.01" placeholder="Monto" required /><select name="currency" defaultValue="DOP"><option>DOP</option><option>USD</option></select><select name="method"><option>Cash</option><option>Card</option><option>Transfer</option><option>Other</option></select><button disabled={busy}>Registrar</button></form><div className="business-list compact">{payments.slice(0, 10).map(item => <article key={item.id}><strong>{item.currency} {item.amount.toFixed(2)}</strong><span>{item.method} · {item.status}</span></article>)}</div></>}
+      {isDemo ? <LockedFeature title="Caja y registro de pagos" text="La demo no expone operaciones financieras reales. Activa una cuenta para administrar la caja." /> : <>
+        <form className="business-form" onSubmit={submit}>
+          <input name="amount" type="number" min="0.01" step="0.01" placeholder="Monto" required />
+          <select name="currency" defaultValue="DOP"><option>DOP</option><option>USD</option></select>
+          <select name="method"><option>Cash</option><option>Card</option><option>Transfer</option><option>Other</option></select>
+          <button disabled={busy}>Registrar</button>
+        </form>
+        <div className="business-list compact">
+          {payments.slice(0, 10).map(item => <article key={item.id}><strong>{item.currency} {item.amount.toFixed(2)}</strong><span>{item.method} · {item.status}</span></article>)}
+          {payments.length === 0 && <p>No hay pagos registrados en los últimos 30 días.</p>}
+        </div>
+      </>}
     </section>
   )
 }

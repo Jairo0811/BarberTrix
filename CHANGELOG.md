@@ -20,7 +20,8 @@ El proyecto sigue [Semantic Versioning](https://semver.org/) y el formato de [Ke
 - creación administrativa de citas para Owner, Administrator y Receptionist reutilizando las reglas de disponibilidad y concurrencia de la agenda;
 - ficha CRM por cliente con visitas completadas, última visita, gasto acumulado por moneda, actividad reciente y notas internas versionadas en auditoría;
 - Caja 2.0 con apertura/cierre de sesión, fondo inicial, entradas y salidas manuales, conciliación esperado vs contado, historial de cierres y reembolsos trazables;
-- Business Reports 2.0 con comparación contra el período anterior, ingresos y ticket promedio por moneda, breakdown por barbero/servicio/método, horas pico, actividad operativa, CSV y salida imprimible/PDF.
+- Business Reports 2.0 con comparación contra el período anterior, ingresos y ticket promedio por moneda, breakdown por barbero/servicio/método, horas pico, actividad operativa, CSV y salida imprimible/PDF;
+- guía de arquitectura de estilos frontend con reglas explícitas de ownership global, portal, shared y feature.
 
 ### Changed
 
@@ -36,4 +37,5 @@ El proyecto sigue [Semantic Versioning](https://semver.org/) y el formato de [Ke
 - módulo de Caja convertido en workspace operativo con moneda fija por sesión, ventas cash/no-cash, movimientos manuales y conciliación diaria;
 - pagos en efectivo requieren caja abierta y la misma moneda de la sesión; los reembolsos cash generan automáticamente una salida de caja;
 - reportes Business pasan a usar límites de fecha en la zona horaria de la barbería y dejan de sumar monedas distintas en un único ingreso bruto;
+- CSS comercial reorganizado por ownership: primitivas reutilizables en `shared/styles/commercial.css` y estilos de agenda en `features/appointments/appointments.css`, eliminando el antiguo stylesheet mixto `business-modules.css`;
 - fixtures de frontend alineados con la capacidad `isSystemAdmin` para mantener el build tipado en verde.

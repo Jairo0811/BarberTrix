@@ -20,6 +20,14 @@ test = Path('backend/tests/BarberTurn.Api.Tests/BarberOnboardingTests.cs')
 text = test.read_text()
 text = text.replace('Assert.Single(shops!.Where(x => x.Id == owner.BarberShopId))', 'Assert.Single(shops!, x => x.Id == owner.BarberShopId)')
 text = text.replace('Assert.Single(pending!.Where(x => x.Id == join.Id))', 'Assert.Single(pending!, x => x.Id == join.Id)')
+text = text.replace(
+    '        Assert.Equal(HttpStatusCode.Created, joinResponse.StatusCode);\n',
+    '''        if (joinResponse.StatusCode != HttpStatusCode.Created)
+        {
+            var failureBody = await joinResponse.Content.ReadAsStringAsync();
+            Assert.Fail($"Expected join request to be created, got {(int)joinResponse.StatusCode}: {failureBody}");
+        }
+''')
 test.write_text(text)
 
 Path('.github/scripts/stage_d_validation_fix.py').unlink(missing_ok=True)

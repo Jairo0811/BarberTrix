@@ -17,6 +17,6 @@ describe('Reports capability paywall', () => {
     localStorage.setItem('barberturn.locale', 'es-419')
     render(<I18nProvider><ReportsSection isDemo={false} capabilities={starterCapabilities} /></I18nProvider>)
     expect(screen.getByText('🔒 Reportes avanzados')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Disponible con BarberTurn Business' })).toHaveAttribute('href', '#billing-section')
+    expect(screen.getByRole('link', { name: 'Disponible con BarberTurn Business' })).toHaveAttribute('href', '#/app/billing')
   })
 })

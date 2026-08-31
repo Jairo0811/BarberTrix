@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { Auth } from './types'
 import { api } from './api'
 import { showError } from './alerts'
+import { adminPageHref } from './portals/admin/adminRoutes'
 import './role-portals.css'
 
 type Subscription = { plan: string; status: string; provider: string; periodEndsAtUtc?: string; cancelAtPeriodEnd: boolean }
@@ -36,7 +37,7 @@ export default function SubscriptionBanner({ auth, isDemo }: { auth: Auth; isDem
         body: JSON.stringify({
           plan,
           returnUrl: `${location.origin}/#/billing-success`,
-          cancelUrl: `${location.origin}/#/login`,
+          cancelUrl: `${location.origin}/${adminPageHref('billing')}`,
         }),
       })
       location.href = response.approvalUrl

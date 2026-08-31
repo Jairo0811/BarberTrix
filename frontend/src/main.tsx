@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import HomePage from './HomePage'
 import LanguageSwitcher from './LanguageSwitcher'
 import { I18nProvider, useI18n } from './i18n'
+import { isAdminAppHash } from './portals/admin/adminRoutes'
 import './styles.css'
 import './login.css'
 import './support.css'
@@ -45,7 +46,7 @@ const routeLabelKeys: Record<PublicRoute, string> = {
 }
 
 function getRoute(): PublicRoute {
-  if (window.location.hash === '#/login' || window.location.hash === '#billing-section') return 'login'
+  if (window.location.hash === '#/login' || isAdminAppHash()) return 'login'
   if (window.location.hash === '#/register') return 'register'
   if (window.location.hash === '#/forgot-password') return 'forgot-password'
   if (window.location.hash.startsWith('#/reset-password')) return 'reset-password'
@@ -90,15 +91,13 @@ function Root() {
 
   useEffect(() => {
     const routeLabel = t(routeLabelKeys[route])
-    document.title = route === 'home'
-      ? 'BarberTurn | Tu Turno, Tu Estilo, Tu Tiempo'
-      : `${route === 'customer' ? 'Portal del cliente' : routeLabel} | BarberTurn`
+    if (!isAdminAppHash()) {
+      document.title = route === 'home'
+        ? 'BarberTurn | Tu Turno, Tu Estilo, Tu Tiempo'
+        : `${route === 'customer' ? 'Portal del cliente' : routeLabel} | BarberTurn`
+    }
 
     const frame = window.requestAnimationFrame(() => {
-      if (window.location.hash === '#billing-section') {
-        document.getElementById('billing-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        return
-      }
       const main = document.querySelector<HTMLElement>('main')
       if (!main) return
       main.id = 'main-content'

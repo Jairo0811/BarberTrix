@@ -29,8 +29,13 @@ export default function App() {
   const isDemo = sessionStorage.getItem(demoStorageKey) === 'true'
 
   useEffect(() => {
-    if (auth) document.title = `${isDemo ? t('route.demo') : auth.role === 'Barber' ? 'Mi jornada' : 'Panel'} | BarberTurn`
-  }, [auth, isDemo, t])
+    if (!auth) return
+    if (!auth.isEmailVerified) {
+      document.title = 'Verifica tu correo | BarberTurn'
+      return
+    }
+    if (auth.role === 'Barber') document.title = 'Mi jornada | BarberTurn'
+  }, [auth])
 
   async function login(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()

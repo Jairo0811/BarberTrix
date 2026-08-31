@@ -23,6 +23,9 @@ El proyecto sigue [Semantic Versioning](https://semver.org/) y el formato de [Ke
 - CI móvil reproducible con `npm ci`, lockfile versionado, auditoría de dependencias, typecheck y bundle Android;
 - snapshot de EF Core validado como código versionado sin jobs que modifiquen una rama durante el CI;
 - navegación administrativa con etiquetas localizadas e iconografía semántica por módulo;
+- dashboard administrativo dividido en rutas `#/app/*`, con una única página funcional montada por vez y navegación compatible con historial/deep links;
+- snapshot operativo y conexión SignalR limitados a Resumen, Cola, Barberos, Servicios y Equipo, evitando cargar la operación completa en páginas comerciales que no la necesitan;
+- paywalls y retorno de checkout alineados con la ruta dedicada `#/app/billing`, conservando compatibilidad con el hash histórico `#billing-section`;
 - directorio de clientes con búsqueda local por nombre, teléfono o correo;
 - consulta de caja limitada a movimientos históricos de los últimos 30 días y estados vacíos más claros;
 - fixtures de frontend alineados con la capacidad `isSystemAdmin` para mantener el build tipado en verde.

@@ -3,10 +3,11 @@ import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBars, faFlask, faRightFromBracket, faShieldHalved, faXmark } from '@fortawesome/free-solid-svg-icons'
 import type { Auth } from '../../../types'
+import type { AdminPageId } from '../adminRoutes'
 
 type DashboardCopy = Record<string, string>
 
-export type DashboardNavItem = { id: string; label: string; icon: IconDefinition }
+export type DashboardNavItem = { id: AdminPageId; label: string; icon: IconDefinition }
 
 type Props = PropsWithChildren<{
   auth: Auth
@@ -14,18 +15,18 @@ type Props = PropsWithChildren<{
   canManageCatalog: boolean
   copy: DashboardCopy
   navItems: DashboardNavItem[]
-  activeSection: string
+  activePage: AdminPageId
   mobileNavOpen: boolean
   mobileMenuButtonRef: RefObject<HTMLButtonElement | null>
   sidebarRef: RefObject<HTMLElement | null>
-  onNavigate: (sectionId: string) => void
+  onNavigate: (page: AdminPageId) => void
   onOpenMobileNav: () => void
   onCloseMobileNav: () => void
   onLogout: () => void
   formatRole: (role: string) => string
 }>
 
-export default function AdminDashboardLayout({ auth, isDemo, canManageCatalog, copy: c, navItems, activeSection, mobileNavOpen, mobileMenuButtonRef, sidebarRef, onNavigate, onOpenMobileNav, onCloseMobileNav, onLogout, formatRole, children }: Props) {
+export default function AdminDashboardLayout({ auth, isDemo, canManageCatalog, copy: c, navItems, activePage, mobileNavOpen, mobileMenuButtonRef, sidebarRef, onNavigate, onOpenMobileNav, onCloseMobileNav, onLogout, formatRole, children }: Props) {
   return (
     <main className={`dashboard-app${isDemo ? ' dashboard-demo' : ' dashboard-admin'}`}>
       {mobileNavOpen && <button className="dashboard-nav-backdrop" type="button" aria-label={c.closeNavigation} onClick={onCloseMobileNav} />}
@@ -40,7 +41,7 @@ export default function AdminDashboardLayout({ auth, isDemo, canManageCatalog, c
 
         <nav className="dashboard-nav">
           {navItems.map(item => (
-            <button key={item.id} className={activeSection === item.id ? 'active' : undefined} type="button" aria-current={activeSection === item.id ? 'page' : undefined} onClick={() => onNavigate(item.id)}>
+            <button key={item.id} className={activePage === item.id ? 'active' : undefined} type="button" aria-current={activePage === item.id ? 'page' : undefined} onClick={() => onNavigate(item.id)}>
               <span className="nav-icon" aria-hidden="true"><FontAwesomeIcon icon={item.icon} /></span><span>{item.label}</span>
             </button>
           ))}
@@ -66,7 +67,7 @@ export default function AdminDashboardLayout({ auth, isDemo, canManageCatalog, c
           </div>
         </header>
 
-        <div className="dashboard-content">{children}</div>
+        <div id="admin-page-content" className="dashboard-content" tabIndex={-1}>{children}</div>
       </section>
     </main>
   )

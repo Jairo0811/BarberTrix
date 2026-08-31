@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { api } from '../../../api'
 import { showError, showSuccessToast } from '../../../alerts'
 import LockedFeature from '../../../shared/components/LockedFeature'
+import { adminPageHref } from '../../../portals/admin/adminRoutes'
 import type { Capabilities, Shop, Subscription } from '../../../portals/admin/commercialTypes'
 
 type Props = { isDemo: boolean; shop: Shop | null; capabilities: Capabilities | null }
@@ -20,7 +21,7 @@ export default function BillingSection({ isDemo, shop, capabilities }: Props) {
   async function checkout(plan: string) {
     setBusy(true)
     try {
-      const response = await api<{ approvalUrl: string }>('/api/billing/checkout', { method: 'POST', body: JSON.stringify({ plan, returnUrl: `${location.origin}/#/billing-success`, cancelUrl: `${location.origin}/#/login` }) })
+      const response = await api<{ approvalUrl: string }>('/api/billing/checkout', { method: 'POST', body: JSON.stringify({ plan, returnUrl: `${location.origin}/#/billing-success`, cancelUrl: `${location.origin}/${adminPageHref('billing')}` }) })
       location.href = response.approvalUrl
     } catch (error) { await showError('No se pudo iniciar PayPal', error instanceof Error ? error.message : 'Error inesperado') }
     finally { setBusy(false) }

@@ -8,6 +8,7 @@ on:
       - .github/scripts/free_plan_patch.py
       - .github/workflows/free-plan-bootstrap.yml
       - backend/tests/BarberTurn.Domain.Tests/SubscriptionPlanTests.cs
+      - frontend/src/features/reports/components/ReportsSection.test.tsx
 
 permissions:
   contents: write

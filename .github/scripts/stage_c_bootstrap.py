@@ -429,7 +429,7 @@ public sealed class IndependentBarberRegistrationTests
         Assert.True(await db.BarberProfiles.AnyAsync(x => x.UserId == user.Id));
         Assert.False(await db.ShopMemberships.AnyAsync(x => x.UserId == user.Id));
 
-        using var tenantRequest = new HttpRequestMessage(HttpMethod.Get, "/api/queue");
+        using var tenantRequest = new HttpRequestMessage(HttpMethod.Get, "/api/queue/barbers");
         tenantRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", payload.AccessToken);
         var tenantResponse = await client.SendAsync(tenantRequest);
         Assert.Equal(HttpStatusCode.Forbidden, tenantResponse.StatusCode);

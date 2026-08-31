@@ -47,7 +47,7 @@ internal sealed class CashManagementService(ApplicationDbContext dbContext) : IC
     {
         var currency = NormalizeCurrency(request.Currency);
         if (request.OpeningBalance < 0)
-            throw new ArgumentOutOfRangeException(nameof(request.OpeningBalance), "Opening balance cannot be negative.");
+            throw new ArgumentOutOfRangeException(nameof(request), "Opening balance cannot be negative.");
 
         await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
         if (await GetCurrentAsync(barberShopId, cancellationToken) is not null)
@@ -72,7 +72,7 @@ internal sealed class CashManagementService(ApplicationDbContext dbContext) : IC
     public async Task<CashSessionResponse> AddMovementAsync(Guid barberShopId, Guid? userId, AddCashMovementRequest request, CancellationToken cancellationToken = default)
     {
         if (request.Amount <= 0)
-            throw new ArgumentOutOfRangeException(nameof(request.Amount), "Movement amount must be greater than zero.");
+            throw new ArgumentOutOfRangeException(nameof(request), "Movement amount must be greater than zero.");
         var reason = RequireTrimmed(request.Reason, 200, "Movement reason is required.");
 
         await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
@@ -89,7 +89,7 @@ internal sealed class CashManagementService(ApplicationDbContext dbContext) : IC
     public async Task<CashSessionResponse> CloseAsync(Guid barberShopId, Guid? userId, CloseCashSessionRequest request, CancellationToken cancellationToken = default)
     {
         if (request.CountedCash < 0)
-            throw new ArgumentOutOfRangeException(nameof(request.CountedCash), "Counted cash cannot be negative.");
+            throw new ArgumentOutOfRangeException(nameof(request), "Counted cash cannot be negative.");
         var note = TrimOptional(request.Note, 500);
 
         await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);

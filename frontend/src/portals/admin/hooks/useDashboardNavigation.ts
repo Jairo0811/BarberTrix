@@ -1,20 +1,24 @@
 import { useEffect, useRef, useState } from 'react'
+import { adminPageHref, readAdminPage, type AdminPageId } from '../adminRoutes'
 
-export function useDashboardNavigation(sectionIds: string[]) {
-  const [activeSection, setActiveSection] = useState('dashboard-overview')
+export function useDashboardNavigation() {
+  const [activePage, setActivePage] = useState<AdminPageId>(readAdminPage)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null)
   const sidebarRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
-    const sections = sectionIds.map(id => document.getElementById(id)).filter((section): section is HTMLElement => section !== null)
-    const observer = new IntersectionObserver(entries => {
-      const visibleSection = entries.filter(entry => entry.isIntersecting).sort((first, second) => second.intersectionRatio - first.intersectionRatio)[0]
-      if (visibleSection) setActiveSection(visibleSection.target.id)
-    }, { rootMargin: '-18% 0px -68% 0px', threshold: [0, 0.2, 0.5] })
-    sections.forEach(section => observer.observe(section))
-    return () => observer.disconnect()
-  }, [sectionIds])
+    const syncPageFromHash = () => setActivePage(readAdminPage())
+    window.addEventListener('hashchange', syncPageFromHash)
+    syncPageFromHash()
+    return () => window.removeEventListener('hashchange', syncPageFromHash)
+  }, [])
+
+  useEffect(() => {
+    if (window.location.hash === '#/login' || window.location.hash === '#billing-section') {
+      window.history.replaceState(null, '', adminPageHref(activePage))
+    }
+  }, [activePage])
 
   useEffect(() => {
     if (!mobileNavOpen) return
@@ -42,15 +46,20 @@ export function useDashboardNavigation(sectionIds: string[]) {
     }
   }, [mobileNavOpen])
 
-  function navigateToSection(id: string) {
-    setActiveSection(id)
+  function navigateToPage(page: AdminPageId) {
     setMobileNavOpen(false)
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    document.getElementById(id)?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
+    if (page === activePage && window.location.hash === adminPageHref(page)) return
+    window.location.hash = adminPageHref(page)
+  }
+
+  function replacePage(page: AdminPageId) {
+    setActivePage(page)
+    setMobileNavOpen(false)
+    window.history.replaceState(null, '', adminPageHref(page))
   }
 
   return {
-    activeSection, mobileNavOpen, mobileMenuButtonRef, sidebarRef, navigateToSection,
+    activePage, mobileNavOpen, mobileMenuButtonRef, sidebarRef, navigateToPage, replacePage,
     openMobileNav: () => setMobileNavOpen(true),
     closeMobileNav: () => setMobileNavOpen(false),
   }

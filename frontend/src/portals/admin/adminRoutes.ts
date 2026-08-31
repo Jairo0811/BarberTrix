@@ -35,6 +35,7 @@ export function adminPageHref(page: AdminPageId) {
 
 export function readAdminPage(hash = window.location.hash): AdminPageId {
   if (hash === '#billing-section') return 'billing'
+  if (hash === '#/app' || hash === '#/app/') return 'overview'
 
   const match = hash.match(/^#\/app\/([^/?#]+)/)
   const candidate = match?.[1]
@@ -46,5 +47,5 @@ export function isBusinessPage(page: AdminPageId): page is BusinessPageId {
 }
 
 export function isAdminAppHash(hash = window.location.hash) {
-  return hash.startsWith('#/app/') || hash === '#billing-section'
+  return hash === '#/app' || hash.startsWith('#/app/') || hash === '#billing-section'
 }

@@ -12,6 +12,26 @@ jobs:
   bootstrap:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_PID: Developer
+          MSSQL_SA_PASSWORD: BarberTurn_CI_2026!Secure
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "bash -c 'cat < /dev/null > /dev/tcp/localhost/1433'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 15
+          --health-start-period 20s
+    env:
+      BARBERTURN_TEST_CONNECTION: "Server=localhost,1433;Database=BarberTurnStageCCi;User Id=sa;Password=BarberTurn_CI_2026!Secure;Encrypt=True;TrustServerCertificate=True"
+      ConnectionStrings__DefaultConnection: "Server=localhost,1433;Database=BarberTurnStageCCi;User Id=sa;Password=BarberTurn_CI_2026!Secure;Encrypt=True;TrustServerCertificate=True"
+      Jwt__Key: "ci-only-jwt-key-with-more-than-thirty-two-characters-2026"
+      EXPO_PUBLIC_API_BASE_URL: https://api.example.test
     steps:
       - uses: actions/checkout@v4
         with:
@@ -22,7 +42,7 @@ jobs:
           dotnet-version: '10.0.x'
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '22.13.1'
 
       - name: Apply stage C changes
         shell: bash
@@ -56,7 +76,7 @@ jobs:
       - name: Validate stage C
         shell: bash
         run: |
-          dotnet test backend/tests/BarberTurn.Api.Tests/BarberTurn.Api.Tests.csproj --configuration Release --no-build
+          dotnet test backend/tests/BarberTurn.Api.Tests/BarberTurn.Api.Tests.csproj --configuration Release --no-build --no-restore
           npm ci --prefix frontend
           npm run build --prefix frontend
           npm ci --prefix mobile

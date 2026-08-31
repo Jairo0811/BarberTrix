@@ -6,6 +6,7 @@ on:
       - feat/barber-onboarding-membership
     paths:
       - .github/scripts/stage_d_invitation_finish.py
+      - .github/scripts/stage_d_invitation_test_fix.py
       - .github/workflows/stage-d-invitation-finish.yml
 
 permissions:
@@ -43,7 +44,9 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - name: Apply final Stage D patch
-        run: python3 .github/scripts/stage_d_invitation_finish.py
+        run: |
+          python3 .github/scripts/stage_d_invitation_finish.py
+          python3 .github/scripts/stage_d_invitation_test_fix.py
       - name: Validate backend
         run: |
           dotnet build backend/src/BarberTurn.Api/BarberTurn.Api.csproj -c Release --nologo

@@ -30,6 +30,15 @@ public sealed class CashManagementTests(BarberTurnFactory factory)
         Assert.NotNull(opened);
         Assert.Equal(1000m, opened.ExpectedCash);
 
+        var wrongCurrency = await client.PostAsJsonAsync("/api/payments", new
+        {
+            amount = 10m,
+            currency = "USD",
+            method = "Cash",
+            externalReference = "wrong-currency"
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, wrongCurrency.StatusCode);
+
         var paymentResponse = await client.PostAsJsonAsync("/api/payments", new
         {
             amount = 500m,

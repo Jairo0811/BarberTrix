@@ -43,7 +43,7 @@ test('invalid and legacy admin hashes normalize to canonical routes', async ({ p
 
 test('landing section anchors do not escape the HashRouter route', async ({ page }) => {
   await page.goto('/#/')
-  await page.getByRole('link', { name: 'Precios' }).click()
+  await page.locator('a[href="#precios"]').first().click()
 
   await expect(page).toHaveURL(/#\/$/)
   await expect(page.locator('#precios')).toBeInViewport()

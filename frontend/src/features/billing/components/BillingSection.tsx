@@ -9,10 +9,12 @@ type Props = { isDemo: boolean; shop: Shop | null; capabilities: Capabilities | 
 export default function BillingSection({ isDemo, shop, capabilities }: Props) {
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [busy, setBusy] = useState(false)
+  const isSystemAdmin = capabilities?.isSystemAdmin === true
+
   const load = useCallback(async () => {
-    if (isDemo) { setSubscription(null); return }
+    if (isDemo || isSystemAdmin) { setSubscription(null); return }
     setSubscription(await api<Subscription>('/api/billing/subscription'))
-  }, [isDemo])
+  }, [isDemo, isSystemAdmin])
   useEffect(() => { void load().catch(() => undefined) }, [load])
 
   async function checkout(plan: string) {
@@ -34,7 +36,7 @@ export default function BillingSection({ isDemo, shop, capabilities }: Props) {
   return (
     <section className="panel dashboard-section" id="billing-section">
       <p className="eyebrow">SUSCRIPCIÓN</p>
-      {isDemo ? <LockedFeature title="Planes y suscripción" text="La demostración no permite iniciar pagos. Crea una cuenta real para elegir un plan." /> : <><h2>{subscription?.plan ?? capabilities?.plan ?? 'Starter'} · {subscription?.status ?? capabilities?.status ?? 'Trialing'}</h2><p>{capabilities ? `${capabilities.activeBarbers} de ${capabilities.barberLimit > 1000 ? 'ilimitados' : capabilities.barberLimit} barberos activos` : 'Cargando uso…'}</p>{capabilities && <p>{capabilities.activeLocations} de {capabilities.locationLimit} sucursales activas</p>}<div className="billing-actions"><button disabled={busy} onClick={() => void checkout('Starter')}>Starter · US$20</button><button disabled={busy} onClick={() => void checkout('Pro')}>Pro · US$40</button><button disabled={busy} onClick={() => void checkout('Business')}>Business · US$70</button>{subscription?.status === 'Active' && <button disabled={busy} onClick={() => void cancelSubscription()}>Cancelar suscripción</button>}{shop && capabilities?.canUseTv && <a href={`#/tv?shop=${shop.slug}`}>Abrir BarberTurn TV</a>}</div></>}
+      {isDemo ? <LockedFeature title="Planes y suscripción" text="La demostración no permite iniciar pagos. Crea una cuenta real para elegir un plan." /> : isSystemAdmin ? <><h2>Administrador del sistema · Acceso total</h2><p>Esta cuenta no está sujeta a planes, límites de barberos ni límites de sucursales.</p>{shop && capabilities?.canUseTv && <div className="billing-actions"><a href={`#/tv?shop=${shop.slug}`}>Abrir BarberTurn TV</a></div>}</> : <><h2>{subscription?.plan ?? capabilities?.plan ?? 'Starter'} · {subscription?.status ?? capabilities?.status ?? 'Trialing'}</h2><p>{capabilities ? `${capabilities.activeBarbers} de ${capabilities.barberLimit > 1000 ? 'ilimitados' : capabilities.barberLimit} barberos activos` : 'Cargando uso…'}</p>{capabilities && <p>{capabilities.activeLocations} de {capabilities.locationLimit > 1000 ? 'ilimitadas' : capabilities.locationLimit} sucursales activas</p>}<div className="billing-actions"><button disabled={busy} onClick={() => void checkout('Starter')}>Starter · US$20</button><button disabled={busy} onClick={() => void checkout('Pro')}>Pro · US$40</button><button disabled={busy} onClick={() => void checkout('Business')}>Business · US$70</button>{subscription?.provider !== 'Trial' && subscription?.status === 'Active' && <button disabled={busy} onClick={() => void cancelSubscription()}>Cancelar suscripción</button>}{shop && capabilities?.canUseTv && <a href={`#/tv?shop=${shop.slug}`}>Abrir BarberTurn TV</a>}</div></>}
     </section>
   )
 }

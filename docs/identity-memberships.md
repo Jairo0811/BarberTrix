@@ -30,22 +30,26 @@ El `Barber` existente sigue siendo el recurso operativo de una barbería: silla,
 
 ## Estrategia de migración
 
-La migración se realizará de forma incremental para proteger la web v1, mobile y JWT existentes.
+La migración se realiza de forma incremental para proteger la web v1, mobile y JWT existentes.
 
-### Etapa A — foundation
+### ✅ Etapa A — foundation
 
-- añadir `BarberProfile`;
-- añadir `ShopMembership`;
-- establecer invariantes de dominio y pruebas;
-- mantener temporalmente `User.BarberShopId`, `User.Role` y `User.BarberId` como contrato legacy.
+- `BarberProfile` implementado;
+- `ShopMembership` implementado;
+- invariantes de dominio y pruebas implementadas;
+- `User.BarberShopId`, `User.Role` y `User.BarberId` se mantienen temporalmente como contrato legacy.
 
-### Etapa B — persistencia y compatibilidad
+### ✅ Etapa B — persistencia y compatibilidad
 
-- mapear las nuevas entidades en EF Core;
-- crear migración de SQL Server;
-- generar membresías equivalentes para usuarios existentes;
-- crear perfiles profesionales para usuarios barbero existentes;
-- hacer que registro de Owner e invitaciones creen también las nuevas relaciones.
+- nuevas entidades mapeadas en EF Core;
+- migración SQL Server generada por `dotnet ef`;
+- backfill de membresías equivalentes para usuarios existentes;
+- backfill de perfiles profesionales para usuarios con rol `Barber`;
+- registro de Owner, demo, invitaciones y seeding realizan dual-write;
+- revocar un miembro sincroniza también su `ShopMembership`;
+- `ShopMembership` aplica unicidad por usuario/barbería y una restricción SQL que exige `BarberId` únicamente para el rol `Barber`.
+
+Durante esta etapa, JWT, autorización, web y mobile siguen leyendo el contexto legacy de `User`. Las nuevas tablas se escriben en paralelo para permitir una migración segura de consumidores en las etapas siguientes.
 
 ### Etapa C — registro independiente
 
@@ -83,6 +87,17 @@ Cuando web, API y mobile utilicen membresías como fuente de verdad:
 - el backend sigue siendo la autoridad de roles y capacidades;
 - cambiar de barbería activa debe producir un contexto/autorización nuevo y auditable;
 - finalizar o revocar una membresía debe invalidar el acceso a ese tenant.
+
+## Backfill y compatibilidad
+
+La migración valida primero que no exista un usuario legacy con `Role = Barber` y `BarberId = NULL`. Si existe, la migración falla deliberadamente para evitar crear una membresía profesional inconsistente.
+
+Para datos válidos:
+
+- cada usuario obtiene una `ShopMembership` equivalente a `BarberShopId + Role + BarberId`;
+- usuarios activos migran con estado `Active`;
+- usuarios desactivados migran con estado `Revoked`;
+- cada usuario legacy con rol `Barber` obtiene un `BarberProfile` cuyo nombre inicial proviene de `User.Name`.
 
 ## Decisión importante
 

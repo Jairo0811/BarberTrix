@@ -1,0 +1,5 @@
+root = false
+
+[*.cs]
+# EF Core migration code is tool-generated and can legitimately allocate inline arrays.
+dotnet_diagnostic.CA1861.severity = none

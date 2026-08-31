@@ -42,6 +42,16 @@ public sealed class DevelopmentDataSeeder(
             var existingShop = await dbContext.BarberShops.SingleAsync(x => x.Id == existingUser.BarberShopId, cancellationToken);
             existingShop.ChangeSubscription(SubscriptionPlan.Business, SubscriptionStatus.Active);
 
+            if (!await dbContext.ShopMemberships.AnyAsync(
+                    x => x.UserId == existingUser.Id && x.BarberShopId == existingUser.BarberShopId,
+                    cancellationToken))
+            {
+                dbContext.ShopMemberships.Add(new ShopMembership(
+                    existingUser.Id,
+                    existingUser.BarberShopId,
+                    UserRole.Administrator));
+            }
+
             await dbContext.SaveChangesAsync(cancellationToken);
             return;
         }
@@ -83,6 +93,7 @@ public sealed class DevelopmentDataSeeder(
 
         seededUser.MarkEmailVerified();
         dbContext.Users.Add(seededUser);
+        dbContext.ShopMemberships.Add(new ShopMembership(seededUser.Id, barberShop.Id, UserRole.Administrator));
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 }

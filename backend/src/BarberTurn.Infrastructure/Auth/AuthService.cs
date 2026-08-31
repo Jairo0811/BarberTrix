@@ -46,6 +46,7 @@ internal sealed class AuthService(
         if (!configuration.GetValue("Auth:RequireVerifiedEmail", false))
             user.MarkEmailVerified();
         dbContext.Users.Add(user);
+        dbContext.ShopMemberships.Add(new ShopMembership(user.Id, barberShop.Id, UserRole.Owner));
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
@@ -81,6 +82,7 @@ internal sealed class AuthService(
         var user = CreateUser(shop.Id, "Administrador Demo", $"demo-{suffix}@example.invalid", SecureToken.Create() + "Aa1!", UserRole.Owner, null);
         user.MarkEmailVerified();
         dbContext.Users.Add(user);
+        dbContext.ShopMemberships.Add(new ShopMembership(user.Id, shop.Id, UserRole.Owner));
 
         var barberOne = new Barber(shop.Id, "Carlos", 1);
         var barberTwo = new Barber(shop.Id, "Miguel", 2);
@@ -262,6 +264,9 @@ internal sealed class AuthService(
         user.MarkEmailVerified();
         invitation.Accept();
         dbContext.Users.Add(user);
+        dbContext.ShopMemberships.Add(new ShopMembership(user.Id, invitation.BarberShopId, invitation.Role, invitation.BarberId));
+        if (invitation.Role == UserRole.Barber)
+            dbContext.BarberProfiles.Add(new BarberProfile(user.Id, user.Name));
         await dbContext.SaveChangesAsync(cancellationToken);
         return await CreateSessionAsync(user, userAgent, ipAddress, cancellationToken);
     }
@@ -272,6 +277,10 @@ internal sealed class AuthService(
         if (user is null || user.Role == UserRole.Owner)
             return false;
         user.Deactivate();
+        var membership = await dbContext.ShopMemberships.SingleOrDefaultAsync(
+            x => x.UserId == user.Id && x.BarberShopId == barberShopId,
+            cancellationToken);
+        membership?.Revoke();
         var sessions = await dbContext.RefreshSessions.Where(x => x.UserId == user.Id && x.RevokedAtUtc == null).ToListAsync(cancellationToken);
         sessions.ForEach(x => x.Revoke());
         await dbContext.SaveChangesAsync(cancellationToken);

@@ -21,13 +21,14 @@ async function expectNoHorizontalOverflow(page: Page) {
 }
 
 for (const role of ['Owner', 'Administrator', 'Receptionist'] satisfies DashboardRole[]) {
-  test(`${role} dashboard keeps its empty state usable on mobile`, async ({ page }) => {
+  test(`${role} routed queue keeps its empty state usable on mobile`, async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
     await seedAuth(page, { ...baseAuth, role })
     await installMockBackend(page, { plan: 'Business' })
 
-    await page.goto('/#/login')
+    await page.goto('/#/app/queue')
 
+    await expect(page).toHaveURL(/#\/app\/queue$/)
     await expect(page.locator('#queue-section')).toBeVisible()
     await expect(page.locator('#queue-list .turn-list .empty')).toBeVisible()
     await expectNoHorizontalOverflow(page)

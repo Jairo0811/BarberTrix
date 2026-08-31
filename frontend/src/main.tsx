@@ -115,11 +115,11 @@ function RouteEffects() {
   const currentView = route === 'customer' ? 'Portal del cliente' : routeLabel
 
   useEffect(() => {
-    if (!isAdminRoute) {
-      document.title = route === 'home'
-        ? 'BarberTurn | Tu Turno, Tu Estilo, Tu Tiempo'
-        : `${currentView} | BarberTurn`
-    }
+    if (isAdminRoute) return
+
+    document.title = route === 'home'
+      ? 'BarberTurn | Tu Turno, Tu Estilo, Tu Tiempo'
+      : `${currentView} | BarberTurn`
 
     const frame = window.requestAnimationFrame(() => {
       const main = document.querySelector<HTMLElement>('main')

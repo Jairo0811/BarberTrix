@@ -45,7 +45,8 @@ public sealed record PlanUsageResponse(
     bool CanUseAppointments,
     bool CanUseTv,
     bool CanUseAdvancedReports,
-    bool IsDemo);
+    bool IsDemo,
+    bool IsSystemAdmin);
 
 public interface IShopLookupService
 {

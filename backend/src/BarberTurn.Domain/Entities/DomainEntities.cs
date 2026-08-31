@@ -119,6 +119,21 @@ public sealed class User : BaseEntity
         Touch();
     }
 
+    public void AssignTenant(Guid barberShopId, UserRole role, Guid? barberId = null)
+    {
+        if (barberShopId == Guid.Empty)
+            throw new ArgumentException("Barbershop is required.", nameof(barberShopId));
+        if (BarberShopId.HasValue && BarberShopId.Value != barberShopId)
+            throw new InvalidOperationException("The user already belongs to another barbershop.");
+        if (role == UserRole.Barber && barberId is null)
+            throw new ArgumentException("A barber tenant assignment requires an operational barber.", nameof(barberId));
+
+        BarberShopId = barberShopId;
+        Role = role;
+        BarberId = role == UserRole.Barber ? barberId : null;
+        Touch();
+    }
+
     public void Deactivate()
     {
         IsActive = false;

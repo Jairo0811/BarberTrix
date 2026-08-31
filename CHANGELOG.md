@@ -1,3 +1,9 @@
+## Unreleased - Barber onboarding Stage D
+
+- Added barber-to-shop join requests with owner/admin approval and rejection.
+- Added searchable onboarding for web and mobile.
+- Approval now materializes the operational barber and active shop membership, then upgrades the next refreshed session to tenant scope.
+
 # Changelog
 
 El proyecto sigue [Semantic Versioning](https://semver.org/) y el formato de [Keep a Changelog](https://keepachangelog.com/).

@@ -1,4 +1,4 @@
-import { FormEvent, lazy, Suspense, useEffect, useState } from 'react'
+import { FormEvent, lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft, faEnvelope, faEye, faEyeSlash, faFlask, faLock } from '@fortawesome/free-solid-svg-icons'
 import type { Auth } from './types'
@@ -10,6 +10,64 @@ import SubscriptionBanner from './SubscriptionBanner'
 const demoStorageKey = 'barberturn.demo'
 const DashboardView = lazy(() => import('./DashboardView'))
 const BarberPortal = lazy(() => import('./BarberPortal'))
+
+type OnboardingShop = { id: string; name: string; slug: string; timeZoneId: string }
+type OnboardingJoinRequest = { id: string; barberShopId: string; barberShopName: string; status: 'Pending' | 'Approved' | 'Rejected' | 'Withdrawn'; reviewNote?: string | null }
+
+function BarberOnboardingPanel({ auth, onLogout, onAuthChanged }: { auth: Auth; onLogout: () => void; onAuthChanged: (next: Auth) => void }) {
+  const [query, setQuery] = useState('')
+  const [shops, setShops] = useState<OnboardingShop[]>([])
+  const [requests, setRequests] = useState<OnboardingJoinRequest[]>([])
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState('')
+  const pendingByShop = useMemo(() => new Map(requests.filter(item => item.status === 'Pending').map(item => [item.barberShopId, item])), [requests])
+
+  async function load(search = query) {
+    setBusy(true); setMessage('')
+    try {
+      const suffix = search.trim() ? `?query=${encodeURIComponent(search.trim())}` : ''
+      const [shopResults, joinRequests] = await Promise.all([api<OnboardingShop[]>(`/api/onboarding/shops${suffix}`), api<OnboardingJoinRequest[]>('/api/onboarding/join-requests')])
+      setShops(shopResults); setRequests(joinRequests)
+      if (joinRequests.some(item => item.status === 'Approved')) {
+        const next = await publicApi<Auth>('/api/auth/refresh', { method: 'POST' })
+        writeAuth(next); onAuthChanged(next)
+      }
+    } catch (exception) { setMessage(exception instanceof Error ? exception.message : 'No se pudo cargar el onboarding.') }
+    finally { setBusy(false) }
+  }
+
+  useEffect(() => { void load('') }, [])
+
+  async function requestJoin(shop: OnboardingShop) {
+    setBusy(true); setMessage('')
+    try { await api(`/api/onboarding/join-requests/${shop.id}`, { method: 'POST' }); await load(query); setMessage(`Solicitud enviada a ${shop.name}.`) }
+    catch (exception) { setMessage(exception instanceof Error ? exception.message : 'No se pudo enviar la solicitud.'); setBusy(false) }
+  }
+
+  async function withdraw(request: OnboardingJoinRequest) {
+    setBusy(true); setMessage('')
+    try { await api(`/api/onboarding/join-requests/${request.id}`, { method: 'DELETE' }); await load(query) }
+    catch (exception) { setMessage(exception instanceof Error ? exception.message : 'No se pudo retirar la solicitud.'); setBusy(false) }
+  }
+
+  return <main className="login-shell"><section className="login-card">
+    <BarberTurnLogo /><h1>Encuentra tu barbería</h1>
+    <p className="login-subtitle">Hola {auth.name}. Tu perfil profesional está listo. Busca tu barbería y solicita ingreso.</p>
+    <div className="login-form"><label className="login-field"><span>Barbería</span><div className="input-wrap"><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Nombre o slug" /></div></label>
+      <button className="login-submit" disabled={busy} onClick={() => void load(query)}>{busy ? 'Cargando…' : 'Buscar'}</button></div>
+    <div style={{ display: 'grid', gap: 12, marginTop: 18 }}>
+      {shops.map(shop => { const pending = pendingByShop.get(shop.id); return <article key={shop.id} style={{ border: '1px solid var(--border, #ddd)', borderRadius: 12, padding: 14 }}>
+        <strong>{shop.name}</strong><p className="login-subtitle">@{shop.slug}</p>
+        {pending ? <button className="demo-button" disabled={busy} onClick={() => void withdraw(pending)}>Retirar solicitud</button> : <button className="login-submit" disabled={busy} onClick={() => void requestJoin(shop)}>Solicitar ingreso</button>}
+      </article> })}
+    </div>
+    <h2 style={{ marginTop: 22 }}>Mis solicitudes</h2>
+    {requests.length === 0 ? <p className="login-subtitle">Aún no has enviado solicitudes.</p> : requests.map(request => <p key={request.id} className="login-subtitle"><strong>{request.barberShopName}</strong> · {request.status}{request.reviewNote ? ` · ${request.reviewNote}` : ''}</p>)}
+    <button className="demo-button" disabled={busy} onClick={() => void load(query)}>Actualizar estado</button>
+    <button className="demo-button" type="button" onClick={onLogout}>Cerrar sesión</button>
+    {message && <p className="login-error" role="status">{message}</p>}
+  </section></main>
+}
 
 function BarberTurnLogo() {
   return (
@@ -83,11 +141,7 @@ export default function App() {
     {error && <p className="login-error" role="status">{error}</p>}
   </section></main>
 
-  if (auth?.sessionScope === 'Onboarding') return <main className="login-shell"><section className="login-card">
-    <BarberTurnLogo /><h1>Tu perfil de barbero está listo</h1>
-    <p className="login-subtitle">Todavía no perteneces a una barbería. En la siguiente etapa podrás aceptar invitaciones, solicitar ingreso o usar un código de incorporación.</p>
-    <button className="demo-button" type="button" onClick={logout}>Cerrar sesión</button>
-  </section></main>
+  if (auth?.sessionScope === 'Onboarding') return <BarberOnboardingPanel auth={auth} onLogout={logout} onAuthChanged={setAuth} />
 
   if (auth?.role === 'Barber') return <Suspense fallback={<main className="login-shell"><p>Cargando portal del barbero…</p></main>}><BarberPortal auth={auth} onLogout={logout} /></Suspense>
 

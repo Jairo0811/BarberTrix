@@ -102,6 +102,17 @@ public sealed class ShopMembership : BaseEntity
         Touch();
     }
 
+    public void ReactivateAsBarber(Guid barberId)
+    {
+        if (barberId == Guid.Empty)
+            throw new ArgumentException("Barber is required.", nameof(barberId));
+        Role = UserRole.Barber;
+        BarberId = barberId;
+        Status = ShopMembershipStatus.Active;
+        EndedAtUtc = null;
+        Touch();
+    }
+
     private void EnsureCurrent()
     {
         if (Status is ShopMembershipStatus.Left or ShopMembershipStatus.Revoked)

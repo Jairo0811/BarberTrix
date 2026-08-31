@@ -32,16 +32,17 @@ jobs:
         run: |
           dotnet tool install --global dotnet-ef --version '10.*'
           dotnet restore BarberTurn.sln
+          dotnet build BarberTurn.sln --configuration Release --no-restore
           dotnet ef migrations add IndependentBarberUsers \
             --project backend/src/BarberTurn.Infrastructure/BarberTurn.Infrastructure.csproj \
             --startup-project backend/src/BarberTurn.Infrastructure/BarberTurn.Infrastructure.csproj \
             --context ApplicationDbContext \
-            --output-dir Persistence/Migrations
+            --output-dir Persistence/Migrations \
+            --no-build
 
       - name: Validate stage C
         shell: bash
         run: |
-          dotnet build BarberTurn.sln --configuration Release --no-restore
           dotnet test backend/tests/BarberTurn.Api.Tests/BarberTurn.Api.Tests.csproj --configuration Release --no-build
           npm ci --prefix frontend
           npm run build --prefix frontend

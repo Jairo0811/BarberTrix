@@ -6,22 +6,52 @@ import '../reports.css'
 
 type Props = { isDemo: boolean; capabilities: Capabilities | null }
 type Preset = 7 | 30 | 90
+type LegacyReport = Partial<Report> & { grossRevenue?: number }
 
 const isoDate = (date: Date) => date.toISOString().slice(0, 10)
 const daysAgo = (days: number) => isoDate(new Date(Date.now() - (days - 1) * 86400000))
 const money = (value: number, currency: string) => new Intl.NumberFormat('es-DO', { style: 'currency', currency }).format(value)
 const methodLabel: Record<string, string> = { Cash: 'Efectivo', Card: 'Tarjeta', BankTransfer: 'Transferencia', Other: 'Otro' }
 
+function normalizeReport(data: LegacyReport, from: string, to: string): Report {
+  const previous = data.previousPeriod ?? {
+    from,
+    to,
+    completedTurns: 0,
+    appointments: 0,
+    noShows: 0,
+    noShowRatePercent: 0,
+    revenueByCurrency: {},
+    averageTicketByCurrency: {},
+  }
+  return {
+    from: data.from ?? from,
+    to: data.to ?? to,
+    completedTurns: data.completedTurns ?? 0,
+    cancelledTurns: data.cancelledTurns ?? 0,
+    noShows: data.noShows ?? 0,
+    appointments: data.appointments ?? 0,
+    noShowRatePercent: data.noShowRatePercent ?? 0,
+    revenueByCurrency: data.revenueByCurrency ?? (data.grossRevenue ? { DOP: data.grossRevenue } : {}),
+    averageTicketByCurrency: data.averageTicketByCurrency ?? {},
+    revenueByMethod: data.revenueByMethod ?? [],
+    revenueByBarber: data.revenueByBarber ?? [],
+    revenueByService: data.revenueByService ?? [],
+    peakHours: data.peakHours ?? [],
+    previousPeriod: previous,
+  }
+}
+
 function percentChange(current: number, previous: number) {
   if (previous === 0) return current === 0 ? 0 : null
   return ((current - previous) / previous) * 100
 }
 
-function Trend({ current, previous, suffix = '' }: { current: number; previous: number; suffix?: string }) {
+function Trend({ current, previous }: { current: number; previous: number }) {
   const change = percentChange(current, previous)
   if (change === null) return <span className="report-trend neutral">Sin base comparable</span>
   const direction = change > 0 ? 'up' : change < 0 ? 'down' : 'neutral'
-  return <span className={`report-trend ${direction}`}>{change > 0 ? '+' : ''}{change.toFixed(1)}% {suffix}</span>
+  return <span className={`report-trend ${direction}`}>{change > 0 ? '+' : ''}{change.toFixed(1)}%</span>
 }
 
 export default function ReportsSection({ isDemo, capabilities }: Props) {
@@ -37,7 +67,8 @@ export default function ReportsSection({ isDemo, capabilities }: Props) {
     setLoading(true)
     setError(null)
     try {
-      const data = await api<Report>(`/api/reports/business?from=${start}&to=${end}`)
+      const raw = await api<LegacyReport>(`/api/reports/business?from=${start}&to=${end}`)
+      const data = normalizeReport(raw, start, end)
       setReport(data)
       const currencies = Object.keys(data.revenueByCurrency)
       setCurrency(current => currencies.includes(current) ? current : currencies[0] ?? 'DOP')

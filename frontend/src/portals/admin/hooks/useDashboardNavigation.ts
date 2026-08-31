@@ -1,24 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
-import { adminPageHref, readAdminPage, type AdminPageId } from '../adminRoutes'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { adminPagePath, parseAdminPagePath, type AdminPageId } from '../adminRoutes'
 
 export function useDashboardNavigation() {
-  const [activePage, setActivePage] = useState<AdminPageId>(readAdminPage)
+  const location = useLocation()
+  const navigate = useNavigate()
+  const activePage = parseAdminPagePath(location.pathname) ?? 'overview'
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null)
   const sidebarRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
-    const syncPageFromHash = () => setActivePage(readAdminPage())
-    window.addEventListener('hashchange', syncPageFromHash)
-    syncPageFromHash()
-    return () => window.removeEventListener('hashchange', syncPageFromHash)
-  }, [])
-
-  useEffect(() => {
-    if (['#/login', '#billing-section', '#/app', '#/app/'].includes(window.location.hash)) {
-      window.history.replaceState(null, '', adminPageHref(activePage))
-    }
-  }, [activePage])
+    if (parseAdminPagePath(location.pathname) !== null && location.pathname !== '/app' && location.pathname !== '/app/') return
+    navigate(adminPagePath('overview'), { replace: true })
+  }, [location.pathname, navigate])
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
@@ -55,14 +50,14 @@ export function useDashboardNavigation() {
 
   function navigateToPage(page: AdminPageId) {
     setMobileNavOpen(false)
-    if (page === activePage && window.location.hash === adminPageHref(page)) return
-    window.location.hash = adminPageHref(page)
+    const path = adminPagePath(page)
+    if (page === activePage && location.pathname === path) return
+    navigate(path)
   }
 
   function replacePage(page: AdminPageId) {
-    setActivePage(page)
     setMobileNavOpen(false)
-    window.history.replaceState(null, '', adminPageHref(page))
+    navigate(adminPagePath(page), { replace: true })
   }
 
   return {

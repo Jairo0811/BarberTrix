@@ -28,7 +28,36 @@ export type Appointment = {
   customerEmail?: string | null
   status: string
 }
-export type Report = { completedTurns: number; cancelledTurns: number; noShows: number; appointments: number; grossRevenue: number }
+export type ReportMoneyBreakdown = { key: string; label: string; revenueByCurrency: Record<string, number>; count: number }
+export type ReportBarberBreakdown = { barberId: string; barberName: string; completedServices: number; serviceMinutes: number; activitySharePercent: number; revenueByCurrency: Record<string, number> }
+export type ReportServiceBreakdown = { serviceId: string; serviceName: string; completedServices: number; revenueByCurrency: Record<string, number> }
+export type ReportHourBreakdown = { hour: number; completedServices: number }
+export type ReportPeriodComparison = {
+  from: string
+  to: string
+  completedTurns: number
+  appointments: number
+  noShows: number
+  noShowRatePercent: number
+  revenueByCurrency: Record<string, number>
+  averageTicketByCurrency: Record<string, number>
+}
+export type Report = {
+  from: string
+  to: string
+  completedTurns: number
+  cancelledTurns: number
+  noShows: number
+  appointments: number
+  noShowRatePercent: number
+  revenueByCurrency: Record<string, number>
+  averageTicketByCurrency: Record<string, number>
+  revenueByMethod: ReportMoneyBreakdown[]
+  revenueByBarber: ReportBarberBreakdown[]
+  revenueByService: ReportServiceBreakdown[]
+  peakHours: ReportHourBreakdown[]
+  previousPeriod: ReportPeriodComparison
+}
 export type TeamMember = { id: string; name: string; email: string; role: string; isActive: boolean }
 export type Subscription = { plan: string; status: string; provider: string; periodEndsAtUtc?: string; cancelAtPeriodEnd: boolean }
 export type Capabilities = { plan: string; status: string; activeBarbers: number; barberLimit: number; activeLocations: number; locationLimit: number; canUseAppointments: boolean; canUseTv: boolean; canUseAdvancedReports: boolean; isDemo: boolean; isSystemAdmin: boolean }

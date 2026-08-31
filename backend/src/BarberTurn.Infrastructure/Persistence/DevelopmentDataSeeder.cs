@@ -12,11 +12,13 @@ public sealed class DevelopmentDataSeeder(
 {
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
-        if (!configuration.GetValue<bool>("DemoAdmin:Enabled"))
+        var enabled = configuration.GetValue<bool>("SystemAdmin:Enabled")
+            || configuration.GetValue<bool>("DemoAdmin:Enabled");
+        if (!enabled)
             return;
 
         var email = configuration["SystemAdmin:Email"] ?? configuration["DemoAdmin:Email"];
-        var password = configuration["DemoAdmin:Password"];
+        var password = configuration["SystemAdmin:Password"] ?? configuration["DemoAdmin:Password"];
 
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
             throw new InvalidOperationException("System administrator credentials must be configured when administrator seeding is enabled.");

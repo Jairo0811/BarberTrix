@@ -1,3 +1,4 @@
+using BarberTurn.Api.Contracts;
 using BarberTurn.Api.Filters;
 using BarberTurn.Application.Cash;
 using BarberTurn.Application.Common;

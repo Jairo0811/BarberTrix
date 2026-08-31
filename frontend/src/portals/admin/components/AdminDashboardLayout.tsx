@@ -67,7 +67,7 @@ export default function AdminDashboardLayout({ auth, isDemo, canManageCatalog, c
           </div>
         </header>
 
-        <div className="dashboard-content">{children}</div>
+        <div id="admin-page-content" className="dashboard-content" tabIndex={-1}>{children}</div>
       </section>
     </main>
   )

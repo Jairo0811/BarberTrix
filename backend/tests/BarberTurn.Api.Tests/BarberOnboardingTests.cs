@@ -71,8 +71,88 @@ public sealed class BarberOnboardingTests
         Assert.True(await db.BarberJoinRequests.AnyAsync(x => x.Id == join.Id && x.Status == BarberJoinRequestStatus.Approved));
     }
 
+    [Fact]
+    public async Task ExistingIndependentBarberCanAcceptTeamInvitation()
+    {
+        using var ownerClient = factory.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost"), HandleCookies = true });
+        using var barberClient = factory.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost"), HandleCookies = true });
+        var suffix = Guid.NewGuid().ToString("N")[..10];
+        const string password = "ValidPass123!";
+        var barberEmail = $"invited-{suffix}@example.com";
+
+        var ownerResponse = await ownerClient.PostAsJsonAsync("/api/auth/register-owner", new
+        {
+            barberShopName = $"Invite Stage D {suffix}", barberShopSlug = $"invite-stage-d-{suffix}", name = "Invite Owner",
+            email = $"invite-owner-{suffix}@example.com", password, acceptedTerms = true
+        });
+        ownerResponse.EnsureSuccessStatusCode();
+        var owner = await ownerResponse.Content.ReadFromJsonAsync<AuthPayload>();
+        Assert.NotNull(owner);
+
+        var barberResponse = await barberClient.PostAsJsonAsync("/api/auth/register-barber", new
+        {
+            name = $"Invited Barber {suffix}", email = barberEmail, password, acceptedTerms = true
+        });
+        barberResponse.EnsureSuccessStatusCode();
+        var barber = await barberResponse.Content.ReadFromJsonAsync<AuthPayload>();
+        Assert.NotNull(barber);
+        Assert.Equal("Onboarding", barber.SessionScope);
+
+        Guid operationalBarberId;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var operationalBarber = new Barber(owner.BarberShopId!.Value, $"Invited Barber {suffix}", 98);
+            db.Barbers.Add(operationalBarber);
+            await db.SaveChangesAsync();
+            operationalBarberId = operationalBarber.Id;
+        }
+
+        ownerClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", owner.AccessToken);
+        var invitationResponse = await ownerClient.PostAsJsonAsync("/api/team/invitations", new
+        {
+            name = $"Invited Barber {suffix}", email = barberEmail, role = 4, barberId = operationalBarberId
+        });
+        invitationResponse.EnsureSuccessStatusCode();
+        var invitation = await invitationResponse.Content.ReadFromJsonAsync<InvitationPayload>();
+        Assert.NotNull(invitation);
+        Assert.Null(invitation.DevelopmentAcceptanceUrl);
+
+        const string token = "stage-d-existing-barber-test-token";
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            db.TeamInvitations.Add(new TeamInvitation(
+                owner.BarberShopId!.Value,
+                barberEmail,
+                $"Invited Barber {suffix}",
+                UserRole.Barber,
+                operationalBarberId,
+                SecureToken.Hash(token),
+                DateTimeOffset.UtcNow.AddMinutes(10)));
+            await db.SaveChangesAsync();
+        }
+
+        var acceptResponse = await barberClient.PostAsJsonAsync("/api/auth/accept-invitation", new
+        {
+            token, password, acceptedTerms = true
+        });
+        acceptResponse.EnsureSuccessStatusCode();
+        var tenant = await acceptResponse.Content.ReadFromJsonAsync<AuthPayload>();
+        Assert.NotNull(tenant);
+        Assert.Equal("Tenant", tenant.SessionScope);
+        Assert.Equal(owner.BarberShopId, tenant.BarberShopId);
+        Assert.Equal(operationalBarberId, tenant.BarberId);
+        Assert.Equal(barber.UserId, tenant.UserId);
+
+        using var verifyScope = factory.Services.CreateScope();
+        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Assert.True(await verifyDb.ShopMemberships.AnyAsync(x => x.UserId == barber.UserId && x.BarberShopId == owner.BarberShopId && x.BarberId == operationalBarberId && x.Status == ShopMembershipStatus.Active));
+    }
+
     private sealed record AuthPayload(string AccessToken, Guid UserId, Guid? BarberShopId, Guid? BarberId, string SessionScope);
     private sealed record ShopItem(Guid Id, string Name);
     private sealed record JoinPayload(Guid Id, string Status);
     private sealed record TeamJoinPayload(Guid Id, Guid UserId);
+    private sealed record InvitationPayload(Guid Id, string Email, string Role, DateTimeOffset ExpiresAtUtc, string? DevelopmentAcceptanceUrl);
 }

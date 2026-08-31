@@ -119,6 +119,10 @@ internal sealed class BarberOnboardingService(ApplicationDbContext dbContext) : 
 
         user.AssignTenant(barberShopId, UserRole.Barber, barber.Id);
         request.Approve(reviewerUserId);
+        var competingRequests = await dbContext.BarberJoinRequests
+            .Where(x => x.UserId == user.Id && x.Id != request.Id && x.Status == BarberJoinRequestStatus.Pending)
+            .ToListAsync(cancellationToken);
+        competingRequests.ForEach(x => x.Withdraw());
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return true;

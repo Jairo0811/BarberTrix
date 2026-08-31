@@ -12,3 +12,7 @@ Stage D separates a professional barber identity from barbershop membership.
 6. Rejection or withdrawal leaves the professional identity independent and reusable.
 
 `BarberJoinRequest` is deliberately separate from `ShopMembership`: a request is intent; a membership is an accepted relationship.
+
+## Existing-account invitations
+
+An owner/administrator can invite an already-registered independent barber by linking the invitation to an operational barber slot. Acceptance verifies the existing account password, activates the `ShopMembership`, assigns tenant claims, and withdraws any competing pending join requests.

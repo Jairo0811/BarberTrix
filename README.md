@@ -14,13 +14,13 @@
   <img src="https://img.shields.io/badge/Tests-Vitest%20%7C%20Playwright-22C55E?style=flat-square" alt="Vitest y Playwright" />
   <img src="https://img.shields.io/badge/i18n-es--419%20%7C%20en%20%7C%20es--ES-0EA5E9?style=flat-square" alt="Idiomas: Español Latino, Inglés y Español de España" />
   <img src="https://img.shields.io/badge/Accesibilidad-NORTIC_B2%20%2F%20WCAG-22C55E?style=flat-square" alt="Base de accesibilidad alineada con NORTIC B2 y WCAG" />
-  <img src="https://img.shields.io/badge/Fases_1--6-Completadas-22C55E?style=flat-square" alt="Fases 1 a 6 completadas" />
+  <img src="https://img.shields.io/badge/Fases_1--7-Completadas-22C55E?style=flat-square" alt="Fases 1 a 7 completadas" />
   <img src="https://img.shields.io/badge/CI_y_Seguridad-Verde-22C55E?style=flat-square" alt="CI y seguridad" />
 </p>
 
 # BarberTurn 💈
 
-**BarberTurn** es una plataforma SaaS multi-tenant para gestionar la operación diaria de barberías: turnos por llegada, citas, barberos, servicios, clientes, caja, reportes, BarberTurn TV y suscripciones comerciales.
+**BarberTurn** es una plataforma SaaS multi-tenant para gestionar la operación diaria de barberías: turnos por llegada, citas, barberos, servicios, CRM de clientes, caja, reportes, BarberTurn TV y suscripciones comerciales.
 
 > **Tu turno. Tu estilo. Tu tiempo.**
 
@@ -28,14 +28,16 @@ La premisa del producto es simple: la tecnología debe adaptarse a la forma de t
 
 ## 🚀 Estado del proyecto
 
-BarberTurn tiene la **web v1 cerrada técnicamente** y continúa en preparación para una salida comercial controlada. El núcleo web está implementado y `main` se mantiene validado mediante CI, pruebas automatizadas, análisis de seguridad y gates progresivos de cobertura.
+BarberTurn tiene la **web v1 cerrada técnicamente** y continúa en preparación para una salida comercial controlada. El roadmap técnico de modernización del panel web **Fases 1–7 está completado**: rutas administrativas formales, Citas 2.0, CRM 2.0, Caja 2.0, Business Reports 2.0, arquitectura CSS por ownership y migración a React Router.
 
-El checklist de cierre está documentado en [`docs/web-v1-finalization.md`](docs/web-v1-finalization.md). La línea móvil ya está activa con React Native + Expo: M0/M1 establecen la base y las sesiones nativas seguras; M2 incorpora solicitudes cliente → barbero y M3 añade notificaciones push transaccionales para personal y clientes.
+`main` se mantiene validado mediante CI, pruebas automatizadas, análisis de seguridad, E2E con navegador, E2E full-stack contra SQL Server y construcción de contenedores de producción.
+
+El checklist de cierre está documentado en [`docs/web-v1-finalization.md`](docs/web-v1-finalization.md). La línea móvil está activa con React Native + Expo: M0/M1 establecen la base y las sesiones nativas seguras; M2 incorpora solicitudes cliente → barbero y M3 añade notificaciones push transaccionales para personal y clientes.
 
 ### Operación principal
 
 - 🚶 fila digital por orden de llegada;
-- 📅 agenda de citas y operación híbrida;
+- 📅 agenda operativa con vistas Hoy/Semana, filtros, creación administrativa y reprogramación por disponibilidad;
 - ✂️ gestión de barberos y disponibilidad;
 - 🧴 catálogo de servicios, duración y precios;
 - 🎟️ ciclo completo `Waiting → Called → InService → Completed`;
@@ -47,9 +49,10 @@ El checklist de cierre está documentado en [`docs/web-v1-finalization.md`](docs
 
 ### Gestión comercial
 
-- 👥 CRM básico de clientes;
-- 💵 registro de pagos/caja;
-- 📈 reportes de negocio;
+- 👥 **CRM 2.0** con búsqueda, edición, visitas completadas, última visita, gasto por moneda, actividad reciente y notas internas versionadas;
+- 💵 **Caja 2.0** con apertura/cierre, fondo inicial, entradas/salidas, pagos, reembolsos y conciliación esperado vs. contado;
+- 📈 **Business Reports 2.0** con rangos personalizados, comparación de períodos, métricas por moneda, barbero, servicio, método de pago y horas pico;
+- 📤 exportación CSV y salida optimizada para impresión/PDF;
 - 🧑‍🤝‍🧑 equipo, invitaciones y roles;
 - 🏪 sucursales y configuración por barbería;
 - 🧾 auditoría de operaciones;
@@ -57,12 +60,29 @@ El checklist de cierre está documentado en [`docs/web-v1-finalization.md`](docs
 - 💰 suscripciones SaaS mediante PayPal;
 - 🔒 capacidades y límites aplicados también en backend.
 
-### Portales y demo
+### Portales y navegación
 
 - 👑 **Owner / Administrator / Receptionist:** panel administrativo según permisos;
 - ✂️ **Barber Portal:** jornada, cola asignada, estado y citas propias sin ruido administrativo;
 - 👤 **Customer Portal:** autoservicio público sin requerir cuenta;
-- 🧪 **Demo comercial limitada:** permite probar el núcleo y mantiene visibles las funciones premium mediante paywalls/CTA sin exponer operaciones sensibles.
+- 🧪 **Demo comercial limitada:** permite probar el núcleo y mantiene visibles las funciones premium mediante paywalls/CTA sin exponer operaciones sensibles;
+- 🧭 **React Router + HashRouter:** navegación formal preservando `#/app/*`, deep links y Back/Forward.
+
+Rutas administrativas principales:
+
+```text
+#/app/overview
+#/app/queue
+#/app/appointments
+#/app/barbers
+#/app/services
+#/app/customers
+#/app/payments
+#/app/reports
+#/app/team
+#/app/locations
+#/app/billing
+```
 
 Los clientes pueden tomar turnos y reservar citas sin crear una cuenta. Una cuenta de cliente registrada no forma parte todavía del alcance actual.
 
@@ -116,6 +136,7 @@ Las reglas comerciales pueden evolucionar antes de la salida pública; el backen
 
 <p align="left">
   <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=111827" alt="React 19" />
+  <img src="https://img.shields.io/badge/React_Router-7.18.3-CA4245?style=flat-square&logo=reactrouter&logoColor=white" alt="React Router 7.18.3" />
   <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript 5" />
   <img src="https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite 8" />
   <img src="https://img.shields.io/badge/UI-Responsive-0EA5E9?style=flat-square" alt="Responsive UI" />
@@ -125,9 +146,10 @@ Las reglas comerciales pueden evolucionar antes de la salida pública; el backen
 </p>
 
 - React 19;
+- React Router 7.18.3 con `HashRouter`;
 - TypeScript;
 - Vite 8;
-- CSS modularizado por experiencia/feature;
+- CSS modularizado por ownership global / portal / shared / feature;
 - Font Awesome;
 - QRCode;
 - SweetAlert2;
@@ -177,6 +199,8 @@ BarberTurn
 │       ├── i18n
 │       ├── shared
 │       └── ...
+├── mobile
+│   └── ...
 ├── deploy
 │   └── sql
 ├── docs
@@ -194,6 +218,7 @@ BarberTurn
 - **Infrastructure:** persistencia, SQL Server, servicios externos y adaptadores.
 - **API:** transporte HTTP, autenticación/autorización, middleware y composición.
 - **Frontend:** portales y features desacoplados por responsabilidad.
+- **Mobile:** experiencia React Native/Expo con sesión segura, realtime y notificaciones push.
 
 La dirección buscada es:
 
@@ -208,6 +233,24 @@ SQL Server / proveedores externos
 ```
 
 Los endpoints no deben convertirse en una segunda capa de persistencia ni consultar el DbContext para lógica de negocio que corresponda a Application/Infrastructure.
+
+### Arquitectura web
+
+La navegación web utiliza un único `HashRouter` como fuente de verdad. `adminRoutes.ts` expone paths canónicos y parsing puro; el dashboard deriva la página activa desde la URL mediante `useLocation()`/`useNavigate()`.
+
+La arquitectura CSS sigue ownership explícito:
+
+```text
+Global
+  ↓
+Portal
+  ↓
+Shared
+  ↓
+Feature
+```
+
+Los estilos específicos de una feature deben vivir con esa feature; las primitivas compartidas solo se promueven a `shared` cuando existen consumidores reales en más de un módulo.
 
 ## 🔐 Seguridad
 
@@ -293,6 +336,8 @@ Consulta [`docs/production-operations.md`](docs/production-operations.md) para b
 - integración API + SQL Server;
 - autenticación, refresh/logout y cookies;
 - aislamiento multi-tenant;
+- Caja 2.0 y conciliación contra SQL Server real;
+- reglas financieras de moneda y reembolsos;
 - error codes y correlation IDs;
 - validación de migraciones;
 - gates progresivos sobre lógica crítica.
@@ -304,6 +349,7 @@ Vitest + React Testing Library cubren, entre otros:
 - autenticación;
 - demo;
 - roles y redirecciones;
+- parsing de rutas administrativas;
 - Barber Portal;
 - paywalls/capabilities;
 - política de contraseñas;
@@ -313,10 +359,10 @@ Vitest + React Testing Library cubren, entre otros:
 
 BarberTurn mantiene dos niveles de Playwright deliberadamente separados:
 
-1. **E2E de navegador con backend simulado**, para validar de forma determinista los flujos de UX: registro, login, dashboard, ciclo de turnos, demo comercial, Barber Portal, Customer Portal, restricciones por rol, Starter vs funciones premium y billing del Owner.
-2. **E2E full-stack real**, que levanta React + ASP.NET Core + SQL Server 2022 y valida registro de Owner, carga del dashboard y posterior login contra datos persistidos realmente en SQL Server.
+1. **E2E de navegador con backend simulado**, para validar de forma determinista registro, login, dashboard, ciclo de turnos, Citas 2.0, CRM 2.0, Caja 2.0, demo comercial, Barber Portal, Customer Portal, restricciones por rol, Starter vs. funciones premium, billing y routing/deep links.
+2. **E2E full-stack real**, que levanta React + ASP.NET Core + SQL Server 2022 y valida flujos reales contra datos persistidos en SQL Server.
 
-El job `Full-stack E2E (React + API + SQL Server)` forma parte del CI y es requisito previo para construir las imágenes de producción. Las dos suites publican artifacts de Playwright para diagnóstico cuando una ejecución falla.
+El job `Full-stack E2E (React + API + SQL Server)` forma parte del CI y es requisito previo para construir las imágenes de producción. Las suites publican artifacts de Playwright para diagnóstico cuando una ejecución falla.
 
 ## 🌐 Internacionalización
 
@@ -336,9 +382,9 @@ La interfaz incorpora una base técnica alineada con buenas prácticas de NORTIC
 
 - navegación por teclado;
 - foco visible;
-- skip link;
+- skip link compatible con `HashRouter`;
 - `aria-live`, `aria-describedby`, `aria-busy`, `aria-pressed`;
-- gestión de foco al cambiar de vista;
+- gestión de foco al cambiar de ruta/vista;
 - semántica para lectores de pantalla;
 - `prefers-reduced-motion`;
 - formularios con errores asociados.
@@ -394,9 +440,15 @@ Requisitos externos antes de un lanzamiento comercial:
 
 ## 🗺️ Roadmap
 
-### ✅ Fases 1–6
+### ✅ Roadmap técnico web — Fases 1–7
 
-Fundación técnica, núcleo de turnos, tiempo real, citas, gestión comercial y SaaS completados.
+- ✅ **Fase 1:** páginas administrativas y rutas `#/app/*`;
+- ✅ **Fase 2:** Citas 2.0 / agenda operativa;
+- ✅ **Fase 3:** CRM 2.0;
+- ✅ **Fase 4:** Caja / Payments 2.0;
+- ✅ **Fase 5:** Business Reports 2.0;
+- ✅ **Fase 6:** CSS / UI Architecture Cleanup;
+- ✅ **Fase 7:** migración formal a React Router preservando deep links e historial.
 
 ### 🟢 Hardening web v1
 
@@ -406,6 +458,8 @@ Fundación técnica, núcleo de turnos, tiempo real, citas, gestión comercial y
 - ✅ demo comercial limitada y portales por rol;
 - ✅ error codes y correlation IDs;
 - ✅ frontend modular por features;
+- ✅ CSS con ownership global / portal / shared / feature;
+- ✅ React Router con URLs hash compatibles;
 - ✅ Vitest + Testing Library;
 - ✅ Playwright E2E de navegador con backend simulado;
 - ✅ E2E full-stack React + ASP.NET Core + SQL Server;
@@ -433,12 +487,14 @@ Fundación técnica, núcleo de turnos, tiempo real, citas, gestión comercial y
 - ✅ sesiones móviles seguras con refresh token rotatorio en SecureStore;
 - ✅ solicitudes cliente → barbero con aceptación, rechazo y contraoferta;
 - ✅ realtime con SignalR mientras la aplicación está abierta;
-- ⏳ notificaciones push de sistema en M3;
+- ✅ notificaciones push transaccionales de sistema en M3;
 - ⏳ preparación de distribución Android/iOS.
 
 ## 📚 Documentación
 
 - 🏗️ [`docs/architecture.md`](docs/architecture.md) — arquitectura y decisiones técnicas.
+- 🧭 [`docs/admin-routing.md`](docs/admin-routing.md) — rutas web, React Router, compatibilidad y navegación administrativa.
+- 🎨 [`docs/frontend-styling.md`](docs/frontend-styling.md) — ownership y arquitectura CSS del frontend.
 - 🎯 [`docs/mvp.md`](docs/mvp.md) — alcance funcional.
 - ✅ [`docs/web-v1-finalization.md`](docs/web-v1-finalization.md) — checklist de cierre web v1.
 - 📱 [`mobile/README.md`](mobile/README.md) — arquitectura, seguridad y ejecución de BarberTurn Mobile.

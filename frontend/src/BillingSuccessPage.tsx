@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from './api'
+import { adminPageHref } from './portals/admin/adminRoutes'
 
 function subscriptionId() {
   const values = new URLSearchParams(location.hash.split('?')[1] ?? '')
@@ -22,6 +23,6 @@ export default function BillingSuccessPage() {
     <img className="recovery-logo" src="/branding/barberturn-logo.png" alt="BarberTurn" />
     <h1>{state === 'success' ? 'Suscripción activada' : state === 'error' ? 'No pudimos activar el plan' : 'Procesando pago'}</h1>
     <p className={state === 'error' ? 'login-error' : 'login-subtitle'} role="status">{message}</p>
-    <a className="login-submit recovery-link-button" href="#/login">Volver al panel</a>
+    <a className="login-submit recovery-link-button" href={adminPageHref('billing')}>Volver a suscripción</a>
   </section></main>
 }

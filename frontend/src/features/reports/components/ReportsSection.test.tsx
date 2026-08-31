@@ -9,7 +9,7 @@ vi.mock('../../../api', () => ({ api: vi.fn() }))
 const starterCapabilities: Capabilities = {
   plan: 'Starter', status: 'Active', activeBarbers: 1, barberLimit: 2,
   activeLocations: 1, locationLimit: 1, canUseAppointments: false, canUseTv: false,
-  canUseAdvancedReports: false, isDemo: false,
+  canUseAdvancedReports: false, isDemo: false, isSystemAdmin: false,
 }
 
 describe('Reports capability paywall', () => {

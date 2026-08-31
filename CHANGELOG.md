@@ -21,4 +21,8 @@ El proyecto sigue [Semantic Versioning](https://semver.org/) y el formato de [Ke
 ### Changed
 
 - CI móvil reproducible con `npm ci`, lockfile versionado, auditoría de dependencias, typecheck y bundle Android;
-- snapshot de EF Core validado como código versionado sin jobs que modifiquen una rama durante el CI.
+- snapshot de EF Core validado como código versionado sin jobs que modifiquen una rama durante el CI;
+- navegación administrativa con etiquetas localizadas e iconografía semántica por módulo;
+- directorio de clientes con búsqueda local por nombre, teléfono o correo;
+- consulta de caja limitada a movimientos históricos de los últimos 30 días y estados vacíos más claros;
+- fixtures de frontend alineados con la capacidad `isSystemAdmin` para mantener el build tipado en verde.

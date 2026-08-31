@@ -1,6 +1,7 @@
 using System.Text;
 using BarberTurn.Application.Auth;
 using BarberTurn.Application.Appointments;
+using BarberTurn.Application.Cash;
 using BarberTurn.Application.Commercial;
 using BarberTurn.Application.Common;
 using BarberTurn.Application.Queue;
@@ -9,6 +10,7 @@ using BarberTurn.Application.TurnRequests;
 using BarberTurn.Domain.Entities;
 using BarberTurn.Infrastructure.Auth;
 using BarberTurn.Infrastructure.Appointments;
+using BarberTurn.Infrastructure.Cash;
 using BarberTurn.Infrastructure.Commercial;
 using BarberTurn.Infrastructure.Common;
 using BarberTurn.Infrastructure.Persistence;
@@ -45,6 +47,7 @@ public static class DependencyInjection
         services.AddScoped<ITurnRequestPushNotifier, TurnRequestPushNotifier>();
         services.AddScoped<PushDeliveryProcessor>();
         services.AddScoped<ICommercialService, CommercialService>();
+        services.AddScoped<ICashManagementService, CashManagementService>();
         services.AddScoped<IAuditService, AuditService>();
         services.AddScoped<IPlanLimitService, PlanLimitService>();
         services.AddScoped<IShopLookupService, ShopLookupService>();

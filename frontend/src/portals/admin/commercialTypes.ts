@@ -34,4 +34,38 @@ export type Subscription = { plan: string; status: string; provider: string; per
 export type Capabilities = { plan: string; status: string; activeBarbers: number; barberLimit: number; activeLocations: number; locationLimit: number; canUseAppointments: boolean; canUseTv: boolean; canUseAdvancedReports: boolean; isDemo: boolean; isSystemAdmin: boolean }
 export type Shop = { name: string; slug: string; timeZoneId: string }
 export type Location = { id: string; name: string; slug: string; address?: string; timeZoneId: string; isActive: boolean }
-export type Payment = { id: string; amount: number; currency: string; method: string; status: string; paidAtUtc?: string }
+export type Payment = {
+  id: string
+  amount: number
+  currency: string
+  method: string
+  status: string
+  turnId?: string | null
+  appointmentId?: string | null
+  customerId?: string | null
+  externalReference?: string | null
+  paidAtUtc?: string | null
+}
+export type CashMovement = {
+  id: string
+  type: 'CashIn' | 'CashOut'
+  amount: number
+  reason: string
+  createdAtUtc: string
+}
+export type CashSession = {
+  id: string
+  currency: string
+  openingBalance: number
+  openedAtUtc: string
+  closedAtUtc?: string | null
+  cashSales: number
+  nonCashSales: number
+  cashIn: number
+  cashOut: number
+  expectedCash: number
+  countedCash?: number | null
+  difference?: number | null
+  closingNote?: string | null
+  movements: CashMovement[]
+}

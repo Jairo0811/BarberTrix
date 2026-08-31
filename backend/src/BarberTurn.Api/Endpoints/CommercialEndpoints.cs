@@ -1,5 +1,6 @@
 using BarberTurn.Api.Contracts;
 using BarberTurn.Api.Filters;
+using BarberTurn.Application.Cash;
 using BarberTurn.Application.Commercial;
 using BarberTurn.Application.Common;
 using BarberTurn.Domain.Entities;
@@ -90,9 +91,21 @@ public static class CommercialEndpoints
         var payments = endpoints.MapGroup("/api/payments").WithTags("Payments").RequireAuthorization("VerifiedUser").RequireAuthorization(policy => policy.RequireRole("Owner", "Administrator", "Receptionist")).AddEndpointFilter<NonDemoTenantFilter>();
         payments.MapGet("/", async (DateTimeOffset? from, DateTimeOffset? to, HttpContext context, ICommercialService service, CancellationToken ct) =>
             Results.Ok(await service.GetPaymentsAsync(ShopId(context), from ?? DateTimeOffset.UtcNow.AddDays(-30), to ?? DateTimeOffset.UtcNow.AddDays(1), ct)));
-        payments.MapPost("/", async (CreatePaymentRequest request, HttpContext context, ICommercialService service, CancellationToken ct) =>
+        payments.MapPost("/", async (CreatePaymentRequest request, HttpContext context, ICommercialService service, ICashManagementService cashService, CancellationToken ct) =>
         {
-            try { return Results.Created("/api/payments", await service.CreatePaymentAsync(ShopId(context), request, ct)); }
+            try
+            {
+                var shopId = ShopId(context);
+                if (request.Method == PaymentMethod.Cash)
+                {
+                    var cashSession = await cashService.GetCurrentAsync(shopId, ct)
+                        ?? throw new InvalidOperationException("Open a cash session before registering a cash payment.");
+                    var requestedCurrency = string.IsNullOrWhiteSpace(request.Currency) ? "DOP" : request.Currency.Trim().ToUpperInvariant();
+                    if (!string.Equals(cashSession.Currency, requestedCurrency, StringComparison.OrdinalIgnoreCase))
+                        throw new InvalidOperationException($"The open cash session uses {cashSession.Currency}. Cash payments must use the same currency.");
+                }
+                return Results.Created("/api/payments", await service.CreatePaymentAsync(shopId, request, ct));
+            }
             catch (Exception ex) when (ex is ArgumentException or InvalidOperationException) { return ApiErrorResults.BadRequest(context, ApiErrorCodes.PaymentInvalid, ex.Message); }
         });
 

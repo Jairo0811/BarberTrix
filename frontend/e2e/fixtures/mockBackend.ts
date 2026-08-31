@@ -27,6 +27,30 @@ export async function installMockBackend(page: Page, options: MockOptions = {}) 
   const appointments: Array<Record<string, unknown>> = []
   const customers: Array<Record<string, unknown>> = [{ id: 'customer-1', name: 'Ana Pérez', phone: '8095550101', email: 'ana@example.com', isActive: true, createdAtUtc: '2026-08-01T12:00:00Z' }]
   const customerNotes = new Map<string, string>()
+  const payments: Array<Record<string, unknown>> = []
+  const cashSessions: Array<Record<string, any>> = []
+  let currentCashSession: Record<string, any> | null = null
+
+  function refreshCashSession() {
+    if (!currentCashSession) return
+    const currency = currentCashSession.currency as string
+    const openedAt = new Date(currentCashSession.openedAtUtc as string).getTime()
+    const sessionPayments = payments.filter(payment =>
+      payment.currency === currency
+      && typeof payment.paidAtUtc === 'string'
+      && new Date(payment.paidAtUtc).getTime() >= openedAt,
+    )
+    currentCashSession.cashSales = sessionPayments
+      .filter(payment => payment.method === 'Cash' && (payment.status === 'Paid' || payment.status === 'Refunded'))
+      .reduce((total, payment) => total + Number(payment.amount), 0)
+    currentCashSession.nonCashSales = sessionPayments
+      .filter(payment => payment.method !== 'Cash' && payment.status === 'Paid')
+      .reduce((total, payment) => total + Number(payment.amount), 0)
+    const movements = currentCashSession.movements as Array<Record<string, any>>
+    currentCashSession.cashIn = movements.filter(item => item.type === 'CashIn').reduce((total, item) => total + Number(item.amount), 0)
+    currentCashSession.cashOut = movements.filter(item => item.type === 'CashOut').reduce((total, item) => total + Number(item.amount), 0)
+    currentCashSession.expectedCash = Number(currentCashSession.openingBalance) + Number(currentCashSession.cashSales) + Number(currentCashSession.cashIn) - Number(currentCashSession.cashOut)
+  }
 
   async function json(route: Route, body: unknown, status = 200) {
     await route.fulfill({
@@ -38,7 +62,7 @@ export async function installMockBackend(page: Page, options: MockOptions = {}) 
         'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Correlation-ID',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
       },
-      body: JSON.stringify(body),
+      body: status === 204 ? '' : JSON.stringify(body),
     })
   }
 
@@ -190,7 +214,110 @@ export async function installMockBackend(page: Page, options: MockOptions = {}) 
       return
     }
 
-    if (path === '/api/team' || path === '/api/payments' || path === '/api/locations') { await json(route, []); return }
+    if (path === '/api/cash/current' && method === 'GET') {
+      if (!currentCashSession) { await json(route, {}, 204); return }
+      refreshCashSession()
+      await json(route, currentCashSession)
+      return
+    }
+    if (path === '/api/cash/sessions' && method === 'GET') {
+      refreshCashSession()
+      await json(route, cashSessions.slice().reverse())
+      return
+    }
+    if (path === '/api/cash/open' && method === 'POST') {
+      if (currentCashSession) { await json(route, { message: 'A cash session is already open.' }, 400); return }
+      const payload = request.postDataJSON() as { currency: string; openingBalance: number }
+      currentCashSession = {
+        id: `cash-session-${cashSessions.length + 1}`,
+        currency: payload.currency,
+        openingBalance: Number(payload.openingBalance),
+        openedAtUtc: new Date().toISOString(),
+        closedAtUtc: null,
+        cashSales: 0,
+        nonCashSales: 0,
+        cashIn: 0,
+        cashOut: 0,
+        expectedCash: Number(payload.openingBalance),
+        countedCash: null,
+        difference: null,
+        closingNote: null,
+        movements: [],
+      }
+      cashSessions.push(currentCashSession)
+      await json(route, currentCashSession, 201)
+      return
+    }
+    if (path === '/api/cash/movements' && method === 'POST') {
+      if (!currentCashSession) { await json(route, { message: 'There is no open cash session.' }, 400); return }
+      const payload = request.postDataJSON() as { type: string; amount: number; reason: string }
+      ;(currentCashSession.movements as Array<Record<string, unknown>>).push({
+        id: `movement-${(currentCashSession.movements as unknown[]).length + 1}`,
+        type: payload.type,
+        amount: Number(payload.amount),
+        reason: payload.reason,
+        createdAtUtc: new Date().toISOString(),
+      })
+      refreshCashSession()
+      await json(route, currentCashSession, 201)
+      return
+    }
+    if (path === '/api/cash/close' && method === 'POST') {
+      if (!currentCashSession) { await json(route, { message: 'There is no open cash session.' }, 400); return }
+      refreshCashSession()
+      const payload = request.postDataJSON() as { countedCash: number; note?: string | null }
+      currentCashSession.countedCash = Number(payload.countedCash)
+      currentCashSession.difference = Number(payload.countedCash) - Number(currentCashSession.expectedCash)
+      currentCashSession.closingNote = payload.note || null
+      currentCashSession.closedAtUtc = new Date().toISOString()
+      const closed = currentCashSession
+      currentCashSession = null
+      await json(route, closed)
+      return
+    }
+
+    if (path === '/api/payments' && method === 'GET') { await json(route, payments.slice().reverse()); return }
+    if (path === '/api/payments' && method === 'POST') {
+      const payload = request.postDataJSON() as { amount: number; currency: string; method: string; externalReference?: string | null }
+      const payment = {
+        id: `payment-${payments.length + 1}`,
+        amount: Number(payload.amount),
+        currency: payload.currency,
+        method: payload.method,
+        status: ['Cash', 'Card', 'Transfer'].includes(payload.method) ? 'Paid' : 'Pending',
+        turnId: null,
+        appointmentId: null,
+        customerId: null,
+        externalReference: payload.externalReference || null,
+        paidAtUtc: new Date().toISOString(),
+      }
+      payments.push(payment)
+      refreshCashSession()
+      await json(route, payment, 201)
+      return
+    }
+    const refundRoute = path.match(/^\/api\/payments\/([^/]+)\/refund$/)
+    if (refundRoute && method === 'POST') {
+      const payment = payments.find(item => item.id === refundRoute[1])
+      if (!payment) { await json(route, {}, 404); return }
+      if (payment.status !== 'Paid') { await json(route, { message: 'Only paid records can be refunded.' }, 400); return }
+      if (payment.method === 'Cash') {
+        if (!currentCashSession) { await json(route, { message: 'Open a cash session before refunding a cash payment.' }, 400); return }
+        ;(currentCashSession.movements as Array<Record<string, unknown>>).push({
+          id: `movement-${(currentCashSession.movements as unknown[]).length + 1}`,
+          type: 'CashOut',
+          amount: payment.amount,
+          reason: `Refund ${payment.id}: Customer refund`,
+          createdAtUtc: new Date().toISOString(),
+        })
+      }
+      payment.status = 'Refunded'
+      refreshCashSession()
+      await json(route, payment)
+      return
+    }
+
+    if (path === '/api/team' || path === '/api/locations') { await json(route, []); return }
     if (path === '/api/reports/business') { await json(route, { completedTurns: 0, cancelledTurns: 0, noShows: 0, appointments: appointments.length, grossRevenue: 0 }); return }
 
     if (path === '/api/public/shops/central/capabilities') { await json(route, { canUseAppointments: plan !== 'Starter', canUseTv: plan !== 'Starter' }); return }
@@ -209,7 +336,7 @@ export async function installMockBackend(page: Page, options: MockOptions = {}) 
     await json(route, { code: 'E2E_ROUTE_NOT_CONFIGURED', message: `${method} ${path}` }, 404)
   })
 
-  return { turns, appointments, customers }
+  return { turns, appointments, customers, payments, cashSessions }
 }
 
 export async function seedAuth(page: Page, auth: Record<string, unknown>, demo = false) {

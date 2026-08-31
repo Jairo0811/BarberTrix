@@ -96,8 +96,14 @@ public static class CommercialEndpoints
             try
             {
                 var shopId = ShopId(context);
-                if (request.Method == PaymentMethod.Cash && await cashService.GetCurrentAsync(shopId, ct) is null)
-                    throw new InvalidOperationException("Open a cash session before registering a cash payment.");
+                if (request.Method == PaymentMethod.Cash)
+                {
+                    var cashSession = await cashService.GetCurrentAsync(shopId, ct)
+                        ?? throw new InvalidOperationException("Open a cash session before registering a cash payment.");
+                    var requestedCurrency = string.IsNullOrWhiteSpace(request.Currency) ? "DOP" : request.Currency.Trim().ToUpperInvariant();
+                    if (!string.Equals(cashSession.Currency, requestedCurrency, StringComparison.OrdinalIgnoreCase))
+                        throw new InvalidOperationException($"The open cash session uses {cashSession.Currency}. Cash payments must use the same currency.");
+                }
                 return Results.Created("/api/payments", await service.CreatePaymentAsync(shopId, request, ct));
             }
             catch (Exception ex) when (ex is ArgumentException or InvalidOperationException) { return ApiErrorResults.BadRequest(context, ApiErrorCodes.PaymentInvalid, ex.Message); }

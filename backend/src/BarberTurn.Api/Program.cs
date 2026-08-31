@@ -55,6 +55,13 @@ if (builder.Configuration.GetValue<bool>("Database:ApplyMigrations"))
 if (builder.Configuration.GetValue<bool>("Database:MigrationOnly"))
     return;
 
+if (app.Environment.IsDevelopment())
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    var seeder = scope.ServiceProvider.GetRequiredService<DevelopmentDataSeeder>();
+    await seeder.SeedAsync();
+}
+
 app.UseForwardedHeaders();
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseExceptionHandler();

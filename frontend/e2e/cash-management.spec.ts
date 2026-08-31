@@ -16,7 +16,7 @@ test('owner opens, operates and reconciles a cash session', async ({ page }) => 
 
   await page.getByLabel('Fondo inicial').fill('1000')
   await page.getByRole('button', { name: 'Abrir caja' }).click()
-  await expect(page.getByText(/Caja abierta/)).toBeVisible()
+  await expect(page.locator('.cash-status.open')).toHaveText('Caja abierta · DOP')
   await expect(page.locator('.cash-kpis article.primary strong')).toContainText('1,000.00')
 
   const paymentCard = page.locator('.cash-card').filter({ hasText: 'Registrar pago' })

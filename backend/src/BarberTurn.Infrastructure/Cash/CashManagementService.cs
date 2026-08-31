@@ -125,6 +125,10 @@ internal sealed class CashManagementService(ApplicationDbContext dbContext) : IC
         {
             var session = await GetCurrentOpenLogAsync(barberShopId, cancellationToken)
                 ?? throw new InvalidOperationException("Open a cash session before refunding a cash payment.");
+            var current = await BuildSessionAsync(barberShopId, session, cancellationToken);
+            if (!string.Equals(current.Currency, payment.Currency, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException($"Open a {payment.Currency} cash session before refunding this cash payment.");
+
             dbContext.AuditLogs.Add(CreateMovementLog(
                 barberShopId,
                 userId,

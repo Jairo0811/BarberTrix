@@ -17,6 +17,6 @@ jobs:
         shell: bash
         run: |
           echo '=== BarberShopId references ==='
-          rg -n "BarberShopId|barbershop_id|ClaimTypes\.Role" backend/src backend/tests || true
+          grep -RInE "BarberShopId|barbershop_id|ClaimTypes\.Role" backend/src backend/tests || true
           echo '=== auth response consumers ==='
-          rg -n "AuthResponse|AuthSessionResponse|MobileAuthSessionResponse|register-owner|/login" backend/src backend/tests frontend/src mobile || true
+          grep -RInE "AuthResponse|AuthSessionResponse|MobileAuthSessionResponse|register-owner|/login" backend/src backend/tests frontend/src mobile || true

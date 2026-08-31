@@ -14,7 +14,6 @@ public interface IAppointmentService
     Task<IReadOnlyList<AppointmentResponse>> GetAsync(Guid barberShopId, DateTimeOffset fromUtc, DateTimeOffset toUtc, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<AvailabilitySlotResponse>> GetAvailabilityAsync(string shopSlug, Guid serviceId, DateOnly localDate, Guid? barberId, CancellationToken cancellationToken = default);
     Task EnsureSlotAvailableAsync(Guid barberShopId, Guid serviceId, Guid barberId, DateTimeOffset startsAt, CancellationToken cancellationToken = default);
-    Task<AppointmentResponse> CreateAsync(Guid barberShopId, CreateAppointmentRequest request, CancellationToken cancellationToken = default);
     Task<AppointmentResponse> CreateFromTurnRequestAsync(Guid barberShopId, Guid serviceId, Guid barberId, DateTimeOffset startsAt, string customerName, string? customerPhone, string? customerEmail, string publicLookupTokenHash, CancellationToken cancellationToken = default);
     Task<PublicAppointmentResponse> CreatePublicAsync(string shopSlug, CreateAppointmentRequest request, CancellationToken cancellationToken = default);
     Task<AppointmentResponse?> GetPublicAsync(string shopSlug, Guid appointmentId, string lookupToken, CancellationToken cancellationToken = default);

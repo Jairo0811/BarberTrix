@@ -2,7 +2,7 @@ export default function LegalPage({ kind }: { kind: 'terms' | 'privacy' }) {
   const privacy = kind === 'privacy'
   return <main className="login-shell"><article className="login-card legal-card">
     <a className="back-home-link" href="#/">← Volver al inicio</a>
-    <img className="recovery-logo" src="/branding/barberturn-logo.png" alt="BarberTurn" />
+    <img className="legal-logo" src="/branding/barberturn-logo.png" alt="BarberTurn" />
     <h1>{privacy ? 'Aviso de privacidad' : 'Términos de servicio'}</h1>
     <p className="login-subtitle">Última actualización: 25 de agosto de 2026.</p>
     {privacy ? <>

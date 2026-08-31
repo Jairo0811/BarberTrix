@@ -22,8 +22,26 @@ public sealed class DevelopmentDataSeeder(
             throw new InvalidOperationException("DemoAdmin credentials must be configured when demo seeding is enabled.");
 
         var normalizedEmail = email.Trim().ToLowerInvariant();
-        if (await dbContext.Users.AnyAsync(user => user.Email == normalizedEmail, cancellationToken))
+        var existingUser = await dbContext.Users
+            .SingleOrDefaultAsync(user => user.Email == normalizedEmail, cancellationToken);
+
+        if (existingUser is not null)
+        {
+            var verification = passwordHasher.VerifyHashedPassword(existingUser, existingUser.PasswordHash, password);
+            if (verification != PasswordVerificationResult.Success)
+            {
+                existingUser.ChangePasswordHash(passwordHasher.HashPassword(existingUser, password));
+            }
+
+            if (existingUser.Role != UserRole.Administrator)
+                existingUser.ChangeRole(UserRole.Administrator, null);
+
+            if (!existingUser.IsEmailVerified)
+                existingUser.MarkEmailVerified();
+
+            await dbContext.SaveChangesAsync(cancellationToken);
             return;
+        }
 
         var barberShop = await dbContext.BarberShops
             .SingleOrDefaultAsync(shop => shop.Slug == "barberturn-demo", cancellationToken);

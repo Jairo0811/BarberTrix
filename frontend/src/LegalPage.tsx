@@ -1,3 +1,5 @@
+import './legal.css'
+
 export default function LegalPage({ kind }: { kind: 'terms' | 'privacy' }) {
   const privacy = kind === 'privacy'
   return <main className="login-shell"><article className="login-card legal-card">

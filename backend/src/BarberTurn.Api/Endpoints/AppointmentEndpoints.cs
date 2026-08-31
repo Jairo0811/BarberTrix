@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
 using BarberTurn.Api.Contracts;
 using BarberTurn.Application.Appointments;
 using BarberTurn.Application.Common;
@@ -59,6 +60,30 @@ public static class AppointmentEndpoints
                 ? Results.Ok(items.Where(x => x.BarberId == barberId))
                 : Results.Ok(Array.Empty<AppointmentResponse>());
         });
+        group.MapPost("/", async (CreateAppointmentRequest request, HttpContext context, IAppointmentService service, IPlanLimitService limits, IQueueNotifier notifier, CancellationToken ct) =>
+        {
+            try
+            {
+                var shopId = ShopId(context);
+                await limits.EnsureCanUseAsync(shopId, PlanFeature.Appointments, ct);
+                var internalLookupHash = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+                var response = await service.CreateFromTurnRequestAsync(shopId, request.ServiceId, request.BarberId, request.StartsAt, request.CustomerName, request.CustomerPhone, request.CustomerEmail, internalLookupHash, ct);
+                await notifier.QueueChangedAsync(shopId, "appointment-created", ct);
+                return Results.Created($"/api/appointments/{response.Id}", response);
+            }
+            catch (BusinessRuleException ex)
+            {
+                return ApiErrorResults.Conflict(context, ex.Code, ex.Message);
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("plan", StringComparison.OrdinalIgnoreCase))
+            {
+                return ApiErrorResults.Forbidden(context, ApiErrorCodes.PlanFeatureUnavailable, ex.Message);
+            }
+            catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+            {
+                return ApiErrorResults.BadRequest(context, ApiErrorCodes.AppointmentInvalid, ex.Message);
+            }
+        }).RequireAuthorization(policy => policy.RequireRole("Owner", "Administrator", "Receptionist"));
         group.MapPut("/{id:guid}", async (Guid id, RescheduleAppointmentRequest request, HttpContext context, IAppointmentService service, CancellationToken ct) =>
             await ExecuteAsync(context, () => service.RescheduleAsync(ShopId(context), id, request, ct)))
             .RequireAuthorization(policy => policy.RequireRole("Owner", "Administrator", "Receptionist"));

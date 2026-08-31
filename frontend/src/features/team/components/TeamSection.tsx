@@ -5,11 +5,13 @@ import LockedFeature from '../../../shared/components/LockedFeature'
 import type { Auth, Barber } from '../../../types'
 import type { TeamMember } from '../../../portals/admin/commercialTypes'
 
-type Props = { auth: Auth; barbers: Barber[]; isDemo: boolean }
+type Props = { auth: Auth; barbers: Barber[]; isDemo: boolean; isSystemAdmin: boolean }
 
-export default function TeamSection({ auth, barbers, isDemo }: Props) {
+export default function TeamSection({ auth, barbers, isDemo, isSystemAdmin }: Props) {
   const [team, setTeam] = useState<TeamMember[]>([])
   const [busy, setBusy] = useState(false)
+  const canDeactivateMembers = auth.role === 'Owner' || isSystemAdmin
+
   const load = useCallback(async () => {
     if (isDemo) { setTeam([]); return }
     setTeam(await api<TeamMember[]>('/api/team'))
@@ -36,7 +38,7 @@ export default function TeamSection({ auth, barbers, isDemo }: Props) {
   return (
     <section className="panel dashboard-section" id="team-section">
       <p className="eyebrow">EQUIPO Y PERMISOS</p><h2>Usuarios</h2>
-      {isDemo ? <LockedFeature title="Equipo y permisos" text="Las invitaciones y cuentas de empleados están bloqueadas en la demostración." /> : <><form className="business-form" onSubmit={submit}><input name="name" placeholder="Nombre" required /><input name="email" type="email" placeholder="Correo" required /><select name="role"><option>Administrator</option><option>Receptionist</option><option>Barber</option></select><select name="barberId" defaultValue=""><option value="">Sin vínculo de barbero</option>{barbers.filter(x => x.isActive).map(x => <option key={x.id} value={x.id}>{x.name}</option>)}</select><button disabled={busy}>Invitar</button></form><div className="business-list compact">{team.map(item => <article key={item.id}><strong>{item.name}</strong><span>{item.role} · {item.isActive ? 'Activo' : 'Inactivo'}</span>{auth.role === 'Owner' && item.role !== 'Owner' && item.isActive && <button disabled={busy} onClick={() => void deactivateMember(item.id)}>Desactivar</button>}</article>)}</div></>}
+      {isDemo ? <LockedFeature title="Equipo y permisos" text="Las invitaciones y cuentas de empleados están bloqueadas en la demostración." /> : <><form className="business-form" onSubmit={submit}><input name="name" placeholder="Nombre" required /><input name="email" type="email" placeholder="Correo" required /><select name="role"><option>Administrator</option><option>Receptionist</option><option>Barber</option></select><select name="barberId" defaultValue=""><option value="">Sin vínculo de barbero</option>{barbers.filter(x => x.isActive).map(x => <option key={x.id} value={x.id}>{x.name}</option>)}</select><button disabled={busy}>Invitar</button></form><div className="business-list compact">{team.map(item => <article key={item.id}><strong>{item.name}</strong><span>{item.role} · {item.isActive ? 'Activo' : 'Inactivo'}</span>{canDeactivateMembers && item.role !== 'Owner' && item.isActive && <button disabled={busy} onClick={() => void deactivateMember(item.id)}>Desactivar</button>}</article>)}</div></>}
     </section>
   )
 }

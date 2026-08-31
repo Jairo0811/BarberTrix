@@ -1,6 +1,7 @@
 import type { Auth, Barber } from './types'
 import './business-modules.css'
 import './role-portals.css'
+import type { AdminPageId } from './portals/admin/adminRoutes'
 import type { Capabilities, Shop } from './portals/admin/commercialTypes'
 import AppointmentsSection from './features/appointments/components/AppointmentsSection'
 import CustomersSection from './features/customers/components/CustomersSection'
@@ -10,7 +11,10 @@ import TeamSection from './features/team/components/TeamSection'
 import LocationsSection from './features/locations/components/LocationsSection'
 import BillingSection from './features/billing/components/BillingSection'
 
+type BusinessPageId = Extract<AdminPageId, 'appointments' | 'customers' | 'payments' | 'reports' | 'team' | 'locations' | 'billing'>
+
 type Props = {
+  page: BusinessPageId
   auth: Auth
   barbers: Barber[]
   isDemo: boolean
@@ -20,17 +24,17 @@ type Props = {
   onShopUpdated: () => Promise<void>
 }
 
-export default function BusinessModules({ auth, barbers, isDemo, isSystemAdmin, shop, capabilities, onShopUpdated }: Props) {
+export default function BusinessModules({ page, auth, barbers, isDemo, isSystemAdmin, shop, capabilities, onShopUpdated }: Props) {
   const elevated = auth.role === 'Owner' || auth.role === 'Administrator'
   const hasOwnerAccess = auth.role === 'Owner' || isSystemAdmin
 
-  return <>
-    <AppointmentsSection isDemo={isDemo} shop={shop} capabilities={capabilities} />
-    <CustomersSection isDemo={isDemo} />
-    {elevated && <PaymentsSection isDemo={isDemo} />}
-    {elevated && <ReportsSection isDemo={isDemo} capabilities={capabilities} />}
-    {elevated && <TeamSection auth={auth} barbers={barbers} isDemo={isDemo} isSystemAdmin={isSystemAdmin} />}
-    {hasOwnerAccess && <LocationsSection isDemo={isDemo} shop={shop} onShopUpdated={onShopUpdated} />}
-    {hasOwnerAccess && <BillingSection isDemo={isDemo} shop={shop} capabilities={capabilities} />}
-  </>
+  if (page === 'appointments') return <AppointmentsSection isDemo={isDemo} shop={shop} capabilities={capabilities} />
+  if (page === 'customers') return <CustomersSection isDemo={isDemo} />
+  if (page === 'payments') return elevated ? <PaymentsSection isDemo={isDemo} /> : null
+  if (page === 'reports') return elevated ? <ReportsSection isDemo={isDemo} capabilities={capabilities} /> : null
+  if (page === 'team') return elevated ? <TeamSection auth={auth} barbers={barbers} isDemo={isDemo} isSystemAdmin={isSystemAdmin} /> : null
+  if (page === 'locations') return hasOwnerAccess ? <LocationsSection isDemo={isDemo} shop={shop} onShopUpdated={onShopUpdated} /> : null
+  if (page === 'billing') return hasOwnerAccess ? <BillingSection isDemo={isDemo} shop={shop} capabilities={capabilities} /> : null
+
+  return null
 }

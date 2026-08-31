@@ -29,7 +29,7 @@ export default function BusinessModules({ auth, barbers, isDemo, isSystemAdmin, 
     <CustomersSection isDemo={isDemo} />
     {elevated && <PaymentsSection isDemo={isDemo} />}
     {elevated && <ReportsSection isDemo={isDemo} capabilities={capabilities} />}
-    {elevated && <TeamSection auth={auth} barbers={barbers} isDemo={isDemo} />}
+    {elevated && <TeamSection auth={auth} barbers={barbers} isDemo={isDemo} isSystemAdmin={isSystemAdmin} />}
     {hasOwnerAccess && <LocationsSection isDemo={isDemo} shop={shop} onShopUpdated={onShopUpdated} />}
     {hasOwnerAccess && <BillingSection isDemo={isDemo} shop={shop} capabilities={capabilities} />}
   </>

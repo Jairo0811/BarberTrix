@@ -1,5 +1,17 @@
 import { useMemo } from 'react'
-import { faBolt, faChartColumn, faClock, faHouse, faListOl, faScissors, faTv, faUserTie, faUsers } from '@fortawesome/free-solid-svg-icons'
+import {
+  faBuilding,
+  faCalendarCheck,
+  faCashRegister,
+  faChartColumn,
+  faCreditCard,
+  faHouse,
+  faListOl,
+  faScissors,
+  faUserGroup,
+  faUserTie,
+  faUsers,
+} from '@fortawesome/free-solid-svg-icons'
 import type { Auth } from './types'
 import { useI18n } from './i18n'
 import './dashboard.css'
@@ -34,15 +46,15 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
   const navItems = useMemo(() => [
     { id: 'dashboard-overview', label: copy.dashboard, icon: faHouse },
     { id: 'queue-section', label: copy.queueLive, icon: faListOl },
+    { id: 'appointments-section', label: copy.appointments, icon: faCalendarCheck },
     { id: 'barbers-section', label: copy.barbers, icon: faUserTie },
     { id: 'services-section', label: copy.services, icon: faScissors, requiresCatalogAccess: true },
-    { id: 'appointments-section', label: 'Citas', icon: faClock },
     { id: 'customers-section', label: copy.customers, icon: faUsers },
-    { id: 'payments-section', label: 'Caja', icon: faBolt, requiresCatalogAccess: true },
+    { id: 'payments-section', label: copy.payments, icon: faCashRegister, requiresCatalogAccess: true },
     { id: 'reports-section', label: copy.reports, icon: faChartColumn, requiresCatalogAccess: true },
-    { id: 'team-section', label: 'Equipo', icon: faUserTie, requiresCatalogAccess: true },
-    { id: 'locations-section', label: 'Sucursales', icon: faHouse, requiresOwner: true },
-    { id: 'billing-section', label: 'Suscripción', icon: faTv, requiresOwner: true },
+    { id: 'team-section', label: copy.team, icon: faUserGroup, requiresCatalogAccess: true },
+    { id: 'locations-section', label: copy.locations, icon: faBuilding, requiresOwner: true },
+    { id: 'billing-section', label: copy.billing, icon: faCreditCard, requiresOwner: true },
   ], [copy])
   const visibleNavItems = useMemo(
     () => navItems.filter(item => (!item.requiresCatalogAccess || canManageCatalog) && (!item.requiresOwner || hasOwnerAccess)),

@@ -91,9 +91,11 @@ function Root() {
 
   useEffect(() => {
     const routeLabel = t(routeLabelKeys[route])
-    document.title = route === 'home'
-      ? 'BarberTurn | Tu Turno, Tu Estilo, Tu Tiempo'
-      : `${route === 'customer' ? 'Portal del cliente' : routeLabel} | BarberTurn`
+    if (!isAdminAppHash()) {
+      document.title = route === 'home'
+        ? 'BarberTurn | Tu Turno, Tu Estilo, Tu Tiempo'
+        : `${route === 'customer' ? 'Portal del cliente' : routeLabel} | BarberTurn`
+    }
 
     const frame = window.requestAnimationFrame(() => {
       const main = document.querySelector<HTMLElement>('main')

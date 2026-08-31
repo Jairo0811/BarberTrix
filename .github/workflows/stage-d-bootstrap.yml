@@ -48,13 +48,16 @@ jobs:
           node-version: 22.13.1
       - name: Apply Stage D changes
         run: python3 .github/scripts/stage_d_bootstrap.py
+      - name: Restore backend
+        run: dotnet restore backend/src/BarberTurn.Api/BarberTurn.Api.csproj
       - name: Generate EF migration
         run: |
           dotnet tool install --global dotnet-ef --version 10.*
           dotnet ef migrations add BarberJoinRequests \
             --project backend/src/BarberTurn.Infrastructure/BarberTurn.Infrastructure.csproj \
             --startup-project backend/src/BarberTurn.Api/BarberTurn.Api.csproj \
-            --output-dir Persistence/Migrations
+            --output-dir Persistence/Migrations \
+            --no-build
       - name: Validate backend
         run: |
           dotnet build backend/src/BarberTurn.Api/BarberTurn.Api.csproj -c Release --nologo

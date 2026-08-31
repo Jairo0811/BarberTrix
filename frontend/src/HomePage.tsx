@@ -38,19 +38,22 @@ type LocalizedPlan = {
 
 const localizedPlans: Record<Locale, LocalizedPlan[]> = {
   'es-419': [
-    { name: 'Starter', price: 'US$20.00', description: 'Para barberías pequeñas que quieren organizar su fila sin complicaciones.', features: ['1 barbería', 'Hasta 3 barberos', 'Gestión de turnos', 'Servicios ilimitados', 'Panel operativo'] },
-    { name: 'Pro', price: 'US$40.00', description: 'La experiencia completa para barberías con mayor volumen de clientes.', features: ['1 barbería', 'Hasta 10 barberos', 'Todo lo de Starter', 'BarberTurn TV', 'Citas y fila híbrida', 'Reportes avanzados'], featured: true },
-    { name: 'Business', price: 'US$70.00', description: 'Para operaciones con equipos grandes y necesidades de gestión avanzadas.', features: ['Hasta 3 sucursales', 'Barberos ilimitados', 'Todo lo de Pro', 'Roles y permisos', 'Analítica avanzada', 'Soporte prioritario'] },
+    { name: 'Free', price: 'US$0', description: 'Para empezar a operar BarberTurn sin tarjeta y probar la cola con clientes reales.', features: ['100 turnos/mes + 10 de tolerancia', 'Hasta 2 barberos', 'Hasta 5 servicios', 'QR y enlace público', 'Notificaciones esenciales', 'Historial de 7 días'] },
+    { name: 'Starter', price: 'US$20.00', description: 'Para barberías pequeñas que ya usan BarberTurn todos los días.', features: ['1,000 turnos/mes', 'Hasta 5 barberos', 'Servicios ilimitados', 'Historial de 90 días', 'Cola y métricas operativas'] },
+    { name: 'Pro', price: 'US$40.00', description: 'Para automatizar la operación, las citas y la experiencia del cliente.', features: ['Turnos de alto volumen', 'Hasta 10 barberos', 'Citas y reservas online', 'BarberTurn TV', 'CRM y caja', 'Automatizaciones avanzadas'], featured: true },
+    { name: 'Business', price: 'US$70.00', description: 'Para operaciones con varias sucursales, analítica y control empresarial.', features: ['Hasta 3 sucursales', 'Barberos ilimitados', 'Todo lo de Pro', 'Reportes avanzados', 'Roles y auditoría avanzada', 'Soporte prioritario'] },
   ],
   en: [
-    { name: 'Starter', price: 'US$20.00', description: 'For small barbershops that want to organize their queue without complexity.', features: ['1 barbershop', 'Up to 3 barbers', 'Queue management', 'Unlimited services', 'Operations dashboard'] },
-    { name: 'Pro', price: 'US$40.00', description: 'The complete experience for busier barbershops with higher customer volume.', features: ['1 barbershop', 'Up to 10 barbers', 'Everything in Starter', 'BarberTurn TV', 'Appointments and hybrid queue', 'Advanced reports'], featured: true },
-    { name: 'Business', price: 'US$70.00', description: 'For larger teams and more advanced management needs.', features: ['Up to 3 locations', 'Unlimited barbers', 'Everything in Pro', 'Roles and permissions', 'Advanced analytics', 'Priority support'] },
+    { name: 'Free', price: 'US$0', description: 'Start operating BarberTurn without a card and try the queue with real customers.', features: ['100 turns/month + 10 grace', 'Up to 2 barbers', 'Up to 5 services', 'Public QR and link', 'Essential notifications', '7-day history'] },
+    { name: 'Starter', price: 'US$20.00', description: 'For small barbershops that already use BarberTurn every day.', features: ['1,000 turns/month', 'Up to 5 barbers', 'Unlimited services', '90-day history', 'Queue and operational metrics'] },
+    { name: 'Pro', price: 'US$40.00', description: 'Automate operations, appointments and the customer experience.', features: ['High-volume turns', 'Up to 10 barbers', 'Appointments and online booking', 'BarberTurn TV', 'CRM and cash management', 'Advanced automations'], featured: true },
+    { name: 'Business', price: 'US$70.00', description: 'For multi-location operations, analytics and enterprise control.', features: ['Up to 3 locations', 'Unlimited barbers', 'Everything in Pro', 'Advanced reports', 'Advanced roles and audit', 'Priority support'] },
   ],
   'es-ES': [
-    { name: 'Starter', price: 'US$20.00', description: 'Para barberías pequeñas que quieren organizar su cola sin complicaciones.', features: ['1 barbería', 'Hasta 3 barberos', 'Gestión de turnos', 'Servicios ilimitados', 'Panel operativo'] },
-    { name: 'Pro', price: 'US$40.00', description: 'La experiencia completa para barberías con mayor volumen de clientes.', features: ['1 barbería', 'Hasta 10 barberos', 'Todo lo de Starter', 'BarberTurn TV', 'Citas y cola híbrida', 'Informes avanzados'], featured: true },
-    { name: 'Business', price: 'US$70.00', description: 'Para negocios con equipos grandes y necesidades de gestión avanzadas.', features: ['Hasta 3 locales', 'Barberos ilimitados', 'Todo lo de Pro', 'Roles y permisos', 'Analítica avanzada', 'Soporte prioritario'] },
+    { name: 'Free', price: 'US$0', description: 'Para empezar a operar BarberTurn sin tarjeta y probar la cola con clientes reales.', features: ['100 turnos/mes + 10 de tolerancia', 'Hasta 2 barberos', 'Hasta 5 servicios', 'QR y enlace público', 'Notificaciones esenciales', 'Historial de 7 días'] },
+    { name: 'Starter', price: 'US$20.00', description: 'Para barberías pequeñas que ya utilizan BarberTurn cada día.', features: ['1.000 turnos/mes', 'Hasta 5 barberos', 'Servicios ilimitados', 'Historial de 90 días', 'Cola y métricas operativas'] },
+    { name: 'Pro', price: 'US$40.00', description: 'Para automatizar la operación, las citas y la experiencia del cliente.', features: ['Turnos de alto volumen', 'Hasta 10 barberos', 'Citas y reservas online', 'BarberTurn TV', 'CRM y caja', 'Automatizaciones avanzadas'], featured: true },
+    { name: 'Business', price: 'US$70.00', description: 'Para negocios con varios locales, analítica y control empresarial.', features: ['Hasta 3 locales', 'Barberos ilimitados', 'Todo lo de Pro', 'Informes avanzados', 'Roles y auditoría avanzada', 'Soporte prioritario'] },
   ],
 }
 

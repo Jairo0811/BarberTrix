@@ -83,6 +83,8 @@ internal sealed class PayPalBillingService(
     public async Task<CheckoutResponse> CreateCheckoutAsync(Guid barberShopId, CheckoutRequest request, CancellationToken cancellationToken = default)
     {
         _ = await dbContext.BarberShops.AsNoTracking().SingleAsync(x => x.Id == barberShopId, cancellationToken);
+        if (request.Plan == SubscriptionPlan.Free)
+            throw new InvalidOperationException("Free does not require a PayPal subscription.");
         ValidateRedirect(request.ReturnUrl);
         ValidateRedirect(request.CancelUrl);
         var planId = configuration[$"PayPal:PlanIds:{request.Plan}"];
@@ -142,8 +144,8 @@ internal sealed class PayPalBillingService(
     {
         var shop = await dbContext.BarberShops.AsNoTracking().SingleAsync(x => x.Id == barberShopId, cancellationToken);
         var subscription = await dbContext.Subscriptions.AsNoTracking().Where(x => x.BarberShopId == barberShopId).OrderByDescending(x => x.CreatedAtUtc).FirstOrDefaultAsync(cancellationToken);
-        return subscription is null
-            ? new SubscriptionResponse(shop.Plan, shop.SubscriptionStatus, "Trial", shop.TrialEndsAtUtc, false)
+        return subscription is null || subscription.Status is not (SubscriptionStatus.Active or SubscriptionStatus.Trialing)
+            ? new SubscriptionResponse(SubscriptionPlan.Free, SubscriptionStatus.Active, "Free", null, false)
             : new SubscriptionResponse(subscription.Plan, subscription.Status, subscription.Provider, subscription.PeriodEndsAtUtc, subscription.CancelAtPeriodEnd);
     }
 
@@ -163,7 +165,7 @@ internal sealed class PayPalBillingService(
         if (!atPeriodEnd)
         {
             var shop = await dbContext.BarberShops.SingleAsync(x => x.Id == barberShopId, cancellationToken);
-            shop.ChangeSubscription(shop.Plan, SubscriptionStatus.Cancelled);
+            shop.ChangeSubscription(SubscriptionPlan.Free, SubscriptionStatus.Active);
         }
         await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -249,7 +251,9 @@ internal sealed class PayPalBillingService(
 
         ApplyWebhookEvent(subscription, eventType, resource, occurredAt.Value);
         var shop = await dbContext.BarberShops.SingleAsync(x => x.Id == subscription.BarberShopId, cancellationToken);
-        shop.ChangeSubscription(subscription.Plan, subscription.Status);
+        shop.ChangeSubscription(
+            subscription.Status is SubscriptionStatus.Active or SubscriptionStatus.Trialing ? subscription.Plan : SubscriptionPlan.Free,
+            subscription.Status is SubscriptionStatus.Active or SubscriptionStatus.Trialing ? subscription.Status : SubscriptionStatus.Active);
         await InsertWebhookReceiptAsync(eventId, eventType, providerId, occurredAt.Value, true, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);

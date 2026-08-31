@@ -75,7 +75,7 @@ const dictionary = {
   "home.contact.grow": "Preparado para crecer contigo",
   "home.contact.cardTitle": "Empieza con BarberTurn",
   "home.contact.cardText": "Crea tu cuenta y prepara tu barbería para gestionar sus primeros turnos.",
-  "home.contact.cardNote": "Sin tarjeta para comenzar la etapa de prueba.",
+  "home.contact.cardNote": "Sin tarjeta para comenzar con Free.",
   "home.support.kicker": "SOPORTE",
   "home.support.title": "¿Algo falló? Estamos para ayudarte.",
   "home.support.text": "Si no puedes iniciar sesión, encuentras un error o necesitas ayuda con tu cuenta, puedes contactar soporte directamente.",

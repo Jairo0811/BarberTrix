@@ -1,3 +1,9 @@
+## Unreleased - Free plan and turn quotas
+
+- Added a permanent Free tier with 100 monthly turns plus a 10-turn grace allowance, 2 active barbers, 5 active services and 7-day queue history.
+- Starter now supports 1,000 monthly turns, 5 active barbers and 90-day history; Pro owns appointments/TV/advanced automation; Business owns advanced reports and multi-location.
+- Essential mobile push notifications remain available on Free. Cancelling or losing a paid subscription now falls back to Free instead of disabling the tenant.
+
 ## Unreleased - Barber onboarding Stage D
 
 - Added barber-to-shop join requests with owner/admin approval and rejection.

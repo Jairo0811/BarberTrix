@@ -56,7 +56,7 @@ El checklist de cierre está documentado en [`docs/web-v1-finalization.md`](docs
 - 🧑‍🤝‍🧑 equipo, invitaciones y roles;
 - 🏪 sucursales y configuración por barbería;
 - 🧾 auditoría de operaciones;
-- 💳 planes Starter / Pro / Business;
+- 💳 planes Free / Starter / Pro / Business;
 - 💰 suscripciones SaaS mediante PayPal;
 - 🔒 capacidades y límites aplicados también en backend.
 
@@ -90,16 +90,20 @@ Los clientes pueden tomar turnos y reservar citas sin crear una cuenta. Una cuen
 
 Las capacidades se validan en servidor; ocultar o bloquear una opción en React nunca es el único control.
 
-| Capacidad | Starter | Pro | Business |
-|---|:---:|:---:|:---:|
-| Cola por llegada | ✅ | ✅ | ✅ |
-| Gestión básica de barberos/servicios | ✅ | ✅ | ✅ |
-| Citas | ❌ | ✅ | ✅ |
-| BarberTurn TV | ❌ | ✅ | ✅ |
-| Reportes avanzados | ❌ | ❌ | ✅ |
-| Suscripción y límites de uso | ✅ | ✅ | ✅ |
+| Capacidad | Free | Starter | Pro | Business |
+|---|:---:|:---:|:---:|:---:|
+| Cola por llegada | ✅ 100/mes (+10 tolerancia) | ✅ 1,000/mes | ✅ alto volumen | ✅ alto volumen |
+| Barberos activos | 2 | 5 | 10 | Ilimitados |
+| Servicios activos | 5 | Ilimitados | Ilimitados | Ilimitados |
+| Historial de turnos | 7 días | 90 días | Completo | Completo |
+| Notificaciones esenciales | ✅ | ✅ | ✅ | ✅ |
+| Citas | ❌ | ❌ | ✅ | ✅ |
+| BarberTurn TV | ❌ | ❌ | ✅ | ✅ |
+| Automatizaciones avanzadas | ❌ | ❌ | ✅ | ✅ |
+| Reportes avanzados | ❌ | ❌ | ❌ | ✅ |
+| Multi-location | 1 | 1 | 1 | Hasta 3 |
 
-Las reglas comerciales pueden evolucionar antes de la salida pública; el backend es la fuente de verdad para entitlements.
+Free es el piso permanente: cancelar o perder una suscripción no elimina datos ni bloquea seguridad, identidad, notificaciones esenciales o turnos existentes. El backend es la fuente de verdad para entitlements. Consulta [`docs/plans-and-entitlements.md`](docs/plans-and-entitlements.md).
 
 ## 🧰 Stack tecnológico
 

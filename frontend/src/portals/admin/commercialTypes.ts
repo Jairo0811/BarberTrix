@@ -60,7 +60,7 @@ export type Report = {
 }
 export type TeamMember = { id: string; name: string; email: string; role: string; isActive: boolean }
 export type Subscription = { plan: string; status: string; provider: string; periodEndsAtUtc?: string; cancelAtPeriodEnd: boolean }
-export type Capabilities = { plan: string; status: string; activeBarbers: number; barberLimit: number; activeLocations: number; locationLimit: number; canUseAppointments: boolean; canUseTv: boolean; canUseAdvancedReports: boolean; isDemo: boolean; isSystemAdmin: boolean }
+export type Capabilities = { plan: string; status: string; activeBarbers: number; barberLimit: number; activeServices: number; serviceLimit: number; activeLocations: number; locationLimit: number; turnsThisMonth: number; monthlyTurnLimit: number; monthlyTurnGraceLimit: number; historyRetentionDays: number; canUseAppointments: boolean; canUseTv: boolean; canUseAdvancedReports: boolean; canUseAdvancedAutomation: boolean; isDemo: boolean; isSystemAdmin: boolean }
 export type Shop = { name: string; slug: string; timeZoneId: string }
 export type Location = { id: string; name: string; slug: string; address?: string; timeZoneId: string; isActive: boolean }
 export type Payment = {

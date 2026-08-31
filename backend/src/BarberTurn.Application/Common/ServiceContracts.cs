@@ -24,13 +24,16 @@ public enum PlanFeature
 {
     Appointments,
     Tv,
-    AdvancedReports
+    AdvancedReports,
+    AdvancedAutomation
 }
 
 public interface IPlanLimitService
 {
     Task EnsureCanAddBarberAsync(Guid barberShopId, CancellationToken cancellationToken = default);
+    Task EnsureCanAddServiceAsync(Guid barberShopId, CancellationToken cancellationToken = default);
     Task EnsureCanAddLocationAsync(Guid barberShopId, CancellationToken cancellationToken = default);
+    Task EnsureCanCreateTurnAsync(Guid barberShopId, CancellationToken cancellationToken = default);
     Task EnsureCanUseAsync(Guid barberShopId, PlanFeature feature, CancellationToken cancellationToken = default);
     Task<PlanUsageResponse> GetUsageAsync(Guid barberShopId, CancellationToken cancellationToken = default);
 }
@@ -40,11 +43,18 @@ public sealed record PlanUsageResponse(
     SubscriptionStatus Status,
     int ActiveBarbers,
     int BarberLimit,
+    int ActiveServices,
+    int ServiceLimit,
     int ActiveLocations,
     int LocationLimit,
+    int TurnsThisMonth,
+    int MonthlyTurnLimit,
+    int MonthlyTurnGraceLimit,
+    int HistoryRetentionDays,
     bool CanUseAppointments,
     bool CanUseTv,
     bool CanUseAdvancedReports,
+    bool CanUseAdvancedAutomation,
     bool IsDemo,
     bool IsSystemAdmin);
 

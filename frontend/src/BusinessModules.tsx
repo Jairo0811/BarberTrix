@@ -1,5 +1,6 @@
 import type { Auth, Barber } from './types'
-import './business-modules.css'
+import './shared/styles/commercial.css'
+import './features/appointments/appointments.css'
 import './role-portals.css'
 import type { BusinessPageId } from './portals/admin/adminRoutes'
 import type { Capabilities, Shop } from './portals/admin/commercialTypes'

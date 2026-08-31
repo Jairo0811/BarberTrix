@@ -8,6 +8,8 @@ describe('admin route helpers', () => {
   })
 
   it('parses valid admin pages and falls back safely', () => {
+    expect(readAdminPage('#/app')).toBe('overview')
+    expect(readAdminPage('#/app/')).toBe('overview')
     expect(readAdminPage('#/app/queue')).toBe('queue')
     expect(readAdminPage('#/app/customers?source=test')).toBe('customers')
     expect(readAdminPage('#/app/not-a-page')).toBe('overview')

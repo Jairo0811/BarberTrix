@@ -1,6 +1,7 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBolt, faClock, faFlask, faListOl, faPlus, faRotate, faScissors, faShieldHalved, faUserTie } from '@fortawesome/free-solid-svg-icons'
 import type { Auth, Barber, Service, Turn } from '../../../types'
+import type { AdminPageId } from '../../../portals/admin/adminRoutes'
 
 type DashboardCopy = Record<string, string>
 
@@ -17,7 +18,7 @@ type Props = {
   loading: boolean
   error: string
   onRefresh: () => void
-  onNavigate: (sectionId: string) => void
+  onNavigate: (page: AdminPageId) => void
   formatRole: (role: string) => string
 }
 
@@ -61,9 +62,9 @@ export default function DashboardOverviewSection({ auth, isDemo, canManageCatalo
         <article className="dashboard-card dashboard-actions-card">
           <div className="dashboard-card-header"><div><h2><FontAwesomeIcon icon={faBolt} /> {c.quickActions}</h2><p>{c.frequentActions}</p></div></div>
           <div className="quick-actions">
-            <button type="button" onClick={() => onNavigate('queue-section')}><span className="quick-icon"><FontAwesomeIcon icon={faPlus} /></span>{c.createTurn}</button>
-            <button type="button" onClick={() => onNavigate('barbers-section')}><span className="quick-icon"><FontAwesomeIcon icon={faUserTie} /></span>{c.manageBarbers}</button>
-            {canManageCatalog && <button type="button" onClick={() => onNavigate('services-section')}><span className="quick-icon"><FontAwesomeIcon icon={faScissors} /></span>{c.manageServices}</button>}
+            <button type="button" onClick={() => onNavigate('queue')}><span className="quick-icon"><FontAwesomeIcon icon={faPlus} /></span>{c.createTurn}</button>
+            <button type="button" onClick={() => onNavigate('barbers')}><span className="quick-icon"><FontAwesomeIcon icon={faUserTie} /></span>{c.manageBarbers}</button>
+            {canManageCatalog && <button type="button" onClick={() => onNavigate('services')}><span className="quick-icon"><FontAwesomeIcon icon={faScissors} /></span>{c.manageServices}</button>}
             <button type="button" disabled={loading} onClick={onRefresh}><span className="quick-icon"><FontAwesomeIcon icon={faRotate} /></span>{c.refreshOperation}</button>
           </div>
         </article>

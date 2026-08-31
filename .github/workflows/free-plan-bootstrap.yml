@@ -1,0 +1,72 @@
+name: Free plan bootstrap
+
+on:
+  push:
+    branches:
+      - feat/free-plan-turn-limits
+    paths:
+      - .github/scripts/free_plan_patch.py
+      - .github/workflows/free-plan-bootstrap.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-validate:
+    runs-on: ubuntu-24.04
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_PID: Developer
+          MSSQL_SA_PASSWORD: BarberTurn_CI_2026!Secure
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "bash -c 'cat < /dev/null > /dev/tcp/localhost/1433'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 15
+          --health-start-period 20s
+    env:
+      BARBERTURN_TEST_CONNECTION: Server=localhost,1433;Database=BarberTurnFreePlanCi;User Id=sa;Password=BarberTurn_CI_2026!Secure;Encrypt=True;TrustServerCertificate=True
+      ConnectionStrings__DefaultConnection: Server=localhost,1433;Database=BarberTurnFreePlanCi;User Id=sa;Password=BarberTurn_CI_2026!Secure;Encrypt=True;TrustServerCertificate=True
+      Jwt__Key: ci-only-jwt-key-with-more-than-thirty-two-characters-2026
+      Database__ApplyMigrations: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/free-plan-turn-limits
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Apply product patch
+        run: python3 .github/scripts/free_plan_patch.py
+      - name: Validate backend
+        run: |
+          dotnet build backend/src/BarberTurn.Api/BarberTurn.Api.csproj -c Release --nologo
+          dotnet test backend/tests/BarberTurn.Domain.Tests/BarberTurn.Domain.Tests.csproj -c Release --nologo
+          dotnet test backend/tests/BarberTurn.Api.Tests/BarberTurn.Api.Tests.csproj -c Release --nologo
+      - name: Validate frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run test -- --run
+          npm run build
+      - name: Validate mobile
+        working-directory: mobile
+        run: |
+          npm ci
+          npx tsc --noEmit
+      - name: Commit product changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "feat: add permanent free plan and turn quotas"
+          git push origin HEAD:feat/free-plan-turn-limits

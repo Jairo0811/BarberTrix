@@ -25,7 +25,7 @@ test('owner creates and reschedules an appointment from the operational agenda',
 
   await expect(page.getByText('Ana Pérez')).toBeVisible()
   await expect(page.getByText('Corte clásico · Carlos')).toBeVisible()
-  await expect(page.getByText('Confirmada')).toBeVisible()
+  await expect(page.locator('.appointment-status').getByText('Confirmada', { exact: true })).toBeVisible()
 
   await page.getByRole('button', { name: 'Reprogramar' }).click()
   const modal = page.getByRole('dialog', { name: 'Ana Pérez' })

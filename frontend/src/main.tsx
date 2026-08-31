@@ -63,6 +63,49 @@ const publicRouteByPath: Record<string, PublicRoute> = {
   '/privacy': 'privacy',
 }
 
+const landingSectionIds = new Set(['inicio', 'caracteristicas', 'precios', 'contacto'])
+let initialLandingSection: string | null = null
+
+if (window.location.hash === '#billing-section') {
+  window.history.replaceState(null, '', '#/app/billing')
+} else {
+  const legacySection = window.location.hash.slice(1)
+  if (landingSectionIds.has(legacySection)) {
+    initialLandingSection = legacySection
+    window.history.replaceState(null, '', '#/')
+  }
+}
+
+function InPageAnchorCompatibility() {
+  useEffect(() => {
+    if (initialLandingSection) {
+      const sectionId = initialLandingSection
+      initialLandingSection = null
+      window.requestAnimationFrame(() => document.getElementById(sectionId)?.scrollIntoView())
+    }
+
+    const handleAnchorClick = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+      const target = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>('a[href^="#"]') : null
+      const href = target?.getAttribute('href')
+      if (!href || href.startsWith('#/') || href === '#') return
+
+      const elementId = decodeURIComponent(href.slice(1))
+      const destination = document.getElementById(elementId)
+      if (!destination) return
+
+      event.preventDefault()
+      destination.scrollIntoView()
+      if (elementId === 'main-content') destination.focus({ preventScroll: true })
+    }
+
+    document.addEventListener('click', handleAnchorClick)
+    return () => document.removeEventListener('click', handleAnchorClick)
+  }, [])
+
+  return null
+}
+
 function RouteEffects() {
   const location = useLocation()
   const { t } = useI18n()
@@ -102,6 +145,7 @@ function RouteEffects() {
 function AppRoutes() {
   return (
     <>
+      <InPageAnchorCompatibility />
       <RouteEffects />
       <LanguageSwitcher />
       <Suspense fallback={<main><p>Cargando BarberTurn…</p></main>}>
@@ -126,10 +170,6 @@ function AppRoutes() {
       </Suspense>
     </>
   )
-}
-
-if (window.location.hash === '#billing-section') {
-  window.history.replaceState(null, '', '#/app/billing')
 }
 
 createRoot(document.getElementById('root')!).render(

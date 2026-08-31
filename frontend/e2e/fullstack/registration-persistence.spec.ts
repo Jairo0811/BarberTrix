@@ -7,6 +7,7 @@ test('owner registration persists through the real API and SQL Server', async ({
   const email = `fullstack-${suffix}@example.com`
   const password = 'Fullstack123!'
 
+  await page.addInitScript(() => localStorage.setItem('barberturn.locale', 'es-419'))
   await page.goto('/#/register')
 
   await page.locator('input[name="shopName"]').fill(shopName)
@@ -26,7 +27,7 @@ test('owner registration persists through the real API and SQL Server', async ({
   expect((await registrationResponse).ok()).toBeTruthy()
   expect((await initialMetricsResponse).ok()).toBeTruthy()
   await expect(page).toHaveURL(/#\/app\/overview$/)
-  await expect(page).toHaveTitle(/Panel \| BarberTurn/)
+  await expect(page).toHaveTitle(/Dashboard \| BarberTurn/)
   await expect(page.getByRole('heading', { name: 'Panel de administración' })).toBeVisible()
   await expect(page.locator('#queue-section')).toHaveCount(0)
 
@@ -56,6 +57,6 @@ test('owner registration persists through the real API and SQL Server', async ({
   expect((await loginResponse).ok()).toBeTruthy()
   expect((await persistedMetricsResponse).ok()).toBeTruthy()
   await expect(page).toHaveURL(/#\/app\/overview$/)
-  await expect(page).toHaveTitle(/Panel \| BarberTurn/)
+  await expect(page).toHaveTitle(/Dashboard \| BarberTurn/)
   await expect(page.getByRole('heading', { name: 'Panel de administración' })).toBeVisible()
 })

@@ -1,7 +1,7 @@
 import type { Auth, Barber } from './types'
 import './business-modules.css'
 import './role-portals.css'
-import type { AdminPageId } from './portals/admin/adminRoutes'
+import type { BusinessPageId } from './portals/admin/adminRoutes'
 import type { Capabilities, Shop } from './portals/admin/commercialTypes'
 import AppointmentsSection from './features/appointments/components/AppointmentsSection'
 import CustomersSection from './features/customers/components/CustomersSection'
@@ -10,8 +10,6 @@ import ReportsSection from './features/reports/components/ReportsSection'
 import TeamSection from './features/team/components/TeamSection'
 import LocationsSection from './features/locations/components/LocationsSection'
 import BillingSection from './features/billing/components/BillingSection'
-
-type BusinessPageId = Extract<AdminPageId, 'appointments' | 'customers' | 'payments' | 'reports' | 'team' | 'locations' | 'billing'>
 
 type Props = {
   page: BusinessPageId

@@ -45,6 +45,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - name: Normalize patch assumptions
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('.github/scripts/free_plan_patch.py')
+          text = path.read_text(encoding='utf-8')
+          text = text.replace(
+              '("frontend/src/i18n/es-ES/common.ts", \'"home.contact.cardNote": "Sin tarjeta para comenzar la etapa de prueba."\', \'"home.contact.cardNote": "Sin tarjeta para comenzar con Free."\')',
+              '("frontend/src/i18n/es-ES/common.ts", \'"home.contact.cardNote": "Sin tarjeta para comenzar el periodo de prueba."\', \'"home.contact.cardNote": "Sin tarjeta para comenzar con Free."\')')
+          text = text.replace(
+              'var paidEntitlement = rawStatus is SubscriptionStatus.Active or SubscriptionStatus.Trialing && shop.Plan != SubscriptionPlan.Free;',
+              'var paidEntitlement = (rawStatus is SubscriptionStatus.Active or SubscriptionStatus.Trialing) && shop.Plan != SubscriptionPlan.Free;')
+          path.write_text(text, encoding='utf-8')
+          PY
       - name: Apply product patch
         run: python3 .github/scripts/free_plan_patch.py
       - name: Validate backend

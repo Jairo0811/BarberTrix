@@ -94,8 +94,7 @@ app.MapAppointmentEndpoints();
 app.MapTurnRequestEndpoints();
 app.MapPushEndpoints();
 app.MapCommercialEndpoints();
+app.MapCustomerCrmEndpoints();
 app.MapHub<QueueHub>("/hubs/queue");
 
 app.Run();
-
-public partial class Program;

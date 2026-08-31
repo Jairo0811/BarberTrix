@@ -5,14 +5,14 @@ namespace BarberTurn.Domain.Tests;
 public sealed class IdentityEntityTests
 {
     [Fact]
-    public void BarberProfile_requires_user_and_display_name()
+    public void BarberProfileRequiresUserAndDisplayName()
     {
         Assert.Throws<ArgumentException>(() => new BarberProfile(Guid.Empty, "Carlos"));
         Assert.Throws<ArgumentException>(() => new BarberProfile(Guid.NewGuid(), " "));
     }
 
     [Fact]
-    public void BarberProfile_updates_professional_data()
+    public void BarberProfileUpdatesProfessionalData()
     {
         var profile = new BarberProfile(Guid.NewGuid(), " Carlos ");
 
@@ -24,7 +24,7 @@ public sealed class IdentityEntityTests
     }
 
     [Fact]
-    public void Barber_membership_requires_operational_barber_link()
+    public void BarberMembershipRequiresOperationalBarberLink()
     {
         Assert.Throws<ArgumentException>(() => new ShopMembership(
             Guid.NewGuid(),
@@ -33,7 +33,7 @@ public sealed class IdentityEntityTests
     }
 
     [Fact]
-    public void Owner_membership_does_not_keep_barber_link()
+    public void OwnerMembershipDoesNotKeepBarberLink()
     {
         var membership = new ShopMembership(
             Guid.NewGuid(),
@@ -46,7 +46,7 @@ public sealed class IdentityEntityTests
     }
 
     [Fact]
-    public void Membership_can_be_suspended_and_reactivated()
+    public void MembershipCanBeSuspendedAndReactivated()
     {
         var membership = new ShopMembership(
             Guid.NewGuid(),
@@ -63,7 +63,7 @@ public sealed class IdentityEntityTests
     }
 
     [Fact]
-    public void Ended_membership_cannot_be_suspended()
+    public void EndedMembershipCannotBeSuspended()
     {
         var membership = new ShopMembership(
             Guid.NewGuid(),

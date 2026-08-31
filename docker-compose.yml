@@ -6,7 +6,7 @@ services:
       MSSQL_PID: Developer
       MSSQL_SA_PASSWORD: ${BARBERTURN_DB_PASSWORD:?Set BARBERTURN_DB_PASSWORD in .env}
     ports:
-      - "1433:1433"
+      - "${BARBERTURN_DB_PORT:-14330}:1433"
     volumes:
       - barberturn-sqlserver:/var/opt/mssql
     healthcheck:

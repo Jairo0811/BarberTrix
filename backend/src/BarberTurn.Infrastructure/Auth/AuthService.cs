@@ -264,10 +264,15 @@ internal sealed class AuthService(
         if (request.Role == UserRole.Owner || string.IsNullOrWhiteSpace(request.Name) || string.IsNullOrWhiteSpace(request.Email))
             throw new ArgumentException("A valid name, email and non-owner role are required.");
         if (request.Role == UserRole.Barber && request.BarberId is null)
-            throw new ArgumentException("A barber account must be linked to a barber.");
+            throw new ArgumentException("A barber account must be linked to an operational barber.");
         var email = request.Email.Trim().ToLowerInvariant();
-        if (await dbContext.Users.AnyAsync(x => x.Email == email, cancellationToken))
-            throw new InvalidOperationException("A user with that email already exists.");
+        var existingUser = await dbContext.Users.SingleOrDefaultAsync(x => x.Email == email && x.IsActive, cancellationToken);
+        if (existingUser is not null)
+        {
+            if (request.Role != UserRole.Barber || existingUser.Role != UserRole.Barber || existingUser.BarberShopId.HasValue ||
+                !await dbContext.BarberProfiles.AnyAsync(x => x.UserId == existingUser.Id, cancellationToken))
+                throw new InvalidOperationException("Only an independent barber account can accept an invitation for an existing user.");
+        }
         if (request.BarberId is Guid barberId && !await dbContext.Barbers.AnyAsync(x => x.Id == barberId && x.BarberShopId == barberShopId, cancellationToken))
             throw new InvalidOperationException("The selected barber does not belong to this barbershop.");
         var raw = SecureToken.Create();
@@ -288,6 +293,32 @@ internal sealed class AuthService(
             ?? throw new InvalidOperationException("The invitation is invalid or expired.");
         if (!invitation.IsUsable)
             throw new InvalidOperationException("The invitation is invalid or expired.");
+        var existingUser = await dbContext.Users.SingleOrDefaultAsync(x => x.Email == invitation.Email && x.IsActive, cancellationToken);
+        if (existingUser is not null)
+        {
+            if (invitation.Role != UserRole.Barber || invitation.BarberId is null || existingUser.Role != UserRole.Barber || existingUser.BarberShopId.HasValue ||
+                !await dbContext.BarberProfiles.AnyAsync(x => x.UserId == existingUser.Id, cancellationToken))
+                throw new InvalidOperationException("The invitation cannot be applied to this existing account.");
+            if (passwordHasher.VerifyHashedPassword(existingUser, existingUser.PasswordHash, request.Password) == PasswordVerificationResult.Failed)
+                throw new InvalidOperationException("The current account password is invalid.");
+
+            var membership = await dbContext.ShopMemberships.SingleOrDefaultAsync(
+                x => x.UserId == existingUser.Id && x.BarberShopId == invitation.BarberShopId, cancellationToken);
+            if (membership is null)
+                dbContext.ShopMemberships.Add(new ShopMembership(existingUser.Id, invitation.BarberShopId, UserRole.Barber, invitation.BarberId));
+            else
+                membership.ReactivateAsBarber(invitation.BarberId.Value);
+
+            existingUser.AssignTenant(invitation.BarberShopId, UserRole.Barber, invitation.BarberId);
+            var pendingRequests = await dbContext.BarberJoinRequests
+                .Where(x => x.UserId == existingUser.Id && x.Status == BarberJoinRequestStatus.Pending)
+                .ToListAsync(cancellationToken);
+            pendingRequests.ForEach(x => x.Withdraw());
+            invitation.Accept();
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return await CreateSessionAsync(existingUser, userAgent, ipAddress, cancellationToken);
+        }
+
         var user = CreateUser(invitation.BarberShopId, invitation.Name, invitation.Email, request.Password, invitation.Role, invitation.BarberId);
         user.MarkEmailVerified();
         invitation.Accept();

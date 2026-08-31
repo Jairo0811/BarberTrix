@@ -9,6 +9,7 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
     public DbSet<User> Users => Set<User>();
     public DbSet<BarberProfile> BarberProfiles => Set<BarberProfile>();
     public DbSet<ShopMembership> ShopMemberships => Set<ShopMembership>();
+    public DbSet<BarberJoinRequest> BarberJoinRequests => Set<BarberJoinRequest>();
     public DbSet<Barber> Barbers => Set<Barber>();
     public DbSet<BarberService> BarberServices => Set<BarberService>();
     public DbSet<Turn> Turns => Set<Turn>();
@@ -78,6 +79,19 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
             entity.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<BarberShop>().WithMany().HasForeignKey(x => x.BarberShopId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<Barber>().WithMany().HasForeignKey(x => x.BarberId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<BarberJoinRequest>(entity =>
+        {
+            entity.ToTable("BarberJoinRequests");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Status).HasConversion<string>().HasMaxLength(30).IsRequired();
+            entity.Property(x => x.ReviewNote).HasMaxLength(500);
+            entity.HasIndex(x => new { x.UserId, x.BarberShopId }).IsUnique();
+            entity.HasIndex(x => new { x.BarberShopId, x.Status, x.CreatedAtUtc });
+            entity.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<BarberShop>().WithMany().HasForeignKey(x => x.BarberShopId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<User>().WithMany().HasForeignKey(x => x.ReviewedByUserId).OnDelete(DeleteBehavior.NoAction);
         });
 
         modelBuilder.Entity<Barber>(entity =>

@@ -5,6 +5,7 @@ using BarberTurn.Application.Cash;
 using BarberTurn.Application.Commercial;
 using BarberTurn.Application.Common;
 using BarberTurn.Application.Queue;
+using BarberTurn.Application.Onboarding;
 using BarberTurn.Application.Push;
 using BarberTurn.Application.TurnRequests;
 using BarberTurn.Domain.Entities;
@@ -15,6 +16,7 @@ using BarberTurn.Infrastructure.Commercial;
 using BarberTurn.Infrastructure.Common;
 using BarberTurn.Infrastructure.Persistence;
 using BarberTurn.Infrastructure.Queue;
+using BarberTurn.Infrastructure.Onboarding;
 using BarberTurn.Infrastructure.Push;
 using BarberTurn.Infrastructure.TurnRequests;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -41,6 +43,7 @@ public static class DependencyInjection
         services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IQueueService, QueueService>();
+        services.AddScoped<IBarberOnboardingService, BarberOnboardingService>();
         services.AddScoped<IAppointmentService, AppointmentService>();
         services.AddScoped<ITurnRequestService, TurnRequestService>();
         services.AddScoped<IPushSubscriptionService, PushSubscriptionService>();
@@ -128,6 +131,10 @@ public static class DependencyInjection
                     .RequireClaim("email_verified", "true")
                     .RequireClaim("barbershop_id")
                     .RequireClaim(System.Security.Claims.ClaimTypes.Role));
+            options.AddPolicy("OnboardingUser", policy =>
+                policy.RequireAuthenticatedUser()
+                    .RequireClaim("email_verified", "true")
+                    .RequireAssertion(context => !context.User.HasClaim(claim => claim.Type == "barbershop_id")));
         });
         return services;
     }

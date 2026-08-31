@@ -8,6 +8,15 @@ public sealed record ShopLocationResponse(Guid Id, Guid BarberShopId, string Nam
 public sealed record UpsertLocationRequest(string Name, string Slug, string? Address, string TimeZoneId);
 public sealed record CustomerResponse(Guid Id, string Name, string? Phone, string? Email, bool IsActive, DateTimeOffset CreatedAtUtc);
 public sealed record UpsertCustomerRequest(string Name, string? Phone, string? Email);
+public sealed record UpdateCustomerNoteRequest(string? Notes);
+public sealed record CustomerAppointmentResponse(Guid Id, DateTimeOffset StartsAtUtc, DateTimeOffset EndsAtUtc, string ServiceName, string BarberName, AppointmentStatus Status);
+public sealed record CustomerDetailResponse(
+    CustomerResponse Customer,
+    string? Notes,
+    int CompletedVisits,
+    DateTimeOffset? LastVisitAtUtc,
+    IReadOnlyDictionary<string, decimal> LifetimeSpendByCurrency,
+    IReadOnlyList<CustomerAppointmentResponse> RecentAppointments);
 public sealed record CreatePaymentRequest(decimal Amount, string Currency, PaymentMethod Method, Guid? TurnId, Guid? AppointmentId, Guid? CustomerId, string? ExternalReference);
 public sealed record PaymentResponse(Guid Id, decimal Amount, string Currency, PaymentMethod Method, PaymentStatus Status, Guid? TurnId, Guid? AppointmentId, Guid? CustomerId, string? ExternalReference, DateTimeOffset? PaidAtUtc);
 public sealed record BusinessReportResponse(DateOnly From, DateOnly To, int CompletedTurns, int CancelledTurns, int NoShows, int Appointments, decimal GrossRevenue, IReadOnlyDictionary<string, decimal> RevenueByMethod);
@@ -20,8 +29,10 @@ public interface ICommercialService
     Task<ShopLocationResponse> CreateLocationAsync(Guid barberShopId, UpsertLocationRequest request, CancellationToken cancellationToken = default);
     Task<ShopLocationResponse?> UpdateLocationAsync(Guid barberShopId, Guid locationId, UpsertLocationRequest request, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<CustomerResponse>> GetCustomersAsync(Guid barberShopId, string? search, int take, CancellationToken cancellationToken = default);
+    Task<CustomerDetailResponse?> GetCustomerDetailAsync(Guid barberShopId, Guid customerId, CancellationToken cancellationToken = default);
     Task<CustomerResponse> CreateCustomerAsync(Guid barberShopId, UpsertCustomerRequest request, CancellationToken cancellationToken = default);
     Task<CustomerResponse?> UpdateCustomerAsync(Guid barberShopId, Guid customerId, UpsertCustomerRequest request, CancellationToken cancellationToken = default);
+    Task<bool> UpdateCustomerNoteAsync(Guid barberShopId, Guid customerId, Guid? userId, string? notes, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<PaymentResponse>> GetPaymentsAsync(Guid barberShopId, DateTimeOffset fromUtc, DateTimeOffset toUtc, CancellationToken cancellationToken = default);
     Task<PaymentResponse> CreatePaymentAsync(Guid barberShopId, CreatePaymentRequest request, CancellationToken cancellationToken = default);
     Task<BusinessReportResponse> GetReportAsync(Guid barberShopId, DateOnly fromDate, DateOnly toDate, CancellationToken cancellationToken = default);

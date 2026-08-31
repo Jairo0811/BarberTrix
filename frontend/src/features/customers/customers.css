@@ -1,0 +1,206 @@
+.customer-crm {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.customer-crm-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.customer-crm-header p {
+  margin: .35rem 0 0;
+  color: var(--muted, #64748b);
+}
+
+.customer-crm-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, .85fr) minmax(0, 1.65fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.customer-directory,
+.customer-profile {
+  min-width: 0;
+}
+
+.customer-directory .business-toolbar {
+  margin-bottom: .85rem;
+}
+
+.customer-list {
+  display: grid;
+  gap: .6rem;
+  max-height: 720px;
+  overflow: auto;
+  padding-right: .25rem;
+}
+
+.customer-list-button {
+  width: 100%;
+  display: grid;
+  gap: .2rem;
+  padding: .85rem 1rem;
+  text-align: left;
+  border: 1px solid rgba(148, 163, 184, .24);
+  border-radius: 14px;
+  background: rgba(15, 23, 42, .03);
+  color: inherit;
+  cursor: pointer;
+}
+
+.customer-list-button:hover,
+.customer-list-button.active {
+  border-color: rgba(59, 130, 246, .48);
+  background: rgba(59, 130, 246, .08);
+}
+
+.customer-list-button strong,
+.customer-list-button span,
+.customer-list-button small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.customer-list-button span,
+.customer-list-button small,
+.customer-meta,
+.customer-profile-empty,
+.customer-appointment-card small {
+  color: var(--muted, #64748b);
+}
+
+.customer-profile {
+  display: grid;
+  gap: 1rem;
+}
+
+.customer-profile-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.customer-profile-heading h3 {
+  margin: .1rem 0 .3rem;
+}
+
+.customer-profile-actions {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
+.customer-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .75rem;
+}
+
+.customer-metric,
+.customer-note-card,
+.customer-history-card,
+.customer-edit-card,
+.customer-create-card {
+  border: 1px solid rgba(148, 163, 184, .22);
+  border-radius: 16px;
+  padding: 1rem;
+  background: rgba(15, 23, 42, .025);
+}
+
+.customer-metric {
+  display: grid;
+  gap: .3rem;
+}
+
+.customer-metric strong {
+  font-size: 1.35rem;
+}
+
+.customer-note-card textarea {
+  width: 100%;
+  min-height: 110px;
+  resize: vertical;
+  margin: .7rem 0;
+}
+
+.customer-history-list {
+  display: grid;
+  gap: .65rem;
+  margin-top: .8rem;
+}
+
+.customer-appointment-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: .35rem 1rem;
+  padding: .8rem 0;
+  border-bottom: 1px solid rgba(148, 163, 184, .16);
+}
+
+.customer-appointment-card:last-child {
+  border-bottom: 0;
+}
+
+.customer-appointment-card span {
+  grid-column: 1 / -1;
+}
+
+.customer-status {
+  align-self: start;
+  justify-self: end;
+  font-size: .78rem;
+  font-weight: 700;
+  padding: .28rem .55rem;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, .14);
+}
+
+.customer-profile-empty {
+  min-height: 320px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  border: 1px dashed rgba(148, 163, 184, .3);
+  border-radius: 16px;
+  padding: 2rem;
+}
+
+.customer-create-card .business-form,
+.customer-edit-card .business-form {
+  margin-top: .75rem;
+}
+
+@media (max-width: 980px) {
+  .customer-crm-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-list {
+    max-height: 360px;
+  }
+}
+
+@media (max-width: 640px) {
+  .customer-crm-header,
+  .customer-profile-heading {
+    flex-direction: column;
+  }
+
+  .customer-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-appointment-card {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-status {
+    justify-self: start;
+  }
+}

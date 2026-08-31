@@ -8,6 +8,9 @@ namespace BarberTurn.Infrastructure.Commercial;
 
 internal sealed class CommercialService(ApplicationDbContext dbContext) : ICommercialService
 {
+    private const string CustomerNoteAction = "CustomerNoteUpdated";
+    private const string CustomerResourceType = "Customer";
+
     public async Task<ShopSettingsResponse> GetShopSettingsAsync(Guid barberShopId, CancellationToken cancellationToken = default) =>
         await dbContext.BarberShops.AsNoTracking()
             .Where(x => x.Id == barberShopId)
@@ -58,6 +61,58 @@ internal sealed class CommercialService(ApplicationDbContext dbContext) : IComme
         return await query.OrderBy(x => x.Name).Take(Math.Clamp(take, 1, 500)).Select(MapCustomer()).ToListAsync(cancellationToken);
     }
 
+    public async Task<CustomerDetailResponse?> GetCustomerDetailAsync(Guid barberShopId, Guid customerId, CancellationToken cancellationToken = default)
+    {
+        var customer = await dbContext.Customers.AsNoTracking()
+            .Where(x => x.Id == customerId && x.BarberShopId == barberShopId)
+            .Select(MapCustomer())
+            .SingleOrDefaultAsync(cancellationToken);
+        if (customer is null)
+            return null;
+
+        var resourceId = customerId.ToString("D");
+        var notes = await dbContext.AuditLogs.AsNoTracking()
+            .Where(x => x.BarberShopId == barberShopId
+                && x.Action == CustomerNoteAction
+                && x.ResourceType == CustomerResourceType
+                && x.ResourceId == resourceId)
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Select(x => x.Metadata)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var completedAppointments = dbContext.Appointments.AsNoTracking()
+            .Where(x => x.BarberShopId == barberShopId && x.CustomerId == customerId && x.Status == AppointmentStatus.Completed);
+        var completedVisits = await completedAppointments.CountAsync(cancellationToken);
+        var lastVisitAtUtc = await completedAppointments
+            .Select(x => (DateTimeOffset?)x.EndsAtUtc)
+            .MaxAsync(cancellationToken);
+
+        var spendRows = await dbContext.Payments.AsNoTracking()
+            .Where(x => x.BarberShopId == barberShopId && x.CustomerId == customerId && x.Status == PaymentStatus.Paid)
+            .GroupBy(x => x.Currency)
+            .Select(group => new { Currency = group.Key, Amount = group.Sum(x => x.Amount) })
+            .ToListAsync(cancellationToken);
+        var lifetimeSpendByCurrency = spendRows.ToDictionary(x => x.Currency, x => x.Amount, StringComparer.OrdinalIgnoreCase);
+
+        var recentAppointments = await (
+            from appointment in dbContext.Appointments.AsNoTracking()
+            join service in dbContext.BarberServices.AsNoTracking() on appointment.ServiceId equals service.Id
+            join barber in dbContext.Barbers.AsNoTracking() on appointment.BarberId equals barber.Id
+            where appointment.BarberShopId == barberShopId && appointment.CustomerId == customerId
+            orderby appointment.StartsAtUtc descending
+            select new CustomerAppointmentResponse(
+                appointment.Id,
+                appointment.StartsAtUtc,
+                appointment.EndsAtUtc,
+                service.Name,
+                barber.Name,
+                appointment.Status))
+            .Take(12)
+            .ToListAsync(cancellationToken);
+
+        return new CustomerDetailResponse(customer, notes, completedVisits, lastVisitAtUtc, lifetimeSpendByCurrency, recentAppointments);
+    }
+
     public async Task<CustomerResponse> CreateCustomerAsync(Guid barberShopId, UpsertCustomerRequest request, CancellationToken cancellationToken = default)
     {
         await EnsureUniqueAsync(barberShopId, null, request.Phone, request.Email, cancellationToken);
@@ -76,6 +131,27 @@ internal sealed class CommercialService(ApplicationDbContext dbContext) : IComme
         customer.Update(request.Name, request.Phone, request.Email);
         await dbContext.SaveChangesAsync(cancellationToken);
         return ToResponse(customer);
+    }
+
+    public async Task<bool> UpdateCustomerNoteAsync(Guid barberShopId, Guid customerId, Guid? userId, string? notes, CancellationToken cancellationToken = default)
+    {
+        if (!await dbContext.Customers.AnyAsync(x => x.Id == customerId && x.BarberShopId == barberShopId, cancellationToken))
+            return false;
+
+        var normalizedNotes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
+        if (normalizedNotes?.Length > 1000)
+            throw new ArgumentException("Customer notes cannot exceed 1000 characters.", nameof(notes));
+
+        dbContext.AuditLogs.Add(new AuditLog(
+            barberShopId,
+            userId,
+            CustomerNoteAction,
+            CustomerResourceType,
+            customerId.ToString("D"),
+            normalizedNotes,
+            null));
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return true;
     }
 
     public async Task<IReadOnlyList<PaymentResponse>> GetPaymentsAsync(Guid barberShopId, DateTimeOffset fromUtc, DateTimeOffset toUtc, CancellationToken cancellationToken = default) =>

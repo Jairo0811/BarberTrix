@@ -17,7 +17,8 @@ El proyecto sigue [Semantic Versioning](https://semver.org/) y el formato de [Ke
 - BarberTurn Mobile M0/M1 con Expo Router, sesiones nativas y secretos en SecureStore;
 - BarberTurn Mobile M2 con solicitudes cliente → barbero, seguimiento privado, bandeja de personal y SignalR.
 - BarberTurn Mobile M3 con opt-in de notificaciones, registro seguro por instalación, navegación push allowlisted y outbox Expo con reintentos;
-- creación administrativa de citas para Owner, Administrator y Receptionist reutilizando las reglas de disponibilidad y concurrencia de la agenda.
+- creación administrativa de citas para Owner, Administrator y Receptionist reutilizando las reglas de disponibilidad y concurrencia de la agenda;
+- ficha CRM por cliente con visitas completadas, última visita, gasto acumulado por moneda, actividad reciente y notas internas versionadas en auditoría.
 
 ### Changed
 
@@ -29,6 +30,6 @@ El proyecto sigue [Semantic Versioning](https://semver.org/) y el formato de [Ke
 - paywalls y retorno de checkout alineados con la ruta dedicada `#/app/billing`, conservando compatibilidad con el hash histórico `#billing-section`;
 - módulo de Citas convertido en una agenda operativa con vistas Hoy/Semana, filtros por barbero y estado, agrupación diaria, creación desde administración y reprogramación mediante slots disponibles;
 - QR del portal del cliente integrado como herramienta secundaria dentro del workspace de Citas;
-- directorio de clientes con búsqueda local por nombre, teléfono o correo;
+- directorio de clientes convertido en workspace maestro-detalle con búsqueda, edición de contacto y contexto operativo del cliente;
 - consulta de caja limitada a movimientos históricos de los últimos 30 días y estados vacíos más claros;
 - fixtures de frontend alineados con la capacidad `isSystemAdmin` para mantener el build tipado en verde.

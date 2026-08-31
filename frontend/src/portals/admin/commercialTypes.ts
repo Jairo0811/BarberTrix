@@ -1,4 +1,20 @@
-export type Customer = { id: string; name: string; phone?: string; email?: string }
+export type Customer = { id: string; name: string; phone?: string | null; email?: string | null; isActive?: boolean; createdAtUtc?: string }
+export type CustomerAppointment = {
+  id: string
+  startsAtUtc: string
+  endsAtUtc: string
+  serviceName: string
+  barberName: string
+  status: string
+}
+export type CustomerProfile = {
+  customer: Customer
+  notes?: string | null
+  completedVisits: number
+  lastVisitAtUtc?: string | null
+  lifetimeSpendByCurrency: Record<string, number>
+  recentAppointments: CustomerAppointment[]
+}
 export type Appointment = {
   id: string
   serviceId: string

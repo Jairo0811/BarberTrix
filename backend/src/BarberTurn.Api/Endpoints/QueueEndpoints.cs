@@ -37,7 +37,7 @@ public static class QueueEndpoints
             catch (InvalidOperationException ex) { return ApiErrorResults.Conflict(context, ApiErrorCodes.QueueConflict, ex.Message); }
         });
 
-        var group = endpoints.MapGroup("/api/queue").WithTags("Queue").RequireAuthorization("VerifiedUser");
+        var group = endpoints.MapGroup("/api/queue").WithTags("Queue").RequireAuthorization("TenantUser");
         group.MapGet("/barbers", async (HttpContext context, IQueueService service, CancellationToken ct) => Results.Ok(await service.GetBarbersAsync(GetShopId(context), ct)));
         group.MapPost("/barbers", async (CreateBarberRequest request, HttpContext context, IQueueService service, CancellationToken ct) =>
             await ExecuteCreateAsync(context, () => service.CreateBarberAsync(GetShopId(context), request, ct), "/api/queue/barbers"))

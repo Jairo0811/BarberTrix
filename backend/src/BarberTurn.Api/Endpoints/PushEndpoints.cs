@@ -10,7 +10,7 @@ public static class PushEndpoints
     {
         var staff = endpoints.MapGroup("/api/push/subscriptions")
             .WithTags("Push notifications")
-            .RequireAuthorization("VerifiedUser");
+            .RequireAuthorization("TenantUser");
 
         staff.MapPut("/", async (
             RegisterPushSubscriptionRequest request,

@@ -39,16 +39,17 @@ public sealed class DevelopmentDataSeeder(
             if (!existingUser.IsEmailVerified)
                 existingUser.MarkEmailVerified();
 
-            var existingShop = await dbContext.BarberShops.SingleAsync(x => x.Id == existingUser.BarberShopId, cancellationToken);
+            var existingShopId = existingUser.BarberShopId ?? throw new InvalidOperationException("Seeded administrator is missing tenant context.");
+            var existingShop = await dbContext.BarberShops.SingleAsync(x => x.Id == existingShopId, cancellationToken);
             existingShop.ChangeSubscription(SubscriptionPlan.Business, SubscriptionStatus.Active);
 
             if (!await dbContext.ShopMemberships.AnyAsync(
-                    x => x.UserId == existingUser.Id && x.BarberShopId == existingUser.BarberShopId,
+                    x => x.UserId == existingUser.Id && x.BarberShopId == existingShopId,
                     cancellationToken))
             {
                 dbContext.ShopMemberships.Add(new ShopMembership(
                     existingUser.Id,
-                    existingUser.BarberShopId,
+                    existingShopId,
                     UserRole.Administrator));
             }
 

@@ -13,6 +13,7 @@ export default function IndexScreen() {
     );
   }
 
+  if (status === 'onboarding') return <Redirect href="/onboarding" />;
   return <Redirect href={status === 'authenticated' ? '/(app)' : '/(auth)/login'} />;
 }
 

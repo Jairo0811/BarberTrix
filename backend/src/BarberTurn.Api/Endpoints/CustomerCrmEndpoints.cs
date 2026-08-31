@@ -10,7 +10,7 @@ public static class CustomerCrmEndpoints
     {
         var customers = endpoints.MapGroup("/api/customers")
             .WithTags("Customers")
-            .RequireAuthorization("VerifiedUser")
+            .RequireAuthorization("TenantUser")
             .AddEndpointFilter<NonDemoTenantFilter>();
 
         customers.MapGet("/{id:guid}/profile", async (

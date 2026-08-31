@@ -27,6 +27,7 @@ function toSession(response: MobileAuthResponse): MobileSession {
       name: response.name,
       role: response.role,
       isEmailVerified: response.isEmailVerified,
+      sessionScope: response.sessionScope,
     },
   };
 }
@@ -45,7 +46,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const applyAuthResponse = useCallback(async (response: MobileAuthResponse) => {
     await persistRefresh(response);
     setSession(toSession(response));
-    setStatus('authenticated');
+    setStatus(response.sessionScope === 'Onboarding' ? 'onboarding' : 'authenticated');
   }, []);
 
   const clearSession = useCallback(async () => {
@@ -97,7 +98,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const signIn = useCallback(async (email: string, password: string) => {
     const response = await login(email, password);
     await applyAuthResponse(response);
-    router.replace('/(app)');
+    router.replace(response.sessionScope === 'Onboarding' ? '/onboarding' : '/(app)');
   }, [applyAuthResponse]);
 
   const signOut = useCallback(async () => {

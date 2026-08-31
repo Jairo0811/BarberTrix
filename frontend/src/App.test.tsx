@@ -12,6 +12,7 @@ vi.mock('./SubscriptionBanner', () => ({ default: () => null }))
 const ownerAuth: Auth = {
   accessToken: 'access-token', expiresAtUtc: '2099-01-01T00:00:00Z',
   userId: 'owner-1', barberShopId: 'shop-1', name: 'Jairo', role: 'Owner', isEmailVerified: true,
+  sessionScope: 'Tenant',
 }
 
 function renderApp() {

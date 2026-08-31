@@ -34,9 +34,10 @@ export type Auth = {
   accessToken: string
   expiresAtUtc: string
   userId: string
-  barberShopId: string
+  barberShopId: string | null
   barberId?: string | null
   name: string
   role: string
   isEmailVerified: boolean
+  sessionScope: 'Tenant' | 'Onboarding'
 }

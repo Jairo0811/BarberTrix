@@ -32,6 +32,24 @@ public static class AuthEndpoints
             }
         }).RequireRateLimiting("registration");
 
+        group.MapPost("/register-barber", async (RegisterBarberRequest request, HttpContext context, IAuthService authService, CancellationToken cancellationToken) =>
+        {
+            try
+            {
+                var response = await authService.RegisterBarberAsync(request, UserAgent(context), Ip(context), cancellationToken);
+                WriteRefreshCookie(context, response);
+                return Results.Ok(ToClientResponse(response));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Results.Conflict(ApiError.From(context, ApiErrorCodes.AuthRegistrationConflict, ex.Message));
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(ApiError.From(context, ApiErrorCodes.AuthRegistrationInvalid, ex.Message));
+            }
+        }).RequireRateLimiting("registration");
+
         group.MapPost("/login", async (LoginRequest request, HttpContext context, IAuthService authService, CancellationToken cancellationToken) =>
         {
             var response = await authService.LoginAsync(request, UserAgent(context), Ip(context), cancellationToken);
@@ -152,7 +170,7 @@ public static class AuthEndpoints
             }
         }).RequireRateLimiting("registration");
 
-        var team = endpoints.MapGroup("/api/team").WithTags("Team").RequireAuthorization("VerifiedUser").AddEndpointFilter<NonDemoTenantFilter>();
+        var team = endpoints.MapGroup("/api/team").WithTags("Team").RequireAuthorization("TenantUser").AddEndpointFilter<NonDemoTenantFilter>();
         team.MapGet("/", async (HttpContext context, IAuthService service, CancellationToken ct) => Results.Ok(await service.GetTeamAsync(GetShopId(context), ct)))
             .RequireAuthorization(policy => policy.RequireRole("Owner", "Administrator"));
         team.MapPost("/invitations", async (CreateInvitationRequest request, HttpContext context, IAuthService service, IConfiguration config, IHostEnvironment environment, CancellationToken ct) =>
@@ -181,7 +199,8 @@ public static class AuthEndpoints
         response.BarberId,
         response.Name,
         response.Role,
-        response.IsEmailVerified);
+        response.IsEmailVerified,
+        response.SessionScope);
 
     private static MobileAuthSessionResponse ToMobileClientResponse(AuthResponse response) => new(
         response.AccessToken,
@@ -193,7 +212,8 @@ public static class AuthEndpoints
         response.BarberId,
         response.Name,
         response.Role,
-        response.IsEmailVerified);
+        response.IsEmailVerified,
+        response.SessionScope);
 
     private static void DisableAuthResponseCaching(HttpContext context) => context.Response.Headers.CacheControl = "no-store";
 
@@ -228,11 +248,12 @@ public static class AuthEndpoints
         string AccessToken,
         DateTimeOffset ExpiresAtUtc,
         Guid UserId,
-        Guid BarberShopId,
+        Guid? BarberShopId,
         Guid? BarberId,
         string Name,
         string Role,
-        bool IsEmailVerified);
+        bool IsEmailVerified,
+        string SessionScope);
 
     private sealed record MobileAuthSessionResponse(
         string AccessToken,
@@ -240,9 +261,10 @@ public static class AuthEndpoints
         string RefreshToken,
         DateTimeOffset RefreshTokenExpiresAtUtc,
         Guid UserId,
-        Guid BarberShopId,
+        Guid? BarberShopId,
         Guid? BarberId,
         string Name,
         string Role,
-        bool IsEmailVerified);
+        bool IsEmailVerified,
+        string SessionScope);
 }

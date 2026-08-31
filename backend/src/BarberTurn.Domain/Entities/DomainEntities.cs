@@ -61,10 +61,8 @@ public sealed class User : BaseEntity
 {
     private User() { }
 
-    public User(Guid barberShopId, string name, string email, string passwordHash, UserRole role, Guid? barberId = null)
+    private User(Guid? barberShopId, string name, string email, string passwordHash, UserRole role, Guid? barberId)
     {
-        if (barberShopId == Guid.Empty)
-            throw new ArgumentException("Barbershop is required.", nameof(barberShopId));
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Name is required.", nameof(name));
         if (string.IsNullOrWhiteSpace(email))
@@ -78,7 +76,16 @@ public sealed class User : BaseEntity
         BarberId = barberId;
     }
 
-    public Guid BarberShopId { get; private set; }
+    public User(Guid barberShopId, string name, string email, string passwordHash, UserRole role, Guid? barberId = null)
+        : this(barberShopId == Guid.Empty ? throw new ArgumentException("Barbershop is required.", nameof(barberShopId)) : (Guid?)barberShopId,
+            name, email, passwordHash, role, barberId)
+    {
+    }
+
+    public static User CreateIndependentBarber(string name, string email, string passwordHash) =>
+        new(null, name, email, passwordHash, UserRole.Barber, null);
+
+    public Guid? BarberShopId { get; private set; }
     public string Name { get; private set; } = string.Empty;
     public string Email { get; private set; } = string.Empty;
     public string PasswordHash { get; private set; } = string.Empty;

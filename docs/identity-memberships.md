@@ -51,7 +51,7 @@ La migración se realiza de forma incremental para proteger la web v1, mobile y 
 
 Durante esta etapa, JWT, autorización, web y mobile siguen leyendo el contexto legacy de `User`. Las nuevas tablas se escriben en paralelo para permitir una migración segura de consumidores en las etapas siguientes.
 
-### Etapa C — registro independiente
+### Etapa C — registro independiente (implementada)
 
 Nuevo flujo público:
 
@@ -59,7 +59,7 @@ Nuevo flujo público:
 POST /api/auth/register-barber
 ```
 
-El registro crea `User + BarberProfile`, pero no crea una barbería ni una membresía falsa. La sesión queda en modo onboarding hasta que exista al menos una membresía activa.
+El registro crea `User + BarberProfile`, pero no crea una barbería ni una membresía falsa. `Users.BarberShopId` puede ser `NULL` durante onboarding. La sesión emite `SessionScope = Onboarding` y no incluye claims `barbershop_id`, `role` ni `barber_id` hasta que exista una membresía activa.
 
 ### Etapa D — ingreso a barberías
 

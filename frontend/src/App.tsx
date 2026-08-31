@@ -83,6 +83,12 @@ export default function App() {
     {error && <p className="login-error" role="status">{error}</p>}
   </section></main>
 
+  if (auth?.sessionScope === 'Onboarding') return <main className="login-shell"><section className="login-card">
+    <BarberTurnLogo /><h1>Tu perfil de barbero está listo</h1>
+    <p className="login-subtitle">Todavía no perteneces a una barbería. En la siguiente etapa podrás aceptar invitaciones, solicitar ingreso o usar un código de incorporación.</p>
+    <button className="demo-button" type="button" onClick={logout}>Cerrar sesión</button>
+  </section></main>
+
   if (auth?.role === 'Barber') return <Suspense fallback={<main className="login-shell"><p>Cargando portal del barbero…</p></main>}><BarberPortal auth={auth} onLogout={logout} /></Suspense>
 
   if (auth) return <>

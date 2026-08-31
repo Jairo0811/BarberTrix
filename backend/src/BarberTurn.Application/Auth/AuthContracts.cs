@@ -11,6 +11,12 @@ public sealed record RegisterOwnerRequest(
     string TimeZoneId = "America/Santo_Domingo",
     bool AcceptedTerms = false,
     string? CaptchaToken = null);
+public sealed record RegisterBarberRequest(
+    string Name,
+    string Email,
+    string Password,
+    bool AcceptedTerms = false,
+    string? CaptchaToken = null);
 public sealed record LoginRequest(string Email, string Password);
 public sealed record ForgotPasswordRequest(string Email);
 public sealed record ForgotPasswordResponse(string Message, string? DevelopmentResetUrl = null);
@@ -28,15 +34,17 @@ public sealed record AuthResponse(
     string RefreshToken,
     DateTimeOffset RefreshTokenExpiresAtUtc,
     Guid UserId,
-    Guid BarberShopId,
+    Guid? BarberShopId,
     Guid? BarberId,
     string Name,
     string Role,
-    bool IsEmailVerified);
+    bool IsEmailVerified,
+    string SessionScope);
 
 public interface IAuthService
 {
     Task<AuthResponse> RegisterOwnerAsync(RegisterOwnerRequest request, string? userAgent, string? ipAddress, CancellationToken cancellationToken = default);
+    Task<AuthResponse> RegisterBarberAsync(RegisterBarberRequest request, string? userAgent, string? ipAddress, CancellationToken cancellationToken = default);
     Task<AuthResponse?> LoginAsync(LoginRequest request, string? userAgent, string? ipAddress, CancellationToken cancellationToken = default);
     Task<AuthResponse> CreateDemoSessionAsync(string? userAgent, string? ipAddress, CancellationToken cancellationToken = default);
     Task<AuthResponse?> RefreshAsync(RefreshTokenRequest request, string? userAgent, string? ipAddress, CancellationToken cancellationToken = default);

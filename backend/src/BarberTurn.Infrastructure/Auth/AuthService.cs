@@ -56,6 +56,34 @@ internal sealed class AuthService(
         return await CreateSessionAsync(user, userAgent, ipAddress, cancellationToken);
     }
 
+    public async Task<AuthResponse> RegisterBarberAsync(RegisterBarberRequest request, string? userAgent, string? ipAddress, CancellationToken cancellationToken = default)
+    {
+        ValidateBarberRegistration(request);
+        if (!await humanVerification.VerifyAsync(request.CaptchaToken, ipAddress, cancellationToken))
+            throw new InvalidOperationException("Human verification failed.");
+
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+        if (await dbContext.Users.AnyAsync(x => x.Email == normalizedEmail, cancellationToken))
+            throw new InvalidOperationException("A user with that email already exists.");
+
+        var shell = User.CreateIndependentBarber(request.Name, normalizedEmail, string.Empty);
+        var user = User.CreateIndependentBarber(
+            request.Name,
+            normalizedEmail,
+            passwordHasher.HashPassword(shell, request.Password));
+        if (!configuration.GetValue("Auth:RequireVerifiedEmail", false))
+            user.MarkEmailVerified();
+
+        dbContext.Users.Add(user);
+        dbContext.BarberProfiles.Add(new BarberProfile(user.Id, user.Name));
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        if (!user.IsEmailVerified)
+            await SendVerificationEmailAsync(user, cancellationToken);
+
+        return await CreateSessionAsync(user, userAgent, ipAddress, cancellationToken);
+    }
+
     public async Task<AuthResponse?> LoginAsync(LoginRequest request, string? userAgent, string? ipAddress, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
@@ -303,7 +331,7 @@ internal sealed class AuthService(
         if (shopIds.Count == 0)
             return;
 
-        var userIds = dbContext.Users.Where(x => shopIds.Contains(x.BarberShopId)).Select(x => x.Id);
+        var userIds = dbContext.Users.Where(x => x.BarberShopId.HasValue && shopIds.Contains(x.BarberShopId.Value)).Select(x => x.Id);
         await dbContext.AuditLogs.Where(x => shopIds.Contains(x.BarberShopId)).ExecuteDeleteAsync(cancellationToken);
         await dbContext.EmailVerificationTokens.Where(x => userIds.Contains(x.UserId)).ExecuteDeleteAsync(cancellationToken);
         await dbContext.RefreshSessions.Where(x => userIds.Contains(x.UserId)).ExecuteDeleteAsync(cancellationToken);
@@ -314,7 +342,7 @@ internal sealed class AuthService(
         await dbContext.BlockedTimes.Where(x => shopIds.Contains(x.BarberShopId)).ExecuteDeleteAsync(cancellationToken);
         await dbContext.Customers.Where(x => shopIds.Contains(x.BarberShopId)).ExecuteDeleteAsync(cancellationToken);
         await dbContext.ShopLocations.Where(x => shopIds.Contains(x.BarberShopId)).ExecuteDeleteAsync(cancellationToken);
-        await dbContext.Users.Where(x => shopIds.Contains(x.BarberShopId)).ExecuteDeleteAsync(cancellationToken);
+        await dbContext.Users.Where(x => x.BarberShopId.HasValue && shopIds.Contains(x.BarberShopId.Value)).ExecuteDeleteAsync(cancellationToken);
         await dbContext.Subscriptions.Where(x => shopIds.Contains(x.BarberShopId)).ExecuteDeleteAsync(cancellationToken);
         await dbContext.BarberServices.Where(x => shopIds.Contains(x.BarberShopId)).ExecuteDeleteAsync(cancellationToken);
         await dbContext.Barbers.Where(x => shopIds.Contains(x.BarberShopId)).ExecuteDeleteAsync(cancellationToken);
@@ -327,15 +355,20 @@ internal sealed class AuthService(
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()), new(JwtRegisteredClaimNames.Email, user.Email),
-            new("barbershop_id", user.BarberShopId.ToString()), new(ClaimTypes.Name, user.Name),
-            new(ClaimTypes.Role, user.Role.ToString()), new("security_stamp", user.SecurityStamp),
+            new(ClaimTypes.Name, user.Name), new("security_stamp", user.SecurityStamp),
             new("email_verified", user.IsEmailVerified ? "true" : "false")
         };
-        if (user.BarberId is Guid barberId)
-            claims.Add(new Claim("barber_id", barberId.ToString()));
+        var sessionScope = user.BarberShopId.HasValue ? "Tenant" : "Onboarding";
+        if (user.BarberShopId is Guid barberShopId)
+        {
+            claims.Add(new Claim("barbershop_id", barberShopId.ToString()));
+            claims.Add(new Claim(ClaimTypes.Role, user.Role.ToString()));
+            if (user.BarberId is Guid barberId)
+                claims.Add(new Claim("barber_id", barberId.ToString()));
+        }
         var credentials = new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(GetJwtKey())), SecurityAlgorithms.HmacSha256);
         var token = new JwtSecurityToken(configuration["Jwt:Issuer"] ?? "BarberTurn.Api", configuration["Jwt:Audience"] ?? "BarberTurn.Web", claims, expires: expiresAt.UtcDateTime, signingCredentials: credentials);
-        return new AuthResponse(new JwtSecurityTokenHandler().WriteToken(token), expiresAt, refreshToken, refreshExpiresAtUtc, user.Id, user.BarberShopId, user.BarberId, user.Name, user.Role.ToString(), user.IsEmailVerified);
+        return new AuthResponse(new JwtSecurityTokenHandler().WriteToken(token), expiresAt, refreshToken, refreshExpiresAtUtc, user.Id, user.BarberShopId, user.BarberId, user.Name, user.Role.ToString(), user.IsEmailVerified, sessionScope);
     }
 
     private User CreateUser(Guid shopId, string name, string email, string password, UserRole role, Guid? barberId)
@@ -376,6 +409,14 @@ internal sealed class AuthService(
         if (!request.AcceptedTerms) throw new ArgumentException("Terms must be accepted.");
         if (string.IsNullOrWhiteSpace(request.BarberShopName) || request.BarberShopName.Length > 120) throw new ArgumentException("A valid barbershop name is required.");
         if (string.IsNullOrWhiteSpace(request.BarberShopSlug) || request.BarberShopSlug.Length > 80) throw new ArgumentException("A valid barbershop slug is required.");
+        if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Length > 120) throw new ArgumentException("A valid name is required.");
+        if (string.IsNullOrWhiteSpace(request.Email) || !request.Email.Contains('@') || request.Email.Length > 180) throw new ArgumentException("A valid email is required.");
+        if (!IsStrongPassword(request.Password)) throw new ArgumentException("Password must contain at least 10 characters, uppercase, lowercase, number and symbol.");
+    }
+
+    private static void ValidateBarberRegistration(RegisterBarberRequest request)
+    {
+        if (!request.AcceptedTerms) throw new ArgumentException("Terms must be accepted.");
         if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Length > 120) throw new ArgumentException("A valid name is required.");
         if (string.IsNullOrWhiteSpace(request.Email) || !request.Email.Contains('@') || request.Email.Length > 180) throw new ArgumentException("A valid email is required.");
         if (!IsStrongPassword(request.Password)) throw new ArgumentException("Password must contain at least 10 characters, uppercase, lowercase, number and symbol.");

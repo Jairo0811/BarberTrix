@@ -19,7 +19,35 @@ public sealed record CustomerDetailResponse(
     IReadOnlyList<CustomerAppointmentResponse> RecentAppointments);
 public sealed record CreatePaymentRequest(decimal Amount, string Currency, PaymentMethod Method, Guid? TurnId, Guid? AppointmentId, Guid? CustomerId, string? ExternalReference);
 public sealed record PaymentResponse(Guid Id, decimal Amount, string Currency, PaymentMethod Method, PaymentStatus Status, Guid? TurnId, Guid? AppointmentId, Guid? CustomerId, string? ExternalReference, DateTimeOffset? PaidAtUtc);
-public sealed record BusinessReportResponse(DateOnly From, DateOnly To, int CompletedTurns, int CancelledTurns, int NoShows, int Appointments, decimal GrossRevenue, IReadOnlyDictionary<string, decimal> RevenueByMethod);
+
+public sealed record ReportMoneyBreakdown(string Key, string Label, IReadOnlyDictionary<string, decimal> RevenueByCurrency, int Count);
+public sealed record ReportBarberBreakdown(Guid BarberId, string BarberName, int CompletedServices, decimal ServiceMinutes, decimal ActivitySharePercent, IReadOnlyDictionary<string, decimal> RevenueByCurrency);
+public sealed record ReportServiceBreakdown(Guid ServiceId, string ServiceName, int CompletedServices, IReadOnlyDictionary<string, decimal> RevenueByCurrency);
+public sealed record ReportHourBreakdown(int Hour, int CompletedServices);
+public sealed record ReportPeriodComparison(
+    DateOnly From,
+    DateOnly To,
+    int CompletedTurns,
+    int Appointments,
+    int NoShows,
+    decimal NoShowRatePercent,
+    IReadOnlyDictionary<string, decimal> RevenueByCurrency,
+    IReadOnlyDictionary<string, decimal> AverageTicketByCurrency);
+public sealed record BusinessReportResponse(
+    DateOnly From,
+    DateOnly To,
+    int CompletedTurns,
+    int CancelledTurns,
+    int NoShows,
+    int Appointments,
+    decimal NoShowRatePercent,
+    IReadOnlyDictionary<string, decimal> RevenueByCurrency,
+    IReadOnlyDictionary<string, decimal> AverageTicketByCurrency,
+    IReadOnlyList<ReportMoneyBreakdown> RevenueByMethod,
+    IReadOnlyList<ReportBarberBreakdown> RevenueByBarber,
+    IReadOnlyList<ReportServiceBreakdown> RevenueByService,
+    IReadOnlyList<ReportHourBreakdown> PeakHours,
+    ReportPeriodComparison PreviousPeriod);
 
 public interface ICommercialService
 {

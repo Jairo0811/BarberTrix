@@ -72,10 +72,7 @@ internal sealed class CommercialService(ApplicationDbContext dbContext) : IComme
 
         var resourceId = customerId.ToString("D");
         var notes = await dbContext.AuditLogs.AsNoTracking()
-            .Where(x => x.BarberShopId == barberShopId
-                && x.Action == CustomerNoteAction
-                && x.ResourceType == CustomerResourceType
-                && x.ResourceId == resourceId)
+            .Where(x => x.BarberShopId == barberShopId && x.Action == CustomerNoteAction && x.ResourceType == CustomerResourceType && x.ResourceId == resourceId)
             .OrderByDescending(x => x.CreatedAtUtc)
             .Select(x => x.Metadata)
             .FirstOrDefaultAsync(cancellationToken);
@@ -83,9 +80,7 @@ internal sealed class CommercialService(ApplicationDbContext dbContext) : IComme
         var completedAppointments = dbContext.Appointments.AsNoTracking()
             .Where(x => x.BarberShopId == barberShopId && x.CustomerId == customerId && x.Status == AppointmentStatus.Completed);
         var completedVisits = await completedAppointments.CountAsync(cancellationToken);
-        var lastVisitAtUtc = await completedAppointments
-            .Select(x => (DateTimeOffset?)x.EndsAtUtc)
-            .MaxAsync(cancellationToken);
+        var lastVisitAtUtc = await completedAppointments.Select(x => (DateTimeOffset?)x.EndsAtUtc).MaxAsync(cancellationToken);
 
         var spendRows = await dbContext.Payments.AsNoTracking()
             .Where(x => x.BarberShopId == barberShopId && x.CustomerId == customerId && x.Status == PaymentStatus.Paid)
@@ -100,13 +95,7 @@ internal sealed class CommercialService(ApplicationDbContext dbContext) : IComme
             join barber in dbContext.Barbers.AsNoTracking() on appointment.BarberId equals barber.Id
             where appointment.BarberShopId == barberShopId && appointment.CustomerId == customerId
             orderby appointment.StartsAtUtc descending
-            select new CustomerAppointmentResponse(
-                appointment.Id,
-                appointment.StartsAtUtc,
-                appointment.EndsAtUtc,
-                service.Name,
-                barber.Name,
-                appointment.Status))
+            select new CustomerAppointmentResponse(appointment.Id, appointment.StartsAtUtc, appointment.EndsAtUtc, service.Name, barber.Name, appointment.Status))
             .Take(12)
             .ToListAsync(cancellationToken);
 
@@ -142,14 +131,7 @@ internal sealed class CommercialService(ApplicationDbContext dbContext) : IComme
         if (normalizedNotes?.Length > 1000)
             throw new ArgumentException("Customer notes cannot exceed 1000 characters.", nameof(notes));
 
-        dbContext.AuditLogs.Add(new AuditLog(
-            barberShopId,
-            userId,
-            CustomerNoteAction,
-            CustomerResourceType,
-            customerId.ToString("D"),
-            normalizedNotes,
-            null));
+        dbContext.AuditLogs.Add(new AuditLog(barberShopId, userId, CustomerNoteAction, CustomerResourceType, customerId.ToString("D"), normalizedNotes, null));
         await dbContext.SaveChangesAsync(cancellationToken);
         return true;
     }
@@ -175,17 +157,210 @@ internal sealed class CommercialService(ApplicationDbContext dbContext) : IComme
     public async Task<BusinessReportResponse> GetReportAsync(Guid barberShopId, DateOnly fromDate, DateOnly toDate, CancellationToken cancellationToken = default)
     {
         if (fromDate > toDate)
-            throw new ArgumentException("The from date must not be after the to date.");
-        var completed = await dbContext.Turns.CountAsync(x => x.BarberShopId == barberShopId && x.QueueDate >= fromDate && x.QueueDate <= toDate && x.Status == TurnStatus.Completed, cancellationToken);
-        var cancelled = await dbContext.Turns.CountAsync(x => x.BarberShopId == barberShopId && x.QueueDate >= fromDate && x.QueueDate <= toDate && x.Status == TurnStatus.Cancelled, cancellationToken);
-        var noShows = await dbContext.Turns.CountAsync(x => x.BarberShopId == barberShopId && x.QueueDate >= fromDate && x.QueueDate <= toDate && x.Status == TurnStatus.NoShow, cancellationToken);
-        var startUtc = new DateTimeOffset(fromDate.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc));
-        var endUtc = new DateTimeOffset(toDate.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc));
-        var appointments = await dbContext.Appointments.CountAsync(x => x.BarberShopId == barberShopId && x.StartsAtUtc >= startUtc && x.StartsAtUtc < endUtc && x.Status != AppointmentStatus.Cancelled, cancellationToken);
-        var payments = await dbContext.Payments.AsNoTracking().Where(x => x.BarberShopId == barberShopId && x.PaidAtUtc >= startUtc && x.PaidAtUtc < endUtc && x.Status == PaymentStatus.Paid).ToListAsync(cancellationToken);
-        var byMethod = payments.GroupBy(x => x.Method.ToString()).ToDictionary(x => x.Key, x => x.Sum(y => y.Amount));
-        return new BusinessReportResponse(fromDate, toDate, completed, cancelled, noShows, appointments, payments.Sum(x => x.Amount), byMethod);
+            throw new ArgumentException("The from date must not be after the to date.", nameof(fromDate));
+        if (toDate.DayNumber - fromDate.DayNumber > 365)
+            throw new ArgumentOutOfRangeException(nameof(toDate), "Business reports are limited to 366 days per request.");
+
+        var timeZoneId = await dbContext.BarberShops.AsNoTracking()
+            .Where(x => x.Id == barberShopId)
+            .Select(x => x.TimeZoneId)
+            .SingleAsync(cancellationToken);
+        var timeZone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+
+        var current = await LoadReportPeriodAsync(barberShopId, fromDate, toDate, timeZone, cancellationToken);
+        var days = toDate.DayNumber - fromDate.DayNumber + 1;
+        var previousTo = fromDate.AddDays(-1);
+        var previousFrom = previousTo.AddDays(-(days - 1));
+        var previous = await LoadReportPeriodAsync(barberShopId, previousFrom, previousTo, timeZone, cancellationToken);
+
+        var barberNames = await dbContext.Barbers.AsNoTracking()
+            .Where(x => x.BarberShopId == barberShopId)
+            .ToDictionaryAsync(x => x.Id, x => x.Name, cancellationToken);
+        var serviceNames = await dbContext.BarberServices.AsNoTracking()
+            .Where(x => x.BarberShopId == barberShopId)
+            .ToDictionaryAsync(x => x.Id, x => x.Name, cancellationToken);
+
+        var turnById = current.Turns.ToDictionary(x => x.Id);
+        var appointmentById = current.Appointments.ToDictionary(x => x.Id);
+        var revenueByBarber = new Dictionary<Guid, Dictionary<string, decimal>>();
+        var revenueByService = new Dictionary<Guid, Dictionary<string, decimal>>();
+        foreach (var payment in current.Payments)
+        {
+            Guid? barberId = null;
+            Guid? serviceId = null;
+            if (payment.TurnId is Guid turnId && turnById.TryGetValue(turnId, out var turn))
+            {
+                barberId = turn.BarberId;
+                serviceId = turn.ServiceId;
+            }
+            else if (payment.AppointmentId is Guid appointmentId && appointmentById.TryGetValue(appointmentId, out var appointment))
+            {
+                barberId = appointment.BarberId;
+                serviceId = appointment.ServiceId;
+            }
+
+            if (barberId is Guid resolvedBarberId)
+                AddMoney(revenueByBarber, resolvedBarberId, payment.Currency, payment.Amount);
+            if (serviceId is Guid resolvedServiceId)
+                AddMoney(revenueByService, resolvedServiceId, payment.Currency, payment.Amount);
+        }
+
+        var representedAppointments = current.Turns.Where(x => x.AppointmentId.HasValue).Select(x => x.AppointmentId!.Value).ToHashSet();
+        var completedTurns = current.Turns.Where(x => x.Status == TurnStatus.Completed).ToList();
+        var directCompletedAppointments = current.Appointments.Where(x => x.Status == AppointmentStatus.Completed && !representedAppointments.Contains(x.Id)).ToList();
+
+        var serviceMinutesByBarber = new Dictionary<Guid, decimal>();
+        var completedByBarber = new Dictionary<Guid, int>();
+        var completedByService = new Dictionary<Guid, int>();
+        var peakHours = new Dictionary<int, int>();
+
+        foreach (var turn in completedTurns)
+        {
+            if (turn.BarberId is Guid barberId)
+            {
+                completedByBarber[barberId] = completedByBarber.GetValueOrDefault(barberId) + 1;
+                if (turn.ServiceStartedAtUtc is { } started && turn.CompletedAtUtc is { } completed && completed > started)
+                    serviceMinutesByBarber[barberId] = serviceMinutesByBarber.GetValueOrDefault(barberId) + (decimal)(completed - started).TotalMinutes;
+            }
+            completedByService[turn.ServiceId] = completedByService.GetValueOrDefault(turn.ServiceId) + 1;
+            if (turn.CompletedAtUtc is { } completedAt)
+            {
+                var hour = TimeZoneInfo.ConvertTime(completedAt, timeZone).Hour;
+                peakHours[hour] = peakHours.GetValueOrDefault(hour) + 1;
+            }
+        }
+
+        foreach (var appointment in directCompletedAppointments)
+        {
+            completedByBarber[appointment.BarberId] = completedByBarber.GetValueOrDefault(appointment.BarberId) + 1;
+            serviceMinutesByBarber[appointment.BarberId] = serviceMinutesByBarber.GetValueOrDefault(appointment.BarberId) + (decimal)(appointment.EndsAtUtc - appointment.StartsAtUtc).TotalMinutes;
+            completedByService[appointment.ServiceId] = completedByService.GetValueOrDefault(appointment.ServiceId) + 1;
+            var hour = TimeZoneInfo.ConvertTime(appointment.StartsAtUtc, timeZone).Hour;
+            peakHours[hour] = peakHours.GetValueOrDefault(hour) + 1;
+        }
+
+        var totalServiceMinutes = serviceMinutesByBarber.Values.Sum();
+        var barberIds = completedByBarber.Keys.Union(revenueByBarber.Keys).Distinct().ToList();
+        var barberBreakdown = barberIds
+            .Select(id => new ReportBarberBreakdown(
+                id,
+                barberNames.GetValueOrDefault(id, "Barbero"),
+                completedByBarber.GetValueOrDefault(id),
+                Math.Round(serviceMinutesByBarber.GetValueOrDefault(id), 1),
+                totalServiceMinutes <= 0 ? 0 : Math.Round(serviceMinutesByBarber.GetValueOrDefault(id) / totalServiceMinutes * 100m, 1),
+                revenueByBarber.TryGetValue(id, out var revenue) ? revenue : EmptyMoney()))
+            .OrderByDescending(x => x.CompletedServices)
+            .ThenBy(x => x.BarberName)
+            .ToList();
+
+        var serviceIds = completedByService.Keys.Union(revenueByService.Keys).Distinct().ToList();
+        var serviceBreakdown = serviceIds
+            .Select(id => new ReportServiceBreakdown(
+                id,
+                serviceNames.GetValueOrDefault(id, "Servicio"),
+                completedByService.GetValueOrDefault(id),
+                revenueByService.TryGetValue(id, out var revenue) ? revenue : EmptyMoney()))
+            .OrderByDescending(x => x.CompletedServices)
+            .ThenBy(x => x.ServiceName)
+            .ToList();
+
+        var methodBreakdown = current.Payments
+            .GroupBy(x => x.Method)
+            .Select(group => new ReportMoneyBreakdown(
+                group.Key.ToString(),
+                group.Key.ToString(),
+                MoneyByCurrency(group),
+                group.Count()))
+            .OrderByDescending(x => x.Count)
+            .ToList();
+
+        return new BusinessReportResponse(
+            fromDate,
+            toDate,
+            current.CompletedTurns,
+            current.CancelledTurns,
+            current.NoShows,
+            current.Appointments.Count(x => x.Status != AppointmentStatus.Cancelled),
+            current.NoShowRatePercent,
+            current.RevenueByCurrency,
+            current.AverageTicketByCurrency,
+            methodBreakdown,
+            barberBreakdown,
+            serviceBreakdown,
+            peakHours.OrderByDescending(x => x.Value).ThenBy(x => x.Key).Select(x => new ReportHourBreakdown(x.Key, x.Value)).ToList(),
+            new ReportPeriodComparison(
+                previousFrom,
+                previousTo,
+                previous.CompletedTurns,
+                previous.Appointments.Count(x => x.Status != AppointmentStatus.Cancelled),
+                previous.NoShows,
+                previous.NoShowRatePercent,
+                previous.RevenueByCurrency,
+                previous.AverageTicketByCurrency));
     }
+
+    private async Task<ReportPeriodData> LoadReportPeriodAsync(Guid barberShopId, DateOnly fromDate, DateOnly toDate, TimeZoneInfo timeZone, CancellationToken ct)
+    {
+        var (startUtc, endUtc) = ToUtcRange(fromDate, toDate, timeZone);
+        var turns = await dbContext.Turns.AsNoTracking()
+            .Where(x => x.BarberShopId == barberShopId && x.QueueDate >= fromDate && x.QueueDate <= toDate)
+            .Select(x => new ReportTurnRow(x.Id, x.ServiceId, x.BarberId, x.AppointmentId, x.Status, x.ServiceStartedAtUtc, x.CompletedAtUtc))
+            .ToListAsync(ct);
+        var appointments = await dbContext.Appointments.AsNoTracking()
+            .Where(x => x.BarberShopId == barberShopId && x.StartsAtUtc >= startUtc && x.StartsAtUtc < endUtc)
+            .Select(x => new ReportAppointmentRow(x.Id, x.ServiceId, x.BarberId, x.StartsAtUtc, x.EndsAtUtc, x.Status))
+            .ToListAsync(ct);
+        var payments = await dbContext.Payments.AsNoTracking()
+            .Where(x => x.BarberShopId == barberShopId && x.PaidAtUtc >= startUtc && x.PaidAtUtc < endUtc && x.Status == PaymentStatus.Paid)
+            .Select(x => new ReportPaymentRow(x.Amount, x.Currency, x.Method, x.TurnId, x.AppointmentId))
+            .ToListAsync(ct);
+
+        var representedAppointments = turns.Where(x => x.AppointmentId.HasValue).Select(x => x.AppointmentId!.Value).ToHashSet();
+        var turnNoShows = turns.Count(x => x.Status == TurnStatus.NoShow);
+        var directAppointmentNoShows = appointments.Count(x => x.Status == AppointmentStatus.NoShow && !representedAppointments.Contains(x.Id));
+        var noShows = turnNoShows + directAppointmentNoShows;
+        var completed = turns.Count(x => x.Status == TurnStatus.Completed);
+        var directAppointmentCompleted = appointments.Count(x => x.Status == AppointmentStatus.Completed && !representedAppointments.Contains(x.Id));
+        var completedServices = completed + directAppointmentCompleted;
+        var opportunityCount = completedServices + noShows;
+
+        return new ReportPeriodData(
+            turns,
+            appointments,
+            payments,
+            completed,
+            turns.Count(x => x.Status == TurnStatus.Cancelled),
+            noShows,
+            opportunityCount == 0 ? 0 : Math.Round(noShows * 100m / opportunityCount, 1),
+            MoneyByCurrency(payments),
+            AverageTicketByCurrency(payments));
+    }
+
+    private static (DateTimeOffset StartUtc, DateTimeOffset EndUtc) ToUtcRange(DateOnly from, DateOnly to, TimeZoneInfo timeZone)
+    {
+        var localStart = DateTime.SpecifyKind(from.ToDateTime(TimeOnly.MinValue), DateTimeKind.Unspecified);
+        var localEnd = DateTime.SpecifyKind(to.AddDays(1).ToDateTime(TimeOnly.MinValue), DateTimeKind.Unspecified);
+        return (new DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(localStart, timeZone)), new DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(localEnd, timeZone)));
+    }
+
+    private static Dictionary<string, decimal> MoneyByCurrency(IEnumerable<ReportPaymentRow> payments) =>
+        payments.GroupBy(x => x.Currency.ToUpperInvariant()).ToDictionary(x => x.Key, x => x.Sum(y => y.Amount), StringComparer.OrdinalIgnoreCase);
+
+    private static Dictionary<string, decimal> AverageTicketByCurrency(IEnumerable<ReportPaymentRow> payments) =>
+        payments.GroupBy(x => x.Currency.ToUpperInvariant()).ToDictionary(x => x.Key, x => Math.Round(x.Average(y => y.Amount), 2), StringComparer.OrdinalIgnoreCase);
+
+    private static void AddMoney(Dictionary<Guid, Dictionary<string, decimal>> target, Guid id, string currency, decimal amount)
+    {
+        if (!target.TryGetValue(id, out var values))
+        {
+            values = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
+            target[id] = values;
+        }
+        var key = currency.ToUpperInvariant();
+        values[key] = values.GetValueOrDefault(key) + amount;
+    }
+
+    private static Dictionary<string, decimal> EmptyMoney() => new(StringComparer.OrdinalIgnoreCase);
 
     private async Task EnsureUniqueAsync(Guid shopId, Guid? excludedId, string? phone, string? email, CancellationToken ct)
     {
@@ -204,4 +379,18 @@ internal sealed class CommercialService(ApplicationDbContext dbContext) : IComme
     private static CustomerResponse ToResponse(Customer x) => new(x.Id, x.Name, x.Phone, x.Email, x.IsActive, x.CreatedAtUtc);
     private static System.Linq.Expressions.Expression<Func<PaymentRecord, PaymentResponse>> MapPayment() => x => new PaymentResponse(x.Id, x.Amount, x.Currency, x.Method, x.Status, x.TurnId, x.AppointmentId, x.CustomerId, x.ExternalReference, x.PaidAtUtc);
     private static PaymentResponse ToResponse(PaymentRecord x) => new(x.Id, x.Amount, x.Currency, x.Method, x.Status, x.TurnId, x.AppointmentId, x.CustomerId, x.ExternalReference, x.PaidAtUtc);
+
+    private sealed record ReportTurnRow(Guid Id, Guid ServiceId, Guid? BarberId, Guid? AppointmentId, TurnStatus Status, DateTimeOffset? ServiceStartedAtUtc, DateTimeOffset? CompletedAtUtc);
+    private sealed record ReportAppointmentRow(Guid Id, Guid ServiceId, Guid BarberId, DateTimeOffset StartsAtUtc, DateTimeOffset EndsAtUtc, AppointmentStatus Status);
+    private sealed record ReportPaymentRow(decimal Amount, string Currency, PaymentMethod Method, Guid? TurnId, Guid? AppointmentId);
+    private sealed record ReportPeriodData(
+        IReadOnlyList<ReportTurnRow> Turns,
+        IReadOnlyList<ReportAppointmentRow> Appointments,
+        IReadOnlyList<ReportPaymentRow> Payments,
+        int CompletedTurns,
+        int CancelledTurns,
+        int NoShows,
+        decimal NoShowRatePercent,
+        IReadOnlyDictionary<string, decimal> RevenueByCurrency,
+        IReadOnlyDictionary<string, decimal> AverageTicketByCurrency);
 }

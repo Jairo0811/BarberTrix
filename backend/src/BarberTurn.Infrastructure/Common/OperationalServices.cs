@@ -24,22 +24,55 @@ internal sealed class ShopLookupService(ApplicationDbContext dbContext) : IShopL
 
 internal sealed class PlanLimitService(ApplicationDbContext dbContext, IConfiguration configuration) : IPlanLimitService
 {
+    private const int Unlimited = int.MaxValue;
+
     public async Task EnsureCanAddBarberAsync(Guid barberShopId, CancellationToken cancellationToken = default)
     {
         var usage = await GetUsageAsync(barberShopId, cancellationToken);
         if (usage.ActiveBarbers >= usage.BarberLimit)
-            throw new InvalidOperationException($"The {usage.Plan} plan allows up to {usage.BarberLimit} active barbers.");
+            throw new InvalidOperationException($"The {usage.Plan} plan allows up to {FormatLimit(usage.BarberLimit)} active barbers.");
+    }
+
+    public async Task EnsureCanAddServiceAsync(Guid barberShopId, CancellationToken cancellationToken = default)
+    {
+        var usage = await GetUsageAsync(barberShopId, cancellationToken);
+        if (usage.ActiveServices >= usage.ServiceLimit)
+            throw new InvalidOperationException($"The {usage.Plan} plan allows up to {FormatLimit(usage.ServiceLimit)} active services.");
+    }
+
+    public async Task EnsureCanAddLocationAsync(Guid barberShopId, CancellationToken cancellationToken = default)
+    {
+        var usage = await GetUsageAsync(barberShopId, cancellationToken);
+        if (usage.ActiveLocations >= usage.LocationLimit)
+            throw new InvalidOperationException($"The {usage.Plan} plan allows up to {FormatLimit(usage.LocationLimit)} active locations.");
+    }
+
+    public async Task EnsureCanCreateTurnAsync(Guid barberShopId, CancellationToken cancellationToken = default)
+    {
+        var usage = await GetUsageAsync(barberShopId, cancellationToken);
+        if (usage.MonthlyTurnGraceLimit == Unlimited)
+            return;
+        if (usage.TurnsThisMonth >= usage.MonthlyTurnGraceLimit)
+            throw new InvalidOperationException($"The {usage.Plan} plan includes {usage.MonthlyTurnLimit} turns per month and its grace allowance of {usage.MonthlyTurnGraceLimit} has been reached. Upgrade the plan to create new turns.");
     }
 
     public async Task<PlanUsageResponse> GetUsageAsync(Guid barberShopId, CancellationToken cancellationToken = default)
     {
         var shop = await dbContext.BarberShops.AsNoTracking().SingleAsync(x => x.Id == barberShopId, cancellationToken);
         var activeBarbers = await dbContext.Barbers.CountAsync(x => x.BarberShopId == barberShopId && x.IsActive, cancellationToken);
+        var activeServices = await dbContext.BarberServices.CountAsync(x => x.BarberShopId == barberShopId && x.IsActive, cancellationToken);
         var activeLocations = await dbContext.ShopLocations.CountAsync(x => x.BarberShopId == barberShopId && x.IsActive, cancellationToken);
+        var timeZone = TimeZoneInfo.FindSystemTimeZoneById(shop.TimeZoneId);
+        var localNow = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, timeZone);
+        var monthStart = new DateOnly(localNow.Year, localNow.Month, 1);
+        var nextMonth = monthStart.AddMonths(1);
+        var turnsThisMonth = await dbContext.Turns.CountAsync(
+            x => x.BarberShopId == barberShopId && x.QueueDate >= monthStart && x.QueueDate < nextMonth,
+            cancellationToken);
+
         var isDemo = shop.Slug.StartsWith("demo-", StringComparison.OrdinalIgnoreCase);
         var systemAdminEmail = configuration["SystemAdmin:Email"] ?? configuration["DemoAdmin:Email"];
         var isSystemAdmin = false;
-
         if (!string.IsNullOrWhiteSpace(systemAdminEmail))
         {
             var normalizedSystemAdminEmail = systemAdminEmail.Trim().ToLowerInvariant();
@@ -48,37 +81,70 @@ internal sealed class PlanLimitService(ApplicationDbContext dbContext, IConfigur
                 cancellationToken);
         }
 
-        var status = isSystemAdmin
-            ? SubscriptionStatus.Active
-            : shop.SubscriptionStatus == SubscriptionStatus.Trialing && shop.TrialEndsAtUtc <= DateTimeOffset.UtcNow
-                ? SubscriptionStatus.PastDue
-                : shop.SubscriptionStatus;
-        var entitled = status is SubscriptionStatus.Active or SubscriptionStatus.Trialing;
-        var limit = isSystemAdmin ? int.MaxValue : isDemo ? 3 : entitled ? shop.Plan switch { SubscriptionPlan.Starter => 3, SubscriptionPlan.Pro => 10, _ => int.MaxValue } : 0;
-        var locationLimit = isSystemAdmin ? int.MaxValue : isDemo ? 1 : entitled ? shop.Plan == SubscriptionPlan.Business ? 3 : 1 : 0;
-        var canUseAppointments = isSystemAdmin || isDemo || entitled && (shop.Plan is SubscriptionPlan.Pro or SubscriptionPlan.Business);
-        var canUseTv = isSystemAdmin || isDemo || entitled && (shop.Plan is SubscriptionPlan.Pro or SubscriptionPlan.Business);
-        var canUseAdvancedReports = isSystemAdmin || !isDemo && entitled && shop.Plan == SubscriptionPlan.Business;
+        var rawStatus = shop.SubscriptionStatus == SubscriptionStatus.Trialing && shop.TrialEndsAtUtc <= DateTimeOffset.UtcNow
+            ? SubscriptionStatus.PastDue
+            : shop.SubscriptionStatus;
+        var paidEntitlement = (rawStatus is SubscriptionStatus.Active or SubscriptionStatus.Trialing) && shop.Plan != SubscriptionPlan.Free;
+        var effectivePlan = isSystemAdmin
+            ? SubscriptionPlan.Business
+            : isDemo
+                ? SubscriptionPlan.Pro
+                : paidEntitlement
+                    ? shop.Plan
+                    : SubscriptionPlan.Free;
+        var effectiveStatus = effectivePlan == SubscriptionPlan.Free ? SubscriptionStatus.Active : rawStatus;
+
+        var barberLimit = isSystemAdmin ? Unlimited : isDemo ? 3 : effectivePlan switch
+        {
+            SubscriptionPlan.Free => 2,
+            SubscriptionPlan.Starter => 5,
+            SubscriptionPlan.Pro => 10,
+            _ => Unlimited
+        };
+        var serviceLimit = isSystemAdmin || isDemo ? Unlimited : effectivePlan == SubscriptionPlan.Free ? 5 : Unlimited;
+        var locationLimit = isSystemAdmin ? Unlimited : isDemo ? 1 : effectivePlan == SubscriptionPlan.Business ? 3 : 1;
+        var monthlyTurnLimit = isSystemAdmin || isDemo ? Unlimited : effectivePlan switch
+        {
+            SubscriptionPlan.Free => 100,
+            SubscriptionPlan.Starter => 1000,
+            _ => Unlimited
+        };
+        var monthlyTurnGraceLimit = monthlyTurnLimit switch
+        {
+            100 => 110,
+            1000 => 1050,
+            _ => Unlimited
+        };
+        var historyRetentionDays = isSystemAdmin || isDemo ? Unlimited : effectivePlan switch
+        {
+            SubscriptionPlan.Free => 7,
+            SubscriptionPlan.Starter => 90,
+            _ => Unlimited
+        };
+        var canUseAppointments = isSystemAdmin || isDemo || effectivePlan is SubscriptionPlan.Pro or SubscriptionPlan.Business;
+        var canUseTv = isSystemAdmin || isDemo || effectivePlan is SubscriptionPlan.Pro or SubscriptionPlan.Business;
+        var canUseAdvancedReports = isSystemAdmin || !isDemo && effectivePlan == SubscriptionPlan.Business;
+        var canUseAdvancedAutomation = isSystemAdmin || !isDemo && effectivePlan is SubscriptionPlan.Pro or SubscriptionPlan.Business;
 
         return new PlanUsageResponse(
-            isSystemAdmin ? SubscriptionPlan.Business : shop.Plan,
-            status,
+            effectivePlan,
+            effectiveStatus,
             activeBarbers,
-            limit,
+            barberLimit,
+            activeServices,
+            serviceLimit,
             activeLocations,
             locationLimit,
+            turnsThisMonth,
+            monthlyTurnLimit,
+            monthlyTurnGraceLimit,
+            historyRetentionDays,
             canUseAppointments,
             canUseTv,
             canUseAdvancedReports,
+            canUseAdvancedAutomation,
             isDemo,
             isSystemAdmin);
-    }
-
-    public async Task EnsureCanAddLocationAsync(Guid barberShopId, CancellationToken cancellationToken = default)
-    {
-        var usage = await GetUsageAsync(barberShopId, cancellationToken);
-        if (usage.ActiveLocations >= usage.LocationLimit)
-            throw new InvalidOperationException($"The {usage.Plan} plan allows up to {usage.LocationLimit} active locations.");
     }
 
     public async Task EnsureCanUseAsync(Guid barberShopId, PlanFeature feature, CancellationToken cancellationToken = default)
@@ -89,12 +155,14 @@ internal sealed class PlanLimitService(ApplicationDbContext dbContext, IConfigur
             PlanFeature.Appointments => usage.CanUseAppointments,
             PlanFeature.Tv => usage.CanUseTv,
             PlanFeature.AdvancedReports => usage.CanUseAdvancedReports,
+            PlanFeature.AdvancedAutomation => usage.CanUseAdvancedAutomation,
             _ => false
         };
-
         if (!allowed)
             throw new InvalidOperationException($"The {feature} feature is not available for the current BarberTurn plan.");
     }
+
+    private static string FormatLimit(int value) => value == Unlimited ? "unlimited" : value.ToString(System.Globalization.CultureInfo.InvariantCulture);
 }
 
 internal sealed class AuditService(ApplicationDbContext dbContext) : IAuditService

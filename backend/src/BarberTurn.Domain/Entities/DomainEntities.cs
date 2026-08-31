@@ -18,14 +18,14 @@ public sealed class BarberShop : BaseEntity
         Name = Require(name, nameof(name));
         Slug = Require(slug, nameof(slug)).ToLowerInvariant();
         TimeZoneId = Require(timeZoneId, nameof(timeZoneId));
-        TrialEndsAtUtc = DateTimeOffset.UtcNow.AddDays(14);
+        TrialEndsAtUtc = null;
     }
 
     public string Name { get; private set; } = string.Empty;
     public string Slug { get; private set; } = string.Empty;
     public string TimeZoneId { get; private set; } = "America/Santo_Domingo";
-    public SubscriptionPlan Plan { get; private set; } = SubscriptionPlan.Starter;
-    public SubscriptionStatus SubscriptionStatus { get; private set; } = SubscriptionStatus.Trialing;
+    public SubscriptionPlan Plan { get; private set; } = SubscriptionPlan.Free;
+    public SubscriptionStatus SubscriptionStatus { get; private set; } = SubscriptionStatus.Active;
     public DateTimeOffset? TrialEndsAtUtc { get; private set; }
     public bool IsActive { get; private set; } = true;
 
@@ -144,6 +144,7 @@ public sealed class User : BaseEntity
 
 public enum SubscriptionPlan
 {
+    Free = 0,
     Starter = 1,
     Pro = 2,
     Business = 3

@@ -65,6 +65,7 @@ internal sealed class QueueService(
 
     public async Task<ServiceResponse> CreateServiceAsync(Guid barberShopId, CreateServiceRequest request, CancellationToken cancellationToken = default)
     {
+        await planLimitService.EnsureCanAddServiceAsync(barberShopId, cancellationToken);
         var service = new BarberService(barberShopId, request.Name, request.Price, request.EstimatedDurationMinutes, request.Description);
         dbContext.BarberServices.Add(service);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -100,6 +101,14 @@ internal sealed class QueueService(
         if (fromDate > toDate)
             throw new ArgumentException("The from date must not be after the to date.");
         take = Math.Clamp(take, 1, 500);
+        var usage = await planLimitService.GetUsageAsync(barberShopId, cancellationToken);
+        if (usage.HistoryRetentionDays != int.MaxValue)
+        {
+            var today = await GetLocalDateAsync(barberShopId, cancellationToken);
+            var minimumDate = today.AddDays(-(usage.HistoryRetentionDays - 1));
+            if (fromDate < minimumDate) fromDate = minimumDate;
+            if (fromDate > toDate) return [];
+        }
         var turns = dbContext.Turns.AsNoTracking()
             .Where(x => x.BarberShopId == barberShopId && x.QueueDate >= fromDate && x.QueueDate <= toDate)
             .OrderByDescending(x => x.CreatedAtUtc)
@@ -259,6 +268,7 @@ internal sealed class QueueService(
             }
         }
 
+        await planLimitService.EnsureCanCreateTurnAsync(barberShopId, cancellationToken);
         var lastSequence = await dbContext.Turns.Where(x => x.BarberShopId == barberShopId && x.QueueDate == today).MaxAsync(x => (int?)x.SequenceNumber, cancellationToken) ?? 0;
         var turn = new Turn(barberShopId, request.ServiceId, today, lastSequence + 1, request.CustomerName, request.BarberId, request.CustomerPhone, publicTokenHash, idempotencyKey, request.AppointmentId);
         dbContext.Turns.Add(turn);

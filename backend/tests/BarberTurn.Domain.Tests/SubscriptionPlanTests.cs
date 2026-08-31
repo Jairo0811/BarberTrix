@@ -5,14 +5,13 @@ namespace BarberTurn.Domain.Tests;
 public sealed class SubscriptionPlanTests
 {
     [Fact]
-    public void NewBarberShopStartsOnStarterTrial()
+    public void NewBarberShopStartsOnPermanentFreePlan()
     {
         var shop = new BarberShop("BarberTurn Test", "barberturn-test");
 
-        Assert.Equal(SubscriptionPlan.Starter, shop.Plan);
-        Assert.Equal(SubscriptionStatus.Trialing, shop.SubscriptionStatus);
-        Assert.NotNull(shop.TrialEndsAtUtc);
-        Assert.True(shop.TrialEndsAtUtc > DateTimeOffset.UtcNow);
+        Assert.Equal(SubscriptionPlan.Free, shop.Plan);
+        Assert.Equal(SubscriptionStatus.Active, shop.SubscriptionStatus);
+        Assert.Null(shop.TrialEndsAtUtc);
     }
 
     [Fact]

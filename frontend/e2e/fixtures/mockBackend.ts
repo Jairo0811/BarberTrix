@@ -25,6 +25,8 @@ export async function installMockBackend(page: Page, options: MockOptions = {}) 
   const services = [{ id: 'service-1', name: 'Corte clásico', description: null, price: 500, estimatedDurationMinutes: 30, isActive: true }]
   const turns: Array<Record<string, unknown>> = []
   const appointments: Array<Record<string, unknown>> = []
+  const customers: Array<Record<string, unknown>> = [{ id: 'customer-1', name: 'Ana Pérez', phone: '8095550101', email: 'ana@example.com', isActive: true, createdAtUtc: '2026-08-01T12:00:00Z' }]
+  const customerNotes = new Map<string, string>()
 
   async function json(route: Route, body: unknown, status = 200) {
     await route.fulfill({
@@ -142,7 +144,53 @@ export async function installMockBackend(page: Page, options: MockOptions = {}) 
       await json(route, appointment ?? {}, appointment ? 200 : 404)
       return
     }
-    if (path === '/api/customers' || path === '/api/team' || path === '/api/payments' || path === '/api/locations') { await json(route, []); return }
+
+    if (path === '/api/customers' && method === 'GET') { await json(route, customers); return }
+    if (path === '/api/customers' && method === 'POST') {
+      const payload = request.postDataJSON() as { name: string; phone?: string; email?: string }
+      const customer = { id: `customer-${customers.length + 1}`, name: payload.name, phone: payload.phone || null, email: payload.email || null, isActive: true, createdAtUtc: new Date().toISOString() }
+      customers.push(customer)
+      await json(route, customer, 201)
+      return
+    }
+    const customerRoute = path.match(/^\/api\/customers\/([^/]+)$/)
+    if (customerRoute && method === 'PUT') {
+      const customer = customers.find(item => item.id === customerRoute[1])
+      if (!customer) { await json(route, {}, 404); return }
+      const payload = request.postDataJSON() as { name: string; phone?: string; email?: string }
+      customer.name = payload.name
+      customer.phone = payload.phone || null
+      customer.email = payload.email || null
+      await json(route, customer)
+      return
+    }
+    const customerProfileRoute = path.match(/^\/api\/customers\/([^/]+)\/profile$/)
+    if (customerProfileRoute && method === 'GET') {
+      const customer = customers.find(item => item.id === customerProfileRoute[1])
+      if (!customer) { await json(route, {}, 404); return }
+      await json(route, {
+        customer,
+        notes: customerNotes.get(customerProfileRoute[1]) || null,
+        completedVisits: 3,
+        lastVisitAtUtc: '2026-08-28T15:30:00Z',
+        lifetimeSpendByCurrency: { DOP: 1800 },
+        recentAppointments: [
+          { id: 'crm-appointment-1', startsAtUtc: '2026-08-28T15:00:00Z', endsAtUtc: '2026-08-28T15:30:00Z', serviceName: 'Corte clásico', barberName: 'Carlos', status: 'Completed' },
+        ],
+      })
+      return
+    }
+    const customerNotesRoute = path.match(/^\/api\/customers\/([^/]+)\/notes$/)
+    if (customerNotesRoute && method === 'PUT') {
+      const customer = customers.find(item => item.id === customerNotesRoute[1])
+      if (!customer) { await json(route, {}, 404); return }
+      const payload = request.postDataJSON() as { notes?: string | null }
+      customerNotes.set(customerNotesRoute[1], payload.notes || '')
+      await json(route, {}, 204)
+      return
+    }
+
+    if (path === '/api/team' || path === '/api/payments' || path === '/api/locations') { await json(route, []); return }
     if (path === '/api/reports/business') { await json(route, { completedTurns: 0, cancelledTurns: 0, noShows: 0, appointments: appointments.length, grossRevenue: 0 }); return }
 
     if (path === '/api/public/shops/central/capabilities') { await json(route, { canUseAppointments: plan !== 'Starter', canUseTv: plan !== 'Starter' }); return }
@@ -161,7 +209,7 @@ export async function installMockBackend(page: Page, options: MockOptions = {}) 
     await json(route, { code: 'E2E_ROUTE_NOT_CONFIGURED', message: `${method} ${path}` }, 404)
   })
 
-  return { turns, appointments }
+  return { turns, appointments, customers }
 }
 
 export async function seedAuth(page: Page, auth: Record<string, unknown>, demo = false) {

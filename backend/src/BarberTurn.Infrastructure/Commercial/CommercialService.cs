@@ -343,10 +343,10 @@ internal sealed class CommercialService(ApplicationDbContext dbContext) : IComme
         return (new DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(localStart, timeZone)), new DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(localEnd, timeZone)));
     }
 
-    private static IReadOnlyDictionary<string, decimal> MoneyByCurrency(IEnumerable<ReportPaymentRow> payments) =>
+    private static Dictionary<string, decimal> MoneyByCurrency(IEnumerable<ReportPaymentRow> payments) =>
         payments.GroupBy(x => x.Currency.ToUpperInvariant()).ToDictionary(x => x.Key, x => x.Sum(y => y.Amount), StringComparer.OrdinalIgnoreCase);
 
-    private static IReadOnlyDictionary<string, decimal> AverageTicketByCurrency(IEnumerable<ReportPaymentRow> payments) =>
+    private static Dictionary<string, decimal> AverageTicketByCurrency(IEnumerable<ReportPaymentRow> payments) =>
         payments.GroupBy(x => x.Currency.ToUpperInvariant()).ToDictionary(x => x.Key, x => Math.Round(x.Average(y => y.Amount), 2), StringComparer.OrdinalIgnoreCase);
 
     private static void AddMoney(Dictionary<Guid, Dictionary<string, decimal>> target, Guid id, string currency, decimal amount)
@@ -360,7 +360,7 @@ internal sealed class CommercialService(ApplicationDbContext dbContext) : IComme
         values[key] = values.GetValueOrDefault(key) + amount;
     }
 
-    private static IReadOnlyDictionary<string, decimal> EmptyMoney() => new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
+    private static Dictionary<string, decimal> EmptyMoney() => new(StringComparer.OrdinalIgnoreCase);
 
     private async Task EnsureUniqueAsync(Guid shopId, Guid? excludedId, string? phone, string? email, CancellationToken ct)
     {

@@ -11,6 +11,7 @@ const barberAuth: Auth = {
   accessToken: 'barber-token', expiresAtUtc: '2099-01-01T00:00:00Z',
   userId: 'user-1', barberShopId: 'shop-1', barberId: 'barber-1',
   name: 'Carlos', role: 'Barber', isEmailVerified: true,
+  sessionScope: 'Tenant',
 }
 
 describe('BarberPortal', () => {

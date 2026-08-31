@@ -50,6 +50,7 @@ jobs:
             --startup-project backend/src/BarberTurn.Infrastructure/BarberTurn.Infrastructure.csproj \
             --context ApplicationDbContext \
             --output-dir Persistence/Migrations \
+            --configuration Release \
             --no-build
 
       - name: Validate stage C

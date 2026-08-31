@@ -56,8 +56,7 @@ jobs:
           dotnet ef migrations add BarberJoinRequests \
             --project backend/src/BarberTurn.Infrastructure/BarberTurn.Infrastructure.csproj \
             --startup-project backend/src/BarberTurn.Api/BarberTurn.Api.csproj \
-            --output-dir Persistence/Migrations \
-            --no-build
+            --output-dir Persistence/Migrations
       - name: Validate backend
         run: |
           dotnet build backend/src/BarberTurn.Api/BarberTurn.Api.csproj -c Release --nologo

@@ -22,7 +22,7 @@ internal sealed class ShopLookupService(ApplicationDbContext dbContext) : IShopL
     }
 }
 
-internal sealed class PlanLimitService(ApplicationDbContext dbContext) : IPlanLimitService
+internal sealed class PlanLimitService(ApplicationDbContext dbContext, IConfiguration configuration) : IPlanLimitService
 {
     public async Task EnsureCanAddBarberAsync(Guid barberShopId, CancellationToken cancellationToken = default)
     {
@@ -37,16 +37,31 @@ internal sealed class PlanLimitService(ApplicationDbContext dbContext) : IPlanLi
         var activeBarbers = await dbContext.Barbers.CountAsync(x => x.BarberShopId == barberShopId && x.IsActive, cancellationToken);
         var activeLocations = await dbContext.ShopLocations.CountAsync(x => x.BarberShopId == barberShopId && x.IsActive, cancellationToken);
         var isDemo = shop.Slug.StartsWith("demo-", StringComparison.OrdinalIgnoreCase);
-        var status = shop.SubscriptionStatus == SubscriptionStatus.Trialing && shop.TrialEndsAtUtc <= DateTimeOffset.UtcNow ? SubscriptionStatus.PastDue : shop.SubscriptionStatus;
+        var systemAdminEmail = configuration["SystemAdmin:Email"] ?? configuration["DemoAdmin:Email"];
+        var isSystemAdmin = false;
+
+        if (!string.IsNullOrWhiteSpace(systemAdminEmail))
+        {
+            var normalizedSystemAdminEmail = systemAdminEmail.Trim().ToLowerInvariant();
+            isSystemAdmin = await dbContext.Users.AsNoTracking().AnyAsync(
+                x => x.BarberShopId == barberShopId && x.Email == normalizedSystemAdminEmail && x.IsActive,
+                cancellationToken);
+        }
+
+        var status = isSystemAdmin
+            ? SubscriptionStatus.Active
+            : shop.SubscriptionStatus == SubscriptionStatus.Trialing && shop.TrialEndsAtUtc <= DateTimeOffset.UtcNow
+                ? SubscriptionStatus.PastDue
+                : shop.SubscriptionStatus;
         var entitled = status is SubscriptionStatus.Active or SubscriptionStatus.Trialing;
-        var limit = isDemo ? 3 : entitled ? shop.Plan switch { SubscriptionPlan.Starter => 3, SubscriptionPlan.Pro => 10, _ => int.MaxValue } : 0;
-        var locationLimit = isDemo ? 1 : entitled ? shop.Plan == SubscriptionPlan.Business ? 3 : 1 : 0;
-        var canUseAppointments = isDemo || entitled && (shop.Plan is SubscriptionPlan.Pro or SubscriptionPlan.Business);
-        var canUseTv = isDemo || entitled && (shop.Plan is SubscriptionPlan.Pro or SubscriptionPlan.Business);
-        var canUseAdvancedReports = !isDemo && entitled && shop.Plan == SubscriptionPlan.Business;
+        var limit = isSystemAdmin ? int.MaxValue : isDemo ? 3 : entitled ? shop.Plan switch { SubscriptionPlan.Starter => 3, SubscriptionPlan.Pro => 10, _ => int.MaxValue } : 0;
+        var locationLimit = isSystemAdmin ? int.MaxValue : isDemo ? 1 : entitled ? shop.Plan == SubscriptionPlan.Business ? 3 : 1 : 0;
+        var canUseAppointments = isSystemAdmin || isDemo || entitled && (shop.Plan is SubscriptionPlan.Pro or SubscriptionPlan.Business);
+        var canUseTv = isSystemAdmin || isDemo || entitled && (shop.Plan is SubscriptionPlan.Pro or SubscriptionPlan.Business);
+        var canUseAdvancedReports = isSystemAdmin || !isDemo && entitled && shop.Plan == SubscriptionPlan.Business;
 
         return new PlanUsageResponse(
-            shop.Plan,
+            isSystemAdmin ? SubscriptionPlan.Business : shop.Plan,
             status,
             activeBarbers,
             limit,
@@ -55,7 +70,8 @@ internal sealed class PlanLimitService(ApplicationDbContext dbContext) : IPlanLi
             canUseAppointments,
             canUseTv,
             canUseAdvancedReports,
-            isDemo);
+            isDemo,
+            isSystemAdmin);
     }
 
     public async Task EnsureCanAddLocationAsync(Guid barberShopId, CancellationToken cancellationToken = default)

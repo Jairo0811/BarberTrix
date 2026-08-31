@@ -58,7 +58,7 @@ public static class TurnRequestEndpoints
 
         var group = endpoints.MapGroup("/api/turn-requests")
             .WithTags("Turn requests")
-            .RequireAuthorization("VerifiedUser");
+            .RequireAuthorization("TenantUser");
 
         group.MapGet("/", async (HttpContext context, ITurnRequestService service, CancellationToken ct) =>
         {

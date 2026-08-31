@@ -120,7 +120,15 @@ public static class DependencyInjection
             });
 
         services.AddAuthorization(options =>
-            options.AddPolicy("VerifiedUser", policy => policy.RequireAuthenticatedUser().RequireClaim("email_verified", "true")));
+        {
+            options.AddPolicy("VerifiedUser", policy =>
+                policy.RequireAuthenticatedUser().RequireClaim("email_verified", "true"));
+            options.AddPolicy("TenantUser", policy =>
+                policy.RequireAuthenticatedUser()
+                    .RequireClaim("email_verified", "true")
+                    .RequireClaim("barbershop_id")
+                    .RequireClaim(System.Security.Claims.ClaimTypes.Role));
+        });
         return services;
     }
 }

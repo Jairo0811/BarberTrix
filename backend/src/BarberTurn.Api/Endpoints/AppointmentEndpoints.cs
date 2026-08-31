@@ -51,7 +51,7 @@ public static class AppointmentEndpoints
             catch (InvalidOperationException ex) { return ApiErrorResults.Conflict(context, ApiErrorCodes.AppointmentConflict, ex.Message); }
         });
 
-        var group = endpoints.MapGroup("/api/appointments").WithTags("Appointments").RequireAuthorization("VerifiedUser");
+        var group = endpoints.MapGroup("/api/appointments").WithTags("Appointments").RequireAuthorization("TenantUser");
         group.MapGet("/", async (DateTimeOffset? from, DateTimeOffset? to, HttpContext context, IAppointmentService service, CancellationToken ct) =>
         {
             var items = await service.GetAsync(ShopId(context), from ?? DateTimeOffset.UtcNow.Date, to ?? DateTimeOffset.UtcNow.AddDays(30), ct);

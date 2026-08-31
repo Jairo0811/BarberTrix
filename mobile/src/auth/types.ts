@@ -1,12 +1,13 @@
-export type AuthStatus = 'loading' | 'anonymous' | 'authenticated';
+export type AuthStatus = 'loading' | 'anonymous' | 'authenticated' | 'onboarding';
 
 export type MobileUser = {
   id: string;
-  barberShopId: string;
+  barberShopId: string | null;
   barberId?: string | null;
   name: string;
   role: 'Owner' | 'Administrator' | 'Receptionist' | 'Barber' | string;
   isEmailVerified: boolean;
+  sessionScope: 'Tenant' | 'Onboarding';
 };
 
 export type MobileSession = {
@@ -21,11 +22,12 @@ export type MobileAuthResponse = {
   refreshToken: string;
   refreshTokenExpiresAtUtc: string;
   userId: string;
-  barberShopId: string;
+  barberShopId: string | null;
   barberId?: string | null;
   name: string;
   role: string;
   isEmailVerified: boolean;
+  sessionScope: 'Tenant' | 'Onboarding';
 };
 
 export type StoredRefreshSession = {

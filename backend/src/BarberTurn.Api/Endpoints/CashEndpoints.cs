@@ -11,7 +11,7 @@ public static class CashEndpoints
     {
         var cash = endpoints.MapGroup("/api/cash")
             .WithTags("Cash")
-            .RequireAuthorization("VerifiedUser")
+            .RequireAuthorization("TenantUser")
             .RequireAuthorization(policy => policy.RequireRole("Owner", "Administrator", "Receptionist"))
             .AddEndpointFilter<NonDemoTenantFilter>();
 
@@ -61,7 +61,7 @@ public static class CashEndpoints
             }
         })
         .WithTags("Cash")
-        .RequireAuthorization("VerifiedUser")
+        .RequireAuthorization("TenantUser")
         .RequireAuthorization(policy => policy.RequireRole("Owner", "Administrator", "Receptionist"))
         .AddEndpointFilter<NonDemoTenantFilter>();
 

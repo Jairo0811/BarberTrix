@@ -3,7 +3,7 @@ import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBars, faFlask, faRightFromBracket, faShieldHalved, faXmark } from '@fortawesome/free-solid-svg-icons'
 import type { Auth } from '../../../types'
-import { adminPageHref, type AdminPageId } from '../adminRoutes'
+import type { AdminPageId } from '../adminRoutes'
 
 type DashboardCopy = Record<string, string>
 
@@ -19,13 +19,14 @@ type Props = PropsWithChildren<{
   mobileNavOpen: boolean
   mobileMenuButtonRef: RefObject<HTMLButtonElement | null>
   sidebarRef: RefObject<HTMLElement | null>
+  onNavigate: (page: AdminPageId) => void
   onOpenMobileNav: () => void
   onCloseMobileNav: () => void
   onLogout: () => void
   formatRole: (role: string) => string
 }>
 
-export default function AdminDashboardLayout({ auth, isDemo, canManageCatalog, copy: c, navItems, activePage, mobileNavOpen, mobileMenuButtonRef, sidebarRef, onOpenMobileNav, onCloseMobileNav, onLogout, formatRole, children }: Props) {
+export default function AdminDashboardLayout({ auth, isDemo, canManageCatalog, copy: c, navItems, activePage, mobileNavOpen, mobileMenuButtonRef, sidebarRef, onNavigate, onOpenMobileNav, onCloseMobileNav, onLogout, formatRole, children }: Props) {
   return (
     <main className={`dashboard-app${isDemo ? ' dashboard-demo' : ' dashboard-admin'}`}>
       {mobileNavOpen && <button className="dashboard-nav-backdrop" type="button" aria-label={c.closeNavigation} onClick={onCloseMobileNav} />}
@@ -40,9 +41,9 @@ export default function AdminDashboardLayout({ auth, isDemo, canManageCatalog, c
 
         <nav className="dashboard-nav">
           {navItems.map(item => (
-            <a key={item.id} className={activePage === item.id ? 'active' : undefined} href={adminPageHref(item.id)} aria-current={activePage === item.id ? 'page' : undefined} onClick={onCloseMobileNav}>
+            <button key={item.id} className={activePage === item.id ? 'active' : undefined} type="button" aria-current={activePage === item.id ? 'page' : undefined} onClick={() => onNavigate(item.id)}>
               <span className="nav-icon" aria-hidden="true"><FontAwesomeIcon icon={item.icon} /></span><span>{item.label}</span>
-            </a>
+            </button>
           ))}
         </nav>
 

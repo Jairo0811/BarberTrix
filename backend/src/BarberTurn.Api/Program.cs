@@ -95,6 +95,7 @@ app.MapTurnRequestEndpoints();
 app.MapPushEndpoints();
 app.MapCommercialEndpoints();
 app.MapCustomerCrmEndpoints();
+app.MapCashEndpoints();
 app.MapHub<QueueHub>("/hubs/queue");
 
 app.Run();

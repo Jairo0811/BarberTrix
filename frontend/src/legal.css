@@ -1,0 +1,15 @@
+.legal-logo {
+  display: block;
+  width: min(190px, 58%);
+  height: auto;
+  margin: 0 auto 20px;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, .28));
+}
+
+@media (max-width: 560px) {
+  .legal-logo {
+    width: min(170px, 62%);
+    margin-bottom: 18px;
+  }
+}

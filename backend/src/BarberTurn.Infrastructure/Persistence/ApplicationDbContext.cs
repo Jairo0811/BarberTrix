@@ -7,6 +7,8 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
 {
     public DbSet<BarberShop> BarberShops => Set<BarberShop>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<BarberProfile> BarberProfiles => Set<BarberProfile>();
+    public DbSet<ShopMembership> ShopMemberships => Set<ShopMembership>();
     public DbSet<Barber> Barbers => Set<Barber>();
     public DbSet<BarberService> BarberServices => Set<BarberService>();
     public DbSet<Turn> Turns => Set<Turn>();
@@ -49,6 +51,31 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
             entity.Property(x => x.SecurityStamp).HasMaxLength(64).IsRequired();
             entity.HasIndex(x => x.Email).IsUnique();
             entity.HasIndex(x => new { x.BarberShopId, x.IsActive });
+            entity.HasOne<BarberShop>().WithMany().HasForeignKey(x => x.BarberShopId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Barber>().WithMany().HasForeignKey(x => x.BarberId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<BarberProfile>(entity =>
+        {
+            entity.ToTable("BarberProfiles");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.DisplayName).HasMaxLength(120).IsRequired();
+            entity.Property(x => x.Bio).HasMaxLength(1000);
+            entity.HasIndex(x => x.UserId).IsUnique();
+            entity.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ShopMembership>(entity =>
+        {
+            entity.ToTable("ShopMemberships", table => table.HasCheckConstraint(
+                "CK_ShopMemberships_BarberLink",
+                "([Role] = 'Barber' AND [BarberId] IS NOT NULL) OR ([Role] <> 'Barber' AND [BarberId] IS NULL)"));
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Role).HasConversion<string>().HasMaxLength(40).IsRequired();
+            entity.Property(x => x.Status).HasConversion<string>().HasMaxLength(30).IsRequired();
+            entity.HasIndex(x => new { x.UserId, x.BarberShopId }).IsUnique();
+            entity.HasIndex(x => new { x.BarberShopId, x.Status, x.Role });
+            entity.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<BarberShop>().WithMany().HasForeignKey(x => x.BarberShopId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<Barber>().WithMany().HasForeignKey(x => x.BarberId).OnDelete(DeleteBehavior.Restrict);
         });

@@ -1,0 +1,22 @@
+name: Identity stage C audit
+
+on:
+  push:
+    branches:
+      - feat/barber-independent-registration
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Find legacy tenant coupling
+        shell: bash
+        run: |
+          echo '=== BarberShopId references ==='
+          rg -n "BarberShopId|barbershop_id|ClaimTypes\.Role" backend/src backend/tests || true
+          echo '=== auth response consumers ==='
+          rg -n "AuthResponse|AuthSessionResponse|MobileAuthSessionResponse|register-owner|/login" backend/src backend/tests frontend/src mobile || true

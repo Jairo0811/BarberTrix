@@ -118,7 +118,7 @@ public sealed class BarberOnboardingTests
         Assert.NotNull(invitation);
         Assert.Null(invitation.DevelopmentAcceptanceUrl);
 
-        const string token = "stage-d-existing-barber-test-token";
+        var token = $"stage-d-existing-barber-test-token-{suffix}";
         using (var scope = factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();

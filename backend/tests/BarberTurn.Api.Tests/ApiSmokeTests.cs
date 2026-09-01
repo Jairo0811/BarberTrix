@@ -50,6 +50,54 @@ public sealed class ApiSmokeTests : IDisposable
     }
 
     [Fact]
+    public async Task ExpiredDemoTenantIsPrunedBeforeCreatingNextDemo()
+    {
+        using var firstClient = CreateClient();
+
+        var firstDemo = await firstClient.PostAsync("/api/auth/demo-login", null);
+        firstDemo.EnsureSuccessStatusCode();
+
+        await using var scope = factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var expiredShopId = await db.BarberShops
+            .AsNoTracking()
+            .Where(x => x.Slug.StartsWith("demo-"))
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Select(x => x.Id)
+            .FirstAsync();
+
+        var expiredAt = DateTimeOffset.UtcNow.AddHours(-5);
+
+        await db.Database.ExecuteSqlInterpolatedAsync(
+            $"""
+            UPDATE [BarberShops]
+            SET [CreatedAtUtc] = {expiredAt}
+            WHERE [Id] = {expiredShopId}
+            """);
+
+        Assert.True(await db.ShopMemberships
+            .AsNoTracking()
+            .AnyAsync(x => x.BarberShopId == expiredShopId));
+
+        using var secondClient = CreateClient();
+
+        var secondDemo = await secondClient.PostAsync("/api/auth/demo-login", null);
+        secondDemo.EnsureSuccessStatusCode();
+
+        Assert.False(await db.BarberShops
+            .AsNoTracking()
+            .AnyAsync(x => x.Id == expiredShopId));
+
+        Assert.False(await db.ShopMemberships
+            .AsNoTracking()
+            .AnyAsync(x => x.BarberShopId == expiredShopId));
+
+        Assert.False(await db.Users
+            .AsNoTracking()
+            .AnyAsync(x => x.BarberShopId == expiredShopId));
+    }
+    [Fact]
     public async Task RefreshTokenIsHttpOnlyAndNeverReturnedToJavascript()
     {
         var demo = await client.PostAsync("/api/auth/demo-login", null);

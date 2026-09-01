@@ -358,28 +358,53 @@ internal sealed class AuthService(
     private async Task PruneExpiredDemoSessionsAsync(CancellationToken cancellationToken)
     {
         var cutoff = DateTimeOffset.UtcNow.AddHours(-4);
-        var shopIds = await dbContext.BarberShops.Where(x => x.Slug.StartsWith("demo-") && x.CreatedAtUtc < cutoff).Select(x => x.Id).ToListAsync(cancellationToken);
+        var shopIds = await dbContext.BarberShops
+            .Where(x => x.Slug.StartsWith("demo-") && x.CreatedAtUtc < cutoff)
+            .Select(x => x.Id)
+            .ToListAsync(cancellationToken);
+
         if (shopIds.Count == 0)
             return;
 
-        var userIds = dbContext.Users.Where(x => x.BarberShopId.HasValue && shopIds.Contains(x.BarberShopId.Value)).Select(x => x.Id);
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        var userIds = dbContext.Users
+            .Where(x => x.BarberShopId.HasValue && shopIds.Contains(x.BarberShopId.Value))
+            .Select(x => x.Id);
+
         await dbContext.AuditLogs.Where(x => shopIds.Contains(x.BarberShopId)).ExecuteDeleteAsync(cancellationToken);
         await dbContext.EmailVerificationTokens.Where(x => userIds.Contains(x.UserId)).ExecuteDeleteAsync(cancellationToken);
         await dbContext.RefreshSessions.Where(x => userIds.Contains(x.UserId)).ExecuteDeleteAsync(cancellationToken);
+
+        await dbContext.BarberJoinRequests
+            .Where(x =>
+                shopIds.Contains(x.BarberShopId) ||
+                userIds.Contains(x.UserId) ||
+                (x.ReviewedByUserId.HasValue && userIds.Contains(x.ReviewedByUserId.Value)))
+            .ExecuteDeleteAsync(cancellationToken);
+
         await dbContext.TeamInvitations.Where(x => shopIds.Contains(x.BarberShopId)).ExecuteDeleteAsync(cancellationToken);
+        await dbContext.PushSubscriptions.Where(x => shopIds.Contains(x.BarberShopId)).ExecuteDeleteAsync(cancellationToken);
         await dbContext.Payments.Where(x => shopIds.Contains(x.BarberShopId)).ExecuteDeleteAsync(cancellationToken);
+        await dbContext.TurnRequests.Where(x => shopIds.Contains(x.BarberShopId)).ExecuteDeleteAsync(cancellationToken);
         await dbContext.Turns.Where(x => shopIds.Contains(x.BarberShopId)).ExecuteDeleteAsync(cancellationToken);
         await dbContext.Appointments.Where(x => shopIds.Contains(x.BarberShopId)).ExecuteDeleteAsync(cancellationToken);
         await dbContext.BlockedTimes.Where(x => shopIds.Contains(x.BarberShopId)).ExecuteDeleteAsync(cancellationToken);
         await dbContext.Customers.Where(x => shopIds.Contains(x.BarberShopId)).ExecuteDeleteAsync(cancellationToken);
         await dbContext.ShopLocations.Where(x => shopIds.Contains(x.BarberShopId)).ExecuteDeleteAsync(cancellationToken);
-        await dbContext.Users.Where(x => x.BarberShopId.HasValue && shopIds.Contains(x.BarberShopId.Value)).ExecuteDeleteAsync(cancellationToken);
+        await dbContext.ShopMemberships.Where(x => shopIds.Contains(x.BarberShopId)).ExecuteDeleteAsync(cancellationToken);
+
+        await dbContext.Users
+            .Where(x => x.BarberShopId.HasValue && shopIds.Contains(x.BarberShopId.Value))
+            .ExecuteDeleteAsync(cancellationToken);
+
         await dbContext.Subscriptions.Where(x => shopIds.Contains(x.BarberShopId)).ExecuteDeleteAsync(cancellationToken);
         await dbContext.BarberServices.Where(x => shopIds.Contains(x.BarberShopId)).ExecuteDeleteAsync(cancellationToken);
         await dbContext.Barbers.Where(x => shopIds.Contains(x.BarberShopId)).ExecuteDeleteAsync(cancellationToken);
         await dbContext.BarberShops.Where(x => shopIds.Contains(x.Id)).ExecuteDeleteAsync(cancellationToken);
-    }
 
+        await transaction.CommitAsync(cancellationToken);
+    }
     private AuthResponse CreateAuthResponse(User user, string refreshToken, DateTimeOffset refreshExpiresAtUtc)
     {
         var expiresAt = DateTimeOffset.UtcNow.AddMinutes(configuration.GetValue("Jwt:AccessTokenMinutes", 15));

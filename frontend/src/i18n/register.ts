@@ -4,6 +4,7 @@ export const registerCopy: Record<'es-419' | 'en' | 'es-ES' | 'ja', Dictionary> 
   'es-419': {
     'register.shopName': 'Nombre de la barbería',
     'register.shopNamePlaceholder': 'Barbería Central',
+    'register.emailPlaceholder': 'ejemplo@barberia.com',
     'register.acceptTermsPrefix': 'Acepto los',
     'register.terms': 'términos de servicio',
     'register.acceptTermsJoin': 'y la',
@@ -12,6 +13,7 @@ export const registerCopy: Record<'es-419' | 'en' | 'es-ES' | 'ja', Dictionary> 
   en: {
     'register.shopName': 'Barbershop name',
     'register.shopNamePlaceholder': 'Central Barbershop',
+    'register.emailPlaceholder': 'example@barbershop.com',
     'register.acceptTermsPrefix': 'I accept the',
     'register.terms': 'terms of service',
     'register.acceptTermsJoin': 'and the',
@@ -20,6 +22,7 @@ export const registerCopy: Record<'es-419' | 'en' | 'es-ES' | 'ja', Dictionary> 
   'es-ES': {
     'register.shopName': 'Nombre de la barbería',
     'register.shopNamePlaceholder': 'Barbería Central',
+    'register.emailPlaceholder': 'ejemplo@barberia.com',
     'register.acceptTermsPrefix': 'Acepto los',
     'register.terms': 'términos de servicio',
     'register.acceptTermsJoin': 'y la',
@@ -28,6 +31,7 @@ export const registerCopy: Record<'es-419' | 'en' | 'es-ES' | 'ja', Dictionary> 
   ja: {
     'register.shopName': 'バーバーショップ名',
     'register.shopNamePlaceholder': 'セントラル・バーバーショップ',
+    'register.emailPlaceholder': 'example@barbershop.jp',
     'register.acceptTermsPrefix': '以下に同意します：',
     'register.terms': '利用規約',
     'register.acceptTermsJoin': 'および',

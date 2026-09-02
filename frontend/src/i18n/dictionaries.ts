@@ -18,6 +18,8 @@ import ptBr from './pt-BR'
 import fr from './fr'
 import de from './de'
 import it from './it'
+import nl from './nl'
+import ht from './ht'
 
 export const dictionaries: Record<Locale, Dictionary> = {
   'es-419': { ...es419Common, ...es419Auth, ...es419Dashboard, ...es419Billing, ...es419Customer },
@@ -27,4 +29,6 @@ export const dictionaries: Record<Locale, Dictionary> = {
   fr,
   de,
   it,
+  nl,
+  ht,
 }

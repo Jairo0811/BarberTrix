@@ -4,6 +4,7 @@ import { europeWave2Mobile } from './europeWave2';
 import { africaWave1Mobile } from './africaWave1';
 import { africaWave2Mobile } from './africaWave2';
 import { asiaWave1Mobile } from './asiaWave1';
+import { asiaWave2Mobile } from './asiaWave2';
 import { coreLegacy } from './coreLegacy';
 
 const baseDictionaries: Record<string, Dictionary> = {
@@ -40,4 +41,5 @@ export const dictionaries: Record<Locale, Dictionary> = {
   ar: merge(africaWave1Mobile.ar), sw: merge(africaWave1Mobile.sw), af: merge(africaWave1Mobile.af), am: merge(africaWave1Mobile.am), so: merge(africaWave1Mobile.so), ha: merge(africaWave1Mobile.ha), yo: merge(africaWave1Mobile.yo), ig: merge(africaWave1Mobile.ig), zu: merge(africaWave1Mobile.zu), xh: merge(africaWave1Mobile.xh),
   wo: merge(africaWave2Mobile.wo), ln: merge(africaWave2Mobile.ln), rw: merge(africaWave2Mobile.rw), rn: merge(africaWave2Mobile.rn), st: merge(africaWave2Mobile.st), tn: merge(africaWave2Mobile.tn), sn: merge(africaWave2Mobile.sn), ny: merge(africaWave2Mobile.ny), mg: merge(africaWave2Mobile.mg), ti: merge(africaWave2Mobile.ti), om: merge(africaWave2Mobile.om), ak: merge(africaWave2Mobile.ak),
   'zh-CN': merge(asiaWave1Mobile['zh-CN']), 'zh-TW': merge(asiaWave1Mobile['zh-TW']), ja: merge(asiaWave1Mobile.ja), ko: merge(asiaWave1Mobile.ko), hi: merge(asiaWave1Mobile.hi), bn: merge(asiaWave1Mobile.bn), ur: merge(asiaWave1Mobile.ur), id: merge(asiaWave1Mobile.id), ms: merge(asiaWave1Mobile.ms), vi: merge(asiaWave1Mobile.vi), th: merge(asiaWave1Mobile.th), fil: merge(asiaWave1Mobile.fil), fa: merge(asiaWave1Mobile.fa),
+  ta: merge(asiaWave2Mobile.ta), te: merge(asiaWave2Mobile.te), mr: merge(asiaWave2Mobile.mr), gu: merge(asiaWave2Mobile.gu), pa: merge(asiaWave2Mobile.pa), kn: merge(asiaWave2Mobile.kn), ml: merge(asiaWave2Mobile.ml), ne: merge(asiaWave2Mobile.ne), si: merge(asiaWave2Mobile.si), my: merge(asiaWave2Mobile.my), km: merge(asiaWave2Mobile.km), lo: merge(asiaWave2Mobile.lo), mn: merge(asiaWave2Mobile.mn), kk: merge(asiaWave2Mobile.kk), uz: merge(asiaWave2Mobile.uz), ky: merge(asiaWave2Mobile.ky), tg: merge(asiaWave2Mobile.tg),
 } as Record<Locale, Dictionary>;

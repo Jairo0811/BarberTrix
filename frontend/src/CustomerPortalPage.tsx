@@ -30,7 +30,11 @@ export default function CustomerPortalPage() {
       fetch(`${API_URL}/api/public/shops/${encodeURIComponent(slug)}/queue`),
       fetch(`${API_URL}/api/public/shops/${encodeURIComponent(slug)}/capabilities`),
     ]).then(async ([shopResponse, queueResponse, capabilitiesResponse]) => {
-      if (!shopResponse.ok) throw new Error(t('customer.shopNotFound'))
+      if (!shopResponse.ok) {
+        setError(t('customer.shopNotFound'))
+        return
+      }
+
       setShop(await shopResponse.json() as Shop)
       if (queueResponse.ok) setQueue(await queueResponse.json() as QueueDisplay)
       if (capabilitiesResponse.ok) setCapabilities(await capabilitiesResponse.json() as PublicCapabilities)

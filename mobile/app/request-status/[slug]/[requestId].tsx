@@ -1,34 +1,26 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { acceptCounterProposal, cancelPublicTurnRequest, getPublicTurnRequest } from '@/turnRequests/turnRequestApi';
 import { publicRequestStore } from '@/turnRequests/publicRequestStore';
-import type { TurnRequestStatus } from '@/turnRequests/types';
 import { PushOptInCard } from '@/notifications/PushOptInCard';
 import { usePushNotifications } from '@/notifications/PushNotificationsProvider';
-
-const labels: Record<TurnRequestStatus, string> = {
-  Pending: 'Esperando respuesta del barbero',
-  Accepted: 'Turno confirmado',
-  Rejected: 'Solicitud rechazada',
-  CounterProposed: 'El barbero propuso otra hora',
-  Cancelled: 'Solicitud cancelada',
-  Expired: 'Solicitud expirada',
-};
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
-}
+import { useI18n } from '@/i18n/I18nProvider';
 
 export default function RequestStatusScreen() {
+  const { locale, t } = useI18n();
   const params = useLocalSearchParams<{ slug: string; requestId: string }>();
   const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
   const requestId = Array.isArray(params.requestId) ? params.requestId[0] : params.requestId;
   const [lookupToken, setLookupToken] = useState<string | null | undefined>(undefined);
   const queryClient = useQueryClient();
   const push = usePushNotifications();
+  const dateFormatter = useMemo(
+    () => new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }),
+    [locale],
+  );
 
   useEffect(() => {
     if (!requestId) return;
@@ -67,12 +59,12 @@ export default function RequestStatusScreen() {
   }
 
   if (!lookupToken) {
-    return <SafeAreaView style={styles.safe}><View style={styles.center}><Text style={styles.title}>No encontramos la credencial segura de esta solicitud.</Text><Text style={styles.body}>Abre el estado desde el mismo dispositivo donde solicitaste el turno.</Text></View></SafeAreaView>;
+    return <SafeAreaView style={styles.safe}><View style={styles.center}><Text style={styles.title}>{t('requestStatus.missingCredential')}</Text><Text style={styles.body}>{t('requestStatus.missingCredentialText')}</Text></View></SafeAreaView>;
   }
 
   const request = requestQuery.data;
   if (!request) {
-    return <SafeAreaView style={styles.safe}><View style={styles.center}><Text style={styles.title}>No pudimos cargar tu solicitud.</Text><Pressable onPress={() => requestQuery.refetch()} style={styles.secondary}><Text style={styles.secondaryText}>Reintentar</Text></Pressable></View></SafeAreaView>;
+    return <SafeAreaView style={styles.safe}><View style={styles.center}><Text style={styles.title}>{t('requestStatus.loadError')}</Text><Pressable onPress={() => requestQuery.refetch()} style={styles.secondary}><Text style={styles.secondaryText}>{t('requestStatus.retry')}</Text></Pressable></View></SafeAreaView>;
   }
 
   const actionable = request.status === 'Pending' || request.status === 'CounterProposed';
@@ -83,13 +75,13 @@ export default function RequestStatusScreen() {
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={requestQuery.isRefetching} onRefresh={() => requestQuery.refetch()} />}
       >
-        <Text style={styles.eyebrow}>ESTADO DE TU SOLICITUD</Text>
-        <Text style={styles.title}>{labels[request.status]}</Text>
+        <Text style={styles.eyebrow}>{t('requestStatus.eyebrow')}</Text>
+        <Text style={styles.title}>{t(`requestStatus.${request.status}`)}</Text>
         <View style={styles.statusCard}>
           <Text style={styles.service}>{request.serviceName}</Text>
-          <Text style={styles.barber}>con {request.barberName}</Text>
-          <Text style={styles.time}>Solicitado: {formatDate(request.requestedStartsAtUtc)}</Text>
-          {request.counterProposedStartsAtUtc ? <Text style={styles.counter}>Nueva propuesta: {formatDate(request.counterProposedStartsAtUtc)}</Text> : null}
+          <Text style={styles.barber}>{t('requestStatus.withBarber', { barber: request.barberName })}</Text>
+          <Text style={styles.time}>{t('requestStatus.requestedAt', { date: dateFormatter.format(new Date(request.requestedStartsAtUtc)) })}</Text>
+          {request.counterProposedStartsAtUtc ? <Text style={styles.counter}>{t('requestStatus.counterAt', { date: dateFormatter.format(new Date(request.counterProposedStartsAtUtc)) })}</Text> : null}
           {request.notes ? <Text style={styles.notes}>“{request.notes}”</Text> : null}
         </View>
 
@@ -97,33 +89,33 @@ export default function RequestStatusScreen() {
           <PushOptInCard
             status={push.status}
             message={push.message}
-            title="Recibe la respuesta al instante"
-            body="Te avisaremos si aceptan, rechazan o proponen otra hora."
+            title={t('requestStatus.pushTitle')}
+            body={t('requestStatus.pushBody')}
             onEnable={() => push.enableForRequest(slug!, requestId!, lookupToken)}
           />
         ) : null}
 
         {request.status === 'CounterProposed' ? (
           <Pressable disabled={acceptMutation.isPending} onPress={() => acceptMutation.mutate()} style={styles.primary}>
-            <Text style={styles.primaryText}>{acceptMutation.isPending ? 'Confirmando…' : 'Aceptar nueva hora'}</Text>
+            <Text style={styles.primaryText}>{acceptMutation.isPending ? t('requestStatus.confirming') : t('requestStatus.acceptNewTime')}</Text>
           </Pressable>
         ) : null}
 
         {request.status === 'Accepted' && request.appointmentId ? (
           <View style={styles.success}>
-            <Text style={styles.successTitle}>¡Listo! Tu cita fue creada.</Text>
-            <Text style={styles.body}>Tu misma credencial segura protege el seguimiento de la cita.</Text>
+            <Text style={styles.successTitle}>{t('requestStatus.appointmentCreated')}</Text>
+            <Text style={styles.body}>{t('requestStatus.secureTracking')}</Text>
           </View>
         ) : null}
 
         {actionable ? (
           <Pressable disabled={cancelMutation.isPending} onPress={() => cancelMutation.mutate()} style={styles.secondary}>
-            <Text style={styles.secondaryText}>{cancelMutation.isPending ? 'Cancelando…' : 'Cancelar solicitud'}</Text>
+            <Text style={styles.secondaryText}>{cancelMutation.isPending ? t('requestStatus.cancelling') : t('requestStatus.cancel')}</Text>
           </Pressable>
         ) : null}
 
-        {acceptMutation.error || cancelMutation.error ? <Text accessibilityRole="alert" style={styles.error}>No pudimos completar la operación. Actualiza e inténtalo de nuevo.</Text> : null}
-        <Text style={styles.hint}>Esta pantalla se actualiza automáticamente mientras la solicitud está pendiente.</Text>
+        {acceptMutation.error || cancelMutation.error ? <Text accessibilityRole="alert" style={styles.error}>{t('requestStatus.operationError')}</Text> : null}
+        <Text style={styles.hint}>{t('requestStatus.autoRefresh')}</Text>
       </ScrollView>
     </SafeAreaView>
   );

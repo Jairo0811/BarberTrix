@@ -10,6 +10,7 @@ const supportedLocales: Locale[] = [
 ]
 
 const rtlLocales = new Set<Locale>(['ar', 'ur', 'fa'])
+const strictLocales = new Set<Locale>(['ja'])
 
 type I18nContextValue = {
   locale: Locale
@@ -30,7 +31,7 @@ function mapDeviceLocale(deviceLocale?: string | null): Locale | null {
     [['ja'],'ja'],[['ko'],'ko'],[['hi'],'hi'],[['bn'],'bn'],[['ur'],'ur'],[['id'],'id'],[['ms'],'ms'],[['vi'],'vi'],[['th'],'th'],[['fil','tl'],'fil'],[['fa'],'fa'],[['ta'],'ta'],[['te'],'te'],[['mr'],'mr'],[['gu'],'gu'],[['pa'],'pa'],[['kn'],'kn'],[['ml'],'ml'],[['ne'],'ne'],[['si'],'si'],[['my'],'my'],[['km'],'km'],[['lo'],'lo'],[['mn'],'mn'],[['kk'],'kk'],[['uz'],'uz'],[['ky'],'ky'],[['tg'],'tg'],
     [['mi'],'mi'],[['sm'],'sm'],[['to'],'to'],[['fj'],'fj'],[['bi'],'bi'],[['tpi'],'tpi'],[['ho'],'ho'],[['gil'],'gil'],[['mh'],'mh'],[['na'],'na'],[['pau'],'pau'],[['tvl'],'tvl'],[['en'],'en'],[['es'],'es-419'],
   ]
-  for (const [prefixes, locale] of aliases) if (prefixes.some(prefix => normalized.startsWith(prefix))) return locale
+  for (const [prefixes, locale] of aliases) if (prefixes.some(prefix => normalized === prefix || normalized.startsWith(`${prefix}-`))) return locale
   return null
 }
 
@@ -80,7 +81,10 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     setLocale,
     setLocalePreference,
     t: (key, values) => {
-      const template = dictionaries[locale][key] ?? dictionaries.en[key] ?? dictionaries['es-419'][key] ?? key
+      const localized = dictionaries[locale][key]
+      const template = strictLocales.has(locale)
+        ? localized ?? key
+        : localized ?? dictionaries.en[key] ?? dictionaries['es-419'][key] ?? key
       if (!values) return template
       return Object.entries(values).reduce((result, [name, replacement]) => result.replaceAll(`{{${name}}}`, String(replacement)), template)
     },

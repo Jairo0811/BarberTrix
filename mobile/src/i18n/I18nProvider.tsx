@@ -13,25 +13,15 @@ type I18nContextValue = {
 function resolveDeviceLocale(): Locale {
   const rawLocale = Intl.DateTimeFormat().resolvedOptions().locale.toLowerCase().replace('_', '-');
   if (rawLocale === 'es-es' || rawLocale.startsWith('es-es-')) return 'es-ES';
-  if (rawLocale.startsWith('pt')) return 'pt-BR';
-  if (rawLocale.startsWith('fr')) return 'fr';
-  if (rawLocale.startsWith('de')) return 'de';
-  if (rawLocale.startsWith('it')) return 'it';
-  if (rawLocale.startsWith('nl')) return 'nl';
-  if (rawLocale.startsWith('ht')) return 'ht';
-  if (rawLocale.startsWith('pl')) return 'pl';
-  if (rawLocale.startsWith('ro')) return 'ro';
-  if (rawLocale.startsWith('sv')) return 'sv';
-  if (rawLocale.startsWith('da')) return 'da';
-  if (rawLocale.startsWith('nb') || rawLocale.startsWith('nn') || rawLocale.startsWith('no')) return 'nb';
-  if (rawLocale.startsWith('fi')) return 'fi';
-  if (rawLocale.startsWith('cs')) return 'cs';
-  if (rawLocale.startsWith('el')) return 'el';
-  if (rawLocale.startsWith('tr')) return 'tr';
-  if (rawLocale.startsWith('uk')) return 'uk';
-  if (rawLocale.startsWith('ru')) return 'ru';
-  if (rawLocale.startsWith('en')) return 'en';
-  if (rawLocale.startsWith('es')) return 'es-419';
+  const aliases: Array<[string[], Locale]> = [
+    [['pt'], 'pt-BR'], [['fr'], 'fr'], [['de'], 'de'], [['it'], 'it'], [['nl'], 'nl'], [['ht'], 'ht'],
+    [['pl'], 'pl'], [['ro'], 'ro'], [['sv'], 'sv'], [['da'], 'da'], [['nb','nn','no'], 'nb'], [['fi'], 'fi'], [['cs'], 'cs'], [['el'], 'el'], [['tr'], 'tr'], [['uk'], 'uk'], [['ru'], 'ru'],
+    [['et'], 'et'], [['lv'], 'lv'], [['lt'], 'lt'], [['sk'], 'sk'], [['sl'], 'sl'], [['hr'], 'hr'], [['sr'], 'sr'], [['bs'], 'bs'], [['bg'], 'bg'], [['sq'], 'sq'], [['mk'], 'mk'], [['hu'], 'hu'], [['is'], 'is'], [['ga'], 'ga'], [['mt'], 'mt'], [['ca'], 'ca'], [['ka'], 'ka'], [['hy'], 'hy'], [['az'], 'az'],
+    [['en'], 'en'], [['es'], 'es-419'],
+  ];
+  for (const [prefixes, locale] of aliases) {
+    if (prefixes.some(prefix => rawLocale.startsWith(prefix))) return locale;
+  }
   return 'es-419';
 }
 
@@ -46,7 +36,6 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     const subscription = AppState.addEventListener('change', state => {
       if (state === 'active') setSystemLocale(resolveDeviceLocale());
     });
-
     return () => subscription.remove();
   }, []);
 
@@ -57,10 +46,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     t: (key, values) => {
       const template = dictionaries[locale][key] ?? dictionaries.en[key] ?? dictionaries['es-419'][key] ?? key;
       if (!values) return template;
-      return Object.entries(values).reduce(
-        (result, [name, replacement]) => result.replaceAll(`{{${name}}}`, String(replacement)),
-        template,
-      );
+      return Object.entries(values).reduce((result, [name, replacement]) => result.replaceAll(`{{${name}}}`, String(replacement)), template);
     },
   }), [locale, localePreference]);
 

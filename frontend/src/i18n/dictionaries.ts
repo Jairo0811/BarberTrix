@@ -24,6 +24,7 @@ import { europeWave1 } from './europe-wave1'
 import { europeWave2 } from './europe-wave2'
 import { africaWave1 } from './africa-wave1'
 import { africaWave2 } from './africa-wave2'
+import { asiaWave1 } from './asia-wave1'
 
 const english: Dictionary = { ...enCommon, ...enAuth, ...enDashboard, ...enBilling, ...enCustomer }
 const merge = (dictionary: Dictionary): Dictionary => ({ ...english, ...dictionary })
@@ -37,4 +38,5 @@ export const dictionaries: Record<Locale, Dictionary> = {
   et: merge(europeWave2.et), lv: merge(europeWave2.lv), lt: merge(europeWave2.lt), sk: merge(europeWave2.sk), sl: merge(europeWave2.sl), hr: merge(europeWave2.hr), sr: merge(europeWave2.sr), bs: merge(europeWave2.bs), bg: merge(europeWave2.bg), sq: merge(europeWave2.sq), mk: merge(europeWave2.mk), hu: merge(europeWave2.hu), is: merge(europeWave2.is), ga: merge(europeWave2.ga), mt: merge(europeWave2.mt), ca: merge(europeWave2.ca), ka: merge(europeWave2.ka), hy: merge(europeWave2.hy), az: merge(europeWave2.az),
   ar: merge(africaWave1.ar), sw: merge(africaWave1.sw), af: merge(africaWave1.af), am: merge(africaWave1.am), so: merge(africaWave1.so), ha: merge(africaWave1.ha), yo: merge(africaWave1.yo), ig: merge(africaWave1.ig), zu: merge(africaWave1.zu), xh: merge(africaWave1.xh),
   wo: merge(africaWave2.wo), ln: merge(africaWave2.ln), rw: merge(africaWave2.rw), rn: merge(africaWave2.rn), st: merge(africaWave2.st), tn: merge(africaWave2.tn), sn: merge(africaWave2.sn), ny: merge(africaWave2.ny), mg: merge(africaWave2.mg), ti: merge(africaWave2.ti), om: merge(africaWave2.om), ak: merge(africaWave2.ak),
+  'zh-CN': merge(asiaWave1['zh-CN']), 'zh-TW': merge(asiaWave1['zh-TW']), ja: merge(asiaWave1.ja), ko: merge(asiaWave1.ko), hi: merge(asiaWave1.hi), bn: merge(asiaWave1.bn), ur: merge(asiaWave1.ur), id: merge(asiaWave1.id), ms: merge(asiaWave1.ms), vi: merge(asiaWave1.vi), th: merge(asiaWave1.th), fil: merge(asiaWave1.fil), fa: merge(asiaWave1.fa),
 }

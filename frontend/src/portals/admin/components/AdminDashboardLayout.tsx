@@ -2,6 +2,7 @@ import type { PropsWithChildren, RefObject } from 'react'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBars, faFlask, faRightFromBracket, faShieldHalved, faXmark } from '@fortawesome/free-solid-svg-icons'
+import { useI18n } from '../../../i18n'
 import type { Auth } from '../../../types'
 import type { AdminPageId } from '../adminRoutes'
 
@@ -27,6 +28,7 @@ type Props = PropsWithChildren<{
 }>
 
 export default function AdminDashboardLayout({ auth, isDemo, canManageCatalog, copy: c, navItems, activePage, mobileNavOpen, mobileMenuButtonRef, sidebarRef, onNavigate, onOpenMobileNav, onCloseMobileNav, onLogout, formatRole, children }: Props) {
+  const { t } = useI18n()
   return (
     <main className={`dashboard-app${isDemo ? ' dashboard-demo' : ' dashboard-admin'}`}>
       {mobileNavOpen && <button className="dashboard-nav-backdrop" type="button" aria-label={c.closeNavigation} onClick={onCloseMobileNav} />}
@@ -58,10 +60,10 @@ export default function AdminDashboardLayout({ auth, isDemo, canManageCatalog, c
         <header className="dashboard-topbar">
           <div className="dashboard-topbar-left">
             <button ref={mobileMenuButtonRef} className="dashboard-mobile-menu" type="button" aria-label={c.openMenu} aria-expanded={mobileNavOpen} aria-controls="dashboard-sidebar" onClick={onOpenMobileNav}><FontAwesomeIcon icon={faBars} /></button>
-            <div className="dashboard-topbar-copy"><strong>{isDemo ? 'BarberTurn Demo' : 'BarberTurn Admin'}</strong><span>{isDemo ? c.demoEnvironment : c.controlCenter}</span></div>
+            <div className="dashboard-topbar-copy"><strong>{isDemo ? t('shell.demoTitle') : t('shell.adminTitle')}</strong><span>{isDemo ? c.demoEnvironment : c.controlCenter}</span></div>
           </div>
           <div className="dashboard-user">
-            {isDemo ? <span className="demo-pill">DEMO</span> : canManageCatalog && <span className="admin-pill compact">ADMIN</span>}
+            {isDemo ? <span className="demo-pill">{t('shell.demoBadge')}</span> : canManageCatalog && <span className="admin-pill compact">{t('shell.adminBadge')}</span>}
             <div className="dashboard-user-copy"><strong>{auth.name}</strong><small>{formatRole(auth.role)}</small></div>
             <span className="dashboard-avatar" aria-hidden="true">{auth.name.charAt(0).toUpperCase()}</span>
           </div>

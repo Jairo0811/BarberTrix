@@ -1,0 +1,53 @@
+name: Mobile dependency refresh
+
+on:
+  push:
+    branches: [chore/mobile-expo-patch-alignment]
+    paths:
+      - mobile/.dependency-refresh-request
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chore/mobile-expo-patch-alignment
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.2
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - name: Install current lockfile
+        run: npm ci
+      - name: Align Expo dependencies
+        run: npx expo install --fix
+      - name: Validate Expo dependency alignment
+        run: npx expo install --check
+      - name: Typecheck
+        env:
+          EXPO_PUBLIC_API_BASE_URL: https://api.example.test
+        run: npm run typecheck
+      - name: Bundle Android
+        env:
+          EXPO_PUBLIC_API_BASE_URL: https://api.example.test
+        run: npx expo export --platform android --output-dir dist-android
+      - name: Commit dependency alignment
+        working-directory: .
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add mobile/package.json mobile/package-lock.json
+          if git diff --cached --quiet; then
+            echo "No dependency changes to commit."
+            exit 0
+          fi
+          git commit -m "chore(mobile): align Expo patch dependencies"
+          git push origin HEAD:chore/mobile-expo-patch-alignment

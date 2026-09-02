@@ -11,6 +11,8 @@ const messages: Partial<Record<Locale, string>> = {
   nl: 'Het wachtwoord moet minimaal 10 tekens bevatten, inclusief een hoofdletter, een kleine letter, een cijfer en een symbool.',
   ht: 'Modpas la dwe gen omwen 10 karaktè epi li dwe gen yon lèt majiskil, yon lèt miniskil, yon chif ak yon senbòl.',
   ja: 'パスワードは10文字以上で、大文字、小文字、数字、記号をそれぞれ1文字以上含めてください。',
+  ko: '비밀번호는 10자 이상이며 대문자, 소문자, 숫자와 기호를 각각 하나 이상 포함해야 합니다.',
+  'zh-CN': '密码必须至少包含 10 个字符，并包含大写字母、小写字母、数字和符号。',
 }
 
 const hints: Partial<Record<Locale, string>> = {
@@ -24,6 +26,8 @@ const hints: Partial<Record<Locale, string>> = {
   nl: '10+ tekens, hoofdletter, cijfer en symbool',
   ht: '10+ karaktè, majiskil, chif ak senbòl',
   ja: '10文字以上・大文字・数字・記号を含む',
+  ko: '10자 이상 · 대문자 · 숫자 · 기호 포함',
+  'zh-CN': '10 个以上字符 · 大写字母 · 数字 · 符号',
 }
 
 export function isStrongPassword(password: string) {

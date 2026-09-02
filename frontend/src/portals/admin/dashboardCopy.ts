@@ -7,6 +7,6 @@ export const dashboardCopy = {
   'es-419': es419Dashboard,
   en: enDashboard,
   'es-ES': esEsDashboard,
-} satisfies Record<Locale, Record<string, string>>
+} satisfies Partial<Record<Locale, Record<string, string>>>
 
 export type DashboardCopy = Record<keyof typeof es419Dashboard, string>

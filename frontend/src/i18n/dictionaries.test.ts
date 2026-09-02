@@ -8,7 +8,7 @@ function sortedKeys(dictionary: Record<string, string>) {
   return Object.keys(dictionary).sort()
 }
 
-const strictCoreLocales: Locale[] = ['es-419', 'en', 'pt-BR', 'fr', 'de', 'it', 'ht', 'ja']
+const strictCoreLocales: Locale[] = ['es-419', 'en', 'pt-BR', 'fr', 'de', 'it', 'ht', 'ja', 'ko', 'zh-CN']
 const automaticProductionLocales: Locale[] = ['es-419', 'en', 'ja']
 const officialProductLocales: Locale[] = ['es-419', 'en', 'pt-BR', 'fr', 'ht', 'de', 'it', 'ja', 'ko', 'zh-CN']
 

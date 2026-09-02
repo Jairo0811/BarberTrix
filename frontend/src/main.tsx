@@ -36,14 +36,14 @@ const routeLabelKeys: Record<PublicRoute, string> = {
   'forgot-password': 'route.forgot',
   'reset-password': 'route.reset',
   demo: 'route.demo',
-  book: 'route.register',
-  customer: 'route.home',
-  tv: 'route.demo',
-  'accept-invitation': 'route.register',
-  'verify-email': 'route.login',
-  'billing-success': 'route.login',
-  terms: 'route.register',
-  privacy: 'route.register',
+  book: 'route.book',
+  customer: 'route.customer',
+  tv: 'route.tv',
+  'accept-invitation': 'route.acceptInvitation',
+  'verify-email': 'route.verifyEmail',
+  'billing-success': 'route.billingSuccess',
+  terms: 'route.terms',
+  privacy: 'route.privacy',
 }
 
 const publicRouteByPath: Record<string, PublicRoute> = {
@@ -107,15 +107,13 @@ function RouteEffects() {
   const { t } = useI18n()
   const isAdminRoute = isAdminAppPath(location.pathname)
   const route = publicRouteByPath[location.pathname] ?? (isAdminRoute ? 'login' : 'home')
-  const routeLabel = t(routeLabelKeys[route])
-  const currentView = route === 'customer' ? 'Portal del cliente' : routeLabel
+  const currentView = t(routeLabelKeys[route])
+  const homeTitle = t('app.homeTitle')
 
   useEffect(() => {
     if (isAdminRoute) return
 
-    document.title = route === 'home'
-      ? 'BarberTurn | Tu Turno, Tu Estilo, Tu Tiempo'
-      : `${currentView} | BarberTurn`
+    document.title = route === 'home' ? homeTitle : `${currentView} | BarberTurn`
 
     const frame = window.requestAnimationFrame(() => {
       const main = document.querySelector<HTMLElement>('main')
@@ -126,7 +124,7 @@ function RouteEffects() {
     })
 
     return () => window.cancelAnimationFrame(frame)
-  }, [currentView, isAdminRoute, location.key, route])
+  }, [currentView, homeTitle, isAdminRoute, location.key, route])
 
   return (
     <>
@@ -139,12 +137,14 @@ function RouteEffects() {
 }
 
 function AppRoutes() {
+  const { t } = useI18n()
+
   return (
     <>
       <InPageAnchorCompatibility />
       <RouteEffects />
       <LanguageSwitcher />
-      <Suspense fallback={<main><p>Cargando BarberTurn…</p></main>}>
+      <Suspense fallback={<main><p>{t('app.loading')}</p></main>}>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/billing-section" element={<Navigate to="/app/billing" replace />} />

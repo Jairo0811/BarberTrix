@@ -19,7 +19,7 @@ import {
 import './home.css'
 import { buildSupportEmailHref, buildWhatsAppHref, supportConfig } from './support'
 import { useI18n } from './i18n'
-import { getHomeAuxCopy } from './i18n/homeAuxCopy'
+import { getProductHomeAuxCopy } from './i18n/eastAsiaHomeAuxCopy'
 
 function navigateToLogin() {
   window.location.hash = '#/login'
@@ -31,7 +31,7 @@ function navigateToRegister() {
 
 export default function HomePage() {
   const { locale, t } = useI18n()
-  const homeAux = getHomeAuxCopy(locale)
+  const homeAux = getProductHomeAuxCopy(locale)
   const currentYear = new Date().getFullYear()
   const whatsappHref = buildWhatsAppHref()
   const [activeSection, setActiveSection] = useState('inicio')

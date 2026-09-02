@@ -12,7 +12,7 @@ type I18nContextValue = {
 };
 
 export const automaticLocales = new Set<Locale>(['es-419', 'en', 'ja']);
-export const strictLocales = new Set<Locale>(['es-419', 'en', 'pt-BR', 'fr', 'de', 'it', 'ht', 'ja']);
+export const strictLocales = new Set<Locale>(['es-419', 'en', 'pt-BR', 'fr', 'de', 'it', 'ht', 'ja', 'ko', 'zh-CN']);
 
 function asAutomaticLocale(locale: Locale): Locale | null {
   return automaticLocales.has(locale) ? locale : null;

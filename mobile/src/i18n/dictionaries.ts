@@ -1,7 +1,8 @@
 import type { Dictionary, Locale } from './types';
-import { asiaWave1Mobile } from './asiaWave1';
 import { coreLegacy } from './coreLegacy';
 import ja from './ja';
+import ko from './ko';
+import zhCN from './zh-CN';
 
 const spanish: Dictionary = {
   'login.title': 'Tu barbería, también en tu bolsillo.', 'login.subtitle': 'Acceso para Owner, Administrator, Receptionist y Barber.', 'login.email': 'Correo', 'login.password': 'Contraseña', 'login.invalidCredentials': 'Correo o contraseña incorrectos.', 'login.failed': 'No pudimos iniciar sesión.', 'login.submitting': 'Entrando…', 'login.submit': 'Iniciar sesión', 'login.customerHint': 'Los clientes pueden solicitar un turno sin crear una cuenta mediante el enlace de su barbería.',
@@ -23,8 +24,6 @@ const french: Dictionary = {
   'home.hello': 'Bonjour, {{name}}.', 'home.team': 'équipe', 'home.body': 'M3 informe l’équipe des nouvelles demandes même lorsque BarberTurn fonctionne en arrière-plan.', 'home.requests': 'Demandes de passage', 'home.requestsText': 'Gérez les demandes en attente et recevez les changements en temps réel.', 'home.pushTitle': 'Ne manquez aucune nouvelle demande', 'home.pushBody': 'Activez les notifications système pour répondre à temps. Le contenu visible n’inclut pas les données personnelles du client.', 'home.signOut': 'Se déconnecter', 'push.enabledTitle': 'Notifications activées', 'push.enabledBody': 'Cet appareil recevra les mises à jour importantes.', 'push.enabling': 'Activation…', 'push.enable': 'Activer les notifications',
 };
 
-const mergeWithEnglish = (dictionary?: Dictionary): Dictionary => ({ ...english, ...(dictionary ?? {}) });
-
 export const dictionaries = {
   'es-419': spanish,
   // Legacy compatibility only. It is no longer exposed as a product locale.
@@ -36,6 +35,6 @@ export const dictionaries = {
   de: coreLegacy.de,
   it: coreLegacy.it,
   ja,
-  ko: mergeWithEnglish(asiaWave1Mobile.ko),
-  'zh-CN': mergeWithEnglish(asiaWave1Mobile['zh-CN']),
+  ko,
+  'zh-CN': zhCN,
 } as Record<Locale, Dictionary>;

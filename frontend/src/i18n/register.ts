@@ -1,6 +1,8 @@
 import type { Dictionary } from './types'
 
-export const registerCopy: Record<'es-419' | 'en' | 'es-ES' | 'pt-BR' | 'fr' | 'de' | 'it' | 'nl' | 'ht' | 'ja', Dictionary> = {
+type CompleteRegistrationLocale = 'es-419' | 'en' | 'es-ES' | 'pt-BR' | 'fr' | 'de' | 'it' | 'nl' | 'ht' | 'ja' | 'ko' | 'zh-CN'
+
+export const registerCopy: Record<CompleteRegistrationLocale, Dictionary> = {
   'es-419': {
     'register.shopName': 'Nombre de la barbería',
     'register.shopNamePlaceholder': 'Barbería Central',
@@ -90,5 +92,23 @@ export const registerCopy: Record<'es-419' | 'en' | 'es-ES' | 'pt-BR' | 'fr' | '
     'register.terms': '利用規約',
     'register.acceptTermsJoin': 'および',
     'register.privacy': 'プライバシーポリシー',
+  },
+  ko: {
+    'register.shopName': '바버샵 이름',
+    'register.shopNamePlaceholder': '센트럴 바버샵',
+    'register.emailPlaceholder': 'example@barbershop.kr',
+    'register.acceptTermsPrefix': '다음에 동의합니다:',
+    'register.terms': '서비스 약관',
+    'register.acceptTermsJoin': '및',
+    'register.privacy': '개인정보 보호정책',
+  },
+  'zh-CN': {
+    'register.shopName': '理发店名称',
+    'register.shopNamePlaceholder': '中央理发店',
+    'register.emailPlaceholder': 'example@barbershop.cn',
+    'register.acceptTermsPrefix': '我同意',
+    'register.terms': '服务条款',
+    'register.acceptTermsJoin': '以及',
+    'register.privacy': '隐私政策',
   },
 }

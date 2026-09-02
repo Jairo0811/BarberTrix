@@ -1,15 +1,17 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faGlobe } from '@fortawesome/free-solid-svg-icons'
-import { Locale, useI18n } from './i18n'
+import { type Locale, useI18n } from './i18n'
+import type { LocalePreference } from './i18n/I18nProvider'
 
-const options: Array<{ value: Locale; labelKey: string }> = [
+const options: Array<{ value: LocalePreference; labelKey?: string; systemLabel?: string }> = [
+  { value: 'system', systemLabel: 'Auto' },
   { value: 'es-419', labelKey: 'language.es419' },
   { value: 'en', labelKey: 'language.en' },
   { value: 'es-ES', labelKey: 'language.esES' },
 ]
 
 export default function LanguageSwitcher() {
-  const { locale, setLocale, t } = useI18n()
+  const { localePreference, setLocalePreference, t } = useI18n()
 
   return (
     <label className="language-switcher">
@@ -19,12 +21,12 @@ export default function LanguageSwitcher() {
       <span className="visually-hidden">{t('language.label')}</span>
       <select
         aria-label={t('language.label')}
-        value={locale}
-        onChange={event => setLocale(event.target.value as Locale)}
+        value={localePreference}
+        onChange={event => setLocalePreference(event.target.value as LocalePreference)}
       >
         {options.map(option => (
           <option key={option.value} value={option.value}>
-            {t(option.labelKey)}
+            {option.systemLabel ?? t(option.labelKey!)}
           </option>
         ))}
       </select>

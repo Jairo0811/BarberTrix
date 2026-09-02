@@ -126,7 +126,7 @@ export default function RegisterPage() {
               <span>{t('common.email')}</span>
               <div className="register-input-wrap">
                 <span className="register-field-icon" aria-hidden="true">✉</span>
-                <input name="email" type="email" autoComplete="email" inputMode="email" placeholder="ejemplo@barberia.com" required />
+                <input name="email" type="email" autoComplete="email" inputMode="email" placeholder={localizedRegisterCopy['register.emailPlaceholder']} required />
               </div>
             </label>
 

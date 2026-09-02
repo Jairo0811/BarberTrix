@@ -1,4 +1,4 @@
-export type Locale = 'es-419' | 'es-ES' | 'en' | 'pt-BR' | 'fr' | 'de' | 'it' | 'nl' | 'ht' | 'pl' | 'ro' | 'sv' | 'da' | 'nb' | 'fi' | 'cs' | 'el' | 'tr' | 'uk' | 'ru' | 'et' | 'lv' | 'lt' | 'sk' | 'sl' | 'hr' | 'sr' | 'bs' | 'bg' | 'sq' | 'mk' | 'hu' | 'is' | 'ga' | 'mt' | 'ca' | 'ka' | 'hy' | 'az' | 'ar' | 'sw' | 'af' | 'am' | 'so' | 'ha' | 'yo' | 'ig' | 'zu' | 'xh';
+export type Locale = 'es-419' | 'es-ES' | 'en' | 'pt-BR' | 'fr' | 'de' | 'it' | 'nl' | 'ht' | 'pl' | 'ro' | 'sv' | 'da' | 'nb' | 'fi' | 'cs' | 'el' | 'tr' | 'uk' | 'ru' | 'et' | 'lv' | 'lt' | 'sk' | 'sl' | 'hr' | 'sr' | 'bs' | 'bg' | 'sq' | 'mk' | 'hu' | 'is' | 'ga' | 'mt' | 'ca' | 'ka' | 'hy' | 'az' | 'ar' | 'sw' | 'af' | 'am' | 'so' | 'ha' | 'yo' | 'ig' | 'zu' | 'xh' | 'wo' | 'ln' | 'rw' | 'rn' | 'st' | 'tn' | 'sn' | 'ny' | 'mg' | 'ti' | 'om' | 'ak';
 export type LocalePreference = 'system' | Locale;
 export type TranslationValues = Record<string, string | number>;
 export type Dictionary = Record<string, string>;

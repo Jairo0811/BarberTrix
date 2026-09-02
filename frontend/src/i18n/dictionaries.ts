@@ -15,16 +15,23 @@ import de from './de'
 import it from './it'
 import ht from './ht'
 import ja from './ja'
+import ko from './ko'
+import zhCN from './zh-CN'
 import { coreUiSupplement } from './coreUiSupplement'
 import { deepRoutesSupplement } from './deepRoutesSupplement'
 import { legalSupplement } from './legalSupplement'
-import { asiaWave1 } from './asia-wave1'
+import { eastAsiaCompleteSupplement } from './eastAsiaCompleteSupplement'
 
 const withSupplement = (locale: keyof typeof coreUiSupplement, dictionary: Dictionary): Dictionary => ({
   ...dictionary,
   ...coreUiSupplement[locale],
   ...deepRoutesSupplement[locale],
   ...legalSupplement[locale],
+})
+
+const withEastAsiaSupplement = (locale: keyof typeof eastAsiaCompleteSupplement, dictionary: Dictionary): Dictionary => ({
+  ...dictionary,
+  ...eastAsiaCompleteSupplement[locale],
 })
 
 const spanish: Dictionary = withSupplement('es-419', {
@@ -43,8 +50,6 @@ const english: Dictionary = withSupplement('en', {
   ...enCustomer,
 })
 
-const mergeWithEnglish = (dictionary: Dictionary): Dictionary => ({ ...english, ...dictionary })
-
 export const dictionaries = {
   'es-419': spanish,
   // Legacy compatibility only. It is no longer exposed as a product locale.
@@ -61,6 +66,6 @@ export const dictionaries = {
   de: withSupplement('de', de),
   it: withSupplement('it', it),
   ja: withSupplement('ja', ja),
-  ko: mergeWithEnglish(asiaWave1.ko),
-  'zh-CN': mergeWithEnglish(asiaWave1['zh-CN']),
+  ko: withEastAsiaSupplement('ko', ko),
+  'zh-CN': withEastAsiaSupplement('zh-CN', zhCN),
 } as Record<Locale, Dictionary>

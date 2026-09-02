@@ -23,7 +23,7 @@ export default function LoginScreen() {
       if (exception instanceof MobileApiError && exception.code === 'AUTH_INVALID_CREDENTIALS')
         setError(t('login.invalidCredentials'));
       else
-        setError(exception instanceof Error ? exception.message : t('login.failed'));
+        setError(t('login.failed'));
     } finally {
       setSubmitting(false);
     }

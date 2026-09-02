@@ -14,9 +14,17 @@ import esEsAuth from './es-ES/auth'
 import esEsDashboard from './es-ES/dashboard'
 import esEsBilling from './es-ES/billing'
 import esEsCustomer from './es-ES/customer'
+import ptBr from './pt-BR'
+import fr from './fr'
+import de from './de'
+import it from './it'
 
 export const dictionaries: Record<Locale, Dictionary> = {
   'es-419': { ...es419Common, ...es419Auth, ...es419Dashboard, ...es419Billing, ...es419Customer },
   en: { ...enCommon, ...enAuth, ...enDashboard, ...enBilling, ...enCustomer },
   'es-ES': { ...esEsCommon, ...esEsAuth, ...esEsDashboard, ...esEsBilling, ...esEsCustomer },
+  'pt-BR': ptBr,
+  fr,
+  de,
+  it,
 }

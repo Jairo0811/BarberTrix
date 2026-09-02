@@ -55,6 +55,12 @@ const localizedPlans: Partial<Record<Locale, LocalizedPlan[]>> = {
     { name: 'Pro', price: 'US$40.00', description: 'Para automatizar la operación, las citas y la experiencia del cliente.', features: ['Turnos de alto volumen', 'Hasta 10 barberos', 'Citas y reservas online', 'BarberTurn TV', 'CRM y caja', 'Automatizaciones avanzadas'], featured: true },
     { name: 'Business', price: 'US$70.00', description: 'Para negocios con varios locales, analítica y control empresarial.', features: ['Hasta 3 locales', 'Barberos ilimitados', 'Todo lo de Pro', 'Informes avanzados', 'Roles y auditoría avanzada', 'Soporte prioritario'] },
   ],
+  ja: [
+    { name: 'Free', price: 'US$0', description: 'カード登録なしで BarberTurn を始め、実際のお客様でキュー運用を試せます。', features: ['月100件 + 10件の猶予', '理容師2名まで', 'サービス5件まで', '公開QRとリンク', '基本通知', '7日間の履歴'] },
+    { name: 'Starter', price: 'US$20.00', description: 'BarberTurn を日常的に利用する小規模バーバーショップ向けです。', features: ['月1,000件', '理容師5名まで', 'サービス数無制限', '90日間の履歴', 'キューと運営指標'] },
+    { name: 'Pro', price: 'US$40.00', description: '運営、予約、顧客体験をさらに自動化したい店舗向けです。', features: ['大規模な順番待ち対応', '理容師10名まで', '予約とオンライン予約', 'BarberTurn TV', 'CRMとレジ管理', '高度な自動化'], featured: true },
+    { name: 'Business', price: 'US$70.00', description: '複数店舗、分析、企業レベルの管理が必要な運営向けです。', features: ['3店舗まで', '理容師数無制限', 'Pro の全機能', '高度なレポート', '高度な権限と監査', '優先サポート'] },
+  ],
 }
 
 export default function HomePage() {
@@ -142,7 +148,7 @@ export default function HomePage() {
         <div className="home-nav-actions">
           <button className="home-login-button" type="button" onClick={navigateToLogin}>{t('common.login')}</button>
           <button className="home-primary-button" type="button" onClick={navigateToRegister}>{t('home.startFree')}</button>
-          <button className="home-mobile-menu" type="button" aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'} aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(open => !open)}>
+          <button className="home-mobile-menu" type="button" aria-label={mobileMenuOpen ? t('closeMenu') : t('openMenu')} aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(open => !open)}>
             <FontAwesomeIcon icon={mobileMenuOpen ? faXmark : faBars} />
           </button>
         </div>
@@ -267,10 +273,10 @@ export default function HomePage() {
 
       <footer className="home-footer">
         <img src="/branding/barberturn-logo.png" alt="BarberTurn" />
-        <p>Tu turno. Tu estilo. Tu tiempo.</p>
+        <p>{locale === 'ja' ? 'あなたの順番。あなたのスタイル。あなたの時間。' : 'Tu turno. Tu estilo. Tu tiempo.'}</p>
         <a className="footer-support-link" href={buildSupportEmailHref()}>{t('common.support')}</a>
-        <a className="footer-support-link" href="#/terms">Términos</a>
-        <a className="footer-support-link" href="#/privacy">Privacidad</a>
+        <a className="footer-support-link" href="#/terms">{locale === 'ja' ? '利用規約' : 'Términos'}</a>
+        <a className="footer-support-link" href="#/privacy">{locale === 'ja' ? 'プライバシー' : 'Privacidad'}</a>
         <span>© {currentYear} BarberTurn. {t('home.footer.rights')}</span>
       </footer>
     </main>

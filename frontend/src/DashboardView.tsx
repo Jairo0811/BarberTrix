@@ -54,12 +54,6 @@ function isQueueBackedPage(page: AdminPageId): page is QueueBackedPageId {
   return queueBackedPageIds.has(page)
 }
 
-function formatRole(role: string, copy: DashboardCopy) {
-  if (role === 'Owner') return copy.owner
-  if (role === 'Administrator') return copy.administrator
-  return role
-}
-
 function QueueBackedPageContent({ page, auth, isDemo, canManageCatalog, copy, today, isSystemAdmin, shop, capabilities, onShopUpdated, onNavigate, formatRole: localizeRole }: QueueBackedPageProps) {
   const queue = useQueueSnapshot(copy.loadOperationError)
 
@@ -90,7 +84,7 @@ function QueueBackedPageContent({ page, auth, isDemo, canManageCatalog, copy, to
 }
 
 export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewProps) {
-  const { locale } = useI18n()
+  const { locale, t } = useI18n()
   const copy = getDashboardCopy(locale)
   const canManageCatalog = auth.role === 'Owner' || auth.role === 'Administrator'
   const commercial = useCommercialContext()
@@ -131,10 +125,9 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
     document.title = `${label} | BarberTurn`
   }, [copy.dashboard, navItems, navigation.activePage])
 
-  const dateLocale = locale === 'en' ? 'en-US' : locale
-  const today = new Intl.DateTimeFormat(dateLocale, { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date())
+  const today = new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date())
   const currentYear = new Date().getFullYear()
-  const localizeRole = (role: string) => formatRole(role, copy)
+  const localizeRole = (role: string) => role === 'Owner' ? copy.owner : role === 'Administrator' ? copy.administrator : role === 'Receptionist' ? t('role.receptionist') : role === 'Barber' ? t('role.barber') : role
   const dashboardSlogan = getHomeAuxCopy(locale).slogan
 
   function renderPage(page: AdminPageId) {

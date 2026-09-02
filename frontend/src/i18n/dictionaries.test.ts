@@ -8,17 +8,15 @@ function sortedKeys(dictionary: Record<string, string>) {
   return Object.keys(dictionary).sort()
 }
 
-const strictCoreLocales: Locale[] = ['es-419', 'en', 'pt-BR', 'fr', 'de', 'it', 'ht', 'ja', 'ko', 'zh-CN']
-const automaticProductionLocales: Locale[] = ['es-419', 'en', 'ja']
 const officialProductLocales: Locale[] = ['es-419', 'en', 'pt-BR', 'fr', 'ht', 'de', 'it', 'ja', 'ko', 'zh-CN']
 
 describe('i18n dictionary completeness', () => {
-  it.each(strictCoreLocales)('keeps %s at full key parity with English', locale => {
+  it.each(officialProductLocales)('keeps %s at full key parity with English', locale => {
     expect(sortedKeys(dictionaries[locale])).toEqual(sortedKeys(dictionaries.en))
   })
 
-  it('keeps audited core locales strict so they cannot fall back to English', () => {
-    expect([...strictLocales]).toEqual(strictCoreLocales)
+  it('keeps every official locale strict so no product locale can fall back to English', () => {
+    expect([...strictLocales]).toEqual(officialProductLocales)
   })
 
   it('keeps Korean and Simplified Chinese core UI native', () => {
@@ -34,8 +32,8 @@ describe('i18n dictionary completeness', () => {
     expect([...officialLocales]).toEqual(officialProductLocales)
   })
 
-  it('only auto-enables locales with end-to-end production coverage', () => {
-    expect([...automaticLocales]).toEqual(automaticProductionLocales)
+  it('auto-enables every official locale with end-to-end production coverage', () => {
+    expect([...automaticLocales]).toEqual(officialProductLocales)
   })
 
   it('treats every Spanish device locale as the same Spanish product locale', () => {
@@ -45,26 +43,23 @@ describe('i18n dictionary completeness', () => {
     expect(normalizeStoredLocale('es-ES')).toBe('es-419')
   })
 
-  it('detects only production-ready locales from BCP 47 language tags', () => {
-    expect(mapDeviceLocale('ja-JP')).toBe('ja')
+  it('detects every official locale from BCP 47 language tags', () => {
     expect(mapDeviceLocale('en-US')).toBe('en')
+    expect(mapDeviceLocale('pt-BR')).toBe('pt-BR')
+    expect(mapDeviceLocale('fr-FR')).toBe('fr')
+    expect(mapDeviceLocale('ht-HT')).toBe('ht')
+    expect(mapDeviceLocale('de-DE')).toBe('de')
+    expect(mapDeviceLocale('it-IT')).toBe('it')
+    expect(mapDeviceLocale('ja-JP')).toBe('ja')
     expect(mapDeviceLocale('ja_JP')).toBe('ja')
+    expect(mapDeviceLocale('ko-KR')).toBe('ko')
+    expect(mapDeviceLocale('zh-CN')).toBe('zh-CN')
   })
 
   it('drops obsolete stored locale choices that are no longer official', () => {
     expect(normalizeStoredLocale('nl')).toBe('system')
     expect(normalizeStoredLocale('pl')).toBe('system')
     expect(normalizeStoredLocale(null)).toBe('system')
-  })
-
-  it('does not auto-enable official locales that still have unaudited product surfaces', () => {
-    expect(mapDeviceLocale('pt-BR')).toBeNull()
-    expect(mapDeviceLocale('fr-FR')).toBeNull()
-    expect(mapDeviceLocale('de-DE')).toBeNull()
-    expect(mapDeviceLocale('it-IT')).toBeNull()
-    expect(mapDeviceLocale('ht-HT')).toBeNull()
-    expect(mapDeviceLocale('zh-CN')).toBeNull()
-    expect(mapDeviceLocale('ko-KR')).toBeNull()
   })
 
   it('ignores device locales that are no longer part of the product catalog', () => {

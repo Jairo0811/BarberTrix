@@ -1,15 +1,13 @@
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react'
 import { dictionaries } from './dictionaries'
-import { normalizeStoredLocale, officialLocaleSet } from './officialLocales'
+import { normalizeStoredLocale, officialLocales, officialLocaleSet } from './officialLocales'
 import type { Locale, TranslationValues } from './types'
 
 const storageKey = 'barberturn.locale'
 export type LocalePreference = 'system' | Locale
 
-export const automaticLocales = new Set<Locale>(['es-419', 'en', 'ja'])
-export const strictLocales = new Set<Locale>([
-  'es-419', 'en', 'pt-BR', 'fr', 'de', 'it', 'ht', 'ja', 'ko', 'zh-CN',
-])
+export const automaticLocales = new Set<Locale>(officialLocales)
+export const strictLocales = new Set<Locale>(officialLocales)
 
 type I18nContextValue = {
   locale: Locale
@@ -103,10 +101,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     setLocale,
     setLocalePreference,
     t: (key, values) => {
-      const localized = dictionaries[locale][key]
-      const template = strictLocales.has(locale)
-        ? localized ?? key
-        : localized ?? dictionaries.en[key] ?? dictionaries['es-419'][key] ?? key
+      const template = dictionaries[locale][key] ?? key
       if (!values) return template
       return Object.entries(values).reduce((result, [name, replacement]) => result.replaceAll(`{{${name}}}`, String(replacement)), template)
     },

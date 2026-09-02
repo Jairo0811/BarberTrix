@@ -1,5 +1,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import { apiErrorMessage } from '../../../apiErrorMessages'
 import { confirmDestructive, showError, showSuccessToast } from '../../../alerts'
+import { useI18n } from '../../../i18n'
 import LockedFeature from '../../../shared/components/LockedFeature'
 import type { CashSession, Payment } from '../../../portals/admin/commercialTypes'
 import {
@@ -14,36 +16,36 @@ import {
 } from '../api/paymentsApi'
 import '../payments.css'
 
-function money(currency: string, amount: number) {
+function money(locale: string, currency: string, amount: number) {
   try {
-    return new Intl.NumberFormat('es-DO', { style: 'currency', currency }).format(amount)
+    return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(amount)
   } catch {
-    return `${currency} ${amount.toFixed(2)}`
+    return `${currency} ${new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount)}`
   }
 }
 
-function dateTime(value?: string | null) {
+function dateTime(locale: string, value?: string | null) {
   if (!value) return '—'
-  return new Intl.DateTimeFormat('es-DO', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
-}
-
-function methodLabel(method: string) {
-  const labels: Record<string, string> = { Cash: 'Efectivo', Card: 'Tarjeta', Transfer: 'Transferencia', PayPal: 'PayPal', Other: 'Otro' }
-  return labels[method] ?? method
-}
-
-function statusLabel(status: string) {
-  const labels: Record<string, string> = { Paid: 'Pagado', Pending: 'Pendiente', Refunded: 'Reembolsado', Failed: 'Fallido' }
-  return labels[status] ?? status
+  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
 }
 
 export default function PaymentsSection({ isDemo }: { isDemo: boolean }) {
+  const { locale, t } = useI18n()
   const [payments, setPayments] = useState<Payment[]>([])
   const [current, setCurrent] = useState<CashSession | undefined>()
   const [sessions, setSessions] = useState<CashSession[]>([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [closeCounted, setCloseCounted] = useState('')
+
+  const methodLabel = (method: string) => {
+    const known = new Set(['Cash', 'Card', 'Transfer', 'BankTransfer', 'PayPal', 'Other'])
+    return known.has(method) ? t(`paymentsAdmin.method.${method}`) : t('paymentsAdmin.method.Other')
+  }
+  const statusLabel = (status: string) => {
+    const known = new Set(['Paid', 'Pending', 'Refunded', 'Failed'])
+    return known.has(status) ? t(`paymentsAdmin.status.${status}`) : t('status.unknown')
+  }
 
   const load = useCallback(async () => {
     if (isDemo) {
@@ -82,7 +84,7 @@ export default function PaymentsSection({ isDemo }: { isDemo: boolean }) {
   async function run(action: () => Promise<void>) {
     setBusy(true)
     try { await action() }
-    catch (error) { await showError('No se pudo completar la operación', error instanceof Error ? error.message : 'Error inesperado') }
+    catch (error) { await showError(t('paymentsAdmin.operationError'), apiErrorMessage(error, locale, t('paymentsAdmin.operationError'))) }
     finally { setBusy(false) }
   }
 
@@ -94,7 +96,7 @@ export default function PaymentsSection({ isDemo }: { isDemo: boolean }) {
       await openCashSession(String(data.get('currency') || 'DOP'), Number(data.get('openingBalance')))
       form.reset()
       await load()
-      void showSuccessToast('Caja abierta')
+      void showSuccessToast(t('paymentsAdmin.opened'))
     })
   }
 
@@ -112,7 +114,7 @@ export default function PaymentsSection({ isDemo }: { isDemo: boolean }) {
       })
       form.reset()
       await load()
-      void showSuccessToast('Pago registrado')
+      void showSuccessToast(t('paymentsAdmin.paymentRecorded'))
     })
   }
 
@@ -128,7 +130,7 @@ export default function PaymentsSection({ isDemo }: { isDemo: boolean }) {
       )
       form.reset()
       await load()
-      void showSuccessToast('Movimiento registrado')
+      void showSuccessToast(t('paymentsAdmin.movementRecorded'))
     })
   }
 
@@ -138,9 +140,9 @@ export default function PaymentsSection({ isDemo }: { isDemo: boolean }) {
     const form = event.currentTarget
     const data = new FormData(form)
     const confirmed = await confirmDestructive(
-      '¿Cerrar la caja?',
-      'El cierre quedará conciliado con el efectivo contado y no podrá seguir recibiendo movimientos.',
-      'Cerrar caja',
+      t('paymentsAdmin.closeConfirmTitle'),
+      t('paymentsAdmin.closeConfirmText'),
+      t('paymentsAdmin.closeConfirm'),
     )
     if (!confirmed) return
 
@@ -149,24 +151,22 @@ export default function PaymentsSection({ isDemo }: { isDemo: boolean }) {
       form.reset()
       setCloseCounted('')
       await load()
-      void showSuccessToast('Caja cerrada')
+      void showSuccessToast(t('paymentsAdmin.closed'))
     })
   }
 
   async function refund(item: Payment) {
     const confirmed = await confirmDestructive(
-      '¿Reembolsar este pago?',
-      item.method === 'Cash'
-        ? 'Se registrará automáticamente una salida de efectivo en la caja abierta.'
-        : 'El pago cambiará a estado reembolsado.',
-      'Reembolsar',
+      t('paymentsAdmin.refundTitle'),
+      item.method === 'Cash' ? t('paymentsAdmin.refundCashText') : t('paymentsAdmin.refundOtherText'),
+      t('paymentsAdmin.refund'),
     )
     if (!confirmed) return
 
     await run(async () => {
-      await refundPayment(item.id, 'Reembolso desde Caja 2.0')
+      await refundPayment(item.id, t('paymentsAdmin.refundReason'))
       await load()
-      void showSuccessToast('Pago reembolsado')
+      void showSuccessToast(t('paymentsAdmin.refunded'))
     })
   }
 
@@ -174,120 +174,120 @@ export default function PaymentsSection({ isDemo }: { isDemo: boolean }) {
     <section className="panel dashboard-section cash-workspace" id="payments-section">
       <div className="cash-heading">
         <div>
-          <p className="eyebrow">CAJA</p>
-          <h2>Control y conciliación</h2>
-          <p className="cash-subtitle">Administra el efectivo del turno, registra cobros y cierra con diferencia calculada.</p>
+          <p className="eyebrow">{t('paymentsAdmin.eyebrow')}</p>
+          <h2>{t('paymentsAdmin.title')}</h2>
+          <p className="cash-subtitle">{t('paymentsAdmin.subtitle')}</p>
         </div>
-        {current && <span className="cash-status open">Caja abierta · {current.currency}</span>}
+        {current && <span className="cash-status open">{t('paymentsAdmin.openStatus', { currency: current.currency })}</span>}
       </div>
 
       {isDemo ? (
-        <LockedFeature title="Caja y registro de pagos" text="La demo no expone operaciones financieras reales. Activa una cuenta para administrar la caja." />
+        <LockedFeature title={t('paymentsAdmin.lockedTitle')} text={t('paymentsAdmin.lockedText')} />
       ) : loading ? (
-        <p className="cash-empty">Cargando caja…</p>
+        <p className="cash-empty">{t('paymentsAdmin.loading')}</p>
       ) : <>
         {!current ? (
           <div className="cash-open-card">
             <div>
-              <p className="eyebrow">INICIO DE TURNO</p>
-              <h3>Abre la caja antes de operar</h3>
-              <p>La moneda queda fija durante la sesión para mantener una conciliación consistente.</p>
+              <p className="eyebrow">{t('paymentsAdmin.shiftStart')}</p>
+              <h3>{t('paymentsAdmin.openTitle')}</h3>
+              <p>{t('paymentsAdmin.openText')}</p>
             </div>
             <form className="cash-inline-form" onSubmit={submitOpen}>
-              <label>Moneda<select name="currency" defaultValue="DOP"><option value="DOP">DOP</option><option value="USD">USD</option></select></label>
-              <label>Fondo inicial<input name="openingBalance" type="number" min="0" step="0.01" defaultValue="0" required /></label>
-              <button disabled={busy}>Abrir caja</button>
+              <label>{t('paymentsAdmin.currency')}<select name="currency" defaultValue="DOP"><option value="DOP">DOP</option><option value="USD">USD</option></select></label>
+              <label>{t('paymentsAdmin.openingBalance')}<input name="openingBalance" type="number" min="0" step="0.01" defaultValue="0" required /></label>
+              <button disabled={busy}>{t('paymentsAdmin.open')}</button>
             </form>
           </div>
         ) : <>
-          <div className="cash-kpis" aria-label="Resumen de caja">
-            <article><span>Fondo inicial</span><strong>{money(current.currency, current.openingBalance)}</strong></article>
-            <article><span>Ventas en efectivo</span><strong>{money(current.currency, current.cashSales)}</strong></article>
-            <article><span>Entradas / salidas</span><strong>{money(current.currency, current.cashIn)} / {money(current.currency, current.cashOut)}</strong></article>
-            <article className="primary"><span>Efectivo esperado</span><strong>{money(current.currency, current.expectedCash)}</strong></article>
-            <article><span>Ventas no efectivo</span><strong>{money(current.currency, current.nonCashSales)}</strong></article>
+          <div className="cash-kpis" aria-label={t('paymentsAdmin.summaryAria')}>
+            <article><span>{t('paymentsAdmin.openingBalance')}</span><strong>{money(locale, current.currency, current.openingBalance)}</strong></article>
+            <article><span>{t('paymentsAdmin.cashSales')}</span><strong>{money(locale, current.currency, current.cashSales)}</strong></article>
+            <article><span>{t('paymentsAdmin.cashInOut')}</span><strong>{money(locale, current.currency, current.cashIn)} / {money(locale, current.currency, current.cashOut)}</strong></article>
+            <article className="primary"><span>{t('paymentsAdmin.expectedCash')}</span><strong>{money(locale, current.currency, current.expectedCash)}</strong></article>
+            <article><span>{t('paymentsAdmin.nonCashSales')}</span><strong>{money(locale, current.currency, current.nonCashSales)}</strong></article>
           </div>
 
           <div className="cash-grid">
             <article className="cash-card">
-              <p className="eyebrow">COBRO</p>
-              <h3>Registrar pago</h3>
+              <p className="eyebrow">{t('paymentsAdmin.charge')}</p>
+              <h3>{t('paymentsAdmin.recordPayment')}</h3>
               <form className="cash-form" onSubmit={submitPayment}>
-                <label>Monto<input name="amount" type="number" min="0.01" step="0.01" placeholder="0.00" required /></label>
-                <label>Método<select name="method" defaultValue="Cash"><option value="Cash">Efectivo</option><option value="Card">Tarjeta</option><option value="Transfer">Transferencia</option></select></label>
-                <label>Referencia<input name="externalReference" placeholder="Opcional" maxLength={180} /></label>
-                <button disabled={busy}>Registrar pago</button>
+                <label>{t('paymentsAdmin.amount')}<input name="amount" type="number" min="0.01" step="0.01" placeholder="0.00" required /></label>
+                <label>{t('paymentsAdmin.method')}<select name="method" defaultValue="Cash"><option value="Cash">{t('paymentsAdmin.method.Cash')}</option><option value="Card">{t('paymentsAdmin.method.Card')}</option><option value="Transfer">{t('paymentsAdmin.method.Transfer')}</option></select></label>
+                <label>{t('paymentsAdmin.reference')}<input name="externalReference" placeholder={t('paymentsAdmin.optional')} maxLength={180} /></label>
+                <button disabled={busy}>{t('paymentsAdmin.recordPayment')}</button>
               </form>
             </article>
 
             <article className="cash-card">
-              <p className="eyebrow">MOVIMIENTOS</p>
-              <h3>Entrada o salida manual</h3>
+              <p className="eyebrow">{t('paymentsAdmin.movements')}</p>
+              <h3>{t('paymentsAdmin.manualMovement')}</h3>
               <form className="cash-form" onSubmit={submitMovement}>
-                <label>Tipo<select name="type" defaultValue="CashOut"><option value="CashOut">Salida</option><option value="CashIn">Entrada</option></select></label>
-                <label>Monto<input name="amount" type="number" min="0.01" step="0.01" required /></label>
-                <label>Motivo<input name="reason" placeholder="Ej. compra de insumos" maxLength={200} required /></label>
-                <button disabled={busy}>Guardar movimiento</button>
+                <label>{t('paymentsAdmin.type')}<select name="type" defaultValue="CashOut"><option value="CashOut">{t('paymentsAdmin.cashOut')}</option><option value="CashIn">{t('paymentsAdmin.cashIn')}</option></select></label>
+                <label>{t('paymentsAdmin.amount')}<input name="amount" type="number" min="0.01" step="0.01" required /></label>
+                <label>{t('paymentsAdmin.reason')}<input name="reason" placeholder={t('paymentsAdmin.reasonPlaceholder')} maxLength={200} required /></label>
+                <button disabled={busy}>{t('paymentsAdmin.saveMovement')}</button>
               </form>
             </article>
 
             <article className="cash-card close-card">
-              <p className="eyebrow">CIERRE</p>
-              <h3>Conciliar caja</h3>
+              <p className="eyebrow">{t('paymentsAdmin.closing')}</p>
+              <h3>{t('paymentsAdmin.reconcile')}</h3>
               <form className="cash-form" onSubmit={submitClose}>
-                <label>Efectivo contado<input name="countedCash" type="number" min="0" step="0.01" value={closeCounted} onChange={event => setCloseCounted(event.target.value)} required /></label>
-                <label>Nota<textarea name="note" rows={2} maxLength={500} placeholder="Opcional" /></label>
+                <label>{t('paymentsAdmin.countedCash')}<input name="countedCash" type="number" min="0" step="0.01" value={closeCounted} onChange={event => setCloseCounted(event.target.value)} required /></label>
+                <label>{t('paymentsAdmin.note')}<textarea name="note" rows={2} maxLength={500} placeholder={t('paymentsAdmin.optional')} /></label>
                 <div className={`cash-difference ${countedDifference === null ? '' : countedDifference === 0 ? 'ok' : 'warning'}`}>
-                  <span>Diferencia</span>
-                  <strong>{countedDifference === null ? '—' : money(current.currency, countedDifference)}</strong>
+                  <span>{t('paymentsAdmin.difference')}</span>
+                  <strong>{countedDifference === null ? '—' : money(locale, current.currency, countedDifference)}</strong>
                 </div>
-                <button className="danger" disabled={busy}>Cerrar caja</button>
+                <button className="danger" disabled={busy}>{t('paymentsAdmin.closeConfirm')}</button>
               </form>
             </article>
           </div>
 
           <div className="cash-movement-list">
-            <div className="cash-section-title"><div><p className="eyebrow">TRAZABILIDAD</p><h3>Movimientos de esta sesión</h3></div><span>{current.movements.length}</span></div>
-            {current.movements.length === 0 ? <p className="cash-empty">No hay entradas o salidas manuales todavía.</p> : current.movements.slice().reverse().map(item => (
+            <div className="cash-section-title"><div><p className="eyebrow">{t('paymentsAdmin.traceability')}</p><h3>{t('paymentsAdmin.sessionMovements')}</h3></div><span>{current.movements.length}</span></div>
+            {current.movements.length === 0 ? <p className="cash-empty">{t('paymentsAdmin.noMovements')}</p> : current.movements.slice().reverse().map(item => (
               <article key={item.id}>
-                <div><strong>{item.type === 'CashIn' ? 'Entrada' : 'Salida'}</strong><span>{item.reason}</span></div>
-                <div className={item.type === 'CashIn' ? 'positive' : 'negative'}>{item.type === 'CashIn' ? '+' : '−'}{money(current.currency, item.amount)}</div>
+                <div><strong>{item.type === 'CashIn' ? t('paymentsAdmin.cashIn') : t('paymentsAdmin.cashOut')}</strong><span>{item.reason}</span></div>
+                <div className={item.type === 'CashIn' ? 'positive' : 'negative'}>{item.type === 'CashIn' ? '+' : '−'}{money(locale, current.currency, item.amount)}</div>
               </article>
             ))}
           </div>
         </>}
 
         <div className="cash-history">
-          <div className="cash-section-title"><div><p className="eyebrow">PAGOS</p><h3>Últimos 30 días</h3></div><span>{payments.length}</span></div>
+          <div className="cash-section-title"><div><p className="eyebrow">{t('paymentsAdmin.payments')}</p><h3>{t('paymentsAdmin.last30Days')}</h3></div><span>{payments.length}</span></div>
           <div className="cash-table-wrap">
             <table className="cash-table">
-              <thead><tr><th>Fecha</th><th>Monto</th><th>Método</th><th>Estado</th><th>Referencia</th><th></th></tr></thead>
+              <thead><tr><th>{t('paymentsAdmin.date')}</th><th>{t('paymentsAdmin.amount')}</th><th>{t('paymentsAdmin.method')}</th><th>{t('paymentsAdmin.state')}</th><th>{t('paymentsAdmin.reference')}</th><th></th></tr></thead>
               <tbody>
                 {payments.slice(0, 30).map(item => <tr key={item.id}>
-                  <td>{dateTime(item.paidAtUtc)}</td>
-                  <td><strong>{money(item.currency, item.amount)}</strong></td>
+                  <td>{dateTime(locale, item.paidAtUtc)}</td>
+                  <td><strong>{money(locale, item.currency, item.amount)}</strong></td>
                   <td>{methodLabel(item.method)}</td>
                   <td><span className={`payment-state ${item.status.toLowerCase()}`}>{statusLabel(item.status)}</span></td>
                   <td>{item.externalReference || '—'}</td>
-                  <td>{item.status === 'Paid' && <button className="cash-link danger-text" disabled={busy} onClick={() => void refund(item)}>Reembolsar</button>}</td>
+                  <td>{item.status === 'Paid' && <button className="cash-link danger-text" disabled={busy} onClick={() => void refund(item)}>{t('paymentsAdmin.refund')}</button>}</td>
                 </tr>)}
               </tbody>
             </table>
           </div>
-          {payments.length === 0 && <p className="cash-empty">No hay pagos registrados en los últimos 30 días.</p>}
+          {payments.length === 0 && <p className="cash-empty">{t('paymentsAdmin.noPayments')}</p>}
         </div>
 
         <div className="cash-session-history">
-          <div className="cash-section-title"><div><p className="eyebrow">CIERRES</p><h3>Sesiones recientes</h3></div><span>{sessions.length}</span></div>
+          <div className="cash-section-title"><div><p className="eyebrow">{t('paymentsAdmin.closings')}</p><h3>{t('paymentsAdmin.recentSessions')}</h3></div><span>{sessions.length}</span></div>
           <div className="cash-session-grid">
             {sessions.map(session => <article key={session.id}>
-              <div><strong>{dateTime(session.openedAtUtc)}</strong><span>{session.closedAtUtc ? `Cerrada ${dateTime(session.closedAtUtc)}` : 'En curso'}</span></div>
-              <div><span>Esperado</span><strong>{money(session.currency, session.expectedCash)}</strong></div>
-              <div><span>Contado</span><strong>{session.countedCash == null ? '—' : money(session.currency, session.countedCash)}</strong></div>
-              <div className={session.difference === 0 ? 'positive' : session.difference == null ? '' : 'negative'}><span>Diferencia</span><strong>{session.difference == null ? '—' : money(session.currency, session.difference)}</strong></div>
+              <div><strong>{dateTime(locale, session.openedAtUtc)}</strong><span>{session.closedAtUtc ? t('paymentsAdmin.closedAt', { date: dateTime(locale, session.closedAtUtc) }) : t('paymentsAdmin.inProgress')}</span></div>
+              <div><span>{t('paymentsAdmin.expected')}</span><strong>{money(locale, session.currency, session.expectedCash)}</strong></div>
+              <div><span>{t('paymentsAdmin.counted')}</span><strong>{session.countedCash == null ? '—' : money(locale, session.currency, session.countedCash)}</strong></div>
+              <div className={session.difference === 0 ? 'positive' : session.difference == null ? '' : 'negative'}><span>{t('paymentsAdmin.difference')}</span><strong>{session.difference == null ? '—' : money(locale, session.currency, session.difference)}</strong></div>
             </article>)}
           </div>
-          {sessions.length === 0 && <p className="cash-empty">Todavía no hay cierres de caja.</p>}
+          {sessions.length === 0 && <p className="cash-empty">{t('paymentsAdmin.noClosings')}</p>}
         </div>
       </>}
     </section>

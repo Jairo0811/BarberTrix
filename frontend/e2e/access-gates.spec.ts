@@ -65,5 +65,5 @@ test('Starter owner sees routed Pro paywalls and can access billing', async ({ p
 
   await page.getByRole('button', { name: 'Suscripción' }).click()
   await expect(page).toHaveURL(/#\/app\/billing$/)
-  await expect(page.locator('#billing-section h2')).toHaveText('Starter · Active')
+  await expect(page.locator('#billing-section h2')).toHaveText('Starter · Activo')
 })

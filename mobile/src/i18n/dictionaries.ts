@@ -1,12 +1,10 @@
 import type { Dictionary, Locale } from './types';
 import { europeWave1Mobile } from './europeWave1';
+import { europeWave2Mobile } from './europeWave2';
 
 const baseDictionaries: Record<string, Dictionary> = {
   'es-419': {
-    'login.title': 'Tu barbería, también en tu bolsillo.',
-    'login.subtitle': 'Acceso para Owner, Administrator, Receptionist y Barber.',
-    'login.email': 'Correo', 'login.password': 'Contraseña', 'login.invalidCredentials': 'Correo o contraseña incorrectos.', 'login.failed': 'No pudimos iniciar sesión.', 'login.submitting': 'Entrando…', 'login.submit': 'Iniciar sesión',
-    'login.customerHint': 'Los clientes pueden solicitar un turno sin crear una cuenta mediante el enlace de su barbería.',
+    'login.title': 'Tu barbería, también en tu bolsillo.', 'login.subtitle': 'Acceso para Owner, Administrator, Receptionist y Barber.', 'login.email': 'Correo', 'login.password': 'Contraseña', 'login.invalidCredentials': 'Correo o contraseña incorrectos.', 'login.failed': 'No pudimos iniciar sesión.', 'login.submitting': 'Entrando…', 'login.submit': 'Iniciar sesión', 'login.customerHint': 'Los clientes pueden solicitar un turno sin crear una cuenta mediante el enlace de su barbería.',
     'home.hello': 'Hola, {{name}}.', 'home.team': 'equipo', 'home.body': 'M3 mantiene al equipo al tanto de nuevas solicitudes, incluso cuando BarberTurn está en segundo plano.', 'home.requests': 'Solicitudes de turno', 'home.requestsText': 'Gestiona solicitudes pendientes y recibe cambios en tiempo real.', 'home.pushTitle': 'No pierdas nuevas solicitudes', 'home.pushBody': 'Activa avisos del sistema para responder a tiempo. El contenido visible no incluye datos personales del cliente.', 'home.signOut': 'Cerrar sesión', 'push.enabledTitle': 'Avisos activados', 'push.enabledBody': 'Este dispositivo recibirá cambios importantes.', 'push.enabling': 'Activando…', 'push.enable': 'Activar avisos',
   },
   'es-ES': {
@@ -43,17 +41,10 @@ const baseDictionaries: Record<string, Dictionary> = {
   },
 };
 
+const english = baseDictionaries.en;
+
 export const dictionaries: Record<Locale, Dictionary> = {
   ...baseDictionaries,
-  pl: europeWave1Mobile.pl,
-  ro: europeWave1Mobile.ro,
-  sv: europeWave1Mobile.sv,
-  da: europeWave1Mobile.da,
-  nb: europeWave1Mobile.nb,
-  fi: europeWave1Mobile.fi,
-  cs: europeWave1Mobile.cs,
-  el: europeWave1Mobile.el,
-  tr: europeWave1Mobile.tr,
-  uk: europeWave1Mobile.uk,
-  ru: europeWave1Mobile.ru,
+  pl: europeWave1Mobile.pl, ro: europeWave1Mobile.ro, sv: europeWave1Mobile.sv, da: europeWave1Mobile.da, nb: europeWave1Mobile.nb, fi: europeWave1Mobile.fi, cs: europeWave1Mobile.cs, el: europeWave1Mobile.el, tr: europeWave1Mobile.tr, uk: europeWave1Mobile.uk, ru: europeWave1Mobile.ru,
+  et: { ...english, ...europeWave2Mobile.et }, lv: { ...english, ...europeWave2Mobile.lv }, lt: { ...english, ...europeWave2Mobile.lt }, sk: { ...english, ...europeWave2Mobile.sk }, sl: { ...english, ...europeWave2Mobile.sl }, hr: { ...english, ...europeWave2Mobile.hr }, sr: { ...english, ...europeWave2Mobile.sr }, bs: { ...english, ...europeWave2Mobile.bs }, bg: { ...english, ...europeWave2Mobile.bg }, sq: { ...english, ...europeWave2Mobile.sq }, mk: { ...english, ...europeWave2Mobile.mk }, hu: { ...english, ...europeWave2Mobile.hu }, is: { ...english, ...europeWave2Mobile.is }, ga: { ...english, ...europeWave2Mobile.ga }, mt: { ...english, ...europeWave2Mobile.mt }, ca: { ...english, ...europeWave2Mobile.ca }, ka: { ...english, ...europeWave2Mobile.ka }, hy: { ...english, ...europeWave2Mobile.hy }, az: { ...english, ...europeWave2Mobile.az },
 } as Record<Locale, Dictionary>;

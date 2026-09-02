@@ -5,6 +5,8 @@ import type { Locale, LocalePreference, TranslationValues } from './types';
 
 type I18nContextValue = { locale: Locale; localePreference: LocalePreference; setLocalePreference: (preference: LocalePreference) => void; t: (key: string, values?: TranslationValues) => string };
 
+const strictLocales = new Set<Locale>(['ja']);
+
 function resolveDeviceLocale(): Locale {
   const rawLocale = Intl.DateTimeFormat().resolvedOptions().locale.toLowerCase().replace('_', '-');
   if (rawLocale === 'es-es' || rawLocale.startsWith('es-es-')) return 'es-ES';
@@ -16,7 +18,7 @@ function resolveDeviceLocale(): Locale {
     [['ja'],'ja'],[['ko'],'ko'],[['hi'],'hi'],[['bn'],'bn'],[['ur'],'ur'],[['id'],'id'],[['ms'],'ms'],[['vi'],'vi'],[['th'],'th'],[['fil','tl'],'fil'],[['fa'],'fa'],[['ta'],'ta'],[['te'],'te'],[['mr'],'mr'],[['gu'],'gu'],[['pa'],'pa'],[['kn'],'kn'],[['ml'],'ml'],[['ne'],'ne'],[['si'],'si'],[['my'],'my'],[['km'],'km'],[['lo'],'lo'],[['mn'],'mn'],[['kk'],'kk'],[['uz'],'uz'],[['ky'],'ky'],[['tg'],'tg'],
     [['mi'],'mi'],[['sm'],'sm'],[['to'],'to'],[['fj'],'fj'],[['bi'],'bi'],[['tpi'],'tpi'],[['ho'],'ho'],[['gil'],'gil'],[['mh'],'mh'],[['na'],'na'],[['pau'],'pau'],[['tvl'],'tvl'],[['en'],'en'],[['es'],'es-419'],
   ];
-  for (const [prefixes, locale] of aliases) if (prefixes.some(prefix => rawLocale.startsWith(prefix))) return locale;
+  for (const [prefixes, locale] of aliases) if (prefixes.some(prefix => rawLocale === prefix || rawLocale.startsWith(`${prefix}-`))) return locale;
   return 'es-419';
 }
 
@@ -27,7 +29,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const [systemLocale, setSystemLocale] = useState<Locale>(resolveDeviceLocale);
   const locale = localePreference === 'system' ? systemLocale : localePreference;
   useEffect(() => { const subscription = AppState.addEventListener('change', state => { if (state === 'active') setSystemLocale(resolveDeviceLocale()); }); return () => subscription.remove(); }, []);
-  const value = useMemo<I18nContextValue>(() => ({ locale, localePreference, setLocalePreference, t: (key, values) => { const template = dictionaries[locale][key] ?? dictionaries.en[key] ?? dictionaries['es-419'][key] ?? key; if (!values) return template; return Object.entries(values).reduce((result, [name, replacement]) => result.replaceAll(`{{${name}}}`, String(replacement)), template); } }), [locale, localePreference]);
+  const value = useMemo<I18nContextValue>(() => ({ locale, localePreference, setLocalePreference, t: (key, values) => { const localized = dictionaries[locale][key]; const template = strictLocales.has(locale) ? localized ?? key : localized ?? dictionaries.en[key] ?? dictionaries['es-419'][key] ?? key; if (!values) return template; return Object.entries(values).reduce((result, [name, replacement]) => result.replaceAll(`{{${name}}}`, String(replacement)), template); } }), [locale, localePreference]);
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 

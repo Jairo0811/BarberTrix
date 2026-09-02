@@ -30,8 +30,8 @@ const baseDictionaries: Record<string, Dictionary> = {
   },
 };
 
-const english = baseDictionaries.en;
-const merge = (dictionary: Dictionary): Dictionary => ({ ...english, ...dictionary });
+const english: Dictionary = baseDictionaries.en ?? {};
+const merge = (dictionary?: Dictionary): Dictionary => ({ ...english, ...(dictionary ?? {}) });
 
 export const dictionaries: Record<Locale, Dictionary> = {
   ...baseDictionaries,

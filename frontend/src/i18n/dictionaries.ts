@@ -52,7 +52,12 @@ export const dictionaries = {
   en: english,
   'pt-BR': withSupplement('pt-BR', ptBr),
   fr: withSupplement('fr', fr),
-  ht: withSupplement('ht', ht),
+  ht: withSupplement('ht', {
+    ...ht,
+    'language.en': 'Anglè',
+    'language.es419': 'Panyòl',
+    'language.esES': 'Panyòl',
+  }),
   de: withSupplement('de', de),
   it: withSupplement('it', it),
   ja: withSupplement('ja', ja),

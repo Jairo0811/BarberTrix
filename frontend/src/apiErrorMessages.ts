@@ -1,7 +1,7 @@
 import type { Locale } from './i18n'
 import { ApiClientError } from './api'
 
-const messages: Record<Locale, Record<string, string>> = {
+const messages: Partial<Record<Locale, Record<string, string>>> = {
   'es-419': {
     AUTH_INVALID_CREDENTIALS: 'Correo o contraseña incorrectos.',
     AUTH_REFRESH_REQUIRED: 'Tu sesión necesita renovarse.',
@@ -92,8 +92,9 @@ export function apiErrorMessage(exception: unknown, locale: Locale, fallback: st
   if (!(exception instanceof ApiClientError))
     return exception instanceof Error ? exception.message : fallback
 
-  if (exception.code && messages[locale][exception.code])
-    return messages[locale][exception.code]
+  const localeMessages = messages[locale] ?? messages.en
+  if (exception.code && localeMessages?.[exception.code])
+    return localeMessages[exception.code]
 
   return exception.message || fallback
 }

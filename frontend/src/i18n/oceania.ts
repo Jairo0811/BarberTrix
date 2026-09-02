@@ -17,4 +17,11 @@ export const oceania: Record<string, Dictionary> = {
   to: d('Lea', 'Hū ki loto', 'ʻĪmeili', 'Lea fufū', 'Fakahā', 'Pēnolo pule', 'Hū ki tuʻa'),
   fj: d('Vosa', 'Curu', 'Imeli', 'Vosavuni', 'Vakaraitaki', 'Matabose', 'Curu tani'),
   bi: d('Lanwis', 'Saen in', 'Imel', 'Paswod', 'Demo', 'Daesbod', 'Saen aot'),
+  tpi: d('Tokples', 'Log in', 'Imel', 'Pasword', 'Demo', 'Dasbod', 'Log aut'),
+  ho: d('Gado', 'Hanuaboi', 'Imeli', 'Password', 'Demonstration', 'Dashboard', 'Ruma hari'),
+  gil: d('Taetae', 'Rinano', 'Imere', 'Taeka n rabakau', 'Katautau', 'Tabo n tararua', 'Rinako'),
+  mh: d('Kajin', 'Drelọñ', 'Email', 'Password', 'Demo', 'Dashboard', 'Jāde'),
+  na: d('Dorerin', 'Login', 'Email', 'Password', 'Demo', 'Dashboard', 'Logout'),
+  pau: d('Tekoi', 'Morael', 'Email', 'Password', 'Demo', 'Dashboard', 'Mengar er ngii'),
+  tvl: d('Gana', 'Ulufale', 'Imeli', 'Kupu fakalilo', 'Fakaasiga', 'Laupapa pule', 'Ulufale keatea'),
 }

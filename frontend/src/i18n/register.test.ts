@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { registerCopy } from './register'
 
-describe('registration localized copy', () => {
-  it('provides complete Japanese registration-specific copy', () => {
-    const japanese = registerCopy.ja
-    const englishKeys = Object.keys(registerCopy.en).sort()
-    const japaneseKeys = Object.keys(japanese).sort()
+const completeRegistrationLocales = ['es-419', 'en', 'es-ES', 'pt-BR', 'fr', 'de', 'it', 'nl', 'ht', 'ja'] as const
 
-    expect(japaneseKeys).toEqual(englishKeys)
+describe('registration localized copy', () => {
+  it.each(completeRegistrationLocales)('keeps %s registration copy at full key parity with English', locale => {
+    expect(Object.keys(registerCopy[locale]).sort()).toEqual(Object.keys(registerCopy.en).sort())
+  })
+
+  it('provides native Japanese registration-specific copy', () => {
+    const japanese = registerCopy.ja
     expect(japanese['register.shopName']).toBe('バーバーショップ名')
     expect(japanese['register.shopNamePlaceholder']).toBe('セントラル・バーバーショップ')
     expect(japanese['register.emailPlaceholder']).toBe('example@barbershop.jp')

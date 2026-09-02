@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { ApiClientError } from './api'
 import { apiErrorMessage } from './apiErrorMessages'
 
+const noEnglishFallbackLocales = ['pt-BR', 'fr', 'de', 'it', 'nl', 'ht', 'ja'] as const
+
 describe('localized API errors', () => {
-  it('translates stable codes for every supported locale', () => {
+  it('translates stable codes for locales with dedicated error catalogs', () => {
     const error = new ApiClientError('backend text', 401, 'AUTH_SESSION_EXPIRED', 'corr-123')
     expect(apiErrorMessage(error, 'es-419', 'fallback')).toBe('Tu sesión expiró. Inicia sesión nuevamente.')
     expect(apiErrorMessage(error, 'en', 'fallback')).toBe('Your session expired. Sign in again.')
@@ -17,18 +19,20 @@ describe('localized API errors', () => {
     expect(apiErrorMessage(businessError, 'ja', 'fallback')).toBe('同じ電話番号またはメールアドレスの顧客がすでに存在します。')
   })
 
-  it('keeps the structured backend message when a code is unknown for non-Japanese locales', () => {
+  it('keeps the structured backend message when a code is unknown for non-strict locales', () => {
     const error = new ApiClientError('Known server detail', 409, 'UNKNOWN_CODE', 'corr-456')
     expect(apiErrorMessage(error, 'es-419', 'fallback')).toBe('Known server detail')
   })
 
-  it('never leaks an unknown English backend message into Japanese UI', () => {
+  it.each(noEnglishFallbackLocales)('never leaks an English backend message into %s UI', locale => {
     const error = new ApiClientError('Known server detail', 409, 'UNKNOWN_CODE', 'corr-789')
-    expect(apiErrorMessage(error, 'ja', '日本語のフォールバック')).toBe('日本語のフォールバック')
+    const fallback = `localized fallback ${locale}`
+    expect(apiErrorMessage(error, locale, fallback)).toBe(fallback)
   })
 
-  it('uses the localized fallback for non-API errors in Japanese', () => {
-    expect(apiErrorMessage(new Error('Network error'), 'ja', '通信エラー')).toBe('通信エラー')
-    expect(apiErrorMessage('unexpected', 'ja', '通信エラー')).toBe('通信エラー')
+  it.each(noEnglishFallbackLocales)('uses the localized fallback for non-API errors in %s', locale => {
+    const fallback = `localized network error ${locale}`
+    expect(apiErrorMessage(new Error('Network error'), locale, fallback)).toBe(fallback)
+    expect(apiErrorMessage('unexpected', locale, fallback)).toBe(fallback)
   })
 })

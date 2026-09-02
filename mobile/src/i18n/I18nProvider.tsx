@@ -6,7 +6,7 @@ import type { Locale, LocalePreference, TranslationValues } from './types';
 type I18nContextValue = { locale: Locale; localePreference: LocalePreference; setLocalePreference: (preference: LocalePreference) => void; t: (key: string, values?: TranslationValues) => string };
 
 export const automaticLocales = new Set<Locale>(['es-419', 'en', 'es-ES', 'ja']);
-const strictLocales = new Set<Locale>(['ja']);
+export const strictLocales = new Set<Locale>(['es-419', 'en', 'es-ES', 'pt-BR', 'fr', 'de', 'it', 'nl', 'ht', 'ja']);
 
 function asAutomaticLocale(locale: Locale): Locale | null {
   return automaticLocales.has(locale) ? locale : null;

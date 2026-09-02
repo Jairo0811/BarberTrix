@@ -1,6 +1,6 @@
 import type { Dictionary } from './types'
 
-export const registerCopy: Record<'es-419' | 'en' | 'es-ES' | 'ja', Dictionary> = {
+export const registerCopy: Record<'es-419' | 'en' | 'es-ES' | 'pt-BR' | 'fr' | 'de' | 'it' | 'nl' | 'ht' | 'ja', Dictionary> = {
   'es-419': {
     'register.shopName': 'Nombre de la barbería',
     'register.shopNamePlaceholder': 'Barbería Central',
@@ -27,6 +27,60 @@ export const registerCopy: Record<'es-419' | 'en' | 'es-ES' | 'ja', Dictionary> 
     'register.terms': 'términos de servicio',
     'register.acceptTermsJoin': 'y la',
     'register.privacy': 'política de privacidad',
+  },
+  'pt-BR': {
+    'register.shopName': 'Nome da barbearia',
+    'register.shopNamePlaceholder': 'Barbearia Central',
+    'register.emailPlaceholder': 'exemplo@barbearia.com',
+    'register.acceptTermsPrefix': 'Aceito os',
+    'register.terms': 'termos de serviço',
+    'register.acceptTermsJoin': 'e a',
+    'register.privacy': 'política de privacidade',
+  },
+  fr: {
+    'register.shopName': 'Nom du barbershop',
+    'register.shopNamePlaceholder': 'Barbershop Central',
+    'register.emailPlaceholder': 'exemple@barbershop.fr',
+    'register.acceptTermsPrefix': 'J’accepte les',
+    'register.terms': 'conditions d’utilisation',
+    'register.acceptTermsJoin': 'et la',
+    'register.privacy': 'politique de confidentialité',
+  },
+  de: {
+    'register.shopName': 'Name des Barbershops',
+    'register.shopNamePlaceholder': 'Zentraler Barbershop',
+    'register.emailPlaceholder': 'beispiel@barbershop.de',
+    'register.acceptTermsPrefix': 'Ich akzeptiere die',
+    'register.terms': 'Nutzungsbedingungen',
+    'register.acceptTermsJoin': 'und die',
+    'register.privacy': 'Datenschutzerklärung',
+  },
+  it: {
+    'register.shopName': 'Nome del barbershop',
+    'register.shopNamePlaceholder': 'Barbershop Centrale',
+    'register.emailPlaceholder': 'esempio@barbershop.it',
+    'register.acceptTermsPrefix': 'Accetto i',
+    'register.terms': 'termini di servizio',
+    'register.acceptTermsJoin': 'e la',
+    'register.privacy': 'politica sulla privacy',
+  },
+  nl: {
+    'register.shopName': 'Naam van de barbershop',
+    'register.shopNamePlaceholder': 'Centrale Barbershop',
+    'register.emailPlaceholder': 'voorbeeld@barbershop.nl',
+    'register.acceptTermsPrefix': 'Ik accepteer de',
+    'register.terms': 'servicevoorwaarden',
+    'register.acceptTermsJoin': 'en het',
+    'register.privacy': 'privacybeleid',
+  },
+  ht: {
+    'register.shopName': 'Non babèshop la',
+    'register.shopNamePlaceholder': 'Babèshop Santral',
+    'register.emailPlaceholder': 'egzanp@babeshop.ht',
+    'register.acceptTermsPrefix': 'Mwen aksepte',
+    'register.terms': 'kondisyon sèvis yo',
+    'register.acceptTermsJoin': 'ak',
+    'register.privacy': 'règleman sou vi prive',
   },
   ja: {
     'register.shopName': 'バーバーショップ名',

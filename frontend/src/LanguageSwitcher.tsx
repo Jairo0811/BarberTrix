@@ -1,6 +1,7 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faGlobe } from '@fortawesome/free-solid-svg-icons'
 import { useI18n } from './i18n'
+import type { Locale } from './i18n'
 import type { LocalePreference } from './i18n/I18nProvider'
 
 const options: Array<{ value: LocalePreference; label: string }> = [
@@ -15,7 +16,20 @@ const options: Array<{ value: LocalePreference; label: string }> = [
   { value: 'mi', label: 'Te Reo Māori' }, { value: 'sm', label: 'Gagana Samoa' }, { value: 'to', label: 'Lea Faka-Tonga' }, { value: 'fj', label: 'Vosa Vakaviti' }, { value: 'bi', label: 'Bislama' }, { value: 'tpi', label: 'Tok Pisin' }, { value: 'ho', label: 'Hiri Motu' }, { value: 'gil', label: 'Kiribati' }, { value: 'mh', label: 'Kajin M̧ajeļ' }, { value: 'na', label: 'Dorerin Naoero' }, { value: 'pau', label: 'Tekoi er a Belau' }, { value: 'tvl', label: 'Te Ggana Tuuvalu' },
 ]
 
+const automaticLabels: Partial<Record<Locale, string>> = {
+  'es-419': 'Automático',
+  en: 'Auto',
+  'es-ES': 'Automático',
+  'pt-BR': 'Automático',
+  fr: 'Automatique',
+  de: 'Automatisch',
+  it: 'Automatico',
+  nl: 'Automatisch',
+  ht: 'Otomatik',
+  ja: '自動',
+}
+
 export default function LanguageSwitcher() {
   const { locale, localePreference, setLocalePreference, t } = useI18n()
-  return <label className="language-switcher"><span className="language-switcher-icon" aria-hidden="true"><FontAwesomeIcon icon={faGlobe} /></span><span className="visually-hidden">{t('language.label')}</span><select aria-label={t('language.label')} value={localePreference} onChange={event => setLocalePreference(event.target.value as LocalePreference)}>{options.map(option => <option key={option.value} value={option.value}>{option.value === 'system' && locale === 'ja' ? '自動' : option.label}</option>)}</select></label>
+  return <label className="language-switcher"><span className="language-switcher-icon" aria-hidden="true"><FontAwesomeIcon icon={faGlobe} /></span><span className="visually-hidden">{t('language.label')}</span><select aria-label={t('language.label')} value={localePreference} onChange={event => setLocalePreference(event.target.value as LocalePreference)}>{options.map(option => <option key={option.value} value={option.value}>{option.value === 'system' ? automaticLabels[locale] ?? option.label : option.label}</option>)}</select></label>
 }

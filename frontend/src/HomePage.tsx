@@ -18,7 +18,8 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import './home.css'
 import { buildSupportEmailHref, buildWhatsAppHref, supportConfig } from './support'
-import { Locale, useI18n } from './i18n'
+import { useI18n } from './i18n'
+import { getHomeAuxCopy } from './i18n/homeAuxCopy'
 
 function navigateToLogin() {
   window.location.hash = '#/login'
@@ -28,43 +29,9 @@ function navigateToRegister() {
   window.location.hash = '#/register'
 }
 
-type LocalizedPlan = {
-  name: string
-  price: string
-  description: string
-  features: string[]
-  featured?: boolean
-}
-
-const localizedPlans: Partial<Record<Locale, LocalizedPlan[]>> = {
-  'es-419': [
-    { name: 'Free', price: 'US$0', description: 'Para empezar a operar BarberTurn sin tarjeta y probar la cola con clientes reales.', features: ['100 turnos/mes + 10 de tolerancia', 'Hasta 2 barberos', 'Hasta 5 servicios', 'QR y enlace público', 'Notificaciones esenciales', 'Historial de 7 días'] },
-    { name: 'Starter', price: 'US$20.00', description: 'Para barberías pequeñas que ya usan BarberTurn todos los días.', features: ['1,000 turnos/mes', 'Hasta 5 barberos', 'Servicios ilimitados', 'Historial de 90 días', 'Cola y métricas operativas'] },
-    { name: 'Pro', price: 'US$40.00', description: 'Para automatizar la operación, las citas y la experiencia del cliente.', features: ['Turnos de alto volumen', 'Hasta 10 barberos', 'Citas y reservas online', 'BarberTurn TV', 'CRM y caja', 'Automatizaciones avanzadas'], featured: true },
-    { name: 'Business', price: 'US$70.00', description: 'Para operaciones con varias sucursales, analítica y control empresarial.', features: ['Hasta 3 sucursales', 'Barberos ilimitados', 'Todo lo de Pro', 'Reportes avanzados', 'Roles y auditoría avanzada', 'Soporte prioritario'] },
-  ],
-  en: [
-    { name: 'Free', price: 'US$0', description: 'Start operating BarberTurn without a card and try the queue with real customers.', features: ['100 turns/month + 10 grace', 'Up to 2 barbers', 'Up to 5 services', 'Public QR and link', 'Essential notifications', '7-day history'] },
-    { name: 'Starter', price: 'US$20.00', description: 'For small barbershops that already use BarberTurn every day.', features: ['1,000 turns/month', 'Up to 5 barbers', 'Unlimited services', '90-day history', 'Queue and operational metrics'] },
-    { name: 'Pro', price: 'US$40.00', description: 'Automate operations, appointments and the customer experience.', features: ['High-volume turns', 'Up to 10 barbers', 'Appointments and online booking', 'BarberTurn TV', 'CRM and cash management', 'Advanced automations'], featured: true },
-    { name: 'Business', price: 'US$70.00', description: 'For multi-location operations, analytics and enterprise control.', features: ['Up to 3 locations', 'Unlimited barbers', 'Everything in Pro', 'Advanced reports', 'Advanced roles and audit', 'Priority support'] },
-  ],
-  'es-ES': [
-    { name: 'Free', price: 'US$0', description: 'Para empezar a operar BarberTurn sin tarjeta y probar la cola con clientes reales.', features: ['100 turnos/mes + 10 de tolerancia', 'Hasta 2 barberos', 'Hasta 5 servicios', 'QR y enlace público', 'Notificaciones esenciales', 'Historial de 7 días'] },
-    { name: 'Starter', price: 'US$20.00', description: 'Para barberías pequeñas que ya utilizan BarberTurn cada día.', features: ['1.000 turnos/mes', 'Hasta 5 barberos', 'Servicios ilimitados', 'Historial de 90 días', 'Cola y métricas operativas'] },
-    { name: 'Pro', price: 'US$40.00', description: 'Para automatizar la operación, las citas y la experiencia del cliente.', features: ['Turnos de alto volumen', 'Hasta 10 barberos', 'Citas y reservas online', 'BarberTurn TV', 'CRM y caja', 'Automatizaciones avanzadas'], featured: true },
-    { name: 'Business', price: 'US$70.00', description: 'Para negocios con varios locales, analítica y control empresarial.', features: ['Hasta 3 locales', 'Barberos ilimitados', 'Todo lo de Pro', 'Informes avanzados', 'Roles y auditoría avanzada', 'Soporte prioritario'] },
-  ],
-  ja: [
-    { name: 'Free', price: 'US$0', description: 'カード登録なしで BarberTurn を始め、実際のお客様でキュー運用を試せます。', features: ['月100件 + 10件の猶予', '理容師2名まで', 'サービス5件まで', '公開QRとリンク', '基本通知', '7日間の履歴'] },
-    { name: 'Starter', price: 'US$20.00', description: 'BarberTurn を日常的に利用する小規模バーバーショップ向けです。', features: ['月1,000件', '理容師5名まで', 'サービス数無制限', '90日間の履歴', 'キューと運営指標'] },
-    { name: 'Pro', price: 'US$40.00', description: '運営、予約、顧客体験をさらに自動化したい店舗向けです。', features: ['大規模な順番待ち対応', '理容師10名まで', '予約とオンライン予約', 'BarberTurn TV', 'CRMとレジ管理', '高度な自動化'], featured: true },
-    { name: 'Business', price: 'US$70.00', description: '複数店舗、分析、企業レベルの管理が必要な運営向けです。', features: ['3店舗まで', '理容師数無制限', 'Pro の全機能', '高度なレポート', '高度な権限と監査', '優先サポート'] },
-  ],
-}
-
 export default function HomePage() {
   const { locale, t } = useI18n()
+  const homeAux = getHomeAuxCopy(locale)
   const currentYear = new Date().getFullYear()
   const whatsappHref = buildWhatsAppHref()
   const [activeSection, setActiveSection] = useState('inicio')
@@ -95,7 +62,7 @@ export default function HomePage() {
     { icon: faTv, title: t('home.feature.tv.title'), text: t('home.feature.tv.text') },
     { icon: faMobileScreenButton, title: t('home.feature.grow.title'), text: t('home.feature.grow.text') },
   ]
-  const plans = localizedPlans[locale] ?? localizedPlans.en ?? localizedPlans['es-419'] ?? []
+  const plans = homeAux.plans
 
   useEffect(() => {
     const sections = navigationItems
@@ -258,7 +225,7 @@ export default function HomePage() {
             <span className="support-option-icon" aria-hidden="true"><FontAwesomeIcon icon={faEnvelope} /></span>
             <div><strong>{t('home.support.email')}</strong><small>{supportConfig.email}</small></div>
           </a>
-          <a className="support-option" href={buildSupportEmailHref('[BarberTurn] Support request')}>
+          <a className="support-option" href={buildSupportEmailHref(homeAux.supportSubject)}>
             <span className="support-option-icon" aria-hidden="true"><FontAwesomeIcon icon={faTriangleExclamation} /></span>
             <div><strong>{t('home.support.report')}</strong><small>{t('home.support.reportText')}</small></div>
           </a>
@@ -273,10 +240,10 @@ export default function HomePage() {
 
       <footer className="home-footer">
         <img src="/branding/barberturn-logo.png" alt="BarberTurn" />
-        <p>{locale === 'ja' ? 'あなたの順番。あなたのスタイル。あなたの時間。' : 'Tu turno. Tu estilo. Tu tiempo.'}</p>
+        <p>{homeAux.slogan}</p>
         <a className="footer-support-link" href={buildSupportEmailHref()}>{t('common.support')}</a>
-        <a className="footer-support-link" href="#/terms">{locale === 'ja' ? '利用規約' : 'Términos'}</a>
-        <a className="footer-support-link" href="#/privacy">{locale === 'ja' ? 'プライバシー' : 'Privacidad'}</a>
+        <a className="footer-support-link" href="#/terms">{homeAux.terms}</a>
+        <a className="footer-support-link" href="#/privacy">{homeAux.privacy}</a>
         <span>© {currentYear} BarberTurn. {t('home.footer.rights')}</span>
       </footer>
     </main>

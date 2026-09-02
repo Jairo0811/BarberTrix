@@ -10,8 +10,10 @@ const supportedLocales: Locale[] = [
 ]
 
 export const automaticLocales = new Set<Locale>(['es-419', 'en', 'es-ES', 'ja'])
+export const strictLocales = new Set<Locale>([
+  'es-419', 'en', 'es-ES', 'pt-BR', 'fr', 'de', 'it', 'nl', 'ht', 'ja',
+])
 const rtlLocales = new Set<Locale>(['ar', 'ur', 'fa'])
-const strictLocales = new Set<Locale>(['ja'])
 
 type I18nContextValue = {
   locale: Locale

@@ -5,7 +5,7 @@ import type { Locale, TranslationValues } from './types'
 const storageKey = 'barberturn.locale'
 export type LocalePreference = 'system' | Locale
 
-const supportedLocales: Locale[] = ['es-419', 'en', 'es-ES', 'pt-BR', 'fr', 'de', 'it']
+const supportedLocales: Locale[] = ['es-419', 'en', 'es-ES', 'pt-BR', 'fr', 'de', 'it', 'nl', 'ht']
 
 type I18nContextValue = {
   locale: Locale
@@ -15,7 +15,7 @@ type I18nContextValue = {
   t: (key: string, values?: TranslationValues) => string
 }
 
-function mapDeviceLocale(deviceLocale?: string | null): Locale {
+function mapDeviceLocale(deviceLocale?: string | null): Locale | null {
   const normalized = deviceLocale?.trim().toLowerCase().replace('_', '-') ?? ''
 
   if (normalized === 'es-es' || normalized.startsWith('es-es-')) return 'es-ES'
@@ -23,15 +23,21 @@ function mapDeviceLocale(deviceLocale?: string | null): Locale {
   if (normalized.startsWith('fr')) return 'fr'
   if (normalized.startsWith('de')) return 'de'
   if (normalized.startsWith('it')) return 'it'
+  if (normalized.startsWith('nl')) return 'nl'
+  if (normalized.startsWith('ht')) return 'ht'
   if (normalized.startsWith('en')) return 'en'
   if (normalized.startsWith('es')) return 'es-419'
 
-  return 'es-419'
+  return null
 }
 
 function resolveSystemLocale(): Locale {
   const preferredLocales = navigator.languages?.length ? navigator.languages : [navigator.language]
-  return mapDeviceLocale(preferredLocales.find(Boolean))
+  for (const candidate of preferredLocales) {
+    const locale = mapDeviceLocale(candidate)
+    if (locale) return locale
+  }
+  return 'es-419'
 }
 
 function resolveInitialPreference(): LocalePreference {

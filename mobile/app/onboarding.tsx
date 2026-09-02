@@ -2,16 +2,22 @@ import { Redirect, router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '@/auth/AuthProvider';
-import { MobileApiError } from '@/api/httpClient';
+import { useI18n } from '@/i18n/I18nProvider';
 import { getMyJoinRequests, requestJoin, searchShops, withdrawJoinRequest, type BarberJoinRequest, type BarberShopDirectoryItem } from '@/onboarding/onboardingApi';
 
 export default function OnboardingScreen() {
   const { status, session, signOut, refresh } = useAuth();
+  const { t } = useI18n();
   const [query, setQuery] = useState('');
   const [shops, setShops] = useState<BarberShopDirectoryItem[]>([]);
   const [requests, setRequests] = useState<BarberJoinRequest[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+
+  const requestStatusLabel = (requestStatus: string) => {
+    const supported = new Set(['Pending', 'Approved', 'Rejected', 'Withdrawn']);
+    return supported.has(requestStatus) ? t(`onboarding.status.${requestStatus}`) : requestStatus;
+  };
 
   const load = useCallback(async (search = query) => {
     if (!session) return;
@@ -28,12 +34,12 @@ export default function OnboardingScreen() {
         const token = await refresh();
         if (token) router.replace('/(app)');
       }
-    } catch (exception) {
-      setError(exception instanceof MobileApiError ? exception.message : 'No pudimos cargar tu onboarding.');
+    } catch {
+      setError(t('onboarding.loadError'));
     } finally {
       setBusy(false);
     }
-  }, [query, refresh, session]);
+  }, [query, refresh, session, t]);
 
   useEffect(() => { void load(''); }, [load]);
 
@@ -49,9 +55,9 @@ export default function OnboardingScreen() {
     try {
       await requestJoin(session.accessToken, shop.id);
       await load(query);
-      Alert.alert('Solicitud enviada', `${shop.name} podrá revisar tu solicitud desde su panel.`);
-    } catch (exception) {
-      setError(exception instanceof MobileApiError ? exception.message : 'No se pudo enviar la solicitud.');
+      Alert.alert(t('onboarding.sentTitle'), t('onboarding.sentText', { shop: shop.name }));
+    } catch {
+      setError(t('onboarding.sendError'));
       setBusy(false);
     }
   }
@@ -62,29 +68,29 @@ export default function OnboardingScreen() {
     try {
       await withdrawJoinRequest(session.accessToken, request.id);
       await load(query);
-    } catch (exception) {
-      setError(exception instanceof MobileApiError ? exception.message : 'No se pudo retirar la solicitud.');
+    } catch {
+      setError(t('onboarding.withdrawError'));
       setBusy(false);
     }
   }
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.eyebrow}>BARBERTURN · BARBERO</Text>
-      <Text style={styles.title}>Encuentra tu barbería</Text>
-      <Text style={styles.body}>Hola {session?.user.name}. Tu perfil profesional ya existe; ahora solicita ingreso a la barbería donde trabajas.</Text>
+      <Text style={styles.eyebrow}>{t('onboarding.eyebrow')}</Text>
+      <Text style={styles.title}>{t('onboarding.title')}</Text>
+      <Text style={styles.body}>{t('onboarding.body', { name: session?.user.name ?? '' })}</Text>
 
       <View style={styles.searchRow}>
-        <TextInput value={query} onChangeText={setQuery} placeholder="Nombre o slug de la barbería" style={styles.input} autoCapitalize="none" />
+        <TextInput value={query} onChangeText={setQuery} placeholder={t('onboarding.searchPlaceholder')} style={styles.input} autoCapitalize="none" />
         <Pressable accessibilityRole="button" style={styles.primaryButton} onPress={() => void load(query)} disabled={busy}>
-          <Text style={styles.primaryButtonText}>Buscar</Text>
+          <Text style={styles.primaryButtonText}>{t('onboarding.search')}</Text>
         </Pressable>
       </View>
 
       {busy && <ActivityIndicator />}
       {!!error && <Text style={styles.error}>{error}</Text>}
 
-      <Text style={styles.sectionTitle}>Barberías disponibles</Text>
+      <Text style={styles.sectionTitle}>{t('onboarding.availableShops')}</Text>
       {shops.map(shop => {
         const pending = pendingByShop.get(shop.id);
         return (
@@ -95,31 +101,31 @@ export default function OnboardingScreen() {
             </View>
             {pending ? (
               <Pressable style={styles.secondaryButton} onPress={() => void withdraw(pending)} disabled={busy}>
-                <Text style={styles.secondaryButtonText}>Retirar solicitud</Text>
+                <Text style={styles.secondaryButtonText}>{t('onboarding.withdraw')}</Text>
               </Pressable>
             ) : (
               <Pressable style={styles.primaryButton} onPress={() => void join(shop)} disabled={busy}>
-                <Text style={styles.primaryButtonText}>Solicitar ingreso</Text>
+                <Text style={styles.primaryButtonText}>{t('onboarding.requestJoin')}</Text>
               </Pressable>
             )}
           </View>
         );
       })}
 
-      <Text style={styles.sectionTitle}>Mis solicitudes</Text>
-      {requests.length === 0 ? <Text style={styles.muted}>Aún no has enviado solicitudes.</Text> : requests.map(request => (
+      <Text style={styles.sectionTitle}>{t('onboarding.myRequests')}</Text>
+      {requests.length === 0 ? <Text style={styles.muted}>{t('onboarding.noRequests')}</Text> : requests.map(request => (
         <View key={request.id} style={styles.requestCard}>
           <Text style={styles.cardTitle}>{request.barberShopName}</Text>
-          <Text style={styles.meta}>Estado: {request.status}</Text>
-          {!!request.reviewNote && <Text style={styles.meta}>Nota: {request.reviewNote}</Text>}
+          <Text style={styles.meta}>{t('onboarding.status', { status: requestStatusLabel(request.status) })}</Text>
+          {!!request.reviewNote && <Text style={styles.meta}>{t('onboarding.note', { note: request.reviewNote })}</Text>}
         </View>
       ))}
 
       <Pressable accessibilityRole="button" style={styles.secondaryButton} onPress={() => void load(query)} disabled={busy}>
-        <Text style={styles.secondaryButtonText}>Actualizar estado</Text>
+        <Text style={styles.secondaryButtonText}>{t('onboarding.refresh')}</Text>
       </Pressable>
       <Pressable accessibilityRole="button" style={styles.linkButton} onPress={() => void signOut()}>
-        <Text style={styles.linkText}>Cerrar sesión</Text>
+        <Text style={styles.linkText}>{t('onboarding.signOut')}</Text>
       </Pressable>
     </ScrollView>
   );

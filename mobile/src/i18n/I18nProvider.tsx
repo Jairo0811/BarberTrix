@@ -14,14 +14,10 @@ function resolveDeviceLocale(): Locale {
   const rawLocale = Intl.DateTimeFormat().resolvedOptions().locale.toLowerCase().replace('_', '-');
   if (rawLocale === 'es-es' || rawLocale.startsWith('es-es-')) return 'es-ES';
   const aliases: Array<[string[], Locale]> = [
-    [['pt'], 'pt-BR'], [['fr'], 'fr'], [['de'], 'de'], [['it'], 'it'], [['nl'], 'nl'], [['ht'], 'ht'],
-    [['pl'], 'pl'], [['ro'], 'ro'], [['sv'], 'sv'], [['da'], 'da'], [['nb','nn','no'], 'nb'], [['fi'], 'fi'], [['cs'], 'cs'], [['el'], 'el'], [['tr'], 'tr'], [['uk'], 'uk'], [['ru'], 'ru'],
-    [['et'], 'et'], [['lv'], 'lv'], [['lt'], 'lt'], [['sk'], 'sk'], [['sl'], 'sl'], [['hr'], 'hr'], [['sr'], 'sr'], [['bs'], 'bs'], [['bg'], 'bg'], [['sq'], 'sq'], [['mk'], 'mk'], [['hu'], 'hu'], [['is'], 'is'], [['ga'], 'ga'], [['mt'], 'mt'], [['ca'], 'ca'], [['ka'], 'ka'], [['hy'], 'hy'], [['az'], 'az'],
-    [['en'], 'en'], [['es'], 'es-419'],
+    [['pt'],'pt-BR'],[['fr'],'fr'],[['de'],'de'],[['it'],'it'],[['nl'],'nl'],[['ht'],'ht'],[['pl'],'pl'],[['ro'],'ro'],[['sv'],'sv'],[['da'],'da'],[['nb','nn','no'],'nb'],[['fi'],'fi'],[['cs'],'cs'],[['el'],'el'],[['tr'],'tr'],[['uk'],'uk'],[['ru'],'ru'],[['et'],'et'],[['lv'],'lv'],[['lt'],'lt'],[['sk'],'sk'],[['sl'],'sl'],[['hr'],'hr'],[['sr'],'sr'],[['bs'],'bs'],[['bg'],'bg'],[['sq'],'sq'],[['mk'],'mk'],[['hu'],'hu'],[['is'],'is'],[['ga'],'ga'],[['mt'],'mt'],[['ca'],'ca'],[['ka'],'ka'],[['hy'],'hy'],[['az'],'az'],
+    [['ar'],'ar'],[['sw'],'sw'],[['af'],'af'],[['am'],'am'],[['so'],'so'],[['ha'],'ha'],[['yo'],'yo'],[['ig'],'ig'],[['zu'],'zu'],[['xh'],'xh'],[['en'],'en'],[['es'],'es-419'],
   ];
-  for (const [prefixes, locale] of aliases) {
-    if (prefixes.some(prefix => rawLocale.startsWith(prefix))) return locale;
-  }
+  for (const [prefixes, locale] of aliases) if (prefixes.some(prefix => rawLocale.startsWith(prefix))) return locale;
   return 'es-419';
 }
 

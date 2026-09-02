@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/images/barberturn-logo.png" alt="Logo de BarberTurn" width="720" />
+  <img src="docs/images/barberturn-logo.png" alt="Logo de BarberTrix" width="720" />
 </p>
 
 <p align="center">

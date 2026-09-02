@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from './api'
+import { useI18n } from './i18n'
 import { adminPageHref } from './portals/admin/adminRoutes'
 
 function subscriptionId() {
@@ -7,22 +8,40 @@ function subscriptionId() {
   return values.get('subscription_id') ?? values.get('ba_token') ?? ''
 }
 
+type BillingState = 'loading' | 'success' | 'error' | 'missing-id'
+
 export default function BillingSuccessPage() {
+  const { t } = useI18n()
   const id = useMemo(subscriptionId, [])
-  const [state, setState] = useState<'loading' | 'success' | 'error'>('loading')
-  const [message, setMessage] = useState('Confirmando tu suscripción con PayPal…')
+  const [state, setState] = useState<BillingState>(id ? 'loading' : 'missing-id')
 
   useEffect(() => {
-    if (!id) { setState('error'); setMessage('PayPal no devolvió un identificador de suscripción.'); return }
+    if (!id) return
     void api('/api/billing/capture', { method: 'POST', body: JSON.stringify({ providerOrderId: id }) })
-      .then(() => { setState('success'); setMessage('Tu plan quedó activo y ya puedes usar sus beneficios.') })
-      .catch(exception => { setState('error'); setMessage(exception instanceof Error ? exception.message : 'No se pudo confirmar la suscripción.') })
+      .then(() => setState('success'))
+      .catch(() => setState('error'))
   }, [id])
+
+  const message = state === 'loading'
+    ? t('billingSuccess.confirming')
+    : state === 'success'
+      ? t('billingSuccess.success')
+      : state === 'missing-id'
+        ? t('billingSuccess.missingId')
+        : t('billingSuccess.error')
+
+  const title = state === 'success'
+    ? t('billingSuccess.successTitle')
+    : state === 'loading'
+      ? t('billingSuccess.processingTitle')
+      : t('billingSuccess.errorTitle')
+
+  const failed = state === 'error' || state === 'missing-id'
 
   return <main className="login-shell"><section className="login-card">
     <img className="recovery-logo" src="/branding/barberturn-logo.png" alt="BarberTurn" />
-    <h1>{state === 'success' ? 'Suscripción activada' : state === 'error' ? 'No pudimos activar el plan' : 'Procesando pago'}</h1>
-    <p className={state === 'error' ? 'login-error' : 'login-subtitle'} role="status">{message}</p>
-    <a className="login-submit recovery-link-button" href={adminPageHref('billing')}>Volver a suscripción</a>
+    <h1>{title}</h1>
+    <p className={failed ? 'login-error' : 'login-subtitle'} role="status">{message}</p>
+    <a className="login-submit recovery-link-button" href={adminPageHref('billing')}>{t('billingSuccess.back')}</a>
   </section></main>
 }

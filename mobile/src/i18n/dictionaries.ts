@@ -1,48 +1,41 @@
 import type { Dictionary, Locale } from './types';
-import { europeWave1Mobile } from './europeWave1';
-import { europeWave2Mobile } from './europeWave2';
-import { africaWave1Mobile } from './africaWave1';
-import { africaWave2Mobile } from './africaWave2';
 import { asiaWave1Mobile } from './asiaWave1';
-import { asiaWave2Mobile } from './asiaWave2';
-import { oceaniaMobile } from './oceania';
 import { coreLegacy } from './coreLegacy';
 import ja from './ja';
 
-const baseDictionaries: Record<string, Dictionary> = {
-  'es-419': {
-    'login.title': 'Tu barbería, también en tu bolsillo.', 'login.subtitle': 'Acceso para Owner, Administrator, Receptionist y Barber.', 'login.email': 'Correo', 'login.password': 'Contraseña', 'login.invalidCredentials': 'Correo o contraseña incorrectos.', 'login.failed': 'No pudimos iniciar sesión.', 'login.submitting': 'Entrando…', 'login.submit': 'Iniciar sesión', 'login.customerHint': 'Los clientes pueden solicitar un turno sin crear una cuenta mediante el enlace de su barbería.',
-    'home.hello': 'Hola, {{name}}.', 'home.team': 'equipo', 'home.body': 'M3 mantiene al equipo al tanto de nuevas solicitudes, incluso cuando BarberTurn está en segundo plano.', 'home.requests': 'Solicitudes de turno', 'home.requestsText': 'Gestiona solicitudes pendientes y recibe cambios en tiempo real.', 'home.pushTitle': 'No pierdas nuevas solicitudes', 'home.pushBody': 'Activa avisos del sistema para responder a tiempo. El contenido visible no incluye datos personales del cliente.', 'home.signOut': 'Cerrar sesión', 'push.enabledTitle': 'Avisos activados', 'push.enabledBody': 'Este dispositivo recibirá cambios importantes.', 'push.enabling': 'Activando…', 'push.enable': 'Activar avisos',
-  },
-  'es-ES': {
-    'login.title': 'Tu barbería, también en tu bolsillo.', 'login.subtitle': 'Acceso para Owner, Administrator, Receptionist y Barber.', 'login.email': 'Correo electrónico', 'login.password': 'Contraseña', 'login.invalidCredentials': 'El correo o la contraseña no son correctos.', 'login.failed': 'No hemos podido iniciar sesión.', 'login.submitting': 'Entrando…', 'login.submit': 'Iniciar sesión', 'login.customerHint': 'Los clientes pueden solicitar un turno sin crear una cuenta mediante el enlace de su barbería.',
-    'home.hello': 'Hola, {{name}}.', 'home.team': 'equipo', 'home.body': 'M3 mantiene al equipo informado de nuevas solicitudes, incluso cuando BarberTurn está en segundo plano.', 'home.requests': 'Solicitudes de turno', 'home.requestsText': 'Gestiona solicitudes pendientes y recibe cambios en tiempo real.', 'home.pushTitle': 'No te pierdas nuevas solicitudes', 'home.pushBody': 'Activa las notificaciones del sistema para responder a tiempo. El contenido visible no incluye datos personales del cliente.', 'home.signOut': 'Cerrar sesión', 'push.enabledTitle': 'Notificaciones activadas', 'push.enabledBody': 'Este dispositivo recibirá cambios importantes.', 'push.enabling': 'Activando…', 'push.enable': 'Activar notificaciones',
-  },
-  en: {
-    'login.title': 'Your barbershop, right in your pocket.', 'login.subtitle': 'Access for Owner, Administrator, Receptionist, and Barber roles.', 'login.email': 'Email', 'login.password': 'Password', 'login.invalidCredentials': 'Incorrect email or password.', 'login.failed': 'We could not sign you in.', 'login.submitting': 'Signing in…', 'login.submit': 'Sign in', 'login.customerHint': 'Customers can request a turn without creating an account through their barbershop link.',
-    'home.hello': 'Hi, {{name}}.', 'home.team': 'team', 'home.body': 'M3 keeps the team informed about new requests even while BarberTurn is running in the background.', 'home.requests': 'Turn requests', 'home.requestsText': 'Manage pending requests and receive real-time updates.', 'home.pushTitle': 'Never miss a new request', 'home.pushBody': 'Enable system notifications to respond on time. Visible notification content does not include customer personal data.', 'home.signOut': 'Sign out', 'push.enabledTitle': 'Notifications enabled', 'push.enabledBody': 'This device will receive important updates.', 'push.enabling': 'Enabling…', 'push.enable': 'Enable notifications',
-  },
-  'pt-BR': {
-    'login.title': 'Sua barbearia, também no seu bolso.', 'login.subtitle': 'Acesso para Owner, Administrator, Receptionist e Barber.', 'login.email': 'E-mail', 'login.password': 'Senha', 'login.invalidCredentials': 'E-mail ou senha incorretos.', 'login.failed': 'Não foi possível entrar.', 'login.submitting': 'Entrando…', 'login.submit': 'Entrar', 'login.customerHint': 'Os clientes podem solicitar um atendimento sem criar conta pelo link da barbearia.',
-    'home.hello': 'Olá, {{name}}.', 'home.team': 'equipe', 'home.body': 'M3 mantém a equipe informada sobre novas solicitações, mesmo quando BarberTurn está em segundo plano.', 'home.requests': 'Solicitações de atendimento', 'home.requestsText': 'Gerencie solicitações pendentes e receba atualizações em tempo real.', 'home.pushTitle': 'Não perca novas solicitações', 'home.pushBody': 'Ative as notificações do sistema para responder a tempo. O conteúdo visível não inclui dados pessoais do cliente.', 'home.signOut': 'Sair', 'push.enabledTitle': 'Notificações ativadas', 'push.enabledBody': 'Este dispositivo receberá atualizações importantes.', 'push.enabling': 'Ativando…', 'push.enable': 'Ativar notificações',
-  },
-  fr: {
-    'login.title': 'Votre barbershop, aussi dans votre poche.', 'login.subtitle': 'Accès pour les rôles Owner, Administrator, Receptionist et Barber.', 'login.email': 'E-mail', 'login.password': 'Mot de passe', 'login.invalidCredentials': 'E-mail ou mot de passe incorrect.', 'login.failed': 'Impossible de vous connecter.', 'login.submitting': 'Connexion…', 'login.submit': 'Se connecter', 'login.customerHint': 'Les clients peuvent demander un passage sans créer de compte via le lien de leur barbershop.',
-    'home.hello': 'Bonjour, {{name}}.', 'home.team': 'équipe', 'home.body': 'M3 informe l’équipe des nouvelles demandes même lorsque BarberTurn fonctionne en arrière-plan.', 'home.requests': 'Demandes de passage', 'home.requestsText': 'Gérez les demandes en attente et recevez les changements en temps réel.', 'home.pushTitle': 'Ne manquez aucune nouvelle demande', 'home.pushBody': 'Activez les notifications système pour répondre à temps. Le contenu visible n’inclut pas les données personnelles du client.', 'home.signOut': 'Se déconnecter', 'push.enabledTitle': 'Notifications activées', 'push.enabledBody': 'Cet appareil recevra les mises à jour importantes.', 'push.enabling': 'Activation…', 'push.enable': 'Activer les notifications',
-  },
+const spanish: Dictionary = {
+  'login.title': 'Tu barbería, también en tu bolsillo.', 'login.subtitle': 'Acceso para Owner, Administrator, Receptionist y Barber.', 'login.email': 'Correo', 'login.password': 'Contraseña', 'login.invalidCredentials': 'Correo o contraseña incorrectos.', 'login.failed': 'No pudimos iniciar sesión.', 'login.submitting': 'Entrando…', 'login.submit': 'Iniciar sesión', 'login.customerHint': 'Los clientes pueden solicitar un turno sin crear una cuenta mediante el enlace de su barbería.',
+  'home.hello': 'Hola, {{name}}.', 'home.team': 'equipo', 'home.body': 'M3 mantiene al equipo al tanto de nuevas solicitudes, incluso cuando BarberTurn está en segundo plano.', 'home.requests': 'Solicitudes de turno', 'home.requestsText': 'Gestiona solicitudes pendientes y recibe cambios en tiempo real.', 'home.pushTitle': 'No pierdas nuevas solicitudes', 'home.pushBody': 'Activa avisos del sistema para responder a tiempo. El contenido visible no incluye datos personales del cliente.', 'home.signOut': 'Cerrar sesión', 'push.enabledTitle': 'Avisos activados', 'push.enabledBody': 'Este dispositivo recibirá cambios importantes.', 'push.enabling': 'Activando…', 'push.enable': 'Activar avisos',
 };
 
-const english: Dictionary = baseDictionaries.en ?? {};
-const merge = (dictionary?: Dictionary): Dictionary => ({ ...english, ...(dictionary ?? {}) });
+const english: Dictionary = {
+  'login.title': 'Your barbershop, right in your pocket.', 'login.subtitle': 'Access for Owner, Administrator, Receptionist, and Barber roles.', 'login.email': 'Email', 'login.password': 'Password', 'login.invalidCredentials': 'Incorrect email or password.', 'login.failed': 'We could not sign you in.', 'login.submitting': 'Signing in…', 'login.submit': 'Sign in', 'login.customerHint': 'Customers can request a turn without creating an account through their barbershop link.',
+  'home.hello': 'Hi, {{name}}.', 'home.team': 'team', 'home.body': 'M3 keeps the team informed about new requests even while BarberTurn is running in the background.', 'home.requests': 'Turn requests', 'home.requestsText': 'Manage pending requests and receive real-time updates.', 'home.pushTitle': 'Never miss a new request', 'home.pushBody': 'Enable system notifications to respond on time. Visible notification content does not include customer personal data.', 'home.signOut': 'Sign out', 'push.enabledTitle': 'Notifications enabled', 'push.enabledBody': 'This device will receive important updates.', 'push.enabling': 'Enabling…', 'push.enable': 'Enable notifications',
+};
 
-export const dictionaries: Record<Locale, Dictionary> = {
-  ...baseDictionaries,
-  de: coreLegacy.de, it: coreLegacy.it, nl: coreLegacy.nl, ht: coreLegacy.ht,
-  pl: europeWave1Mobile.pl, ro: europeWave1Mobile.ro, sv: europeWave1Mobile.sv, da: europeWave1Mobile.da, nb: europeWave1Mobile.nb, fi: europeWave1Mobile.fi, cs: europeWave1Mobile.cs, el: europeWave1Mobile.el, tr: europeWave1Mobile.tr, uk: europeWave1Mobile.uk, ru: europeWave1Mobile.ru,
-  et: merge(europeWave2Mobile.et), lv: merge(europeWave2Mobile.lv), lt: merge(europeWave2Mobile.lt), sk: merge(europeWave2Mobile.sk), sl: merge(europeWave2Mobile.sl), hr: merge(europeWave2Mobile.hr), sr: merge(europeWave2Mobile.sr), bs: merge(europeWave2Mobile.bs), bg: merge(europeWave2Mobile.bg), sq: merge(europeWave2Mobile.sq), mk: merge(europeWave2Mobile.mk), hu: merge(europeWave2Mobile.hu), is: merge(europeWave2Mobile.is), ga: merge(europeWave2Mobile.ga), mt: merge(europeWave2Mobile.mt), ca: merge(europeWave2Mobile.ca), ka: merge(europeWave2Mobile.ka), hy: merge(europeWave2Mobile.hy), az: merge(europeWave2Mobile.az),
-  ar: merge(africaWave1Mobile.ar), sw: merge(africaWave1Mobile.sw), af: merge(africaWave1Mobile.af), am: merge(africaWave1Mobile.am), so: merge(africaWave1Mobile.so), ha: merge(africaWave1Mobile.ha), yo: merge(africaWave1Mobile.yo), ig: merge(africaWave1Mobile.ig), zu: merge(africaWave1Mobile.zu), xh: merge(africaWave1Mobile.xh),
-  wo: merge(africaWave2Mobile.wo), ln: merge(africaWave2Mobile.ln), rw: merge(africaWave2Mobile.rw), rn: merge(africaWave2Mobile.rn), st: merge(africaWave2Mobile.st), tn: merge(africaWave2Mobile.tn), sn: merge(africaWave2Mobile.sn), ny: merge(africaWave2Mobile.ny), mg: merge(africaWave2Mobile.mg), ti: merge(africaWave2Mobile.ti), om: merge(africaWave2Mobile.om), ak: merge(africaWave2Mobile.ak),
-  'zh-CN': merge(asiaWave1Mobile['zh-CN']), 'zh-TW': merge(asiaWave1Mobile['zh-TW']), ja, ko: merge(asiaWave1Mobile.ko), hi: merge(asiaWave1Mobile.hi), bn: merge(asiaWave1Mobile.bn), ur: merge(asiaWave1Mobile.ur), id: merge(asiaWave1Mobile.id), ms: merge(asiaWave1Mobile.ms), vi: merge(asiaWave1Mobile.vi), th: merge(asiaWave1Mobile.th), fil: merge(asiaWave1Mobile.fil), fa: merge(asiaWave1Mobile.fa),
-  ta: merge(asiaWave2Mobile.ta), te: merge(asiaWave2Mobile.te), mr: merge(asiaWave2Mobile.mr), gu: merge(asiaWave2Mobile.gu), pa: merge(asiaWave2Mobile.pa), kn: merge(asiaWave2Mobile.kn), ml: merge(asiaWave2Mobile.ml), ne: merge(asiaWave2Mobile.ne), si: merge(asiaWave2Mobile.si), my: merge(asiaWave2Mobile.my), km: merge(asiaWave2Mobile.km), lo: merge(asiaWave2Mobile.lo), mn: merge(asiaWave2Mobile.mn), kk: merge(asiaWave2Mobile.kk), uz: merge(asiaWave2Mobile.uz), ky: merge(asiaWave2Mobile.ky), tg: merge(asiaWave2Mobile.tg),
-  mi: merge(oceaniaMobile.mi), sm: merge(oceaniaMobile.sm), to: merge(oceaniaMobile.to), fj: merge(oceaniaMobile.fj), bi: merge(oceaniaMobile.bi), tpi: merge(oceaniaMobile.tpi), ho: merge(oceaniaMobile.ho), gil: merge(oceaniaMobile.gil), mh: merge(oceaniaMobile.mh), na: merge(oceaniaMobile.na), pau: merge(oceaniaMobile.pau), tvl: merge(oceaniaMobile.tvl),
+const portuguese: Dictionary = {
+  'login.title': 'Sua barbearia, também no seu bolso.', 'login.subtitle': 'Acesso para Owner, Administrator, Receptionist e Barber.', 'login.email': 'E-mail', 'login.password': 'Senha', 'login.invalidCredentials': 'E-mail ou senha incorretos.', 'login.failed': 'Não foi possível entrar.', 'login.submitting': 'Entrando…', 'login.submit': 'Entrar', 'login.customerHint': 'Os clientes podem solicitar um atendimento sem criar conta pelo link da barbearia.',
+  'home.hello': 'Olá, {{name}}.', 'home.team': 'equipe', 'home.body': 'M3 mantém a equipe informada sobre novas solicitações, mesmo quando BarberTurn está em segundo plano.', 'home.requests': 'Solicitações de atendimento', 'home.requestsText': 'Gerencie solicitações pendentes e receba atualizações em tempo real.', 'home.pushTitle': 'Não perca novas solicitações', 'home.pushBody': 'Ative as notificações do sistema para responder a tempo. O conteúdo visível não inclui dados pessoais do cliente.', 'home.signOut': 'Sair', 'push.enabledTitle': 'Notificações ativadas', 'push.enabledBody': 'Este dispositivo receberá atualizações importantes.', 'push.enabling': 'Ativando…', 'push.enable': 'Ativar notificações',
+};
+
+const french: Dictionary = {
+  'login.title': 'Votre barbershop, aussi dans votre poche.', 'login.subtitle': 'Accès pour les rôles Owner, Administrator, Receptionist et Barber.', 'login.email': 'E-mail', 'login.password': 'Mot de passe', 'login.invalidCredentials': 'E-mail ou mot de passe incorrect.', 'login.failed': 'Impossible de vous connecter.', 'login.submitting': 'Connexion…', 'login.submit': 'Se connecter', 'login.customerHint': 'Les clients peuvent demander un passage sans créer de compte via le lien de leur barbershop.',
+  'home.hello': 'Bonjour, {{name}}.', 'home.team': 'équipe', 'home.body': 'M3 informe l’équipe des nouvelles demandes même lorsque BarberTurn fonctionne en arrière-plan.', 'home.requests': 'Demandes de passage', 'home.requestsText': 'Gérez les demandes en attente et recevez les changements en temps réel.', 'home.pushTitle': 'Ne manquez aucune nouvelle demande', 'home.pushBody': 'Activez les notifications système pour répondre à temps. Le contenu visible n’inclut pas les données personnelles du client.', 'home.signOut': 'Se déconnecter', 'push.enabledTitle': 'Notifications activées', 'push.enabledBody': 'Cet appareil recevra les mises à jour importantes.', 'push.enabling': 'Activation…', 'push.enable': 'Activer les notifications',
+};
+
+const mergeWithEnglish = (dictionary?: Dictionary): Dictionary => ({ ...english, ...(dictionary ?? {}) });
+
+export const dictionaries = {
+  'es-419': spanish,
+  // Legacy compatibility only. It is no longer exposed as a product locale.
+  'es-ES': spanish,
+  en: english,
+  'pt-BR': portuguese,
+  fr: french,
+  ht: coreLegacy.ht,
+  de: coreLegacy.de,
+  it: coreLegacy.it,
+  ja,
+  ko: mergeWithEnglish(asiaWave1Mobile.ko),
+  'zh-CN': mergeWithEnglish(asiaWave1Mobile['zh-CN']),
 } as Record<Locale, Dictionary>;

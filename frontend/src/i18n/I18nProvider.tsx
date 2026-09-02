@@ -5,7 +5,10 @@ import type { Locale, TranslationValues } from './types'
 const storageKey = 'barberturn.locale'
 export type LocalePreference = 'system' | Locale
 
-const supportedLocales: Locale[] = ['es-419', 'en', 'es-ES', 'pt-BR', 'fr', 'de', 'it', 'nl', 'ht']
+const supportedLocales: Locale[] = [
+  'es-419', 'en', 'es-ES', 'pt-BR', 'fr', 'de', 'it', 'nl', 'ht',
+  'pl', 'ro', 'sv', 'da', 'nb', 'fi', 'cs', 'el', 'tr', 'uk', 'ru',
+]
 
 type I18nContextValue = {
   locale: Locale
@@ -25,6 +28,17 @@ function mapDeviceLocale(deviceLocale?: string | null): Locale | null {
   if (normalized.startsWith('it')) return 'it'
   if (normalized.startsWith('nl')) return 'nl'
   if (normalized.startsWith('ht')) return 'ht'
+  if (normalized.startsWith('pl')) return 'pl'
+  if (normalized.startsWith('ro')) return 'ro'
+  if (normalized.startsWith('sv')) return 'sv'
+  if (normalized.startsWith('da')) return 'da'
+  if (normalized.startsWith('nb') || normalized.startsWith('nn') || normalized.startsWith('no')) return 'nb'
+  if (normalized.startsWith('fi')) return 'fi'
+  if (normalized.startsWith('cs')) return 'cs'
+  if (normalized.startsWith('el')) return 'el'
+  if (normalized.startsWith('tr')) return 'tr'
+  if (normalized.startsWith('uk')) return 'uk'
+  if (normalized.startsWith('ru')) return 'ru'
   if (normalized.startsWith('en')) return 'en'
   if (normalized.startsWith('es')) return 'es-419'
 

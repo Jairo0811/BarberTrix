@@ -20,10 +20,13 @@ import de from './de'
 import it from './it'
 import nl from './nl'
 import ht from './ht'
+import { europeWave1 } from './europe-wave1'
+
+const english: Dictionary = { ...enCommon, ...enAuth, ...enDashboard, ...enBilling, ...enCustomer }
 
 export const dictionaries: Record<Locale, Dictionary> = {
   'es-419': { ...es419Common, ...es419Auth, ...es419Dashboard, ...es419Billing, ...es419Customer },
-  en: { ...enCommon, ...enAuth, ...enDashboard, ...enBilling, ...enCustomer },
+  en: english,
   'es-ES': { ...esEsCommon, ...esEsAuth, ...esEsDashboard, ...esEsBilling, ...esEsCustomer },
   'pt-BR': ptBr,
   fr,
@@ -31,4 +34,15 @@ export const dictionaries: Record<Locale, Dictionary> = {
   it,
   nl,
   ht,
+  pl: { ...english, ...europeWave1.pl },
+  ro: { ...english, ...europeWave1.ro },
+  sv: { ...english, ...europeWave1.sv },
+  da: { ...english, ...europeWave1.da },
+  nb: { ...english, ...europeWave1.nb },
+  fi: { ...english, ...europeWave1.fi },
+  cs: { ...english, ...europeWave1.cs },
+  el: { ...english, ...europeWave1.el },
+  tr: { ...english, ...europeWave1.tr },
+  uk: { ...english, ...europeWave1.uk },
+  ru: { ...english, ...europeWave1.ru },
 }

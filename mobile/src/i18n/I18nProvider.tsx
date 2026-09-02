@@ -1,7 +1,7 @@
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { AppState } from 'react-native';
 import { dictionaries } from './dictionaries';
-import { officialLocaleSet } from './officialLocales';
+import { officialLocales, officialLocaleSet } from './officialLocales';
 import type { Locale, LocalePreference, TranslationValues } from './types';
 
 type I18nContextValue = {
@@ -11,8 +11,8 @@ type I18nContextValue = {
   t: (key: string, values?: TranslationValues) => string;
 };
 
-export const automaticLocales = new Set<Locale>(['es-419', 'en', 'ja']);
-export const strictLocales = new Set<Locale>(['es-419', 'en', 'pt-BR', 'fr', 'de', 'it', 'ht', 'ja', 'ko', 'zh-CN']);
+export const automaticLocales = new Set<Locale>(officialLocales);
+export const strictLocales = new Set<Locale>(officialLocales);
 
 function asAutomaticLocale(locale: Locale): Locale | null {
   return automaticLocales.has(locale) ? locale : null;
@@ -72,10 +72,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     localePreference,
     setLocalePreference,
     t: (key, values) => {
-      const localized = dictionaries[locale][key];
-      const template = strictLocales.has(locale)
-        ? localized ?? key
-        : localized ?? dictionaries.en[key] ?? dictionaries['es-419'][key] ?? key;
+      const template = dictionaries[locale][key] ?? key;
       if (!values) return template;
       return Object.entries(values).reduce(
         (result, [name, replacement]) => result.replaceAll(`{{${name}}}`, String(replacement)),

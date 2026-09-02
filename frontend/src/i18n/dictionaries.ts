@@ -22,19 +22,17 @@ import nl from './nl'
 import ht from './ht'
 import { europeWave1 } from './europe-wave1'
 import { europeWave2 } from './europe-wave2'
+import { africaWave1 } from './africa-wave1'
 
 const english: Dictionary = { ...enCommon, ...enAuth, ...enDashboard, ...enBilling, ...enCustomer }
+const merge = (dictionary: Dictionary): Dictionary => ({ ...english, ...dictionary })
 
 export const dictionaries: Record<Locale, Dictionary> = {
   'es-419': { ...es419Common, ...es419Auth, ...es419Dashboard, ...es419Billing, ...es419Customer },
   en: english,
   'es-ES': { ...esEsCommon, ...esEsAuth, ...esEsDashboard, ...esEsBilling, ...esEsCustomer },
-  'pt-BR': ptBr,
-  fr,
-  de,
-  it,
-  nl,
-  ht,
-  pl: { ...english, ...europeWave1.pl }, ro: { ...english, ...europeWave1.ro }, sv: { ...english, ...europeWave1.sv }, da: { ...english, ...europeWave1.da }, nb: { ...english, ...europeWave1.nb }, fi: { ...english, ...europeWave1.fi }, cs: { ...english, ...europeWave1.cs }, el: { ...english, ...europeWave1.el }, tr: { ...english, ...europeWave1.tr }, uk: { ...english, ...europeWave1.uk }, ru: { ...english, ...europeWave1.ru },
-  et: { ...english, ...europeWave2.et }, lv: { ...english, ...europeWave2.lv }, lt: { ...english, ...europeWave2.lt }, sk: { ...english, ...europeWave2.sk }, sl: { ...english, ...europeWave2.sl }, hr: { ...english, ...europeWave2.hr }, sr: { ...english, ...europeWave2.sr }, bs: { ...english, ...europeWave2.bs }, bg: { ...english, ...europeWave2.bg }, sq: { ...english, ...europeWave2.sq }, mk: { ...english, ...europeWave2.mk }, hu: { ...english, ...europeWave2.hu }, is: { ...english, ...europeWave2.is }, ga: { ...english, ...europeWave2.ga }, mt: { ...english, ...europeWave2.mt }, ca: { ...english, ...europeWave2.ca }, ka: { ...english, ...europeWave2.ka }, hy: { ...english, ...europeWave2.hy }, az: { ...english, ...europeWave2.az },
+  'pt-BR': ptBr, fr, de, it, nl, ht,
+  pl: merge(europeWave1.pl), ro: merge(europeWave1.ro), sv: merge(europeWave1.sv), da: merge(europeWave1.da), nb: merge(europeWave1.nb), fi: merge(europeWave1.fi), cs: merge(europeWave1.cs), el: merge(europeWave1.el), tr: merge(europeWave1.tr), uk: merge(europeWave1.uk), ru: merge(europeWave1.ru),
+  et: merge(europeWave2.et), lv: merge(europeWave2.lv), lt: merge(europeWave2.lt), sk: merge(europeWave2.sk), sl: merge(europeWave2.sl), hr: merge(europeWave2.hr), sr: merge(europeWave2.sr), bs: merge(europeWave2.bs), bg: merge(europeWave2.bg), sq: merge(europeWave2.sq), mk: merge(europeWave2.mk), hu: merge(europeWave2.hu), is: merge(europeWave2.is), ga: merge(europeWave2.ga), mt: merge(europeWave2.mt), ca: merge(europeWave2.ca), ka: merge(europeWave2.ka), hy: merge(europeWave2.hy), az: merge(europeWave2.az),
+  ar: merge(africaWave1.ar), sw: merge(africaWave1.sw), af: merge(africaWave1.af), am: merge(africaWave1.am), so: merge(africaWave1.so), ha: merge(africaWave1.ha), yo: merge(africaWave1.yo), ig: merge(africaWave1.ig), zu: merge(africaWave1.zu), xh: merge(africaWave1.xh),
 }

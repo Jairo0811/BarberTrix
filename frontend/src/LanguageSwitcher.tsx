@@ -3,11 +3,15 @@ import { faGlobe } from '@fortawesome/free-solid-svg-icons'
 import { useI18n } from './i18n'
 import type { LocalePreference } from './i18n/I18nProvider'
 
-const options: Array<{ value: LocalePreference; labelKey?: string; systemLabel?: string }> = [
-  { value: 'system', systemLabel: 'Auto' },
-  { value: 'es-419', labelKey: 'language.es419' },
-  { value: 'en', labelKey: 'language.en' },
-  { value: 'es-ES', labelKey: 'language.esES' },
+const options: Array<{ value: LocalePreference; label: string }> = [
+  { value: 'system', label: 'Auto' },
+  { value: 'es-419', label: 'Español Latino' },
+  { value: 'es-ES', label: 'Español (España)' },
+  { value: 'en', label: 'English' },
+  { value: 'pt-BR', label: 'Português' },
+  { value: 'fr', label: 'Français' },
+  { value: 'de', label: 'Deutsch' },
+  { value: 'it', label: 'Italiano' },
 ]
 
 export default function LanguageSwitcher() {
@@ -26,7 +30,7 @@ export default function LanguageSwitcher() {
       >
         {options.map(option => (
           <option key={option.value} value={option.value}>
-            {option.systemLabel ?? t(option.labelKey!)}
+            {option.label}
           </option>
         ))}
       </select>

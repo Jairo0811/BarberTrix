@@ -5,6 +5,8 @@ import type { Locale, TranslationValues } from './types'
 const storageKey = 'barberturn.locale'
 export type LocalePreference = 'system' | Locale
 
+const supportedLocales: Locale[] = ['es-419', 'en', 'es-ES', 'pt-BR', 'fr', 'de', 'it']
+
 type I18nContextValue = {
   locale: Locale
   localePreference: LocalePreference
@@ -17,6 +19,10 @@ function mapDeviceLocale(deviceLocale?: string | null): Locale {
   const normalized = deviceLocale?.trim().toLowerCase().replace('_', '-') ?? ''
 
   if (normalized === 'es-es' || normalized.startsWith('es-es-')) return 'es-ES'
+  if (normalized.startsWith('pt')) return 'pt-BR'
+  if (normalized.startsWith('fr')) return 'fr'
+  if (normalized.startsWith('de')) return 'de'
+  if (normalized.startsWith('it')) return 'it'
   if (normalized.startsWith('en')) return 'en'
   if (normalized.startsWith('es')) return 'es-419'
 
@@ -30,8 +36,7 @@ function resolveSystemLocale(): Locale {
 
 function resolveInitialPreference(): LocalePreference {
   const stored = localStorage.getItem(storageKey)
-  if (stored === 'es-419' || stored === 'en' || stored === 'es-ES') return stored
-  return 'system'
+  return supportedLocales.includes(stored as Locale) ? stored as Locale : 'system'
 }
 
 const I18nContext = createContext<I18nContextValue | null>(null)
@@ -65,7 +70,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     setLocale,
     setLocalePreference,
     t: (key, values) => {
-      const template = dictionaries[locale][key] ?? dictionaries['es-419'][key] ?? key
+      const template = dictionaries[locale][key] ?? dictionaries.en[key] ?? dictionaries['es-419'][key] ?? key
       if (!values) return template
       return Object.entries(values).reduce(
         (result, [name, replacement]) => result.replaceAll(`{{${name}}}`, String(replacement)),

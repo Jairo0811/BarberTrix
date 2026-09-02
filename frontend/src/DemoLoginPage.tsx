@@ -29,11 +29,7 @@ export default function DemoLoginPage() {
 
     try {
       const response = await fetch(`${API_URL}/api/auth/demo-login`, { method: 'POST', credentials: 'include' })
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => null)
-        throw new Error(payload?.detail ?? payload?.message ?? t('login.genericError'))
-      }
+      if (!response.ok) throw new Error(t('login.genericError'))
 
       const auth = await response.json() as Auth
       clearAuth()
@@ -107,7 +103,7 @@ export default function DemoLoginPage() {
               </button>
               <a className="demo-login-secondary" href="#/login">{t('demo.backLogin')}</a>
             </div>
-            <a className="recovery-support-link" href={buildSupportEmailHref('[BarberTurn] Demo access problem')}>
+            <a className="recovery-support-link" href={buildSupportEmailHref(t('demo.supportSubject'))}>
               {t('common.support')}
             </a>
           </>

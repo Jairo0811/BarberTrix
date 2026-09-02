@@ -1,4 +1,5 @@
-import { createContext, type ReactNode, useContext, useMemo, useState } from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
+import { AppState } from 'react-native';
 
 type Locale = 'es-419' | 'es-ES' | 'en';
 type LocalePreference = 'system' | Locale;
@@ -95,7 +96,16 @@ const I18nContext = createContext<I18nContextValue | null>(null);
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [localePreference, setLocalePreference] = useState<LocalePreference>('system');
-  const locale = localePreference === 'system' ? resolveDeviceLocale() : localePreference;
+  const [systemLocale, setSystemLocale] = useState<Locale>(resolveDeviceLocale);
+  const locale = localePreference === 'system' ? systemLocale : localePreference;
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', state => {
+      if (state === 'active') setSystemLocale(resolveDeviceLocale());
+    });
+
+    return () => subscription.remove();
+  }, []);
 
   const value = useMemo<I18nContextValue>(() => ({
     locale,

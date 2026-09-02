@@ -2,6 +2,7 @@ import type { Dictionary, Locale } from './types';
 import { europeWave1Mobile } from './europeWave1';
 import { europeWave2Mobile } from './europeWave2';
 import { africaWave1Mobile } from './africaWave1';
+import { coreLegacy } from './coreLegacy';
 
 const baseDictionaries: Record<string, Dictionary> = {
   'es-419': {
@@ -24,7 +25,6 @@ const baseDictionaries: Record<string, Dictionary> = {
     'login.title': 'Votre barbershop, aussi dans votre poche.', 'login.subtitle': 'Accès pour les rôles Owner, Administrator, Receptionist et Barber.', 'login.email': 'E-mail', 'login.password': 'Mot de passe', 'login.invalidCredentials': 'E-mail ou mot de passe incorrect.', 'login.failed': 'Impossible de vous connecter.', 'login.submitting': 'Connexion…', 'login.submit': 'Se connecter', 'login.customerHint': 'Les clients peuvent demander un passage sans créer de compte via le lien de leur barbershop.',
     'home.hello': 'Bonjour, {{name}}.', 'home.team': 'équipe', 'home.body': 'M3 informe l’équipe des nouvelles demandes même lorsque BarberTurn fonctionne en arrière-plan.', 'home.requests': 'Demandes de passage', 'home.requestsText': 'Gérez les demandes en attente et recevez les changements en temps réel.', 'home.pushTitle': 'Ne manquez aucune nouvelle demande', 'home.pushBody': 'Activez les notifications système pour répondre à temps. Le contenu visible n’inclut pas les données personnelles du client.', 'home.signOut': 'Se déconnecter', 'push.enabledTitle': 'Notifications activées', 'push.enabledBody': 'Cet appareil recevra les mises à jour importantes.', 'push.enabling': 'Activation…', 'push.enable': 'Activer les notifications',
   },
-  de: {}, it: {}, nl: {}, ht: {},
 };
 
 const english = baseDictionaries.en;
@@ -32,7 +32,7 @@ const merge = (dictionary: Dictionary): Dictionary => ({ ...english, ...dictiona
 
 export const dictionaries: Record<Locale, Dictionary> = {
   ...baseDictionaries,
-  de: english, it: english, nl: english, ht: english,
+  de: coreLegacy.de, it: coreLegacy.it, nl: coreLegacy.nl, ht: coreLegacy.ht,
   pl: europeWave1Mobile.pl, ro: europeWave1Mobile.ro, sv: europeWave1Mobile.sv, da: europeWave1Mobile.da, nb: europeWave1Mobile.nb, fi: europeWave1Mobile.fi, cs: europeWave1Mobile.cs, el: europeWave1Mobile.el, tr: europeWave1Mobile.tr, uk: europeWave1Mobile.uk, ru: europeWave1Mobile.ru,
   et: merge(europeWave2Mobile.et), lv: merge(europeWave2Mobile.lv), lt: merge(europeWave2Mobile.lt), sk: merge(europeWave2Mobile.sk), sl: merge(europeWave2Mobile.sl), hr: merge(europeWave2Mobile.hr), sr: merge(europeWave2Mobile.sr), bs: merge(europeWave2Mobile.bs), bg: merge(europeWave2Mobile.bg), sq: merge(europeWave2Mobile.sq), mk: merge(europeWave2Mobile.mk), hu: merge(europeWave2Mobile.hu), is: merge(europeWave2Mobile.is), ga: merge(europeWave2Mobile.ga), mt: merge(europeWave2Mobile.mt), ca: merge(europeWave2Mobile.ca), ka: merge(europeWave2Mobile.ka), hy: merge(europeWave2Mobile.hy), az: merge(europeWave2Mobile.az),
   ar: merge(africaWave1Mobile.ar), sw: merge(africaWave1Mobile.sw), af: merge(africaWave1Mobile.af), am: merge(africaWave1Mobile.am), so: merge(africaWave1Mobile.so), ha: merge(africaWave1Mobile.ha), yo: merge(africaWave1Mobile.yo), ig: merge(africaWave1Mobile.ig), zu: merge(africaWave1Mobile.zu), xh: merge(africaWave1Mobile.xh),

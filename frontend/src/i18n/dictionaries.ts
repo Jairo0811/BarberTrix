@@ -1,4 +1,5 @@
 import type { Dictionary, Locale } from './types'
+import type { OfficialLocale } from './officialLocales'
 import es419Common from './es-419/common'
 import es419Auth from './es-419/auth'
 import es419Dashboard from './es-419/dashboard'
@@ -21,15 +22,29 @@ import { coreUiSupplement } from './coreUiSupplement'
 import { deepRoutesSupplement } from './deepRoutesSupplement'
 import { legalSupplement } from './legalSupplement'
 import { eastAsiaCompleteSupplement } from './eastAsiaCompleteSupplement'
+import { commercialCoreSupplement } from './commercialCoreSupplement'
+import { appointmentsAdminSupplement } from './appointmentsAdminSupplement'
+import { customersAdminSupplement } from './customersAdminSupplement'
+import { paymentsAdminSupplement } from './paymentsAdminSupplement'
+import { reportsAdminSupplement } from './reportsAdminSupplement'
 
-const withSupplement = (locale: keyof typeof coreUiSupplement, dictionary: Dictionary): Dictionary => ({
+const withCommercialAdmin = (locale: OfficialLocale, dictionary: Dictionary): Dictionary => ({
+  ...dictionary,
+  ...commercialCoreSupplement[locale],
+  ...appointmentsAdminSupplement[locale],
+  ...customersAdminSupplement[locale],
+  ...paymentsAdminSupplement[locale],
+  ...reportsAdminSupplement[locale],
+})
+
+const withSupplement = (locale: keyof typeof coreUiSupplement, dictionary: Dictionary): Dictionary => withCommercialAdmin(locale as OfficialLocale, {
   ...dictionary,
   ...coreUiSupplement[locale],
   ...deepRoutesSupplement[locale],
   ...legalSupplement[locale],
 })
 
-const withEastAsiaSupplement = (locale: keyof typeof eastAsiaCompleteSupplement, dictionary: Dictionary): Dictionary => ({
+const withEastAsiaSupplement = (locale: keyof typeof eastAsiaCompleteSupplement, dictionary: Dictionary): Dictionary => withCommercialAdmin(locale, {
   ...dictionary,
   ...eastAsiaCompleteSupplement[locale],
 })

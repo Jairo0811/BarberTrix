@@ -106,7 +106,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22.13.1
+          node-version: 22.22.2
           cache: npm
           cache-dependency-path: mobile/package-lock.json
       - name: Install dependencies
@@ -114,7 +114,6 @@ jobs:
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
       - name: Validate Expo dependency alignment
-        continue-on-error: true
         run: npx expo install --check
       - name: Typecheck
         env:

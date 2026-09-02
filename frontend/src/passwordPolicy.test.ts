@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { isStrongPassword, passwordPolicyHint, passwordPolicyMessage } from './passwordPolicy'
 
-const completeLocales = ['es-419', 'en', 'es-ES', 'pt-BR', 'fr', 'de', 'it', 'nl', 'ht', 'ja'] as const
+const completeLocales = ['es-419', 'en', 'es-ES', 'pt-BR', 'fr', 'de', 'it', 'nl', 'ht', 'ja', 'ko', 'zh-CN'] as const
 
 describe('password policy', () => {
   it('accepts only passwords that meet every requirement', () => {
@@ -18,10 +18,17 @@ describe('password policy', () => {
     expect(passwordPolicyHint(locale)).toBeTruthy()
   })
 
-  it('does not reuse English guidance for reactivated non-English locales', () => {
-    for (const locale of ['pt-BR', 'fr', 'de', 'it', 'nl', 'ht', 'ja'] as const) {
+  it('does not reuse English guidance for complete non-English locales', () => {
+    for (const locale of ['pt-BR', 'fr', 'de', 'it', 'nl', 'ht', 'ja', 'ko', 'zh-CN'] as const) {
       expect(passwordPolicyMessage(locale)).not.toBe(passwordPolicyMessage('en'))
       expect(passwordPolicyHint(locale)).not.toBe(passwordPolicyHint('en'))
     }
+  })
+
+  it('uses native Korean and Simplified Chinese guidance', () => {
+    expect(passwordPolicyMessage('ko')).toContain('비밀번호')
+    expect(passwordPolicyMessage('zh-CN')).toContain('密码')
+    expect(passwordPolicyHint('ko')).toContain('10자')
+    expect(passwordPolicyHint('zh-CN')).toContain('10 个')
   })
 })

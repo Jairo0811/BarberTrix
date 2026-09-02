@@ -18,6 +18,7 @@ const barberAuth: Auth = {
 describe('BarberPortal', () => {
   beforeEach(() => {
     localStorage.clear()
+    localStorage.setItem('barberturn.locale', 'es-419')
     apiMock.mockImplementation((path: string) => {
       if (path === '/api/queue/barbers') return Promise.resolve([{ id: 'barber-1', name: 'Carlos', chairNumber: 2, status: 'Available', isActive: true }])
       if (path === '/api/queue/turns') return Promise.resolve([])

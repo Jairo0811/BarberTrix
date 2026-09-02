@@ -10,7 +10,7 @@ function queryToken() {
 }
 
 export default function AcceptInvitationPage() {
-  const { locale } = useI18n()
+  const { locale, t } = useI18n()
   const token = useMemo(queryToken, [])
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -29,7 +29,7 @@ export default function AcceptInvitationPage() {
     }
 
     if (password !== String(data.get('confirmation') ?? '')) {
-      setError('Las contraseñas no coinciden.')
+      setError(t('invitation.passwordMismatch'))
       setBusy(false)
       return
     }
@@ -43,22 +43,22 @@ export default function AcceptInvitationPage() {
       location.hash = '#/login'
       location.reload()
     } catch (exception) {
-      setError(apiErrorMessage(exception, locale, 'No se pudo aceptar la invitación.'))
+      setError(apiErrorMessage(exception, locale, t('invitation.acceptError')))
     } finally {
       setBusy(false)
     }
   }
 
   return <main className="login-shell"><section className="login-card">
-    <a className="back-home-link" href="#/login">← Volver al acceso</a>
+    <a className="back-home-link" href="#/login">← {t('invitation.backLogin')}</a>
     <img className="recovery-logo" src="/branding/barberturn-logo.png" alt="BarberTurn" />
-    <h1>Únete al equipo</h1>
-    <p className="login-subtitle">Crea tu contraseña para activar la invitación.</p>
-    {!token ? <p className="login-error" role="alert">El enlace no incluye una invitación válida.</p> : <form className="login-form" onSubmit={accept}>
-      <label className="login-field"><span>Contraseña</span><div className="input-wrap"><input name="password" type="password" minLength={10} required autoComplete="new-password" /></div></label>
-      <label className="login-field"><span>Confirmar contraseña</span><div className="input-wrap"><input name="confirmation" type="password" minLength={10} required autoComplete="new-password" /></div></label>
-      <label className="remember-option"><input name="acceptedTerms" type="checkbox" required /><span>Acepto los términos y la política de privacidad.</span></label>
-      <button className="login-submit" disabled={busy}>{busy ? 'Activando…' : 'Activar mi cuenta'}</button>
+    <h1>{t('invitation.title')}</h1>
+    <p className="login-subtitle">{t('invitation.subtitle')}</p>
+    {!token ? <p className="login-error" role="alert">{t('invitation.invalid')}</p> : <form className="login-form" onSubmit={accept}>
+      <label className="login-field"><span>{t('common.password')}</span><div className="input-wrap"><input name="password" type="password" minLength={10} required autoComplete="new-password" /></div></label>
+      <label className="login-field"><span>{t('common.confirmPassword')}</span><div className="input-wrap"><input name="confirmation" type="password" minLength={10} required autoComplete="new-password" /></div></label>
+      <label className="remember-option"><input name="acceptedTerms" type="checkbox" required /><span>{t('invitation.acceptTerms')}</span></label>
+      <button className="login-submit" disabled={busy}>{busy ? t('invitation.activating') : t('invitation.activate')}</button>
     </form>}
     {error && <p className="login-error" role="alert">{error}</p>}
   </section></main>

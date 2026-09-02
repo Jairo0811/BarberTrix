@@ -14,6 +14,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import type { Auth } from './types'
 import { useI18n } from './i18n'
+import { getHomeAuxCopy } from './i18n/homeAuxCopy'
 import './dashboard.css'
 import BusinessModules from './BusinessModules'
 import AdminDashboardLayout, { type DashboardNavItem } from './portals/admin/components/AdminDashboardLayout'
@@ -134,6 +135,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
   const today = new Intl.DateTimeFormat(dateLocale, { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date())
   const currentYear = new Date().getFullYear()
   const localizeRole = (role: string) => formatRole(role, copy)
+  const dashboardSlogan = getHomeAuxCopy(locale).slogan
 
   function renderPage(page: AdminPageId) {
     if (ownerPermissionPending && (page === 'locations' || page === 'billing')) {
@@ -176,7 +178,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
       onNavigate={navigation.navigateToPage} onOpenMobileNav={navigation.openMobileNav} onCloseMobileNav={navigation.closeMobileNav}
       onLogout={onLogout} formatRole={localizeRole}>
       {renderPage(navigation.activePage)}
-      <footer className="dashboard-footer"><span>© {currentYear} BarberTurn. {copy.rights}</span><span>Tu turno. Tu estilo. Tu tiempo.</span></footer>
+      <footer className="dashboard-footer"><span>© {currentYear} BarberTurn. {copy.rights}</span><span>{dashboardSlogan}</span></footer>
     </AdminDashboardLayout>
   )
 }

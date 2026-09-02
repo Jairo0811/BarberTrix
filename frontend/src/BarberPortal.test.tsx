@@ -31,7 +31,7 @@ describe('BarberPortal', () => {
     render(<I18nProvider><BarberPortal auth={barberAuth} onLogout={vi.fn()} /></I18nProvider>)
 
     expect(await screen.findByRole('heading', { name: 'Tu trabajo de hoy, sin ruido administrativo.' })).toBeInTheDocument()
-    expect(await screen.findByText('Disponible')).toBeInTheDocument()
+    expect((await screen.findAllByText('Disponible')).length).toBeGreaterThanOrEqual(2)
     expect(screen.queryByText('Available')).not.toBeInTheDocument()
     expect(screen.getByText('Disponible con BarberTurn Pro')).toBeInTheDocument()
     expect(screen.queryByText('Suscripción')).not.toBeInTheDocument()

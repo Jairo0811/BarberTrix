@@ -36,7 +36,7 @@ type LocalizedPlan = {
   featured?: boolean
 }
 
-const localizedPlans: Record<Locale, LocalizedPlan[]> = {
+const localizedPlans: Partial<Record<Locale, LocalizedPlan[]>> = {
   'es-419': [
     { name: 'Free', price: 'US$0', description: 'Para empezar a operar BarberTurn sin tarjeta y probar la cola con clientes reales.', features: ['100 turnos/mes + 10 de tolerancia', 'Hasta 2 barberos', 'Hasta 5 servicios', 'QR y enlace público', 'Notificaciones esenciales', 'Historial de 7 días'] },
     { name: 'Starter', price: 'US$20.00', description: 'Para barberías pequeñas que ya usan BarberTurn todos los días.', features: ['1,000 turnos/mes', 'Hasta 5 barberos', 'Servicios ilimitados', 'Historial de 90 días', 'Cola y métricas operativas'] },
@@ -89,7 +89,7 @@ export default function HomePage() {
     { icon: faTv, title: t('home.feature.tv.title'), text: t('home.feature.tv.text') },
     { icon: faMobileScreenButton, title: t('home.feature.grow.title'), text: t('home.feature.grow.text') },
   ]
-  const plans = localizedPlans[locale]
+  const plans = localizedPlans[locale] ?? localizedPlans.en ?? localizedPlans['es-419'] ?? []
 
   useEffect(() => {
     const sections = navigationItems

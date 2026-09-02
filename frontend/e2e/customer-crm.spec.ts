@@ -17,7 +17,7 @@ test('owner reviews and updates a customer CRM profile', async ({ page }) => {
   const profile = page.locator('.customer-profile')
   await expect(profile.getByRole('heading', { name: 'Ana Pérez' })).toBeVisible()
   await expect(profile.getByText('3', { exact: true })).toBeVisible()
-  await expect(profile.getByText(/DOP 1,800\.00/)).toBeVisible()
+  await expect(profile.getByText(/DOP\s*1,800\.00/)).toBeVisible()
   await expect(profile.getByText('Corte clásico')).toBeVisible()
 
   await profile.getByRole('button', { name: 'Editar datos' }).click()

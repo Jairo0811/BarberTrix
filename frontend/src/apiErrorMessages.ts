@@ -1,6 +1,8 @@
 import type { Locale } from './i18n'
 import { ApiClientError } from './api'
 
+const noEnglishFallbackLocales = new Set<Locale>(['pt-BR', 'fr', 'de', 'it', 'nl', 'ht', 'ja'])
+
 const messages: Partial<Record<Locale, Record<string, string>>> = {
   'es-419': {
     AUTH_INVALID_CREDENTIALS: 'Correo o contraseña incorrectos.', AUTH_REFRESH_REQUIRED: 'Tu sesión necesita renovarse.', AUTH_REFRESH_INVALID: 'Tu sesión expiró. Inicia sesión nuevamente.', AUTH_SESSION_EXPIRED: 'Tu sesión expiró. Inicia sesión nuevamente.', AUTH_REGISTRATION_CONFLICT: 'Ya existe una cuenta o barbería con esos datos.', AUTH_REGISTRATION_INVALID: 'Revisa los datos del registro e inténtalo nuevamente.', AUTH_EMAIL_REQUIRED: 'El correo electrónico es obligatorio.', AUTH_PASSWORD_RESET_INVALID: 'El enlace de recuperación no es válido o ya expiró.', AUTH_EMAIL_VERIFICATION_INVALID: 'El enlace de verificación no es válido o ya expiró.', AUTH_INVITATION_INVALID: 'La invitación no es válida o ya expiró.', TEAM_INVALID: 'Revisa los datos del equipo e inténtalo nuevamente.', TEAM_OPERATION_INVALID: 'No fue posible completar la operación del equipo.', QUEUE_INVALID: 'Revisa los datos del turno e inténtalo nuevamente.', QUEUE_CONFLICT: 'El turno cambió. Actualiza la información e inténtalo nuevamente.', APPOINTMENT_INVALID: 'Revisa los datos de la cita e inténtalo nuevamente.', APPOINTMENT_CONFLICT: 'La cita cambió y no se pudo completar la operación.', PLAN_FEATURE_UNAVAILABLE: 'Esta función no está disponible en tu plan actual.', SHOP_SETTINGS_INVALID: 'Revisa la configuración de la barbería.', LOCATION_INVALID: 'Revisa los datos de la ubicación.', CUSTOMER_INVALID: 'Revisa los datos del cliente.', CUSTOMER_ALREADY_EXISTS: 'Ya existe un cliente con ese teléfono o correo.', PAYMENT_INVALID: 'Revisa los datos del pago.', BILLING_INVALID: 'No fue posible completar la operación de facturación.', BILLING_WEBHOOK_INVALID: 'No fue posible verificar la notificación de pago.', DEMO_FEATURE_UNAVAILABLE: 'Esta función no está disponible en la demostración.', TENANT_CONTEXT_INVALID: 'La sesión no contiene un contexto de barbería válido.',
@@ -17,12 +19,21 @@ const messages: Partial<Record<Locale, Record<string, string>>> = {
 }
 
 export function apiErrorMessage(exception: unknown, locale: Locale, fallback: string) {
-  if (!(exception instanceof ApiClientError))
-    return locale === 'ja' ? fallback : exception instanceof Error ? exception.message : fallback
+  const blocksEnglishFallback = noEnglishFallbackLocales.has(locale)
 
-  const localeMessages = messages[locale] ?? (locale === 'ja' ? undefined : messages.en)
+  if (!(exception instanceof ApiClientError))
+    return blocksEnglishFallback ? fallback : exception instanceof Error ? exception.message : fallback
+
+  const localeMessages = messages[locale]
   if (exception.code && localeMessages?.[exception.code])
     return localeMessages[exception.code]
 
-  return locale === 'ja' ? fallback : exception.message || fallback
+  if (blocksEnglishFallback)
+    return fallback
+
+  const fallbackMessages = localeMessages ?? messages.en
+  if (exception.code && fallbackMessages?.[exception.code])
+    return fallbackMessages[exception.code]
+
+  return exception.message || fallback
 }

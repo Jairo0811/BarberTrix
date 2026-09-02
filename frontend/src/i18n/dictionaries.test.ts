@@ -21,6 +21,15 @@ describe('i18n dictionary completeness', () => {
     expect([...strictLocales]).toEqual(strictCoreLocales)
   })
 
+  it('keeps Korean and Simplified Chinese core UI native', () => {
+    expect(dictionaries.ko['login.welcome']).toBe('다시 오신 것을 환영합니다')
+    expect(dictionaries.ko['dashboard']).toBe('대시보드')
+    expect(dictionaries.ko['booking.title']).toBe('당신의 시간도 중요합니다')
+    expect(dictionaries['zh-CN']['login.welcome']).toBe('欢迎回来')
+    expect(dictionaries['zh-CN']['dashboard']).toBe('控制面板')
+    expect(dictionaries['zh-CN']['booking.title']).toBe('你的时间同样重要')
+  })
+
   it('exposes only the ten official BarberTurn product locales', () => {
     expect([...officialLocales]).toEqual(officialProductLocales)
   })

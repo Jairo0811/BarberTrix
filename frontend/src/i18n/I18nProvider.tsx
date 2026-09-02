@@ -8,7 +8,7 @@ export type LocalePreference = 'system' | Locale
 
 export const automaticLocales = new Set<Locale>(['es-419', 'en', 'ja'])
 export const strictLocales = new Set<Locale>([
-  'es-419', 'en', 'pt-BR', 'fr', 'de', 'it', 'ht', 'ja',
+  'es-419', 'en', 'pt-BR', 'fr', 'de', 'it', 'ht', 'ja', 'ko', 'zh-CN',
 ])
 
 type I18nContextValue = {

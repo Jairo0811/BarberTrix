@@ -8,6 +8,7 @@ export type LocalePreference = 'system' | Locale
 const supportedLocales: Locale[] = [
   'es-419', 'en', 'es-ES', 'pt-BR', 'fr', 'de', 'it', 'nl', 'ht',
   'pl', 'ro', 'sv', 'da', 'nb', 'fi', 'cs', 'el', 'tr', 'uk', 'ru',
+  'et', 'lv', 'lt', 'sk', 'sl', 'hr', 'sr', 'bs', 'bg', 'sq', 'mk', 'hu', 'is', 'ga', 'mt', 'ca', 'ka', 'hy', 'az',
 ]
 
 type I18nContextValue = {
@@ -20,28 +21,16 @@ type I18nContextValue = {
 
 function mapDeviceLocale(deviceLocale?: string | null): Locale | null {
   const normalized = deviceLocale?.trim().toLowerCase().replace('_', '-') ?? ''
-
   if (normalized === 'es-es' || normalized.startsWith('es-es-')) return 'es-ES'
-  if (normalized.startsWith('pt')) return 'pt-BR'
-  if (normalized.startsWith('fr')) return 'fr'
-  if (normalized.startsWith('de')) return 'de'
-  if (normalized.startsWith('it')) return 'it'
-  if (normalized.startsWith('nl')) return 'nl'
-  if (normalized.startsWith('ht')) return 'ht'
-  if (normalized.startsWith('pl')) return 'pl'
-  if (normalized.startsWith('ro')) return 'ro'
-  if (normalized.startsWith('sv')) return 'sv'
-  if (normalized.startsWith('da')) return 'da'
-  if (normalized.startsWith('nb') || normalized.startsWith('nn') || normalized.startsWith('no')) return 'nb'
-  if (normalized.startsWith('fi')) return 'fi'
-  if (normalized.startsWith('cs')) return 'cs'
-  if (normalized.startsWith('el')) return 'el'
-  if (normalized.startsWith('tr')) return 'tr'
-  if (normalized.startsWith('uk')) return 'uk'
-  if (normalized.startsWith('ru')) return 'ru'
-  if (normalized.startsWith('en')) return 'en'
-  if (normalized.startsWith('es')) return 'es-419'
-
+  const aliases: Array<[string[], Locale]> = [
+    [['pt'], 'pt-BR'], [['fr'], 'fr'], [['de'], 'de'], [['it'], 'it'], [['nl'], 'nl'], [['ht'], 'ht'],
+    [['pl'], 'pl'], [['ro'], 'ro'], [['sv'], 'sv'], [['da'], 'da'], [['nb','nn','no'], 'nb'], [['fi'], 'fi'], [['cs'], 'cs'], [['el'], 'el'], [['tr'], 'tr'], [['uk'], 'uk'], [['ru'], 'ru'],
+    [['et'], 'et'], [['lv'], 'lv'], [['lt'], 'lt'], [['sk'], 'sk'], [['sl'], 'sl'], [['hr'], 'hr'], [['sr'], 'sr'], [['bs'], 'bs'], [['bg'], 'bg'], [['sq'], 'sq'], [['mk'], 'mk'], [['hu'], 'hu'], [['is'], 'is'], [['ga'], 'ga'], [['mt'], 'mt'], [['ca'], 'ca'], [['ka'], 'ka'], [['hy'], 'hy'], [['az'], 'az'],
+    [['en'], 'en'], [['es'], 'es-419'],
+  ]
+  for (const [prefixes, locale] of aliases) {
+    if (prefixes.some(prefix => normalized.startsWith(prefix))) return locale
+  }
   return null
 }
 
@@ -92,10 +81,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     t: (key, values) => {
       const template = dictionaries[locale][key] ?? dictionaries.en[key] ?? dictionaries['es-419'][key] ?? key
       if (!values) return template
-      return Object.entries(values).reduce(
-        (result, [name, replacement]) => result.replaceAll(`{{${name}}}`, String(replacement)),
-        template,
-      )
+      return Object.entries(values).reduce((result, [name, replacement]) => result.replaceAll(`{{${name}}}`, String(replacement)), template)
     },
   }), [locale, localePreference])
 

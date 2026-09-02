@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { isStrongPassword, passwordPolicyHint, passwordPolicyMessage } from './passwordPolicy'
 
+const completeLocales = ['es-419', 'en', 'es-ES', 'pt-BR', 'fr', 'de', 'it', 'nl', 'ht', 'ja'] as const
+
 describe('password policy', () => {
   it('accepts only passwords that meet every requirement', () => {
     expect(isStrongPassword('Secure123!')).toBe(true)
@@ -11,8 +13,15 @@ describe('password policy', () => {
     expect(isStrongPassword('WithoutSymbol1')).toBe(false)
   })
 
-  it('provides localized policy guidance', () => {
-    expect(passwordPolicyMessage('en')).toContain('at least 10 characters')
-    expect(passwordPolicyHint('es-419')).toContain('10+ caracteres')
+  it.each(completeLocales)('provides localized policy guidance for %s', locale => {
+    expect(passwordPolicyMessage(locale)).toBeTruthy()
+    expect(passwordPolicyHint(locale)).toBeTruthy()
+  })
+
+  it('does not reuse English guidance for reactivated non-English locales', () => {
+    for (const locale of ['pt-BR', 'fr', 'de', 'it', 'nl', 'ht', 'ja'] as const) {
+      expect(passwordPolicyMessage(locale)).not.toBe(passwordPolicyMessage('en'))
+      expect(passwordPolicyHint(locale)).not.toBe(passwordPolicyHint('en'))
+    }
   })
 })

@@ -3,9 +3,11 @@ import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput,
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MobileApiError } from '@/api/httpClient';
 import { useAuth } from '@/auth/AuthProvider';
+import { useI18n } from '@/i18n/I18nProvider';
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
+  const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string>();
@@ -19,9 +21,9 @@ export default function LoginScreen() {
       await signIn(email.trim(), password);
     } catch (exception) {
       if (exception instanceof MobileApiError && exception.code === 'AUTH_INVALID_CREDENTIALS')
-        setError('Correo o contraseña incorrectos.');
+        setError(t('login.invalidCredentials'));
       else
-        setError(exception instanceof Error ? exception.message : 'No pudimos iniciar sesión.');
+        setError(exception instanceof Error ? exception.message : t('login.failed'));
     } finally {
       setSubmitting(false);
     }
@@ -32,15 +34,15 @@ export default function LoginScreen() {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
         <View style={styles.container}>
           <Text style={styles.brand}>BarberTurn</Text>
-          <Text style={styles.title}>Tu barbería, también en tu bolsillo.</Text>
-          <Text style={styles.subtitle}>Acceso para Owner, Administrator, Receptionist y Barber.</Text>
-          <TextInput accessibilityLabel="Correo" autoCapitalize="none" autoComplete="email" keyboardType="email-address" placeholder="Correo" value={email} onChangeText={setEmail} style={styles.input} />
-          <TextInput accessibilityLabel="Contraseña" autoComplete="current-password" placeholder="Contraseña" secureTextEntry value={password} onChangeText={setPassword} onSubmitEditing={submit} style={styles.input} />
+          <Text style={styles.title}>{t('login.title')}</Text>
+          <Text style={styles.subtitle}>{t('login.subtitle')}</Text>
+          <TextInput accessibilityLabel={t('login.email')} autoCapitalize="none" autoComplete="email" keyboardType="email-address" placeholder={t('login.email')} value={email} onChangeText={setEmail} style={styles.input} />
+          <TextInput accessibilityLabel={t('login.password')} autoComplete="current-password" placeholder={t('login.password')} secureTextEntry value={password} onChangeText={setPassword} onSubmitEditing={submit} style={styles.input} />
           {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
           <Pressable accessibilityRole="button" accessibilityState={{ disabled: submitting || !email.trim() || !password }} disabled={submitting || !email.trim() || !password} onPress={submit} style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}>
-            <Text style={styles.buttonText}>{submitting ? 'Entrando…' : 'Iniciar sesión'}</Text>
+            <Text style={styles.buttonText}>{submitting ? t('login.submitting') : t('login.submit')}</Text>
           </Pressable>
-          <Text style={styles.customerHint}>Los clientes pueden solicitar un turno sin crear una cuenta mediante el enlace de su barbería.</Text>
+          <Text style={styles.customerHint}>{t('login.customerHint')}</Text>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

@@ -19,7 +19,7 @@ import BusinessModules from './BusinessModules'
 import AdminDashboardLayout, { type DashboardNavItem } from './portals/admin/components/AdminDashboardLayout'
 import { isBusinessPage, type AdminPageId } from './portals/admin/adminRoutes'
 import type { Capabilities, Shop } from './portals/admin/commercialTypes'
-import { dashboardCopy, type DashboardCopy } from './portals/admin/dashboardCopy'
+import { getDashboardCopy, type DashboardCopy } from './portals/admin/dashboardCopy'
 import { useDashboardNavigation } from './portals/admin/hooks/useDashboardNavigation'
 import { useCommercialContext } from './portals/admin/hooks/useCommercialContext'
 import DashboardOverviewSection from './features/queue/components/DashboardOverviewSection'
@@ -90,7 +90,7 @@ function QueueBackedPageContent({ page, auth, isDemo, canManageCatalog, copy, to
 
 export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewProps) {
   const { locale } = useI18n()
-  const copy = dashboardCopy[locale]
+  const copy = getDashboardCopy(locale)
   const canManageCatalog = auth.role === 'Owner' || auth.role === 'Administrator'
   const commercial = useCommercialContext()
   const isSystemAdmin = commercial.capabilities?.isSystemAdmin === true

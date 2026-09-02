@@ -2,33 +2,35 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useAuth } from '@/auth/AuthProvider';
+import { useI18n } from '@/i18n/I18nProvider';
 import { PushOptInCard } from '@/notifications/PushOptInCard';
 import { usePushNotifications } from '@/notifications/PushNotificationsProvider';
 
 export default function HomeScreen() {
   const { session, signOut } = useAuth();
+  const { t } = useI18n();
   const push = usePushNotifications();
 
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
         <Text style={styles.eyebrow}>BARBERTURN MOBILE</Text>
-        <Text style={styles.title}>Hola, {session?.user.name ?? 'equipo'}.</Text>
+        <Text style={styles.title}>{t('home.hello', { name: session?.user.name ?? t('home.team') })}</Text>
         <Text style={styles.role}>{session?.user.role ?? ''}</Text>
-        <Text style={styles.body}>M3 mantiene al equipo al tanto de nuevas solicitudes, incluso cuando BarberTurn está en segundo plano.</Text>
+        <Text style={styles.body}>{t('home.body')}</Text>
         <Pressable accessibilityRole="button" onPress={() => router.push('/(app)/turn-requests')} style={styles.card}>
-          <Text style={styles.cardTitle}>Solicitudes de turno</Text>
-          <Text style={styles.cardText}>Gestiona solicitudes pendientes y recibe cambios en tiempo real.</Text>
+          <Text style={styles.cardTitle}>{t('home.requests')}</Text>
+          <Text style={styles.cardText}>{t('home.requestsText')}</Text>
         </Pressable>
         <PushOptInCard
           status={push.status}
           message={push.message}
-          title="No pierdas nuevas solicitudes"
-          body="Activa avisos del sistema para responder a tiempo. El contenido visible no incluye datos personales del cliente."
+          title={t('home.pushTitle')}
+          body={t('home.pushBody')}
           onEnable={() => push.enableForStaff()}
         />
         <Pressable accessibilityRole="button" onPress={signOut} style={styles.button}>
-          <Text style={styles.buttonText}>Cerrar sesión</Text>
+          <Text style={styles.buttonText}>{t('home.signOut')}</Text>
         </Pressable>
       </View>
     </SafeAreaView>

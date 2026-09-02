@@ -16,6 +16,6 @@ const options: Array<{ value: LocalePreference; label: string }> = [
 ]
 
 export default function LanguageSwitcher() {
-  const { localePreference, setLocalePreference, t } = useI18n()
-  return <label className="language-switcher"><span className="language-switcher-icon" aria-hidden="true"><FontAwesomeIcon icon={faGlobe} /></span><span className="visually-hidden">{t('language.label')}</span><select aria-label={t('language.label')} value={localePreference} onChange={event => setLocalePreference(event.target.value as LocalePreference)}>{options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+  const { locale, localePreference, setLocalePreference, t } = useI18n()
+  return <label className="language-switcher"><span className="language-switcher-icon" aria-hidden="true"><FontAwesomeIcon icon={faGlobe} /></span><span className="visually-hidden">{t('language.label')}</span><select aria-label={t('language.label')} value={localePreference} onChange={event => setLocalePreference(event.target.value as LocalePreference)}>{options.map(option => <option key={option.value} value={option.value}>{option.value === 'system' && locale === 'ja' ? '自動' : option.label}</option>)}</select></label>
 }

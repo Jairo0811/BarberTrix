@@ -2,6 +2,7 @@ import type { Dictionary, Locale } from './types';
 import { europeWave1Mobile } from './europeWave1';
 import { europeWave2Mobile } from './europeWave2';
 import { africaWave1Mobile } from './africaWave1';
+import { africaWave2Mobile } from './africaWave2';
 import { coreLegacy } from './coreLegacy';
 
 const baseDictionaries: Record<string, Dictionary> = {
@@ -36,4 +37,5 @@ export const dictionaries: Record<Locale, Dictionary> = {
   pl: europeWave1Mobile.pl, ro: europeWave1Mobile.ro, sv: europeWave1Mobile.sv, da: europeWave1Mobile.da, nb: europeWave1Mobile.nb, fi: europeWave1Mobile.fi, cs: europeWave1Mobile.cs, el: europeWave1Mobile.el, tr: europeWave1Mobile.tr, uk: europeWave1Mobile.uk, ru: europeWave1Mobile.ru,
   et: merge(europeWave2Mobile.et), lv: merge(europeWave2Mobile.lv), lt: merge(europeWave2Mobile.lt), sk: merge(europeWave2Mobile.sk), sl: merge(europeWave2Mobile.sl), hr: merge(europeWave2Mobile.hr), sr: merge(europeWave2Mobile.sr), bs: merge(europeWave2Mobile.bs), bg: merge(europeWave2Mobile.bg), sq: merge(europeWave2Mobile.sq), mk: merge(europeWave2Mobile.mk), hu: merge(europeWave2Mobile.hu), is: merge(europeWave2Mobile.is), ga: merge(europeWave2Mobile.ga), mt: merge(europeWave2Mobile.mt), ca: merge(europeWave2Mobile.ca), ka: merge(europeWave2Mobile.ka), hy: merge(europeWave2Mobile.hy), az: merge(europeWave2Mobile.az),
   ar: merge(africaWave1Mobile.ar), sw: merge(africaWave1Mobile.sw), af: merge(africaWave1Mobile.af), am: merge(africaWave1Mobile.am), so: merge(africaWave1Mobile.so), ha: merge(africaWave1Mobile.ha), yo: merge(africaWave1Mobile.yo), ig: merge(africaWave1Mobile.ig), zu: merge(africaWave1Mobile.zu), xh: merge(africaWave1Mobile.xh),
+  wo: merge(africaWave2Mobile.wo), ln: merge(africaWave2Mobile.ln), rw: merge(africaWave2Mobile.rw), rn: merge(africaWave2Mobile.rn), st: merge(africaWave2Mobile.st), tn: merge(africaWave2Mobile.tn), sn: merge(africaWave2Mobile.sn), ny: merge(africaWave2Mobile.ny), mg: merge(africaWave2Mobile.mg), ti: merge(africaWave2Mobile.ti), om: merge(africaWave2Mobile.om), ak: merge(africaWave2Mobile.ak),
 } as Record<Locale, Dictionary>;

@@ -14,6 +14,17 @@ const options: Array<{ value: LocalePreference; label: string }> = [
   { value: 'ht', label: 'Kreyòl ayisyen' },
   { value: 'de', label: 'Deutsch' },
   { value: 'it', label: 'Italiano' },
+  { value: 'pl', label: 'Polski' },
+  { value: 'ro', label: 'Română' },
+  { value: 'sv', label: 'Svenska' },
+  { value: 'da', label: 'Dansk' },
+  { value: 'nb', label: 'Norsk' },
+  { value: 'fi', label: 'Suomi' },
+  { value: 'cs', label: 'Čeština' },
+  { value: 'el', label: 'Ελληνικά' },
+  { value: 'tr', label: 'Türkçe' },
+  { value: 'uk', label: 'Українська' },
+  { value: 'ru', label: 'Русский' },
 ]
 
 export default function LanguageSwitcher() {

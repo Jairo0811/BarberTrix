@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import BarberPortal from './BarberPortal'
+import { I18nProvider } from './i18n'
 import type { Auth } from './types'
 
 const { apiMock } = vi.hoisted(() => ({ apiMock: vi.fn() }))
@@ -16,6 +17,8 @@ const barberAuth: Auth = {
 
 describe('BarberPortal', () => {
   beforeEach(() => {
+    localStorage.clear()
+    localStorage.setItem('barberturn.locale', 'es-419')
     apiMock.mockImplementation((path: string) => {
       if (path === '/api/queue/barbers') return Promise.resolve([{ id: 'barber-1', name: 'Carlos', chairNumber: 2, status: 'Available', isActive: true }])
       if (path === '/api/queue/turns') return Promise.resolve([])
@@ -24,11 +27,12 @@ describe('BarberPortal', () => {
     })
   })
 
-  it('shows only the operational workspace for a barber', async () => {
-    render(<BarberPortal auth={barberAuth} onLogout={vi.fn()} />)
+  it('shows only the localized operational workspace for a barber', async () => {
+    render(<I18nProvider><BarberPortal auth={barberAuth} onLogout={vi.fn()} /></I18nProvider>)
 
     expect(await screen.findByRole('heading', { name: 'Tu trabajo de hoy, sin ruido administrativo.' })).toBeInTheDocument()
-    expect(await screen.findByText('Available')).toBeInTheDocument()
+    expect((await screen.findAllByText('Disponible')).length).toBeGreaterThanOrEqual(2)
+    expect(screen.queryByText('Available')).not.toBeInTheDocument()
     expect(screen.getByText('Disponible con BarberTurn Pro')).toBeInTheDocument()
     expect(screen.queryByText('Suscripción')).not.toBeInTheDocument()
   })

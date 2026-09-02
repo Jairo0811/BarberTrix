@@ -2,6 +2,8 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
 import QRCode from 'qrcode'
 import type { Barber, Service } from '../../../types'
 import { showError, showSuccessToast } from '../../../alerts'
+import { apiErrorMessage } from '../../../apiErrorMessages'
+import { useI18n } from '../../../i18n'
 import LockedFeature from '../../../shared/components/LockedFeature'
 import type { Appointment, Capabilities, Shop } from '../../../portals/admin/commercialTypes'
 import {
@@ -19,6 +21,7 @@ type Props = { isDemo: boolean; shop: Shop | null; capabilities: Capabilities | 
 type AgendaView = 'today' | 'week'
 
 const activeStatuses = ['Confirmed', 'CheckedIn']
+const localizedStatuses = new Set(['Confirmed', 'CheckedIn', 'Completed', 'Cancelled', 'NoShow'])
 
 function dateKeyInZone(value: Date | string, timeZone?: string) {
   const date = typeof value === 'string' ? new Date(value) : value
@@ -42,28 +45,21 @@ function mondayOf(dateKey: string) {
   return addDays(dateKey, day === 0 ? -6 : 1 - day)
 }
 
-function statusLabel(status: string) {
-  const labels: Record<string, string> = {
-    Confirmed: 'Confirmada', CheckedIn: 'En espera', Completed: 'Completada',
-    Cancelled: 'Cancelada', NoShow: 'No llegó',
-  }
-  return labels[status] ?? status
-}
-
-function formatDateTime(value: string, timeZone?: string) {
-  return new Intl.DateTimeFormat('es-DO', {
+function formatDateTime(value: string, locale: string, timeZone?: string) {
+  return new Intl.DateTimeFormat(locale, {
     timeZone: timeZone || undefined,
     weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit',
   }).format(new Date(value))
 }
 
-function formatTime(value: string, timeZone?: string) {
-  return new Intl.DateTimeFormat('es-DO', {
+function formatTime(value: string, locale: string, timeZone?: string) {
+  return new Intl.DateTimeFormat(locale, {
     timeZone: timeZone || undefined, hour: 'numeric', minute: '2-digit',
   }).format(new Date(value))
 }
 
 export default function AppointmentsSection({ isDemo, shop, capabilities }: Props) {
+  const { locale, t } = useI18n()
   const today = dateKeyInZone(new Date(), shop?.timeZoneId)
   const [view, setView] = useState<AgendaView>('today')
   const [selectedDate, setSelectedDate] = useState(today)
@@ -84,6 +80,9 @@ export default function AppointmentsSection({ isDemo, shop, capabilities }: Prop
   const [editBarberId, setEditBarberId] = useState('')
   const [editSlot, setEditSlot] = useState('')
   const [editSlots, setEditSlots] = useState<AvailabilitySlot[]>([])
+
+  const statusLabel = (status: string) => localizedStatuses.has(status) ? t(`appointmentsAdmin.status.${status}`) : t('status.unknown')
+  const durationLabel = (minutes: number) => new Intl.NumberFormat(locale, { style: 'unit', unit: 'minute', unitDisplay: 'short' }).format(minutes)
 
   const load = useCallback(async () => {
     if (!capabilities?.canUseAppointments) { setAppointments([]); return }
@@ -146,9 +145,9 @@ export default function AppointmentsSection({ isDemo, shop, capabilities }: Prop
     try {
       await runAppointmentAction(id, action)
       await load()
-      void showSuccessToast('Cita actualizada')
+      void showSuccessToast(t('appointmentsAdmin.updated'))
     } catch (error) {
-      await showError('No se pudo actualizar la cita', error instanceof Error ? error.message : 'Error inesperado')
+      await showError(t('appointmentsAdmin.updateError'), apiErrorMessage(error, locale, t('appointmentsAdmin.updateError')))
     } finally { setBusy(false) }
   }
 
@@ -170,9 +169,9 @@ export default function AppointmentsSection({ isDemo, shop, capabilities }: Prop
       form.reset()
       setFormServiceId(''); setFormBarberId(''); setFormSlot(''); setSlots([])
       await load()
-      void showSuccessToast('Cita creada')
+      void showSuccessToast(t('appointmentsAdmin.created'))
     } catch (error) {
-      await showError('No se pudo crear la cita', error instanceof Error ? error.message : 'Error inesperado')
+      await showError(t('appointmentsAdmin.createError'), apiErrorMessage(error, locale, t('appointmentsAdmin.createError')))
     } finally { setBusy(false) }
   }
 
@@ -191,73 +190,73 @@ export default function AppointmentsSection({ isDemo, shop, capabilities }: Prop
       await rescheduleAppointment(editing.id, { barberId: editBarberId, startsAt: editSlot })
       setEditing(null); setEditSlot(''); setEditSlots([])
       await load()
-      void showSuccessToast('Cita reprogramada')
+      void showSuccessToast(t('appointmentsAdmin.rescheduled'))
     } catch (error) {
-      await showError('No se pudo reprogramar la cita', error instanceof Error ? error.message : 'Error inesperado')
+      await showError(t('appointmentsAdmin.rescheduleError'), apiErrorMessage(error, locale, t('appointmentsAdmin.rescheduleError')))
     } finally { setBusy(false) }
   }
 
   return (
     <section className="panel dashboard-section appointments-workspace" id="appointments-section">
       <div className="panel-heading">
-        <div><p className="eyebrow">AGENDA HÍBRIDA</p><h2>Agenda de citas</h2><p className="appointments-lead">Organiza la semana, filtra por barbero y mueve reservas sin salir del panel.</p></div>
-        {shop && capabilities?.canUseAppointments && <a className="secondary-link" href={`#/customer?shop=${shop.slug}`}>Portal del cliente</a>}
+        <div><p className="eyebrow">{t('appointmentsAdmin.eyebrow')}</p><h2>{t('appointmentsAdmin.title')}</h2><p className="appointments-lead">{t('appointmentsAdmin.lead')}</p></div>
+        {shop && capabilities?.canUseAppointments && <a className="secondary-link" href={`#/customer?shop=${shop.slug}`}>{t('appointmentsAdmin.customerPortal')}</a>}
       </div>
 
-      {!capabilities?.canUseAppointments ? <LockedFeature title="Citas y agenda híbrida" text="Reserva horarios, combina citas con turnos por llegada y gestiona la agenda del equipo." /> : <>
-        <div className="appointments-toolbar" aria-label="Controles de agenda">
-          <div className="agenda-view-switch" role="group" aria-label="Vista de agenda">
-            <button type="button" className={view === 'today' ? 'active' : ''} onClick={() => setView('today')}>Hoy</button>
-            <button type="button" className={view === 'week' ? 'active' : ''} onClick={() => setView('week')}>Semana</button>
+      {!capabilities?.canUseAppointments ? <LockedFeature title={t('appointmentsAdmin.lockedTitle')} text={t('appointmentsAdmin.lockedText')} /> : <>
+        <div className="appointments-toolbar" aria-label={t('appointmentsAdmin.controls')}>
+          <div className="agenda-view-switch" role="group" aria-label={t('appointmentsAdmin.view')}>
+            <button type="button" className={view === 'today' ? 'active' : ''} onClick={() => setView('today')}>{t('appointmentsAdmin.today')}</button>
+            <button type="button" className={view === 'week' ? 'active' : ''} onClick={() => setView('week')}>{t('appointmentsAdmin.week')}</button>
           </div>
-          <label>Fecha<input type="date" value={selectedDate} onChange={event => setSelectedDate(event.target.value)} /></label>
-          <label>Barbero<select value={barberFilter} onChange={event => setBarberFilter(event.target.value)}><option value="all">Todos</option>{barbers.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
-          <label>Estado<select value={statusFilter} onChange={event => setStatusFilter(event.target.value)}><option value="active">Activas</option><option value="all">Todos</option><option value="Confirmed">Confirmadas</option><option value="CheckedIn">En espera</option><option value="Completed">Completadas</option><option value="NoShow">No llegó</option><option value="Cancelled">Canceladas</option></select></label>
+          <label>{t('appointmentsAdmin.date')}<input type="date" value={selectedDate} onChange={event => setSelectedDate(event.target.value)} /></label>
+          <label>{t('appointmentsAdmin.barber')}<select value={barberFilter} onChange={event => setBarberFilter(event.target.value)}><option value="all">{t('commercial.all')}</option>{barbers.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+          <label>{t('appointmentsAdmin.status')}<select value={statusFilter} onChange={event => setStatusFilter(event.target.value)}><option value="active">{t('appointmentsAdmin.active')}</option><option value="all">{t('commercial.all')}</option><option value="Confirmed">{t('appointmentsAdmin.status.Confirmed')}</option><option value="CheckedIn">{t('appointmentsAdmin.status.CheckedIn')}</option><option value="Completed">{t('appointmentsAdmin.status.Completed')}</option><option value="NoShow">{t('appointmentsAdmin.status.NoShow')}</option><option value="Cancelled">{t('appointmentsAdmin.status.Cancelled')}</option></select></label>
         </div>
 
-        <div className="agenda-summary"><strong>{visibleAppointments.length}</strong><span>{view === 'today' ? 'citas en el día seleccionado' : 'citas en la semana seleccionada'}</span></div>
+        <div className="agenda-summary"><strong>{visibleAppointments.length}</strong><span>{view === 'today' ? t('appointmentsAdmin.daySummary') : t('appointmentsAdmin.weekSummary')}</span></div>
 
         <div className="agenda-days">
           {groupedAppointments.length ? groupedAppointments.map(([dateKey, items]) => <section className="agenda-day" key={dateKey}>
-            <h3>{new Intl.DateTimeFormat('es-DO', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(`${dateKey}T12:00:00Z`))}</h3>
+            <h3>{new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(`${dateKey}T12:00:00Z`))}</h3>
             <div className="business-list appointment-list">{items.map(item => <article key={item.id} className={`appointment-card status-${item.status.toLowerCase()}`}>
-              <div className="appointment-time"><strong>{formatTime(item.startsAtUtc, shop?.timeZoneId)}</strong><span>{formatTime(item.endsAtUtc, shop?.timeZoneId)}</span></div>
-              <div className="appointment-details"><strong>{item.customerName}</strong><span>{item.serviceName} · {item.barberName}</span><small>{item.customerPhone || item.customerEmail || 'Sin contacto registrado'}</small></div>
+              <div className="appointment-time"><strong>{formatTime(item.startsAtUtc, locale, shop?.timeZoneId)}</strong><span>{formatTime(item.endsAtUtc, locale, shop?.timeZoneId)}</span></div>
+              <div className="appointment-details"><strong>{item.customerName}</strong><span>{item.serviceName} · {item.barberName}</span><small>{item.customerPhone || item.customerEmail || t('appointmentsAdmin.noContact')}</small></div>
               <span className="appointment-status">{statusLabel(item.status)}</span>
               {!isDemo && <div className="billing-actions appointment-actions">
-                {item.status === 'Confirmed' && <><button disabled={busy} onClick={() => beginReschedule(item)}>Reprogramar</button><button disabled={busy} onClick={() => void appointmentAction(item.id, 'check-in')}>Check-in</button><button disabled={busy} onClick={() => void appointmentAction(item.id, 'no-show')}>No llegó</button><button className="danger" disabled={busy} onClick={() => void appointmentAction(item.id, 'cancel')}>Cancelar</button></>}
-                {item.status === 'CheckedIn' && <button disabled={busy} onClick={() => void appointmentAction(item.id, 'complete')}>Completar</button>}
+                {item.status === 'Confirmed' && <><button disabled={busy} onClick={() => beginReschedule(item)}>{t('appointmentsAdmin.reschedule')}</button><button disabled={busy} onClick={() => void appointmentAction(item.id, 'check-in')}>{t('appointmentsAdmin.checkIn')}</button><button disabled={busy} onClick={() => void appointmentAction(item.id, 'no-show')}>{t('appointmentsAdmin.status.NoShow')}</button><button className="danger" disabled={busy} onClick={() => void appointmentAction(item.id, 'cancel')}>{t('appointmentsAdmin.cancel')}</button></>}
+                {item.status === 'CheckedIn' && <button disabled={busy} onClick={() => void appointmentAction(item.id, 'complete')}>{t('appointmentsAdmin.complete')}</button>}
               </div>}
             </article>)}</div>
-          </section>) : <div className="agenda-empty"><strong>Agenda despejada</strong><span>No hay citas que coincidan con esta vista y filtros.</span></div>}
+          </section>) : <div className="agenda-empty"><strong>{t('appointmentsAdmin.emptyTitle')}</strong><span>{t('appointmentsAdmin.emptyText')}</span></div>}
         </div>
 
         {!isDemo && <section className="appointment-admin-grid">
           <article className="appointment-form-card">
-            <p className="eyebrow">NUEVA RESERVA</p><h3>Crear cita</h3>
+            <p className="eyebrow">{t('appointmentsAdmin.newEyebrow')}</p><h3>{t('appointmentsAdmin.createTitle')}</h3>
             <form className="business-form appointment-form" onSubmit={create}>
-              <input name="customerName" placeholder="Nombre del cliente" required />
-              <input name="customerPhone" placeholder="Teléfono" inputMode="tel" />
-              <input name="customerEmail" placeholder="Correo" type="email" />
-              <select value={formServiceId} onChange={event => setFormServiceId(event.target.value)} required><option value="">Servicio</option>{services.map(item => <option key={item.id} value={item.id}>{item.name} · {item.estimatedDurationMinutes} min</option>)}</select>
-              <select value={formBarberId} onChange={event => setFormBarberId(event.target.value)} required><option value="">Barbero</option>{barbers.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
+              <input name="customerName" placeholder={t('appointmentsAdmin.customerName')} required />
+              <input name="customerPhone" placeholder={t('appointmentsAdmin.phone')} inputMode="tel" />
+              <input name="customerEmail" placeholder={t('appointmentsAdmin.email')} type="email" />
+              <select value={formServiceId} onChange={event => setFormServiceId(event.target.value)} required><option value="">{t('appointmentsAdmin.service')}</option>{services.map(item => <option key={item.id} value={item.id}>{item.name} · {durationLabel(item.estimatedDurationMinutes)}</option>)}</select>
+              <select value={formBarberId} onChange={event => setFormBarberId(event.target.value)} required><option value="">{t('appointmentsAdmin.barber')}</option>{barbers.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
               <input type="date" value={formDate} min={today} onChange={event => setFormDate(event.target.value)} required />
-              <select value={formSlot} onChange={event => setFormSlot(event.target.value)} required disabled={!slots.length}><option value="">{slots.length ? 'Horario disponible' : 'Sin horarios disponibles'}</option>{slots.map(slot => <option key={`${slot.barberId}-${slot.startsAtUtc}`} value={slot.startsAtUtc}>{formatTime(slot.startsAtUtc, shop?.timeZoneId)}</option>)}</select>
-              <button disabled={busy || !formSlot}>Crear cita</button>
+              <select value={formSlot} onChange={event => setFormSlot(event.target.value)} required disabled={!slots.length}><option value="">{slots.length ? t('appointmentsAdmin.slotAvailable') : t('appointmentsAdmin.noSlots')}</option>{slots.map(slot => <option key={`${slot.barberId}-${slot.startsAtUtc}`} value={slot.startsAtUtc}>{formatTime(slot.startsAtUtc, locale, shop?.timeZoneId)}</option>)}</select>
+              <button disabled={busy || !formSlot}>{t('appointmentsAdmin.create')}</button>
             </form>
           </article>
 
-          {bookingQr && <article className="booking-qr appointment-self-service"><img src={bookingQr} alt="Código QR del portal de clientes" /><div><strong>Autoservicio del cliente</strong><span>Comparte el QR para que tus clientes reserven o tomen turno sin intervención del personal.</span><a href={bookingQr} download={`barberturn-${shop?.slug ?? 'clientes'}-qr.png`}>Descargar QR</a></div></article>}
+          {bookingQr && <article className="booking-qr appointment-self-service"><img src={bookingQr} alt={t('appointmentsAdmin.qrAlt')} /><div><strong>{t('appointmentsAdmin.selfService')}</strong><span>{t('appointmentsAdmin.selfServiceText')}</span><a href={bookingQr} download={`barberturn-${shop?.slug ?? 'customers'}-qr.png`}>{t('appointmentsAdmin.downloadQr')}</a></div></article>}
         </section>}
 
         {editing && <div className="appointment-modal-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setEditing(null) }}>
           <section className="appointment-modal" role="dialog" aria-modal="true" aria-labelledby="reschedule-title">
-            <p className="eyebrow">REPROGRAMAR</p><h3 id="reschedule-title">{editing.customerName}</h3><p>{editing.serviceName} · actualmente {formatDateTime(editing.startsAtUtc, shop?.timeZoneId)}</p>
+            <p className="eyebrow">{t('appointmentsAdmin.rescheduleEyebrow')}</p><h3 id="reschedule-title">{editing.customerName}</h3><p>{editing.serviceName} · {t('appointmentsAdmin.currently', { date: formatDateTime(editing.startsAtUtc, locale, shop?.timeZoneId) })}</p>
             <form className="business-form appointment-form" onSubmit={saveReschedule}>
               <select value={editBarberId} onChange={event => setEditBarberId(event.target.value)} required>{barbers.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
               <input type="date" value={editDate} min={today} onChange={event => setEditDate(event.target.value)} required />
-              <select value={editSlot} onChange={event => setEditSlot(event.target.value)} required disabled={!editSlots.length}><option value="">{editSlots.length ? 'Nuevo horario' : 'Sin horarios disponibles'}</option>{editSlots.map(slot => <option key={`${slot.barberId}-${slot.startsAtUtc}`} value={slot.startsAtUtc}>{formatTime(slot.startsAtUtc, shop?.timeZoneId)}</option>)}</select>
-              <div className="billing-actions"><button type="button" className="secondary-link" onClick={() => setEditing(null)}>Cerrar</button><button disabled={busy || !editSlot}>Guardar cambio</button></div>
+              <select value={editSlot} onChange={event => setEditSlot(event.target.value)} required disabled={!editSlots.length}><option value="">{editSlots.length ? t('appointmentsAdmin.newSlot') : t('appointmentsAdmin.noSlots')}</option>{editSlots.map(slot => <option key={`${slot.barberId}-${slot.startsAtUtc}`} value={slot.startsAtUtc}>{formatTime(slot.startsAtUtc, locale, shop?.timeZoneId)}</option>)}</select>
+              <div className="billing-actions"><button type="button" className="secondary-link" onClick={() => setEditing(null)}>{t('commercial.close')}</button><button disabled={busy || !editSlot}>{t('appointmentsAdmin.saveChange')}</button></div>
             </form>
           </section>
         </div>}

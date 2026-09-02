@@ -14,12 +14,13 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import type { Auth } from './types'
 import { useI18n } from './i18n'
+import { getHomeAuxCopy } from './i18n/homeAuxCopy'
 import './dashboard.css'
 import BusinessModules from './BusinessModules'
 import AdminDashboardLayout, { type DashboardNavItem } from './portals/admin/components/AdminDashboardLayout'
 import { isBusinessPage, type AdminPageId } from './portals/admin/adminRoutes'
 import type { Capabilities, Shop } from './portals/admin/commercialTypes'
-import { dashboardCopy, type DashboardCopy } from './portals/admin/dashboardCopy'
+import { getDashboardCopy, type DashboardCopy } from './portals/admin/dashboardCopy'
 import { useDashboardNavigation } from './portals/admin/hooks/useDashboardNavigation'
 import { useCommercialContext } from './portals/admin/hooks/useCommercialContext'
 import DashboardOverviewSection from './features/queue/components/DashboardOverviewSection'
@@ -53,12 +54,6 @@ function isQueueBackedPage(page: AdminPageId): page is QueueBackedPageId {
   return queueBackedPageIds.has(page)
 }
 
-function formatRole(role: string, copy: DashboardCopy) {
-  if (role === 'Owner') return copy.owner
-  if (role === 'Administrator') return copy.administrator
-  return role
-}
-
 function QueueBackedPageContent({ page, auth, isDemo, canManageCatalog, copy, today, isSystemAdmin, shop, capabilities, onShopUpdated, onNavigate, formatRole: localizeRole }: QueueBackedPageProps) {
   const queue = useQueueSnapshot(copy.loadOperationError)
 
@@ -89,8 +84,8 @@ function QueueBackedPageContent({ page, auth, isDemo, canManageCatalog, copy, to
 }
 
 export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewProps) {
-  const { locale } = useI18n()
-  const copy = dashboardCopy[locale]
+  const { locale, t } = useI18n()
+  const copy = getDashboardCopy(locale)
   const canManageCatalog = auth.role === 'Owner' || auth.role === 'Administrator'
   const commercial = useCommercialContext()
   const isSystemAdmin = commercial.capabilities?.isSystemAdmin === true
@@ -130,10 +125,10 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
     document.title = `${label} | BarberTurn`
   }, [copy.dashboard, navItems, navigation.activePage])
 
-  const dateLocale = locale === 'en' ? 'en-US' : locale
-  const today = new Intl.DateTimeFormat(dateLocale, { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date())
+  const today = new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date())
   const currentYear = new Date().getFullYear()
-  const localizeRole = (role: string) => formatRole(role, copy)
+  const localizeRole = (role: string) => role === 'Owner' ? copy.owner : role === 'Administrator' ? copy.administrator : role === 'Receptionist' ? t('role.receptionist') : role === 'Barber' ? t('role.barber') : role
+  const dashboardSlogan = getHomeAuxCopy(locale).slogan
 
   function renderPage(page: AdminPageId) {
     if (ownerPermissionPending && (page === 'locations' || page === 'billing')) {
@@ -176,7 +171,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
       onNavigate={navigation.navigateToPage} onOpenMobileNav={navigation.openMobileNav} onCloseMobileNav={navigation.closeMobileNav}
       onLogout={onLogout} formatRole={localizeRole}>
       {renderPage(navigation.activePage)}
-      <footer className="dashboard-footer"><span>© {currentYear} BarberTurn. {copy.rights}</span><span>Tu turno. Tu estilo. Tu tiempo.</span></footer>
+      <footer className="dashboard-footer"><span>© {currentYear} BarberTurn. {copy.rights}</span><span>{dashboardSlogan}</span></footer>
     </AdminDashboardLayout>
   )
 }

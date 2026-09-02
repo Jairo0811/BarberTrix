@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { Auth } from './types'
 import { api } from './api'
 import { showError } from './alerts'
+import { useI18n } from './i18n'
 import { adminPageHref } from './portals/admin/adminRoutes'
 import './role-portals.css'
 
@@ -9,6 +10,7 @@ type Subscription = { plan: string; status: string; provider: string; periodEnds
 type Capabilities = { plan: string; status: string; canUseAppointments: boolean; canUseTv: boolean; canUseAdvancedReports: boolean; isDemo: boolean }
 
 export default function SubscriptionBanner({ auth, isDemo }: { auth: Auth; isDemo: boolean }) {
+  const { t } = useI18n()
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [capabilities, setCapabilities] = useState<Capabilities | null>(null)
   const [busy, setBusy] = useState(false)
@@ -41,26 +43,26 @@ export default function SubscriptionBanner({ auth, isDemo }: { auth: Auth; isDem
         }),
       })
       location.href = response.approvalUrl
-    } catch (error) {
-      await showError('No se pudo iniciar el pago', error instanceof Error ? error.message : 'Error inesperado')
+    } catch {
+      await showError(t('subscription.paymentStartError'), t('subscription.unexpectedError'))
     } finally {
       setBusy(false)
     }
   }
 
   return (
-    <aside className={`subscription-banner ${paid ? 'is-paid' : 'needs-upgrade'}`} aria-label="Estado de suscripción">
+    <aside className={`subscription-banner ${paid ? 'is-paid' : 'needs-upgrade'}`} aria-label={t('subscription.aria')}>
       <div>
-        <strong>{paid ? `Plan ${subscription.plan} activo` : 'Activa tu suscripción de BarberTurn'}</strong>
+        <strong>{paid ? t('subscription.activePlan', { plan: subscription.plan }) : t('subscription.activate')}</strong>
         <span>
           {paid
-            ? premiumUnlocked ? 'Tus funciones incluidas están habilitadas según tu plan.' : 'Tu plan Starter mantiene activas las funciones esenciales.'
-            : 'Mientras no exista una suscripción activa, las funciones Pro y Business permanecen bloqueadas.'}
+            ? premiumUnlocked ? t('subscription.premiumUnlocked') : t('subscription.starterEssential')
+            : t('subscription.locked')}
         </span>
       </div>
       {!paid && <div className="subscription-banner-actions">
         <button disabled={busy} onClick={() => void checkout('Starter')}>Starter · US$20</button>
-        <button disabled={busy} onClick={() => void checkout('Pro')}>Desbloquear Pro · US$40</button>
+        <button disabled={busy} onClick={() => void checkout('Pro')}>{t('subscription.unlockPro')}</button>
         <button disabled={busy} onClick={() => void checkout('Business')}>Business · US$70</button>
       </div>}
     </aside>

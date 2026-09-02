@@ -5,31 +5,23 @@ import { router } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { MobileApiError } from '@/api/httpClient';
 import { useAuth } from '@/auth/AuthProvider';
+import { useI18n } from '@/i18n/I18nProvider';
 import { createTurnRequestRealtimeConnection } from '@/realtime/turnRequestRealtime';
 import { acceptTurnRequest, counterProposeTurnRequest, getStaffTurnRequests, rejectTurnRequest } from '@/turnRequests/turnRequestApi';
 import type { TurnRequest } from '@/turnRequests/types';
 
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
-}
-
-function statusLabel(request: TurnRequest) {
-  if (request.status === 'Pending') return 'Pendiente';
-  if (request.status === 'CounterProposed') return 'Contraoferta enviada';
-  if (request.status === 'Accepted') return 'Aceptada';
-  if (request.status === 'Rejected') return 'Rechazada';
-  if (request.status === 'Cancelled') return 'Cancelada';
-  return 'Expirada';
-}
-
 export default function StaffTurnRequestsScreen() {
   const { session, refresh } = useAuth();
+  const { locale, t } = useI18n();
   const queryClient = useQueryClient();
   const queryKey = ['staff-turn-requests', session?.user.barberShopId];
 
+  const formatDate = (value: string) => new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
+  const statusLabel = (request: TurnRequest) => t(`staffRequests.status.${request.status}`);
+
   const withToken = async <T,>(operation: (token: string) => Promise<T>): Promise<T> => {
     const token = session?.accessToken;
-    if (!token) throw new Error('La sesión no está disponible.');
+    if (!token) throw new Error(t('staffRequests.sessionUnavailable'));
     try {
       return await operation(token);
     } catch (error) {
@@ -79,16 +71,16 @@ export default function StaffTurnRequestsScreen() {
       >
         <View style={styles.header}>
           <View style={styles.headerCopy}>
-            <Text style={styles.eyebrow}>M2 · SOLICITUDES</Text>
-            <Text style={styles.title}>Turnos solicitados</Text>
-            <Text style={styles.subtitle}>Las nuevas solicitudes llegan en tiempo real mientras la app está abierta.</Text>
+            <Text style={styles.eyebrow}>{t('staffRequests.eyebrow')}</Text>
+            <Text style={styles.title}>{t('staffRequests.title')}</Text>
+            <Text style={styles.subtitle}>{t('staffRequests.subtitle')}</Text>
           </View>
-          <Pressable onPress={() => router.back()} style={styles.back}><Text style={styles.backText}>Volver</Text></Pressable>
+          <Pressable onPress={() => router.back()} style={styles.back}><Text style={styles.backText}>{t('staffRequests.back')}</Text></Pressable>
         </View>
 
         {requestQuery.isLoading ? <ActivityIndicator /> : null}
-        {requestQuery.error ? <Text accessibilityRole="alert" style={styles.error}>No pudimos cargar las solicitudes. Desliza para reintentar.</Text> : null}
-        {!requestQuery.isLoading && actionable.length === 0 ? <View style={styles.empty}><Text style={styles.emptyTitle}>Sin solicitudes pendientes</Text><Text style={styles.subtitle}>Cuando un cliente elija un barbero y horario aparecerá aquí.</Text></View> : null}
+        {requestQuery.error ? <Text accessibilityRole="alert" style={styles.error}>{t('staffRequests.loadError')}</Text> : null}
+        {!requestQuery.isLoading && actionable.length === 0 ? <View style={styles.empty}><Text style={styles.emptyTitle}>{t('staffRequests.emptyTitle')}</Text><Text style={styles.subtitle}>{t('staffRequests.emptyText')}</Text></View> : null}
 
         {actionable.map(request => (
           <View key={request.id} style={styles.card}>
@@ -101,12 +93,12 @@ export default function StaffTurnRequestsScreen() {
             </View>
             <Text style={styles.time}>{formatDate(request.effectiveStartsAtUtc)}</Text>
             {request.notes ? <Text style={styles.notes}>“{request.notes}”</Text> : null}
-            {request.status === 'CounterProposed' ? <Text style={styles.counter}>Esperando que el cliente confirme la nueva hora.</Text> : null}
+            {request.status === 'CounterProposed' ? <Text style={styles.counter}>{t('staffRequests.counterWaiting')}</Text> : null}
 
             {request.status === 'Pending' ? (
               <View style={styles.actions}>
-                <Pressable disabled={mutate.isPending} onPress={() => mutate.mutate({ kind: 'accept', id: request.id })} style={styles.primary}><Text style={styles.primaryText}>Aceptar</Text></Pressable>
-                <Pressable disabled={mutate.isPending} onPress={() => mutate.mutate({ kind: 'reject', id: request.id })} style={styles.danger}><Text style={styles.dangerText}>Rechazar</Text></Pressable>
+                <Pressable disabled={mutate.isPending} onPress={() => mutate.mutate({ kind: 'accept', id: request.id })} style={styles.primary}><Text style={styles.primaryText}>{t('staffRequests.accept')}</Text></Pressable>
+                <Pressable disabled={mutate.isPending} onPress={() => mutate.mutate({ kind: 'reject', id: request.id })} style={styles.danger}><Text style={styles.dangerText}>{t('staffRequests.reject')}</Text></Pressable>
               </View>
             ) : null}
 
@@ -121,9 +113,9 @@ export default function StaffTurnRequestsScreen() {
           </View>
         ))}
 
-        {mutate.error ? <Text accessibilityRole="alert" style={styles.error}>{mutate.error instanceof Error ? mutate.error.message : 'No pudimos completar la acción.'}</Text> : null}
+        {mutate.error ? <Text accessibilityRole="alert" style={styles.error}>{t('staffRequests.actionError')}</Text> : null}
 
-        {history.length > 0 ? <Text style={styles.sectionTitle}>Recientes</Text> : null}
+        {history.length > 0 ? <Text style={styles.sectionTitle}>{t('staffRequests.recent')}</Text> : null}
         {history.map(request => (
           <View key={request.id} style={styles.historyCard}>
             <View style={styles.cardCopy}><Text style={styles.historyTitle}>{request.customerName} · {request.serviceName}</Text><Text style={styles.subtitle}>{formatDate(request.effectiveStartsAtUtc)}</Text></View>

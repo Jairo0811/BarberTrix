@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api } from '../../../api'
+import { apiErrorMessage } from '../../../apiErrorMessages'
 import { showError, showSuccessToast } from '../../../alerts'
+import { useI18n } from '../../../i18n'
 import LockedFeature from '../../../shared/components/LockedFeature'
 import { adminPageHref } from '../../../portals/admin/adminRoutes'
 import type { Capabilities, Shop, Subscription } from '../../../portals/admin/commercialTypes'
@@ -8,6 +10,7 @@ import type { Capabilities, Shop, Subscription } from '../../../portals/admin/co
 type Props = { isDemo: boolean; shop: Shop | null; capabilities: Capabilities | null }
 
 export default function BillingSection({ isDemo, shop, capabilities }: Props) {
+  const { locale, t } = useI18n()
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [busy, setBusy] = useState(false)
   const isSystemAdmin = capabilities?.isSystemAdmin === true
@@ -23,21 +26,27 @@ export default function BillingSection({ isDemo, shop, capabilities }: Props) {
     try {
       const response = await api<{ approvalUrl: string }>('/api/billing/checkout', { method: 'POST', body: JSON.stringify({ plan, returnUrl: `${location.origin}/#/billing-success`, cancelUrl: `${location.origin}/${adminPageHref('billing')}` }) })
       location.href = response.approvalUrl
-    } catch (error) { await showError('No se pudo iniciar PayPal', error instanceof Error ? error.message : 'Error inesperado') }
+    } catch (error) { await showError(t('billing.paypalError'), apiErrorMessage(error, locale, t('billing.paypalError'))) }
     finally { setBusy(false) }
   }
 
   async function cancelSubscription() {
     setBusy(true)
-    try { await api('/api/billing/cancel?atPeriodEnd=false', { method: 'POST' }); await load(); void showSuccessToast('Suscripción cancelada') }
-    catch (error) { await showError('No se pudo cancelar la suscripción', error instanceof Error ? error.message : 'Error inesperado') }
+    try { await api('/api/billing/cancel?atPeriodEnd=false', { method: 'POST' }); await load(); void showSuccessToast(t('billing.cancelled')) }
+    catch (error) { await showError(t('billing.cancelError'), apiErrorMessage(error, locale, t('billing.cancelError'))) }
     finally { setBusy(false) }
   }
 
+  const status = subscription?.status ?? capabilities?.status ?? 'Active'
+  const statusText = status === 'Active' ? t('commercial.active') : t('commercial.inactive')
+  const barberLimit = capabilities?.barberLimit && capabilities.barberLimit > 1000 ? t('commercial.unlimited') : String(capabilities?.barberLimit ?? 0)
+  const serviceLimit = capabilities?.serviceLimit && capabilities.serviceLimit > 1000 ? t('commercial.unlimited') : String(capabilities?.serviceLimit ?? 0)
+  const locationLimit = capabilities?.locationLimit && capabilities.locationLimit > 1000 ? t('commercial.unlimitedFeminine') : String(capabilities?.locationLimit ?? 0)
+
   return (
     <section className="panel dashboard-section" id="billing-section">
-      <p className="eyebrow">SUSCRIPCIÓN</p>
-      {isDemo ? <LockedFeature title="Planes y suscripción" text="La demostración no permite iniciar pagos. Crea una cuenta real para elegir un plan." /> : isSystemAdmin ? <><h2>Administrador del sistema · Acceso total</h2><p>Esta cuenta no está sujeta a planes, límites de barberos ni límites de sucursales.</p>{shop && capabilities?.canUseTv && <div className="billing-actions"><a href={`#/tv?shop=${shop.slug}`}>Abrir BarberTurn TV</a></div>}</> : <><h2>{subscription?.plan ?? capabilities?.plan ?? 'Free'} · {subscription?.status ?? capabilities?.status ?? 'Active'}</h2><p>{capabilities ? `${capabilities.activeBarbers} de ${capabilities.barberLimit > 1000 ? 'ilimitados' : capabilities.barberLimit} barberos activos` : 'Cargando uso…'}</p>{capabilities && <p>{capabilities.activeServices} de {capabilities.serviceLimit > 1000 ? 'ilimitados' : capabilities.serviceLimit} servicios activos</p>}{capabilities && <p>{capabilities.monthlyTurnLimit > 1000 ? `${capabilities.turnsThisMonth} turnos este mes · uso ampliado` : `${capabilities.turnsThisMonth} de ${capabilities.monthlyTurnLimit} turnos incluidos este mes${capabilities.turnsThisMonth >= capabilities.monthlyTurnLimit ? ` · tolerancia hasta ${capabilities.monthlyTurnGraceLimit}` : ''}`}</p>}{capabilities && <p>{capabilities.activeLocations} de {capabilities.locationLimit > 1000 ? 'ilimitadas' : capabilities.locationLimit} sucursales activas</p>}<div className="billing-actions"><button disabled={busy} onClick={() => void checkout('Starter')}>Starter · US$20</button><button disabled={busy} onClick={() => void checkout('Pro')}>Pro · US$40</button><button disabled={busy} onClick={() => void checkout('Business')}>Business · US$70</button>{subscription?.provider !== 'Free' && subscription?.status === 'Active' && <button disabled={busy} onClick={() => void cancelSubscription()}>Cancelar suscripción</button>}{shop && capabilities?.canUseTv && <a href={`#/tv?shop=${shop.slug}`}>Abrir BarberTurn TV</a>}</div></>}
+      <p className="eyebrow">{t('billing.eyebrow')}</p>
+      {isDemo ? <LockedFeature title={t('billing.lockedTitle')} text={t('billing.lockedText')} /> : isSystemAdmin ? <><h2>{t('billing.systemAdminTitle')}</h2><p>{t('billing.systemAdminText')}</p>{shop && capabilities?.canUseTv && <div className="billing-actions"><a href={`#/tv?shop=${shop.slug}`}>{t('billing.openTv')}</a></div>}</> : <><h2>{subscription?.plan ?? capabilities?.plan ?? 'Free'} · {statusText}</h2><p>{capabilities ? t('billing.activeBarbers', { active: capabilities.activeBarbers, limit: barberLimit }) : t('billing.loadingUsage')}</p>{capabilities && <p>{t('billing.activeServices', { active: capabilities.activeServices, limit: serviceLimit })}</p>}{capabilities && <p>{capabilities.monthlyTurnLimit > 1000 ? t('billing.turnsExpanded', { used: capabilities.turnsThisMonth }) : `${t('billing.turnsIncluded', { used: capabilities.turnsThisMonth, limit: capabilities.monthlyTurnLimit })}${capabilities.turnsThisMonth >= capabilities.monthlyTurnLimit ? t('billing.graceUntil', { grace: capabilities.monthlyTurnGraceLimit }) : ''}`}</p>}{capabilities && <p>{t('billing.activeLocations', { active: capabilities.activeLocations, limit: locationLimit })}</p>}<div className="billing-actions"><button disabled={busy} onClick={() => void checkout('Starter')}>Starter · US$20</button><button disabled={busy} onClick={() => void checkout('Pro')}>Pro · US$40</button><button disabled={busy} onClick={() => void checkout('Business')}>Business · US$70</button>{subscription?.provider !== 'Free' && subscription?.status === 'Active' && <button disabled={busy} onClick={() => void cancelSubscription()}>{t('billing.cancel')}</button>}{shop && capabilities?.canUseTv && <a href={`#/tv?shop=${shop.slug}`}>{t('billing.openTv')}</a>}</div></>}
     </section>
   )
 }

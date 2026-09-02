@@ -1,0 +1,81 @@
+import type { Dictionary } from './types'
+
+export const europeWave1: Record<string, Dictionary> = {
+  pl: {
+    'language.label': 'Język', 'common.login': 'Zaloguj się', 'common.register': 'Utwórz konto', 'common.email': 'E-mail', 'common.password': 'Hasło',
+    'home.nav.home': 'Strona główna', 'home.nav.features': 'Funkcje', 'home.nav.pricing': 'Cennik', 'home.nav.contact': 'Kontakt', 'home.startFree': 'Zacznij za darmo',
+    'home.hero.title1': 'Uporządkuj swój salon barberski.', 'home.hero.title2': 'Obsługuj klientów lepiej.', 'home.viewFeatures': 'Zobacz funkcje',
+    'login.welcome': 'Witaj ponownie', 'login.subtitle': 'Zaloguj się, aby kontynuować', 'login.submit': 'Zaloguj się', 'login.submitting': 'Logowanie…',
+    'dashboard': 'Panel', 'queueLive': 'Kolejka na żywo', 'barbers': 'Barberzy', 'services': 'Usługi', 'customers': 'Klienci', 'reports': 'Raporty', 'logout': 'Wyloguj się',
+  },
+  ro: {
+    'language.label': 'Limbă', 'common.login': 'Autentificare', 'common.register': 'Creează cont', 'common.email': 'E-mail', 'common.password': 'Parolă',
+    'home.nav.home': 'Acasă', 'home.nav.features': 'Funcții', 'home.nav.pricing': 'Prețuri', 'home.nav.contact': 'Contact', 'home.startFree': 'Începe gratuit',
+    'home.hero.title1': 'Organizează-ți frizeria.', 'home.hero.title2': 'Servește clienții mai bine.', 'home.viewFeatures': 'Vezi funcțiile',
+    'login.welcome': 'Bine ai revenit', 'login.subtitle': 'Autentifică-te pentru a continua', 'login.submit': 'Autentificare', 'login.submitting': 'Se autentifică…',
+    'dashboard': 'Panou', 'queueLive': 'Coadă live', 'barbers': 'Frizeri', 'services': 'Servicii', 'customers': 'Clienți', 'reports': 'Rapoarte', 'logout': 'Deconectare',
+  },
+  sv: {
+    'language.label': 'Språk', 'common.login': 'Logga in', 'common.register': 'Skapa konto', 'common.email': 'E-post', 'common.password': 'Lösenord',
+    'home.nav.home': 'Hem', 'home.nav.features': 'Funktioner', 'home.nav.pricing': 'Priser', 'home.nav.contact': 'Kontakt', 'home.startFree': 'Börja gratis',
+    'home.hero.title1': 'Organisera din barbershop.', 'home.hero.title2': 'Ge kunderna bättre service.', 'home.viewFeatures': 'Visa funktioner',
+    'login.welcome': 'Välkommen tillbaka', 'login.subtitle': 'Logga in för att fortsätta', 'login.submit': 'Logga in', 'login.submitting': 'Loggar in…',
+    'dashboard': 'Översikt', 'queueLive': 'Livekö', 'barbers': 'Barberare', 'services': 'Tjänster', 'customers': 'Kunder', 'reports': 'Rapporter', 'logout': 'Logga ut',
+  },
+  da: {
+    'language.label': 'Sprog', 'common.login': 'Log ind', 'common.register': 'Opret konto', 'common.email': 'E-mail', 'common.password': 'Adgangskode',
+    'home.nav.home': 'Hjem', 'home.nav.features': 'Funktioner', 'home.nav.pricing': 'Priser', 'home.nav.contact': 'Kontakt', 'home.startFree': 'Start gratis',
+    'home.hero.title1': 'Organisér din barbershop.', 'home.hero.title2': 'Servér kunderne bedre.', 'home.viewFeatures': 'Se funktioner',
+    'login.welcome': 'Velkommen tilbage', 'login.subtitle': 'Log ind for at fortsætte', 'login.submit': 'Log ind', 'login.submitting': 'Logger ind…',
+    'dashboard': 'Dashboard', 'queueLive': 'Livekø', 'barbers': 'Barberer', 'services': 'Tjenester', 'customers': 'Kunder', 'reports': 'Rapporter', 'logout': 'Log ud',
+  },
+  nb: {
+    'language.label': 'Språk', 'common.login': 'Logg inn', 'common.register': 'Opprett konto', 'common.email': 'E-post', 'common.password': 'Passord',
+    'home.nav.home': 'Hjem', 'home.nav.features': 'Funksjoner', 'home.nav.pricing': 'Priser', 'home.nav.contact': 'Kontakt', 'home.startFree': 'Start gratis',
+    'home.hero.title1': 'Organiser barbershopen din.', 'home.hero.title2': 'Gi kundene bedre service.', 'home.viewFeatures': 'Se funksjoner',
+    'login.welcome': 'Velkommen tilbake', 'login.subtitle': 'Logg inn for å fortsette', 'login.submit': 'Logg inn', 'login.submitting': 'Logger inn…',
+    'dashboard': 'Oversikt', 'queueLive': 'Livekø', 'barbers': 'Barberere', 'services': 'Tjenester', 'customers': 'Kunder', 'reports': 'Rapporter', 'logout': 'Logg ut',
+  },
+  fi: {
+    'language.label': 'Kieli', 'common.login': 'Kirjaudu sisään', 'common.register': 'Luo tili', 'common.email': 'Sähköposti', 'common.password': 'Salasana',
+    'home.nav.home': 'Etusivu', 'home.nav.features': 'Ominaisuudet', 'home.nav.pricing': 'Hinnat', 'home.nav.contact': 'Yhteystiedot', 'home.startFree': 'Aloita ilmaiseksi',
+    'home.hero.title1': 'Järjestä parturiliikkeesi.', 'home.hero.title2': 'Palvele asiakkaita paremmin.', 'home.viewFeatures': 'Näytä ominaisuudet',
+    'login.welcome': 'Tervetuloa takaisin', 'login.subtitle': 'Kirjaudu sisään jatkaaksesi', 'login.submit': 'Kirjaudu sisään', 'login.submitting': 'Kirjaudutaan…',
+    'dashboard': 'Hallintapaneeli', 'queueLive': 'Reaaliaikainen jono', 'barbers': 'Parturit', 'services': 'Palvelut', 'customers': 'Asiakkaat', 'reports': 'Raportit', 'logout': 'Kirjaudu ulos',
+  },
+  cs: {
+    'language.label': 'Jazyk', 'common.login': 'Přihlásit se', 'common.register': 'Vytvořit účet', 'common.email': 'E-mail', 'common.password': 'Heslo',
+    'home.nav.home': 'Domů', 'home.nav.features': 'Funkce', 'home.nav.pricing': 'Ceny', 'home.nav.contact': 'Kontakt', 'home.startFree': 'Začít zdarma',
+    'home.hero.title1': 'Zorganizujte své holičství.', 'home.hero.title2': 'Obsluhujte zákazníky lépe.', 'home.viewFeatures': 'Zobrazit funkce',
+    'login.welcome': 'Vítejte zpět', 'login.subtitle': 'Přihlaste se a pokračujte', 'login.submit': 'Přihlásit se', 'login.submitting': 'Přihlašování…',
+    'dashboard': 'Přehled', 'queueLive': 'Živá fronta', 'barbers': 'Holiči', 'services': 'Služby', 'customers': 'Zákazníci', 'reports': 'Reporty', 'logout': 'Odhlásit se',
+  },
+  el: {
+    'language.label': 'Γλώσσα', 'common.login': 'Σύνδεση', 'common.register': 'Δημιουργία λογαριασμού', 'common.email': 'Email', 'common.password': 'Κωδικός πρόσβασης',
+    'home.nav.home': 'Αρχική', 'home.nav.features': 'Λειτουργίες', 'home.nav.pricing': 'Τιμές', 'home.nav.contact': 'Επικοινωνία', 'home.startFree': 'Ξεκινήστε δωρεάν',
+    'home.hero.title1': 'Οργανώστε το κουρείο σας.', 'home.hero.title2': 'Εξυπηρετήστε καλύτερα τους πελάτες.', 'home.viewFeatures': 'Προβολή λειτουργιών',
+    'login.welcome': 'Καλώς ήρθατε ξανά', 'login.subtitle': 'Συνδεθείτε για να συνεχίσετε', 'login.submit': 'Σύνδεση', 'login.submitting': 'Σύνδεση…',
+    'dashboard': 'Πίνακας ελέγχου', 'queueLive': 'Ζωντανή ουρά', 'barbers': 'Κουρείς', 'services': 'Υπηρεσίες', 'customers': 'Πελάτες', 'reports': 'Αναφορές', 'logout': 'Αποσύνδεση',
+  },
+  tr: {
+    'language.label': 'Dil', 'common.login': 'Giriş yap', 'common.register': 'Hesap oluştur', 'common.email': 'E-posta', 'common.password': 'Şifre',
+    'home.nav.home': 'Ana sayfa', 'home.nav.features': 'Özellikler', 'home.nav.pricing': 'Fiyatlandırma', 'home.nav.contact': 'İletişim', 'home.startFree': 'Ücretsiz başla',
+    'home.hero.title1': 'Berber dükkânınızı düzenleyin.', 'home.hero.title2': 'Müşterilere daha iyi hizmet verin.', 'home.viewFeatures': 'Özellikleri görüntüle',
+    'login.welcome': 'Tekrar hoş geldiniz', 'login.subtitle': 'Devam etmek için giriş yapın', 'login.submit': 'Giriş yap', 'login.submitting': 'Giriş yapılıyor…',
+    'dashboard': 'Kontrol paneli', 'queueLive': 'Canlı sıra', 'barbers': 'Berberler', 'services': 'Hizmetler', 'customers': 'Müşteriler', 'reports': 'Raporlar', 'logout': 'Çıkış yap',
+  },
+  uk: {
+    'language.label': 'Мова', 'common.login': 'Увійти', 'common.register': 'Створити акаунт', 'common.email': 'Ел. пошта', 'common.password': 'Пароль',
+    'home.nav.home': 'Головна', 'home.nav.features': 'Функції', 'home.nav.pricing': 'Ціни', 'home.nav.contact': 'Контакти', 'home.startFree': 'Почати безкоштовно',
+    'home.hero.title1': 'Організуйте свою барбершоп.', 'home.hero.title2': 'Обслуговуйте клієнтів краще.', 'home.viewFeatures': 'Переглянути функції',
+    'login.welcome': 'З поверненням', 'login.subtitle': 'Увійдіть, щоб продовжити', 'login.submit': 'Увійти', 'login.submitting': 'Вхід…',
+    'dashboard': 'Панель', 'queueLive': 'Жива черга', 'barbers': 'Барбери', 'services': 'Послуги', 'customers': 'Клієнти', 'reports': 'Звіти', 'logout': 'Вийти',
+  },
+  ru: {
+    'language.label': 'Язык', 'common.login': 'Войти', 'common.register': 'Создать аккаунт', 'common.email': 'Эл. почта', 'common.password': 'Пароль',
+    'home.nav.home': 'Главная', 'home.nav.features': 'Возможности', 'home.nav.pricing': 'Цены', 'home.nav.contact': 'Контакты', 'home.startFree': 'Начать бесплатно',
+    'home.hero.title1': 'Организуйте свой барбершоп.', 'home.hero.title2': 'Обслуживайте клиентов лучше.', 'home.viewFeatures': 'Посмотреть возможности',
+    'login.welcome': 'С возвращением', 'login.subtitle': 'Войдите, чтобы продолжить', 'login.submit': 'Войти', 'login.submitting': 'Вход…',
+    'dashboard': 'Панель', 'queueLive': 'Живая очередь', 'barbers': 'Барберы', 'services': 'Услуги', 'customers': 'Клиенты', 'reports': 'Отчёты', 'logout': 'Выйти',
+  },
+}

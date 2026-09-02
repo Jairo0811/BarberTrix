@@ -1,5 +1,6 @@
 import { FormEvent, useState } from 'react'
 import { useI18n } from './i18n'
+import { registerCopy } from './i18n/register'
 import './register.css'
 import type { Auth } from './types'
 import { publicApi, writeAuth } from './api'
@@ -20,6 +21,7 @@ function buildShopSlug(name: string) {
 
 export default function RegisterPage() {
   const { t, locale } = useI18n()
+  const localizedRegisterCopy = registerCopy[locale as keyof typeof registerCopy] ?? registerCopy.en
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -106,10 +108,10 @@ export default function RegisterPage() {
 
           <form className="register-form" onSubmit={register} aria-busy={busy} aria-describedby={error ? 'register-error' : undefined}>
             <label>
-              <span>Nombre de la barbería</span>
+              <span>{localizedRegisterCopy['register.shopName']}</span>
               <div className="register-input-wrap">
                 <span className="register-field-icon" aria-hidden="true">✂</span>
-                <input name="shopName" type="text" autoComplete="organization" maxLength={120} placeholder="Barbería Central" required />
+                <input name="shopName" type="text" autoComplete="organization" maxLength={120} placeholder={localizedRegisterCopy['register.shopNamePlaceholder']} required />
               </div>
             </label>
             <label>
@@ -124,7 +126,7 @@ export default function RegisterPage() {
               <span>{t('common.email')}</span>
               <div className="register-input-wrap">
                 <span className="register-field-icon" aria-hidden="true">✉</span>
-                <input name="email" type="email" autoComplete="email" inputMode="email" placeholder="ejemplo@barberia.com" required />
+                <input name="email" type="email" autoComplete="email" inputMode="email" placeholder={localizedRegisterCopy['register.emailPlaceholder']} required />
               </div>
             </label>
 
@@ -150,7 +152,12 @@ export default function RegisterPage() {
               </div>
             </label>
 
-            <label className="register-terms"><input name="acceptedTerms" type="checkbox" required /> <span>Acepto los <a href="#/terms" target="_blank">términos de servicio</a> y la <a href="#/privacy" target="_blank">política de privacidad</a>.</span></label>
+            <label className="register-terms">
+              <input name="acceptedTerms" type="checkbox" required />{' '}
+              <span>
+                {localizedRegisterCopy['register.acceptTermsPrefix']} <a href="#/terms" target="_blank">{localizedRegisterCopy['register.terms']}</a> {localizedRegisterCopy['register.acceptTermsJoin']} <a href="#/privacy" target="_blank">{localizedRegisterCopy['register.privacy']}</a>.
+              </span>
+            </label>
             <button className="register-submit" type="submit" disabled={busy}>{busy ? t('register.submitting') : t('register.submit')}</button>
           </form>
 

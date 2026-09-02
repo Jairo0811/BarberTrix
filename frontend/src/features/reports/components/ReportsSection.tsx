@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { api } from '../../../api'
+import { apiErrorMessage } from '../../../apiErrorMessages'
+import { useI18n } from '../../../i18n'
 import LockedFeature from '../../../shared/components/LockedFeature'
 import type { Capabilities, Report } from '../../../portals/admin/commercialTypes'
 import '../reports.css'
@@ -10,8 +12,7 @@ type LegacyReport = Partial<Report> & { grossRevenue?: number }
 
 const isoDate = (date: Date) => date.toISOString().slice(0, 10)
 const daysAgo = (days: number) => isoDate(new Date(Date.now() - (days - 1) * 86400000))
-const money = (value: number, currency: string) => new Intl.NumberFormat('es-DO', { style: 'currency', currency }).format(value)
-const methodLabel: Record<string, string> = { Cash: 'Efectivo', Card: 'Tarjeta', BankTransfer: 'Transferencia', Other: 'Otro' }
+const money = (locale: string, value: number, currency: string) => new Intl.NumberFormat(locale, { style: 'currency', currency }).format(value)
 
 function normalizeReport(data: LegacyReport, from: string, to: string): Report {
   const previous = data.previousPeriod ?? {
@@ -48,19 +49,26 @@ function percentChange(current: number, previous: number) {
 }
 
 function Trend({ current, previous }: { current: number; previous: number }) {
+  const { locale, t } = useI18n()
   const change = percentChange(current, previous)
-  if (change === null) return <span className="report-trend neutral">Sin base comparable</span>
+  if (change === null) return <span className="report-trend neutral">{t('reportsAdmin.noBase')}</span>
   const direction = change > 0 ? 'up' : change < 0 ? 'down' : 'neutral'
-  return <span className={`report-trend ${direction}`}>{change > 0 ? '+' : ''}{change.toFixed(1)}%</span>
+  return <span className={`report-trend ${direction}`}>{change > 0 ? '+' : ''}{new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(change)}%</span>
 }
 
 export default function ReportsSection({ isDemo, capabilities }: Props) {
+  const { locale, t } = useI18n()
   const [report, setReport] = useState<Report | null>(null)
   const [from, setFrom] = useState(() => daysAgo(30))
   const [to, setTo] = useState(() => isoDate(new Date()))
   const [currency, setCurrency] = useState('DOP')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const methodLabel = (method: string, fallback?: string) => {
+    const known = new Set(['Cash', 'Card', 'Transfer', 'BankTransfer', 'PayPal', 'Other'])
+    return known.has(method) ? t(`paymentsAdmin.method.${method}`) : fallback || t('paymentsAdmin.method.Other')
+  }
 
   const load = useCallback(async (start = from, end = to) => {
     if (isDemo || !capabilities?.canUseAdvancedReports) { setReport(null); return }
@@ -73,11 +81,11 @@ export default function ReportsSection({ isDemo, capabilities }: Props) {
       const currencies = Object.keys(data.revenueByCurrency)
       setCurrency(current => currencies.includes(current) ? current : currencies[0] ?? 'DOP')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo cargar el reporte.')
+      setError(apiErrorMessage(err, locale, t('reportsAdmin.loadError')))
     } finally {
       setLoading(false)
     }
-  }, [capabilities?.canUseAdvancedReports, from, isDemo, to])
+  }, [capabilities?.canUseAdvancedReports, from, isDemo, locale, t, to])
 
   useEffect(() => { void load() }, [capabilities?.canUseAdvancedReports, isDemo]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -98,25 +106,25 @@ export default function ReportsSection({ isDemo, capabilities }: Props) {
   const exportCsv = () => {
     if (!report) return
     const rows: Array<Array<string | number>> = [
-      ['BarberTurn · Business Reports 2.0'],
-      ['Periodo', report.from, report.to],
-      ['Moneda', currency],
+      [t('reportsAdmin.csvTitle')],
+      [t('reportsAdmin.period'), report.from, report.to],
+      [t('reportsAdmin.currency'), currency],
       [],
-      ['Indicador', 'Actual', 'Periodo anterior'],
-      ['Turnos completados', report.completedTurns, report.previousPeriod.completedTurns],
-      ['Citas', report.appointments, report.previousPeriod.appointments],
-      ['No-show %', report.noShowRatePercent, report.previousPeriod.noShowRatePercent],
-      ['Ingresos', report.revenueByCurrency[currency] ?? 0, report.previousPeriod.revenueByCurrency[currency] ?? 0],
-      ['Ticket promedio', report.averageTicketByCurrency[currency] ?? 0, report.previousPeriod.averageTicketByCurrency[currency] ?? 0],
+      [t('reportsAdmin.metric'), t('reportsAdmin.current'), t('reportsAdmin.previous')],
+      [t('reportsAdmin.completedTurns'), report.completedTurns, report.previousPeriod.completedTurns],
+      [t('reportsAdmin.appointments'), report.appointments, report.previousPeriod.appointments],
+      [t('reportsAdmin.noShowPercent'), report.noShowRatePercent, report.previousPeriod.noShowRatePercent],
+      [t('reportsAdmin.revenue'), report.revenueByCurrency[currency] ?? 0, report.previousPeriod.revenueByCurrency[currency] ?? 0],
+      [t('reportsAdmin.averageTicket'), report.averageTicketByCurrency[currency] ?? 0, report.previousPeriod.averageTicketByCurrency[currency] ?? 0],
       [],
-      ['Barbero', 'Servicios completados', 'Actividad %', `Ingresos ${currency}`],
+      [t('reportsAdmin.barber'), t('reportsAdmin.completedServices'), t('reportsAdmin.activity'), `${t('reportsAdmin.revenue')} ${currency}`],
       ...report.revenueByBarber.map(item => [item.barberName, item.completedServices, item.activitySharePercent, item.revenueByCurrency[currency] ?? 0]),
       [],
-      ['Servicio', 'Servicios completados', `Ingresos ${currency}`],
+      [t('reportsAdmin.service'), t('reportsAdmin.completedServices'), `${t('reportsAdmin.revenue')} ${currency}`],
       ...report.revenueByService.map(item => [item.serviceName, item.completedServices, item.revenueByCurrency[currency] ?? 0]),
       [],
-      ['Método de pago', 'Operaciones', `Ingresos ${currency}`],
-      ...report.revenueByMethod.map(item => [methodLabel[item.key] ?? item.label, item.count, item.revenueByCurrency[currency] ?? 0]),
+      [t('reportsAdmin.paymentMethod'), t('reportsAdmin.operations'), `${t('reportsAdmin.revenue')} ${currency}`],
+      ...report.revenueByMethod.map(item => [methodLabel(item.key, item.label), item.count, item.revenueByCurrency[currency] ?? 0]),
     ]
     const escape = (value: string | number) => `"${String(value).replaceAll('"', '""')}"`
     const csv = `\uFEFF${rows.map(row => row.map(escape).join(',')).join('\n')}`
@@ -128,8 +136,8 @@ export default function ReportsSection({ isDemo, capabilities }: Props) {
     URL.revokeObjectURL(url)
   }
 
-  if (isDemo) return <section className="panel dashboard-section" id="reports-section"><LockedFeature title="Reportes avanzados" text="Los indicadores históricos y financieros completos se reservan para clientes de BarberTurn." plan="Business" /></section>
-  if (!capabilities?.canUseAdvancedReports) return <section className="panel dashboard-section" id="reports-section"><LockedFeature title="Reportes avanzados" text="Desbloquea métricas históricas, ingresos y comportamiento operativo." plan="Business" /></section>
+  if (isDemo) return <section className="panel dashboard-section" id="reports-section"><LockedFeature title={t('reportsAdmin.lockedTitle')} text={t('reportsAdmin.demoLockedText')} plan="Business" /></section>
+  if (!capabilities?.canUseAdvancedReports) return <section className="panel dashboard-section" id="reports-section"><LockedFeature title={t('reportsAdmin.lockedTitle')} text={t('reportsAdmin.planLockedText')} plan="Business" /></section>
 
   const revenue = report?.revenueByCurrency[currency] ?? 0
   const previousRevenue = report?.previousPeriod.revenueByCurrency[currency] ?? 0
@@ -140,34 +148,34 @@ export default function ReportsSection({ isDemo, capabilities }: Props) {
   return (
     <section className="panel dashboard-section reports-workspace" id="reports-section">
       <div className="reports-header">
-        <div><p className="eyebrow">BUSINESS REPORTS 2.0</p><h2>Analítica del negocio</h2><p className="muted">Compara rendimiento, ingresos y operación sin mezclar monedas.</p></div>
-        <div className="report-actions"><button type="button" className="secondary" onClick={exportCsv} disabled={!report}>Exportar CSV</button><button type="button" className="secondary" onClick={() => window.print()} disabled={!report}>Imprimir / PDF</button></div>
+        <div><p className="eyebrow">{t('reportsAdmin.eyebrow')}</p><h2>{t('reportsAdmin.title')}</h2><p className="muted">{t('reportsAdmin.lead')}</p></div>
+        <div className="report-actions"><button type="button" className="secondary" onClick={exportCsv} disabled={!report}>{t('reportsAdmin.exportCsv')}</button><button type="button" className="secondary" onClick={() => window.print()} disabled={!report}>{t('reportsAdmin.print')}</button></div>
       </div>
 
-      <div className="reports-toolbar" aria-label="Filtros del reporte">
-        <div className="report-presets"><button type="button" onClick={() => applyPreset(7)}>7 días</button><button type="button" onClick={() => applyPreset(30)}>30 días</button><button type="button" onClick={() => applyPreset(90)}>90 días</button></div>
-        <label>Desde<input type="date" value={from} max={to} onChange={event => setFrom(event.target.value)} /></label>
-        <label>Hasta<input type="date" value={to} min={from} onChange={event => setTo(event.target.value)} /></label>
-        <button type="button" className="primary" onClick={() => void load()} disabled={loading}>{loading ? 'Actualizando…' : 'Aplicar'}</button>
-        <label>Moneda<select value={currency} onChange={event => setCurrency(event.target.value)}>{(currencies.length ? currencies : ['DOP']).map(item => <option key={item}>{item}</option>)}</select></label>
+      <div className="reports-toolbar" aria-label={t('reportsAdmin.filters')}>
+        <div className="report-presets"><button type="button" onClick={() => applyPreset(7)}>{t('reportsAdmin.days', { days: 7 })}</button><button type="button" onClick={() => applyPreset(30)}>{t('reportsAdmin.days', { days: 30 })}</button><button type="button" onClick={() => applyPreset(90)}>{t('reportsAdmin.days', { days: 90 })}</button></div>
+        <label>{t('reportsAdmin.from')}<input type="date" value={from} max={to} onChange={event => setFrom(event.target.value)} /></label>
+        <label>{t('reportsAdmin.to')}<input type="date" value={to} min={from} onChange={event => setTo(event.target.value)} /></label>
+        <button type="button" className="primary" onClick={() => void load()} disabled={loading}>{loading ? t('reportsAdmin.updating') : t('reportsAdmin.apply')}</button>
+        <label>{t('reportsAdmin.currency')}<select value={currency} onChange={event => setCurrency(event.target.value)}>{(currencies.length ? currencies : ['DOP']).map(item => <option key={item}>{item}</option>)}</select></label>
       </div>
 
       {error && <p className="form-error" role="alert">{error}</p>}
       {report && <>
-        <p className="report-period">{report.from} → {report.to} · comparación con {report.previousPeriod.from} → {report.previousPeriod.to}</p>
+        <p className="report-period">{t('reportsAdmin.periodComparison', { from: report.from, to: report.to, previousFrom: report.previousPeriod.from, previousTo: report.previousPeriod.to })}</p>
         <div className="report-kpis">
-          <article><span>Ingresos</span><strong>{money(revenue, currency)}</strong><Trend current={revenue} previous={previousRevenue} /></article>
-          <article><span>Ticket promedio</span><strong>{money(averageTicket, currency)}</strong><Trend current={averageTicket} previous={previousTicket} /></article>
-          <article><span>Turnos completados</span><strong>{report.completedTurns}</strong><Trend current={report.completedTurns} previous={report.previousPeriod.completedTurns} /></article>
-          <article><span>No-show</span><strong>{report.noShowRatePercent.toFixed(1)}%</strong><Trend current={report.noShowRatePercent} previous={report.previousPeriod.noShowRatePercent} /></article>
-          <article><span>Citas</span><strong>{report.appointments}</strong><Trend current={report.appointments} previous={report.previousPeriod.appointments} /></article>
+          <article><span>{t('reportsAdmin.revenue')}</span><strong>{money(locale, revenue, currency)}</strong><Trend current={revenue} previous={previousRevenue} /></article>
+          <article><span>{t('reportsAdmin.averageTicket')}</span><strong>{money(locale, averageTicket, currency)}</strong><Trend current={averageTicket} previous={previousTicket} /></article>
+          <article><span>{t('reportsAdmin.completedTurns')}</span><strong>{report.completedTurns}</strong><Trend current={report.completedTurns} previous={report.previousPeriod.completedTurns} /></article>
+          <article><span>{t('reportsAdmin.noShow')}</span><strong>{new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(report.noShowRatePercent)}%</strong><Trend current={report.noShowRatePercent} previous={report.previousPeriod.noShowRatePercent} /></article>
+          <article><span>{t('reportsAdmin.appointments')}</span><strong>{report.appointments}</strong><Trend current={report.appointments} previous={report.previousPeriod.appointments} /></article>
         </div>
 
         <div className="report-grid">
-          <article className="report-card"><h3>Ingresos por barbero</h3><div className="report-table"><div className="report-row heading"><span>Barbero</span><span>Servicios</span><span>Actividad</span><span>Ingresos</span></div>{report.revenueByBarber.map(item => <div className="report-row" key={item.barberId}><span>{item.barberName}</span><span>{item.completedServices}</span><span>{item.activitySharePercent.toFixed(1)}%</span><strong>{money(item.revenueByCurrency[currency] ?? 0, currency)}</strong></div>)}</div></article>
-          <article className="report-card"><h3>Ingresos por servicio</h3><div className="report-table"><div className="report-row service heading"><span>Servicio</span><span>Servicios</span><span>Ingresos</span></div>{report.revenueByService.map(item => <div className="report-row service" key={item.serviceId}><span>{item.serviceName}</span><span>{item.completedServices}</span><strong>{money(item.revenueByCurrency[currency] ?? 0, currency)}</strong></div>)}</div></article>
-          <article className="report-card"><h3>Métodos de pago</h3><div className="payment-breakdown">{report.revenueByMethod.map(item => <div key={item.key}><div><strong>{methodLabel[item.key] ?? item.label}</strong><span>{item.count} operaciones</span></div><strong>{money(item.revenueByCurrency[currency] ?? 0, currency)}</strong></div>)}</div></article>
-          <article className="report-card"><h3>Horas pico</h3><div className="peak-hours">{report.peakHours.slice(0, 8).map(item => <div key={item.hour}><span>{String(item.hour).padStart(2, '0')}:00</span><div><i style={{ width: `${Math.max((item.completedServices / maxHour) * 100, 4)}%` }} /></div><strong>{item.completedServices}</strong></div>)}</div><p className="muted report-note">Basado en servicios completados y convertido a la zona horaria de la barbería.</p></article>
+          <article className="report-card"><h3>{t('reportsAdmin.revenueByBarber')}</h3><div className="report-table"><div className="report-row heading"><span>{t('reportsAdmin.barber')}</span><span>{t('reportsAdmin.services')}</span><span>{t('reportsAdmin.activity')}</span><span>{t('reportsAdmin.revenue')}</span></div>{report.revenueByBarber.map(item => <div className="report-row" key={item.barberId}><span>{item.barberName}</span><span>{item.completedServices}</span><span>{new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(item.activitySharePercent)}%</span><strong>{money(locale, item.revenueByCurrency[currency] ?? 0, currency)}</strong></div>)}</div></article>
+          <article className="report-card"><h3>{t('reportsAdmin.revenueByService')}</h3><div className="report-table"><div className="report-row service heading"><span>{t('reportsAdmin.service')}</span><span>{t('reportsAdmin.services')}</span><span>{t('reportsAdmin.revenue')}</span></div>{report.revenueByService.map(item => <div className="report-row service" key={item.serviceId}><span>{item.serviceName}</span><span>{item.completedServices}</span><strong>{money(locale, item.revenueByCurrency[currency] ?? 0, currency)}</strong></div>)}</div></article>
+          <article className="report-card"><h3>{t('reportsAdmin.paymentMethods')}</h3><div className="payment-breakdown">{report.revenueByMethod.map(item => <div key={item.key}><div><strong>{methodLabel(item.key, item.label)}</strong><span>{t('reportsAdmin.operationCount', { count: item.count })}</span></div><strong>{money(locale, item.revenueByCurrency[currency] ?? 0, currency)}</strong></div>)}</div></article>
+          <article className="report-card"><h3>{t('reportsAdmin.peakHours')}</h3><div className="peak-hours">{report.peakHours.slice(0, 8).map(item => <div key={item.hour}><span>{String(item.hour).padStart(2, '0')}:00</span><div><i style={{ width: `${Math.max((item.completedServices / maxHour) * 100, 4)}%` }} /></div><strong>{item.completedServices}</strong></div>)}</div><p className="muted report-note">{t('reportsAdmin.peakNote')}</p></article>
         </div>
       </>}
     </section>

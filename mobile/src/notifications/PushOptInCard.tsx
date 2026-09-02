@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useI18n } from '@/i18n/I18nProvider';
 import type { PushOptInStatus } from './PushNotificationsProvider';
 
 type Props = {
@@ -10,11 +11,13 @@ type Props = {
 };
 
 export function PushOptInCard({ status, message, title, body, onEnable }: Props) {
+  const { t } = useI18n();
+
   if (status === 'enabled') {
     return (
       <View accessibilityRole="summary" style={[styles.card, styles.enabled]}>
-        <Text style={styles.title}>Avisos activados</Text>
-        <Text style={styles.body}>Este dispositivo recibirá cambios importantes.</Text>
+        <Text style={styles.title}>{t('push.enabledTitle')}</Text>
+        <Text style={styles.body}>{t('push.enabledBody')}</Text>
       </View>
     );
   }
@@ -24,7 +27,7 @@ export function PushOptInCard({ status, message, title, body, onEnable }: Props)
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.body}>{body}</Text>
       <Pressable accessibilityRole="button" disabled={status === 'enabling'} onPress={onEnable} style={styles.button}>
-        <Text style={styles.buttonText}>{status === 'enabling' ? 'Activando…' : 'Activar avisos'}</Text>
+        <Text style={styles.buttonText}>{status === 'enabling' ? t('push.enabling') : t('push.enable')}</Text>
       </Pressable>
       {message ? <Text accessibilityRole="alert" style={styles.error}>{message}</Text> : null}
     </View>

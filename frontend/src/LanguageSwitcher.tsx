@@ -12,18 +12,10 @@ const options: Array<{ value: LocalePreference; label: string }> = [
   { value: 'wo', label: 'Wolof' }, { value: 'ln', label: 'Lingála' }, { value: 'rw', label: 'Kinyarwanda' }, { value: 'rn', label: 'Kirundi' }, { value: 'st', label: 'Sesotho' }, { value: 'tn', label: 'Setswana' }, { value: 'sn', label: 'ChiShona' }, { value: 'ny', label: 'Chichewa' }, { value: 'mg', label: 'Malagasy' }, { value: 'ti', label: 'ትግርኛ' }, { value: 'om', label: 'Afaan Oromoo' }, { value: 'ak', label: 'Akan / Twi' },
   { value: 'zh-CN', label: '简体中文' }, { value: 'zh-TW', label: '繁體中文' }, { value: 'ja', label: '日本語' }, { value: 'ko', label: '한국어' }, { value: 'hi', label: 'हिन्दी' }, { value: 'bn', label: 'বাংলা' }, { value: 'ur', label: 'اردو' }, { value: 'id', label: 'Bahasa Indonesia' }, { value: 'ms', label: 'Bahasa Melayu' }, { value: 'vi', label: 'Tiếng Việt' }, { value: 'th', label: 'ไทย' }, { value: 'fil', label: 'Filipino' }, { value: 'fa', label: 'فارسی' },
   { value: 'ta', label: 'தமிழ்' }, { value: 'te', label: 'తెలుగు' }, { value: 'mr', label: 'मराठी' }, { value: 'gu', label: 'ગુજરાતી' }, { value: 'pa', label: 'ਪੰਜਾਬੀ' }, { value: 'kn', label: 'ಕನ್ನಡ' }, { value: 'ml', label: 'മലയാളം' }, { value: 'ne', label: 'नेपाली' }, { value: 'si', label: 'සිංහල' }, { value: 'my', label: 'မြန်မာ' }, { value: 'km', label: 'ខ្មែរ' }, { value: 'lo', label: 'ລາວ' }, { value: 'mn', label: 'Монгол' }, { value: 'kk', label: 'Қазақша' }, { value: 'uz', label: 'O‘zbekcha' }, { value: 'ky', label: 'Кыргызча' }, { value: 'tg', label: 'Тоҷикӣ' },
-  { value: 'mi', label: 'Te Reo Māori' }, { value: 'sm', label: 'Gagana Samoa' }, { value: 'to', label: 'Lea Faka-Tonga' }, { value: 'fj', label: 'Vosa Vakaviti' }, { value: 'bi', label: 'Bislama' },
+  { value: 'mi', label: 'Te Reo Māori' }, { value: 'sm', label: 'Gagana Samoa' }, { value: 'to', label: 'Lea Faka-Tonga' }, { value: 'fj', label: 'Vosa Vakaviti' }, { value: 'bi', label: 'Bislama' }, { value: 'tpi', label: 'Tok Pisin' }, { value: 'ho', label: 'Hiri Motu' }, { value: 'gil', label: 'Kiribati' }, { value: 'mh', label: 'Kajin M̧ajeļ' }, { value: 'na', label: 'Dorerin Naoero' }, { value: 'pau', label: 'Tekoi er a Belau' }, { value: 'tvl', label: 'Te Ggana Tuuvalu' },
 ]
 
 export default function LanguageSwitcher() {
   const { localePreference, setLocalePreference, t } = useI18n()
-  return (
-    <label className="language-switcher">
-      <span className="language-switcher-icon" aria-hidden="true"><FontAwesomeIcon icon={faGlobe} /></span>
-      <span className="visually-hidden">{t('language.label')}</span>
-      <select aria-label={t('language.label')} value={localePreference} onChange={event => setLocalePreference(event.target.value as LocalePreference)}>
-        {options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-      </select>
-    </label>
-  )
+  return <label className="language-switcher"><span className="language-switcher-icon" aria-hidden="true"><FontAwesomeIcon icon={faGlobe} /></span><span className="visually-hidden">{t('language.label')}</span><select aria-label={t('language.label')} value={localePreference} onChange={event => setLocalePreference(event.target.value as LocalePreference)}>{options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
 }

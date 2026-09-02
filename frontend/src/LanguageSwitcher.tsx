@@ -10,6 +10,8 @@ const options: Array<{ value: LocalePreference; label: string }> = [
   { value: 'en', label: 'English' },
   { value: 'pt-BR', label: 'Português' },
   { value: 'fr', label: 'Français' },
+  { value: 'nl', label: 'Nederlands' },
+  { value: 'ht', label: 'Kreyòl ayisyen' },
   { value: 'de', label: 'Deutsch' },
   { value: 'it', label: 'Italiano' },
 ]

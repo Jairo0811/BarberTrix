@@ -1,6 +1,6 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faGlobe } from '@fortawesome/free-solid-svg-icons'
-import { type Locale, useI18n } from './i18n'
+import { useI18n } from './i18n'
 import type { LocalePreference } from './i18n/I18nProvider'
 
 const options: Array<{ value: LocalePreference; labelKey?: string; systemLabel?: string }> = [

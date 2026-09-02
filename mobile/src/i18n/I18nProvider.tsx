@@ -19,6 +19,17 @@ function resolveDeviceLocale(): Locale {
   if (rawLocale.startsWith('it')) return 'it';
   if (rawLocale.startsWith('nl')) return 'nl';
   if (rawLocale.startsWith('ht')) return 'ht';
+  if (rawLocale.startsWith('pl')) return 'pl';
+  if (rawLocale.startsWith('ro')) return 'ro';
+  if (rawLocale.startsWith('sv')) return 'sv';
+  if (rawLocale.startsWith('da')) return 'da';
+  if (rawLocale.startsWith('nb') || rawLocale.startsWith('nn') || rawLocale.startsWith('no')) return 'nb';
+  if (rawLocale.startsWith('fi')) return 'fi';
+  if (rawLocale.startsWith('cs')) return 'cs';
+  if (rawLocale.startsWith('el')) return 'el';
+  if (rawLocale.startsWith('tr')) return 'tr';
+  if (rawLocale.startsWith('uk')) return 'uk';
+  if (rawLocale.startsWith('ru')) return 'ru';
   if (rawLocale.startsWith('en')) return 'en';
   if (rawLocale.startsWith('es')) return 'es-419';
   return 'es-419';

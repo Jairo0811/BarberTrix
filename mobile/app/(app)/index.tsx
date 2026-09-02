@@ -10,13 +10,15 @@ export default function HomeScreen() {
   const { session, signOut } = useAuth();
   const { t } = useI18n();
   const push = usePushNotifications();
+  const role = session?.user.role;
+  const roleLabel = role ? t(`mobile.role.${role}`) : '';
 
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
-        <Text style={styles.eyebrow}>BARBERTURN MOBILE</Text>
+        <Text style={styles.eyebrow}>{t('mobile.homeEyebrow')}</Text>
         <Text style={styles.title}>{t('home.hello', { name: session?.user.name ?? t('home.team') })}</Text>
-        <Text style={styles.role}>{session?.user.role ?? ''}</Text>
+        <Text style={styles.role}>{roleLabel}</Text>
         <Text style={styles.body}>{t('home.body')}</Text>
         <Pressable accessibilityRole="button" onPress={() => router.push('/(app)/turn-requests')} style={styles.card}>
           <Text style={styles.cardTitle}>{t('home.requests')}</Text>

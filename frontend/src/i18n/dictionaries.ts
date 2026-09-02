@@ -22,6 +22,8 @@ import nl from './nl'
 import ht from './ht'
 import ja from './ja'
 import { coreUiSupplement } from './coreUiSupplement'
+import { deepRoutesSupplement } from './deepRoutesSupplement'
+import { legalSupplement } from './legalSupplement'
 import { europeWave1 } from './europe-wave1'
 import { europeWave2 } from './europe-wave2'
 import { africaWave1 } from './africa-wave1'
@@ -33,6 +35,8 @@ import { oceania } from './oceania'
 const withSupplement = (locale: keyof typeof coreUiSupplement, dictionary: Dictionary): Dictionary => ({
   ...dictionary,
   ...coreUiSupplement[locale],
+  ...deepRoutesSupplement[locale],
+  ...legalSupplement[locale],
 })
 
 const english: Dictionary = withSupplement('en', { ...enCommon, ...enAuth, ...enDashboard, ...enBilling, ...enCustomer })

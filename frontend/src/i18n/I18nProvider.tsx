@@ -6,9 +6,7 @@ const storageKey = 'barberturn.locale'
 export type LocalePreference = 'system' | Locale
 
 const supportedLocales: Locale[] = [
-  'es-419', 'en', 'es-ES', 'pt-BR', 'fr', 'de', 'it', 'nl', 'ht',
-  'pl', 'ro', 'sv', 'da', 'nb', 'fi', 'cs', 'el', 'tr', 'uk', 'ru',
-  'et', 'lv', 'lt', 'sk', 'sl', 'hr', 'sr', 'bs', 'bg', 'sq', 'mk', 'hu', 'is', 'ga', 'mt', 'ca', 'ka', 'hy', 'az',
+  'es-419','en','es-ES','pt-BR','fr','de','it','nl','ht','pl','ro','sv','da','nb','fi','cs','el','tr','uk','ru','et','lv','lt','sk','sl','hr','sr','bs','bg','sq','mk','hu','is','ga','mt','ca','ka','hy','az','ar','sw','af','am','so','ha','yo','ig','zu','xh',
 ]
 
 type I18nContextValue = {
@@ -23,14 +21,10 @@ function mapDeviceLocale(deviceLocale?: string | null): Locale | null {
   const normalized = deviceLocale?.trim().toLowerCase().replace('_', '-') ?? ''
   if (normalized === 'es-es' || normalized.startsWith('es-es-')) return 'es-ES'
   const aliases: Array<[string[], Locale]> = [
-    [['pt'], 'pt-BR'], [['fr'], 'fr'], [['de'], 'de'], [['it'], 'it'], [['nl'], 'nl'], [['ht'], 'ht'],
-    [['pl'], 'pl'], [['ro'], 'ro'], [['sv'], 'sv'], [['da'], 'da'], [['nb','nn','no'], 'nb'], [['fi'], 'fi'], [['cs'], 'cs'], [['el'], 'el'], [['tr'], 'tr'], [['uk'], 'uk'], [['ru'], 'ru'],
-    [['et'], 'et'], [['lv'], 'lv'], [['lt'], 'lt'], [['sk'], 'sk'], [['sl'], 'sl'], [['hr'], 'hr'], [['sr'], 'sr'], [['bs'], 'bs'], [['bg'], 'bg'], [['sq'], 'sq'], [['mk'], 'mk'], [['hu'], 'hu'], [['is'], 'is'], [['ga'], 'ga'], [['mt'], 'mt'], [['ca'], 'ca'], [['ka'], 'ka'], [['hy'], 'hy'], [['az'], 'az'],
-    [['en'], 'en'], [['es'], 'es-419'],
+    [['pt'],'pt-BR'],[['fr'],'fr'],[['de'],'de'],[['it'],'it'],[['nl'],'nl'],[['ht'],'ht'],[['pl'],'pl'],[['ro'],'ro'],[['sv'],'sv'],[['da'],'da'],[['nb','nn','no'],'nb'],[['fi'],'fi'],[['cs'],'cs'],[['el'],'el'],[['tr'],'tr'],[['uk'],'uk'],[['ru'],'ru'],[['et'],'et'],[['lv'],'lv'],[['lt'],'lt'],[['sk'],'sk'],[['sl'],'sl'],[['hr'],'hr'],[['sr'],'sr'],[['bs'],'bs'],[['bg'],'bg'],[['sq'],'sq'],[['mk'],'mk'],[['hu'],'hu'],[['is'],'is'],[['ga'],'ga'],[['mt'],'mt'],[['ca'],'ca'],[['ka'],'ka'],[['hy'],'hy'],[['az'],'az'],
+    [['ar'],'ar'],[['sw'],'sw'],[['af'],'af'],[['am'],'am'],[['so'],'so'],[['ha'],'ha'],[['yo'],'yo'],[['ig'],'ig'],[['zu'],'zu'],[['xh'],'xh'],[['en'],'en'],[['es'],'es-419'],
   ]
-  for (const [prefixes, locale] of aliases) {
-    if (prefixes.some(prefix => normalized.startsWith(prefix))) return locale
-  }
+  for (const [prefixes, locale] of aliases) if (prefixes.some(prefix => normalized.startsWith(prefix))) return locale
   return null
 }
 
@@ -71,6 +65,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     document.documentElement.lang = locale
+    document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr'
   }, [locale])
 
   const value = useMemo<I18nContextValue>(() => ({

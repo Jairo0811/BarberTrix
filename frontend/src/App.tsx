@@ -15,6 +15,7 @@ type OnboardingShop = { id: string; name: string; slug: string; timeZoneId: stri
 type OnboardingJoinRequest = { id: string; barberShopId: string; barberShopName: string; status: 'Pending' | 'Approved' | 'Rejected' | 'Withdrawn'; reviewNote?: string | null }
 
 function BarberOnboardingPanel({ auth, onLogout, onAuthChanged }: { auth: Auth; onLogout: () => void; onAuthChanged: (next: Auth) => void }) {
+  const { t } = useI18n()
   const [query, setQuery] = useState('')
   const [shops, setShops] = useState<OnboardingShop[]>([])
   const [requests, setRequests] = useState<OnboardingJoinRequest[]>([])
@@ -32,7 +33,7 @@ function BarberOnboardingPanel({ auth, onLogout, onAuthChanged }: { auth: Auth; 
         const next = await publicApi<Auth>('/api/auth/refresh', { method: 'POST' })
         writeAuth(next); onAuthChanged(next)
       }
-    } catch (exception) { setMessage(exception instanceof Error ? exception.message : 'No se pudo cargar el onboarding.') }
+    } catch { setMessage(t('onboarding.loadError')) }
     finally { setBusy(false) }
   }
 
@@ -40,31 +41,31 @@ function BarberOnboardingPanel({ auth, onLogout, onAuthChanged }: { auth: Auth; 
 
   async function requestJoin(shop: OnboardingShop) {
     setBusy(true); setMessage('')
-    try { await api(`/api/onboarding/join-requests/${shop.id}`, { method: 'POST' }); await load(query); setMessage(`Solicitud enviada a ${shop.name}.`) }
-    catch (exception) { setMessage(exception instanceof Error ? exception.message : 'No se pudo enviar la solicitud.'); setBusy(false) }
+    try { await api(`/api/onboarding/join-requests/${shop.id}`, { method: 'POST' }); await load(query); setMessage(t('onboarding.requestSent', { shop: shop.name })) }
+    catch { setMessage(t('onboarding.requestError')); setBusy(false) }
   }
 
   async function withdraw(request: OnboardingJoinRequest) {
     setBusy(true); setMessage('')
     try { await api(`/api/onboarding/join-requests/${request.id}`, { method: 'DELETE' }); await load(query) }
-    catch (exception) { setMessage(exception instanceof Error ? exception.message : 'No se pudo retirar la solicitud.'); setBusy(false) }
+    catch { setMessage(t('onboarding.withdrawError')); setBusy(false) }
   }
 
   return <main className="login-shell"><section className="login-card">
-    <BarberTurnLogo /><h1>Encuentra tu barbería</h1>
-    <p className="login-subtitle">Hola {auth.name}. Tu perfil profesional está listo. Busca tu barbería y solicita ingreso.</p>
-    <div className="login-form"><label className="login-field"><span>Barbería</span><div className="input-wrap"><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Nombre o slug" /></div></label>
-      <button className="login-submit" disabled={busy} onClick={() => void load(query)}>{busy ? 'Cargando…' : 'Buscar'}</button></div>
+    <BarberTurnLogo /><h1>{t('onboarding.title')}</h1>
+    <p className="login-subtitle">{t('onboarding.subtitle', { name: auth.name })}</p>
+    <div className="login-form"><label className="login-field"><span>{t('onboarding.shop')}</span><div className="input-wrap"><input value={query} onChange={event => setQuery(event.target.value)} placeholder={t('onboarding.shopPlaceholder')} /></div></label>
+      <button className="login-submit" disabled={busy} onClick={() => void load(query)}>{busy ? t('onboarding.loading') : t('onboarding.search')}</button></div>
     <div style={{ display: 'grid', gap: 12, marginTop: 18 }}>
       {shops.map(shop => { const pending = pendingByShop.get(shop.id); return <article key={shop.id} style={{ border: '1px solid var(--border, #ddd)', borderRadius: 12, padding: 14 }}>
         <strong>{shop.name}</strong><p className="login-subtitle">@{shop.slug}</p>
-        {pending ? <button className="demo-button" disabled={busy} onClick={() => void withdraw(pending)}>Retirar solicitud</button> : <button className="login-submit" disabled={busy} onClick={() => void requestJoin(shop)}>Solicitar ingreso</button>}
+        {pending ? <button className="demo-button" disabled={busy} onClick={() => void withdraw(pending)}>{t('onboarding.withdraw')}</button> : <button className="login-submit" disabled={busy} onClick={() => void requestJoin(shop)}>{t('onboarding.requestJoin')}</button>}
       </article> })}
     </div>
-    <h2 style={{ marginTop: 22 }}>Mis solicitudes</h2>
-    {requests.length === 0 ? <p className="login-subtitle">Aún no has enviado solicitudes.</p> : requests.map(request => <p key={request.id} className="login-subtitle"><strong>{request.barberShopName}</strong> · {request.status}{request.reviewNote ? ` · ${request.reviewNote}` : ''}</p>)}
-    <button className="demo-button" disabled={busy} onClick={() => void load(query)}>Actualizar estado</button>
-    <button className="demo-button" type="button" onClick={onLogout}>Cerrar sesión</button>
+    <h2 style={{ marginTop: 22 }}>{t('onboarding.myRequests')}</h2>
+    {requests.length === 0 ? <p className="login-subtitle">{t('onboarding.noRequests')}</p> : requests.map(request => <p key={request.id} className="login-subtitle"><strong>{request.barberShopName}</strong> · {t(`onboarding.status.${request.status}`)}{request.reviewNote ? ` · ${request.reviewNote}` : ''}</p>)}
+    <button className="demo-button" disabled={busy} onClick={() => void load(query)}>{t('onboarding.refreshStatus')}</button>
+    <button className="demo-button" type="button" onClick={onLogout}>{t('logout')}</button>
     {message && <p className="login-error" role="status">{message}</p>}
   </section></main>
 }
@@ -89,11 +90,11 @@ export default function App() {
   useEffect(() => {
     if (!auth) return
     if (!auth.isEmailVerified) {
-      document.title = 'Verifica tu correo | BarberTurn'
+      document.title = `${t('verification.documentTitle')} | BarberTurn`
       return
     }
-    if (auth.role === 'Barber') document.title = 'Mi jornada | BarberTurn'
-  }, [auth])
+    if (auth.role === 'Barber') document.title = `${t('barber.documentTitle')} | BarberTurn`
+  }, [auth, t])
 
   async function login(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -129,25 +130,25 @@ export default function App() {
 
   async function resendVerification() {
     setBusy(true); setError('')
-    try { await api('/api/auth/send-verification', { method: 'POST' }); setError('Te enviamos un enlace nuevo. Revisa también tu carpeta de spam.') }
-    catch (exception) { setError(apiErrorMessage(exception, locale, 'No se pudo reenviar el enlace.')) }
+    try { await api('/api/auth/send-verification', { method: 'POST' }); setError(t('verification.resendSuccess')) }
+    catch { setError(t('verification.resendError')) }
     finally { setBusy(false) }
   }
 
   if (auth && !auth.isEmailVerified) return <main className="login-shell"><section className="login-card">
-    <BarberTurnLogo /><h1>Verifica tu correo</h1><p className="login-subtitle">Antes de abrir el panel, confirma el enlace que enviamos a tu correo. El enlace vence en 24 horas.</p>
-    <button className="login-submit" disabled={busy} onClick={() => void resendVerification()}>{busy ? 'Enviando…' : 'Reenviar enlace'}</button>
-    <button className="demo-button" type="button" onClick={logout}>Cerrar sesión</button>
+    <BarberTurnLogo /><h1>{t('verification.title')}</h1><p className="login-subtitle">{t('verification.text')}</p>
+    <button className="login-submit" disabled={busy} onClick={() => void resendVerification()}>{busy ? t('verification.sending') : t('verification.resend')}</button>
+    <button className="demo-button" type="button" onClick={logout}>{t('logout')}</button>
     {error && <p className="login-error" role="status">{error}</p>}
   </section></main>
 
   if (auth?.sessionScope === 'Onboarding') return <BarberOnboardingPanel auth={auth} onLogout={logout} onAuthChanged={setAuth} />
 
-  if (auth?.role === 'Barber') return <Suspense fallback={<main className="login-shell"><p>Cargando portal del barbero…</p></main>}><BarberPortal auth={auth} onLogout={logout} /></Suspense>
+  if (auth?.role === 'Barber') return <Suspense fallback={<main className="login-shell"><p>{t('loading.barberPortal')}</p></main>}><BarberPortal auth={auth} onLogout={logout} /></Suspense>
 
   if (auth) return <>
     <SubscriptionBanner auth={auth} isDemo={isDemo} />
-    <Suspense fallback={<main className="login-shell"><p>Cargando panel…</p></main>}><DashboardView auth={auth} isDemo={isDemo} onLogout={logout} /></Suspense>
+    <Suspense fallback={<main className="login-shell"><p>{t('loading.dashboard')}</p></main>}><DashboardView auth={auth} isDemo={isDemo} onLogout={logout} /></Suspense>
   </>
 
   return (
@@ -173,7 +174,7 @@ export default function App() {
               <span>{t('common.email')}</span>
               <div className="input-wrap">
                 <span className="field-icon" aria-hidden="true"><FontAwesomeIcon icon={faEnvelope} /></span>
-                <input name="email" type="email" autoComplete="email" inputMode="email" placeholder="ejemplo@barberia.com" required />
+                <input name="email" type="email" autoComplete="email" inputMode="email" placeholder={t('login.emailPlaceholder')} required />
               </div>
             </label>
 

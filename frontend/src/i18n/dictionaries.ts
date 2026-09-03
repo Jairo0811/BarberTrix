@@ -28,6 +28,7 @@ import { customersAdminSupplement } from './customersAdminSupplement'
 import { paymentsAdminSupplement } from './paymentsAdminSupplement'
 import { reportsAdminSupplement } from './reportsAdminSupplement'
 import { tvSupplement } from './tvSupplement'
+import { tvAudioSupplement } from './tvAudioSupplement'
 
 const withCommercialAdmin = (locale: OfficialLocale, dictionary: Dictionary): Dictionary => ({
   ...dictionary,
@@ -37,6 +38,7 @@ const withCommercialAdmin = (locale: OfficialLocale, dictionary: Dictionary): Di
   ...paymentsAdminSupplement[locale],
   ...reportsAdminSupplement[locale],
   ...tvSupplement[locale],
+  ...tvAudioSupplement[locale],
 })
 
 const withSupplement = (locale: keyof typeof coreUiSupplement, dictionary: Dictionary): Dictionary => withCommercialAdmin(locale as OfficialLocale, {

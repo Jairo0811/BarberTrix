@@ -3,7 +3,7 @@ import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, Vi
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useAuth } from '@/auth/AuthProvider';
-import { discoveryCopy } from '@/discovery/discoveryCopy';
+import { getDiscoveryCopy, type DiscoveryCopy } from '@/discovery/discoveryCopy';
 import { searchShops, type DiscoveryShopCard } from '@/discovery/discoveryApi';
 import { useI18n } from '@/i18n/I18nProvider';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
@@ -12,7 +12,7 @@ import { BrandedBackground } from '@/ui/BrandedBackground';
 export default function DiscoverScreen() {
   const { session, signOut } = useAuth();
   const { locale } = useI18n();
-  const copy = discoveryCopy[locale];
+  const copy = getDiscoveryCopy(locale);
   const [query, setQuery] = useState('');
   const normalizedQuery = useMemo(() => query.trim(), [query]);
   const isClient = session?.user.role === 'Client';
@@ -40,33 +40,22 @@ export default function DiscoverScreen() {
             <Text style={styles.eyebrow}>{copy.eyebrow}</Text>
             <Text style={styles.title}>{copy.title}</Text>
             <Text style={styles.subtitle}>{copy.subtitle}</Text>
-            <TextInput
-              accessibilityLabel={copy.searchPlaceholder}
-              autoCapitalize="none"
-              autoCorrect={false}
-              onChangeText={setQuery}
-              placeholder={copy.searchPlaceholder}
-              placeholderTextColor={colors.textSubtle}
-              style={styles.search}
-              value={query}
-            />
+            <TextInput accessibilityLabel={copy.searchPlaceholder} autoCapitalize="none" autoCorrect={false} onChangeText={setQuery} placeholder={copy.searchPlaceholder} placeholderTextColor={colors.textSubtle} style={styles.search} value={query} />
           </View>
         }
         renderItem={({ item }) => <ShopCard item={item} copy={copy} />}
         ListEmptyComponent={shopsQuery.isLoading
           ? <ActivityIndicator color={colors.primaryGlow} size="large" style={styles.state} />
           : <Text style={styles.stateText}>{shopsQuery.isError ? copy.error : copy.empty}</Text>}
-        ListFooterComponent={
-          session
-            ? (!isClient ? <Pressable accessibilityRole="button" onPress={() => router.push('/(app)')} style={({ pressed }) => [styles.staffButton, pressed && styles.pressed]}><Text style={styles.staffButtonText}>Volver al espacio profesional</Text></Pressable> : null)
-            : <Pressable accessibilityRole="button" onPress={() => router.push('/(auth)/login')} style={({ pressed }) => [styles.staffButton, pressed && styles.pressed]}><Text style={styles.staffButtonText}>{copy.staffLogin}</Text></Pressable>
-        }
+        ListFooterComponent={session
+          ? (!isClient ? <Pressable accessibilityRole="button" onPress={() => router.push('/(app)')} style={({ pressed }) => [styles.staffButton, pressed && styles.pressed]}><Text style={styles.staffButtonText}>Volver al espacio profesional</Text></Pressable> : null)
+          : <Pressable accessibilityRole="button" onPress={() => router.push('/(auth)/login')} style={({ pressed }) => [styles.staffButton, pressed && styles.pressed]}><Text style={styles.staffButtonText}>{copy.staffLogin}</Text></Pressable>}
       />
     </View>
   );
 }
 
-function ShopCard({ item, copy }: { item: DiscoveryShopCard; copy: (typeof discoveryCopy)[keyof typeof discoveryCopy] }) {
+function ShopCard({ item, copy }: { item: DiscoveryShopCard; copy: DiscoveryCopy }) {
   const waitText = item.estimatedWaitMinutes == null ? copy.unavailable : item.estimatedWaitMinutes <= 0 ? copy.noWait : `${item.estimatedWaitMinutes} min`;
   return <View style={styles.card}>
     <View style={styles.cardTop}><View style={styles.cardIdentity}><Text style={styles.shopName}>{item.name}</Text>{!!item.address && <Text numberOfLines={2} style={styles.address}>{item.address}</Text>}</View><View style={styles.waitBadge}><Text style={styles.waitLabel}>{copy.liveWait}</Text><Text style={styles.waitValue}>{waitText}</Text></View></View>

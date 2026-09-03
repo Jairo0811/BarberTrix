@@ -14,10 +14,15 @@ type Labels = {
   requests: string;
 };
 
+const defaultLabels: Labels = {
+  home: 'Home',
+  requests: 'Requests',
+};
+
 const labelsByLocale: Record<string, Labels> = {
   'es-419': { home: 'Inicio', requests: 'Solicitudes' },
   'es-ES': { home: 'Inicio', requests: 'Solicitudes' },
-  en: { home: 'Home', requests: 'Requests' },
+  en: defaultLabels,
   'pt-BR': { home: 'Início', requests: 'Solicitações' },
   fr: { home: 'Accueil', requests: 'Demandes' },
   ht: { home: 'Akèy', requests: 'Demann' },
@@ -30,7 +35,7 @@ const labelsByLocale: Record<string, Labels> = {
 
 export function MobileBottomNav({ active }: Props) {
   const { locale } = useI18n();
-  const labels = labelsByLocale[locale] ?? labelsByLocale.en;
+  const labels: Labels = labelsByLocale[locale] ?? defaultLabels;
 
   return (
     <View accessibilityRole="tablist" style={styles.shell}>

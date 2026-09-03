@@ -84,44 +84,31 @@ internal sealed class PlanLimitService(ApplicationDbContext dbContext, IConfigur
         var rawStatus = shop.SubscriptionStatus == SubscriptionStatus.Trialing && shop.TrialEndsAtUtc <= DateTimeOffset.UtcNow
             ? SubscriptionStatus.PastDue
             : shop.SubscriptionStatus;
-        var paidEntitlement = (rawStatus is SubscriptionStatus.Active or SubscriptionStatus.Trialing) && shop.Plan != SubscriptionPlan.Free;
+        var normalizedShopPlan = shop.Plan.NormalizeCommercial();
+        var paidEntitlement = (rawStatus is SubscriptionStatus.Active or SubscriptionStatus.Trialing) && normalizedShopPlan != SubscriptionPlan.Free;
         var effectivePlan = isSystemAdmin
             ? SubscriptionPlan.Business
             : isDemo
                 ? SubscriptionPlan.Pro
                 : paidEntitlement
-                    ? shop.Plan
+                    ? normalizedShopPlan
                     : SubscriptionPlan.Free;
         var effectiveStatus = effectivePlan == SubscriptionPlan.Free ? SubscriptionStatus.Active : rawStatus;
 
         var barberLimit = isSystemAdmin ? Unlimited : isDemo ? 3 : effectivePlan switch
         {
             SubscriptionPlan.Free => 3,
-            SubscriptionPlan.Starter => 5,
             SubscriptionPlan.Pro => 10,
             _ => Unlimited
         };
-        var serviceLimit = isSystemAdmin || isDemo ? Unlimited : effectivePlan == SubscriptionPlan.Free ? 5 : Unlimited;
+        var serviceLimit = Unlimited;
         var locationLimit = isSystemAdmin ? Unlimited : isDemo ? 1 : effectivePlan == SubscriptionPlan.Business ? 3 : 1;
-        var monthlyTurnLimit = isSystemAdmin || isDemo ? Unlimited : effectivePlan switch
-        {
-            SubscriptionPlan.Free => 100,
-            SubscriptionPlan.Starter => 1000,
-            _ => Unlimited
-        };
-        var monthlyTurnGraceLimit = monthlyTurnLimit switch
-        {
-            100 => 110,
-            1000 => 1050,
-            _ => Unlimited
-        };
-        var historyRetentionDays = isSystemAdmin || isDemo ? Unlimited : effectivePlan switch
-        {
-            SubscriptionPlan.Free => 7,
-            SubscriptionPlan.Starter => 90,
-            _ => Unlimited
-        };
-        var canUseAppointments = isSystemAdmin || isDemo || effectivePlan is SubscriptionPlan.Pro or SubscriptionPlan.Business;
+        var monthlyTurnLimit = isSystemAdmin || isDemo || effectivePlan != SubscriptionPlan.Free ? Unlimited : 1000;
+        var monthlyTurnGraceLimit = monthlyTurnLimit == 1000 ? 1050 : Unlimited;
+        var historyRetentionDays = isSystemAdmin || isDemo || effectivePlan != SubscriptionPlan.Free
+            ? Unlimited
+            : DateTime.DaysInMonth(localNow.Year, localNow.Month);
+        var canUseAppointments = true;
         var canUseTv = isSystemAdmin || isDemo || effectivePlan is SubscriptionPlan.Pro or SubscriptionPlan.Business;
         var canUseAdvancedReports = isSystemAdmin || !isDemo && effectivePlan == SubscriptionPlan.Business;
         var canUseAdvancedAutomation = isSystemAdmin || !isDemo && effectivePlan is SubscriptionPlan.Pro or SubscriptionPlan.Business;
@@ -159,7 +146,7 @@ internal sealed class PlanLimitService(ApplicationDbContext dbContext, IConfigur
             _ => false
         };
         if (!allowed)
-            throw new InvalidOperationException($"The {feature} feature is not available for the current BarberTurn plan.");
+            throw new InvalidOperationException($"The {feature} feature is not available for the current BarberTrix plan.");
     }
 
     private static string FormatLimit(int value) => value == Unlimited ? "unlimited" : value.ToString(System.Globalization.CultureInfo.InvariantCulture);

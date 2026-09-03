@@ -78,7 +78,6 @@ services:
       PayPal__ClientId: ${BARBERTURN_PAYPAL_CLIENT_ID}
       PayPal__Secret: ${BARBERTURN_PAYPAL_SECRET}
       PayPal__WebhookId: ${BARBERTURN_PAYPAL_WEBHOOK_ID}
-      PayPal__PlanIds__Starter: ${BARBERTURN_PAYPAL_STARTER_PLAN_ID}
       PayPal__PlanIds__Pro: ${BARBERTURN_PAYPAL_PRO_PLAN_ID}
       PayPal__PlanIds__Business: ${BARBERTURN_PAYPAL_BUSINESS_PLAN_ID}
       Push__Enabled: "true"

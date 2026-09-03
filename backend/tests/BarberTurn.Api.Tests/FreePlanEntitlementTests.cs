@@ -18,7 +18,7 @@ public sealed class FreePlanEntitlementTests
     public FreePlanEntitlementTests(BarberTurnFactory factory) => this.factory = factory;
 
     [Fact]
-    public async Task NewOwnerStartsOnPermanentFreeEntitlements()
+    public async Task NewOwnerStartsOnConsolidatedPermanentFreeEntitlements()
     {
         using var client = CreateClient();
         var auth = await RegisterOwnerAsync(client);
@@ -29,15 +29,16 @@ public sealed class FreePlanEntitlementTests
         var usage = await response.Content.ReadFromJsonAsync<UsagePayload>();
 
         Assert.NotNull(usage);
+        var localNow = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("America/Santo_Domingo"));
         Assert.Equal("Free", usage.Plan);
         Assert.Equal("Active", usage.Status);
         Assert.Equal(3, usage.BarberLimit);
-        Assert.Equal(5, usage.ServiceLimit);
+        Assert.Equal(int.MaxValue, usage.ServiceLimit);
         Assert.Equal(1, usage.LocationLimit);
-        Assert.Equal(100, usage.MonthlyTurnLimit);
-        Assert.Equal(110, usage.MonthlyTurnGraceLimit);
-        Assert.Equal(7, usage.HistoryRetentionDays);
-        Assert.False(usage.CanUseAppointments);
+        Assert.Equal(1000, usage.MonthlyTurnLimit);
+        Assert.Equal(1050, usage.MonthlyTurnGraceLimit);
+        Assert.Equal(DateTime.DaysInMonth(localNow.Year, localNow.Month), usage.HistoryRetentionDays);
+        Assert.True(usage.CanUseAppointments);
         Assert.False(usage.CanUseTv);
         Assert.False(usage.CanUseAdvancedReports);
         Assert.False(usage.CanUseAdvancedAutomation);
@@ -61,20 +62,17 @@ public sealed class FreePlanEntitlementTests
     }
 
     [Fact]
-    public async Task FreeServiceLimitIsEnforcedServerSide()
+    public async Task FreeServicesAreUnlimitedServerSide()
     {
         using var client = CreateClient();
         var auth = await RegisterOwnerAsync(client);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth.AccessToken);
 
-        for (var index = 1; index <= 5; index++)
+        for (var index = 1; index <= 6; index++)
         {
             var created = await client.PostAsJsonAsync("/api/queue/services", new { name = $"Service {index}", price = 10m, estimatedDurationMinutes = 30, description = (string?)null });
             Assert.Equal(HttpStatusCode.Created, created.StatusCode);
         }
-
-        var rejected = await client.PostAsJsonAsync("/api/queue/services", new { name = "Service 6", price = 10m, estimatedDurationMinutes = 30, description = (string?)null });
-        Assert.Equal(HttpStatusCode.BadRequest, rejected.StatusCode);
     }
 
     [Fact]
@@ -95,7 +93,7 @@ public sealed class FreePlanEntitlementTests
             var tz = TimeZoneInfo.FindSystemTimeZoneById(shop.TimeZoneId);
             var localNow = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, tz);
             var today = new DateOnly(localNow.Year, localNow.Month, localNow.Day);
-            for (var index = 1; index <= 110; index++)
+            for (var index = 1; index <= 1050; index++)
                 db.Turns.Add(new Turn(shop.Id, service.Id, today, index, $"Customer {index}"));
             await db.SaveChangesAsync();
         }

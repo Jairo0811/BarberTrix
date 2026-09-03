@@ -12,6 +12,7 @@ public static class TvEndpoints
     {
         var admin = endpoints.MapGroup("/api/tv/displays")
             .WithTags("BarberTrix TV")
+            .RequireAuthorization("TenantUser")
             .RequireAuthorization(policy => policy.RequireRole("Owner", "Administrator"));
 
         admin.MapGet("/", async (HttpContext context, ITvDisplayService service, CancellationToken ct) =>

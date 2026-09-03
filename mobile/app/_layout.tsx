@@ -25,7 +25,7 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <PushNotificationsProvider>
-              <StatusBar style="light" backgroundColor={colors.background} />
+              <StatusBar style="light" />
               <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }} />
             </PushNotificationsProvider>
           </AuthProvider>

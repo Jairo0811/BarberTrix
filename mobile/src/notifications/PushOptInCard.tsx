@@ -42,7 +42,7 @@ export function PushOptInCard({ status, message, title, body, onEnable }: Props)
           accessibilityState={{ disabled: status === 'enabling' }}
           disabled={status === 'enabling'}
           onPress={onEnable}
-          style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
+          style={({ pressed }) => [styles.button, pressed && styles.buttonPressed, status === 'enabling' && styles.disabled]}
         >
           <Text style={styles.buttonText}>
             {status === 'enabling' ? t('push.enabling') : t('push.enable')}
@@ -101,4 +101,5 @@ const styles = StyleSheet.create({
   buttonPressed: { backgroundColor: colors.primaryPressed },
   buttonText: { color: colors.white, fontWeight: '900' },
   error: { marginTop: 2, color: colors.danger, fontWeight: '700', lineHeight: 19 },
+  disabled: { opacity: 0.55 },
 });

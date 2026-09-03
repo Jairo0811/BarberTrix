@@ -8,6 +8,40 @@ import { publicRequestStore } from '@/turnRequests/publicRequestStore';
 import { PushOptInCard } from '@/notifications/PushOptInCard';
 import { usePushNotifications } from '@/notifications/PushNotificationsProvider';
 import { useI18n } from '@/i18n/I18nProvider';
+import { colors, radius, spacing, typography } from '@/theme/tokens';
+import { BrandLogo } from '@/ui/BrandLogo';
+import { BrandedBackground } from '@/ui/BrandedBackground';
+
+function statusTone(status: string) {
+  switch (status) {
+    case 'Accepted':
+      return {
+        accent: colors.success,
+        background: 'rgba(84, 214, 138, 0.10)',
+        border: 'rgba(84, 214, 138, 0.28)',
+      };
+    case 'CounterProposed':
+      return {
+        accent: colors.warning,
+        background: 'rgba(255, 178, 74, 0.10)',
+        border: 'rgba(255, 178, 74, 0.28)',
+      };
+    case 'Rejected':
+    case 'Cancelled':
+    case 'Expired':
+      return {
+        accent: colors.danger,
+        background: colors.dangerSoft,
+        border: 'rgba(255, 122, 122, 0.26)',
+      };
+    default:
+      return {
+        accent: colors.primaryGlow,
+        background: colors.primarySoft,
+        border: colors.borderStrong,
+      };
+  }
+}
 
 export default function RequestStatusScreen() {
   const { locale, t } = useI18n();
@@ -55,33 +89,103 @@ export default function RequestStatusScreen() {
   }, [lookupToken, push.disableForRequest, requestId, requestQuery.data, slug]);
 
   if (lookupToken === undefined || requestQuery.isLoading) {
-    return <SafeAreaView style={styles.safe}><View style={styles.center}><ActivityIndicator /></View></SafeAreaView>;
+    return (
+      <SafeAreaView style={styles.safe}>
+        <BrandedBackground />
+        <View style={styles.centerState}>
+          <BrandLogo />
+          <ActivityIndicator color={colors.primaryGlow} size="large" />
+        </View>
+      </SafeAreaView>
+    );
   }
 
   if (!lookupToken) {
-    return <SafeAreaView style={styles.safe}><View style={styles.center}><Text style={styles.title}>{t('requestStatus.missingCredential')}</Text><Text style={styles.body}>{t('requestStatus.missingCredentialText')}</Text></View></SafeAreaView>;
+    return (
+      <SafeAreaView style={styles.safe}>
+        <BrandedBackground />
+        <View style={styles.centerState}>
+          <BrandLogo />
+          <Text style={styles.stateTitle}>{t('requestStatus.missingCredential')}</Text>
+          <Text style={styles.body}>{t('requestStatus.missingCredentialText')}</Text>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   const request = requestQuery.data;
+
   if (!request) {
-    return <SafeAreaView style={styles.safe}><View style={styles.center}><Text style={styles.title}>{t('requestStatus.loadError')}</Text><Pressable onPress={() => requestQuery.refetch()} style={styles.secondary}><Text style={styles.secondaryText}>{t('requestStatus.retry')}</Text></Pressable></View></SafeAreaView>;
+    return (
+      <SafeAreaView style={styles.safe}>
+        <BrandedBackground />
+        <View style={styles.centerState}>
+          <BrandLogo />
+          <Text style={styles.stateTitle}>{t('requestStatus.loadError')}</Text>
+          <Pressable accessibilityRole="button" onPress={() => requestQuery.refetch()} style={({ pressed }) => [styles.secondary, pressed && styles.secondaryPressed]}>
+            <Text style={styles.secondaryText}>{t('requestStatus.retry')}</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   const actionable = request.status === 'Pending' || request.status === 'CounterProposed';
+  const tone = statusTone(request.status);
 
   return (
     <SafeAreaView style={styles.safe}>
+      <BrandedBackground />
+
       <ScrollView
         contentContainerStyle={styles.content}
-        refreshControl={<RefreshControl refreshing={requestQuery.isRefetching} onRefresh={() => requestQuery.refetch()} />}
+        refreshControl={(
+          <RefreshControl
+            refreshing={requestQuery.isRefetching}
+            onRefresh={() => requestQuery.refetch()}
+            tintColor={colors.primaryGlow}
+            colors={[colors.primary]}
+            progressBackgroundColor={colors.surfaceStrong}
+          />
+        )}
+        showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.eyebrow}>{t('requestStatus.eyebrow')}</Text>
-        <Text style={styles.title}>{t(`requestStatus.${request.status}`)}</Text>
+        <View style={styles.brandHeader}>
+          <BrandLogo />
+          <Text style={styles.eyebrow}>{t('requestStatus.eyebrow')}</Text>
+        </View>
+
+        <View style={[styles.statusHero, { backgroundColor: tone.background, borderColor: tone.border }]}>
+          <View style={[styles.statusPulse, { backgroundColor: tone.accent }]} />
+          <View style={styles.statusCopy}>
+            <Text style={[styles.statusLabel, { color: tone.accent }]}>BARBERTRIX</Text>
+            <Text style={styles.title}>{t(`requestStatus.${request.status}`)}</Text>
+          </View>
+        </View>
+
         <View style={styles.statusCard}>
-          <Text style={styles.service}>{request.serviceName}</Text>
-          <Text style={styles.barber}>{t('requestStatus.withBarber', { barber: request.barberName })}</Text>
-          <Text style={styles.time}>{t('requestStatus.requestedAt', { date: dateFormatter.format(new Date(request.requestedStartsAtUtc)) })}</Text>
-          {request.counterProposedStartsAtUtc ? <Text style={styles.counter}>{t('requestStatus.counterAt', { date: dateFormatter.format(new Date(request.counterProposedStartsAtUtc)) })}</Text> : null}
+          <View style={styles.cardTopLine}>
+            <View style={styles.serviceIcon}><Text style={styles.serviceIconText}>BT</Text></View>
+            <View style={styles.serviceCopy}>
+              <Text style={styles.service}>{request.serviceName}</Text>
+              <Text style={styles.barber}>{t('requestStatus.withBarber', { barber: request.barberName })}</Text>
+            </View>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.infoRow}>
+            <Text style={styles.infoIcon}>◷</Text>
+            <Text style={styles.time}>{t('requestStatus.requestedAt', { date: dateFormatter.format(new Date(request.requestedStartsAtUtc)) })}</Text>
+          </View>
+
+          {request.counterProposedStartsAtUtc ? (
+            <View style={styles.counterBox}>
+              <Text style={styles.counterLabel}>↻</Text>
+              <Text style={styles.counter}>{t('requestStatus.counterAt', { date: dateFormatter.format(new Date(request.counterProposedStartsAtUtc)) })}</Text>
+            </View>
+          ) : null}
+
           {request.notes ? <Text style={styles.notes}>“{request.notes}”</Text> : null}
         </View>
 
@@ -96,50 +200,203 @@ export default function RequestStatusScreen() {
         ) : null}
 
         {request.status === 'CounterProposed' ? (
-          <Pressable disabled={acceptMutation.isPending} onPress={() => acceptMutation.mutate()} style={styles.primary}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ disabled: acceptMutation.isPending }}
+            disabled={acceptMutation.isPending}
+            onPress={() => acceptMutation.mutate()}
+            style={({ pressed }) => [styles.primary, pressed && styles.primaryPressed, acceptMutation.isPending && styles.disabled]}
+          >
             <Text style={styles.primaryText}>{acceptMutation.isPending ? t('requestStatus.confirming') : t('requestStatus.acceptNewTime')}</Text>
+            <Text style={styles.primaryArrow}>→</Text>
           </Pressable>
         ) : null}
 
         {request.status === 'Accepted' && request.appointmentId ? (
           <View style={styles.success}>
-            <Text style={styles.successTitle}>{t('requestStatus.appointmentCreated')}</Text>
-            <Text style={styles.body}>{t('requestStatus.secureTracking')}</Text>
+            <View style={styles.successIcon}><Text style={styles.successIconText}>✓</Text></View>
+            <View style={styles.successCopy}>
+              <Text style={styles.successTitle}>{t('requestStatus.appointmentCreated')}</Text>
+              <Text style={styles.body}>{t('requestStatus.secureTracking')}</Text>
+            </View>
           </View>
         ) : null}
 
         {actionable ? (
-          <Pressable disabled={cancelMutation.isPending} onPress={() => cancelMutation.mutate()} style={styles.secondary}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ disabled: cancelMutation.isPending }}
+            disabled={cancelMutation.isPending}
+            onPress={() => cancelMutation.mutate()}
+            style={({ pressed }) => [styles.secondary, pressed && styles.secondaryPressed, cancelMutation.isPending && styles.disabled]}
+          >
             <Text style={styles.secondaryText}>{cancelMutation.isPending ? t('requestStatus.cancelling') : t('requestStatus.cancel')}</Text>
           </Pressable>
         ) : null}
 
-        {acceptMutation.error || cancelMutation.error ? <Text accessibilityRole="alert" style={styles.error}>{t('requestStatus.operationError')}</Text> : null}
-        <Text style={styles.hint}>{t('requestStatus.autoRefresh')}</Text>
+        {acceptMutation.error || cancelMutation.error ? (
+          <View style={styles.errorBox}>
+            <Text accessibilityRole="alert" style={styles.error}>{t('requestStatus.operationError')}</Text>
+          </View>
+        ) : null}
+
+        <View style={styles.autoRefreshCard}>
+          <View style={styles.autoRefreshDot} />
+          <Text style={styles.hint}>{t('requestStatus.autoRefresh')}</Text>
+        </View>
+
+        <Text style={styles.footer}>BarberTrix · Secure request tracking</Text>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#f7f7f5' },
-  center: { flex: 1, justifyContent: 'center', padding: 24, gap: 14 },
-  content: { flexGrow: 1, padding: 24, justifyContent: 'center', gap: 16 },
-  eyebrow: { fontSize: 12, letterSpacing: 1.5, fontWeight: '900', color: '#686861' },
-  title: { fontSize: 30, lineHeight: 36, fontWeight: '900', color: '#111' },
-  body: { fontSize: 16, lineHeight: 23, color: '#55554f' },
-  statusCard: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#d7d7d0', borderRadius: 18, padding: 20, gap: 7 },
-  service: { fontSize: 22, fontWeight: '900', color: '#111' },
-  barber: { fontSize: 17, fontWeight: '700', color: '#44443f' },
-  time: { marginTop: 8, color: '#55554f' },
-  counter: { fontWeight: '900', fontSize: 16, color: '#111' },
-  notes: { marginTop: 6, color: '#686861', fontStyle: 'italic' },
-  primary: { minHeight: 54, borderRadius: 14, backgroundColor: '#111', alignItems: 'center', justifyContent: 'center' },
-  primaryText: { color: '#fff', fontWeight: '900' },
-  secondary: { minHeight: 50, borderRadius: 14, borderWidth: 1, borderColor: '#111', alignItems: 'center', justifyContent: 'center' },
-  secondaryText: { fontWeight: '800', color: '#111' },
-  success: { padding: 16, borderRadius: 14, backgroundColor: '#ecece5', gap: 5 },
-  successTitle: { fontWeight: '900', fontSize: 17 },
-  error: { color: '#a21414', fontWeight: '700' },
-  hint: { textAlign: 'center', color: '#77776f', fontSize: 13 },
+  safe: { flex: 1, backgroundColor: colors.background },
+  centerState: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 620,
+    alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.xl,
+    gap: spacing.lg,
+  },
+  content: {
+    flexGrow: 1,
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
+    padding: spacing.xl,
+    paddingBottom: 60,
+    justifyContent: 'center',
+    gap: spacing.lg,
+  },
+  brandHeader: { alignItems: 'center', gap: spacing.sm },
+  eyebrow: { ...typography.eyebrow, color: colors.textSubtle, textAlign: 'center' },
+  stateTitle: { ...typography.sectionTitle, color: colors.text, textAlign: 'center' },
+  body: { ...typography.body, color: colors.textMuted, textAlign: 'center' },
+  statusHero: {
+    minHeight: 120,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.lg,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+  },
+  statusPulse: { width: 12, height: 12, borderRadius: 6 },
+  statusCopy: { flex: 1, gap: 5 },
+  statusLabel: { fontSize: 10, fontWeight: '900', letterSpacing: 1.5 },
+  title: { color: colors.text, fontSize: 28, lineHeight: 34, fontWeight: '900', letterSpacing: -0.5 },
+  statusCard: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  cardTopLine: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  serviceIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primarySoft,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+  },
+  serviceIconText: { color: colors.primaryGlow, fontSize: 14, fontWeight: '900' },
+  serviceCopy: { flex: 1, gap: 4 },
+  service: { fontSize: 22, fontWeight: '900', color: colors.text },
+  barber: { fontSize: 15, fontWeight: '700', color: colors.textMuted },
+  divider: { height: 1, backgroundColor: colors.border },
+  infoRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  infoIcon: { color: colors.primaryGlow, fontSize: 16, fontWeight: '900' },
+  time: { flex: 1, color: colors.textMuted, lineHeight: 21 },
+  counterBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: 'rgba(255, 178, 74, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 178, 74, 0.18)',
+  },
+  counterLabel: { color: colors.warning, fontSize: 16, fontWeight: '900' },
+  counter: { flex: 1, fontWeight: '900', fontSize: 15, lineHeight: 21, color: colors.warning },
+  notes: { color: colors.textSubtle, fontStyle: 'italic', lineHeight: 20 },
+  primary: {
+    minHeight: 56,
+    borderRadius: radius.md,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+  },
+  primaryPressed: { backgroundColor: colors.primaryPressed },
+  primaryText: { color: colors.white, fontWeight: '900' },
+  primaryArrow: { position: 'absolute', right: 20, color: colors.white, fontSize: 21, fontWeight: '700' },
+  secondary: {
+    minHeight: 52,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    backgroundColor: colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 18,
+  },
+  secondaryPressed: { opacity: 0.76 },
+  secondaryText: { fontWeight: '900', color: colors.primaryGlow },
+  success: {
+    padding: spacing.lg,
+    borderRadius: radius.lg,
+    backgroundColor: colors.successSoft,
+    borderWidth: 1,
+    borderColor: 'rgba(84, 214, 138, 0.24)',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.md,
+  },
+  successIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(84, 214, 138, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(84, 214, 138, 0.24)',
+  },
+  successIconText: { color: colors.success, fontSize: 18, fontWeight: '900' },
+  successCopy: { flex: 1, gap: 4 },
+  successTitle: { color: colors.text, fontWeight: '900', fontSize: 17 },
+  disabled: { opacity: 0.48 },
+  errorBox: {
+    padding: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.dangerSoft,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 122, 122, 0.22)',
+  },
+  error: { color: colors.danger, fontWeight: '700', lineHeight: 20 },
+  autoRefreshCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: 'rgba(10, 18, 33, 0.62)',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  autoRefreshDot: { width: 8, height: 8, marginTop: 5, borderRadius: 4, backgroundColor: colors.success },
+  hint: { flex: 1, color: colors.textSubtle, fontSize: 12, lineHeight: 19 },
+  footer: { textAlign: 'center', color: colors.textSubtle, fontSize: 10, fontWeight: '700', marginTop: spacing.sm },
 });

@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "BarberTurn",
+    "name": "BarberTrix",
     "slug": "barberturn",
     "scheme": "barberturn",
     "version": "0.3.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "plugins": [
       "expo-router",
       "expo-notifications",

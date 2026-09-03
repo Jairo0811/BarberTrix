@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { HubConnectionBuilder } from '@microsoft/signalr'
 import { API_URL, ApiClientError, publicApi } from './api'
 import { useI18n } from './i18n'

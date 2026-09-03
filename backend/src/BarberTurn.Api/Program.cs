@@ -20,7 +20,7 @@ builder.Services.AddSignalR();
 builder.Services.AddScoped<IQueueNotifier, SignalRQueueNotifier>();
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
-    options.ForwardedHeaders = XForwardedFor | XForwardedProto;
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
     options.ForwardLimit = 1;
 });
 builder.Services.AddRateLimiter(options =>

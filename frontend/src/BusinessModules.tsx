@@ -11,6 +11,7 @@ import ReportsSection from './features/reports/components/ReportsSection'
 import TeamSection from './features/team/components/TeamSection'
 import LocationsSection from './features/locations/components/LocationsSection'
 import BillingSection from './features/billing/components/BillingSection'
+import TvAdminSection from './features/tv/components/TvAdminSection'
 
 type Props = {
   page: BusinessPageId
@@ -31,6 +32,7 @@ export default function BusinessModules({ page, auth, barbers, isDemo, isSystemA
   if (page === 'customers') return <CustomersSection isDemo={isDemo} />
   if (page === 'payments') return elevated ? <PaymentsSection isDemo={isDemo} /> : null
   if (page === 'reports') return elevated ? <ReportsSection isDemo={isDemo} capabilities={capabilities} /> : null
+  if (page === 'tv') return elevated ? <TvAdminSection capabilities={capabilities} /> : null
   if (page === 'team') return elevated ? <TeamSection auth={auth} barbers={barbers} isDemo={isDemo} isSystemAdmin={isSystemAdmin} /> : null
   if (page === 'locations') return hasOwnerAccess ? <LocationsSection isDemo={isDemo} shop={shop} onShopUpdated={onShopUpdated} /> : null
   if (page === 'billing') return hasOwnerAccess ? <BillingSection isDemo={isDemo} shop={shop} capabilities={capabilities} /> : null

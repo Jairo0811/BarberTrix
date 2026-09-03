@@ -31,7 +31,7 @@ public sealed class FreePlanEntitlementTests
         Assert.NotNull(usage);
         Assert.Equal("Free", usage.Plan);
         Assert.Equal("Active", usage.Status);
-        Assert.Equal(2, usage.BarberLimit);
+        Assert.Equal(3, usage.BarberLimit);
         Assert.Equal(5, usage.ServiceLimit);
         Assert.Equal(1, usage.LocationLimit);
         Assert.Equal(100, usage.MonthlyTurnLimit);
@@ -41,6 +41,23 @@ public sealed class FreePlanEntitlementTests
         Assert.False(usage.CanUseTv);
         Assert.False(usage.CanUseAdvancedReports);
         Assert.False(usage.CanUseAdvancedAutomation);
+    }
+
+    [Fact]
+    public async Task FreeBarberLimitAllowsThreeActiveBarbersAndRejectsFourth()
+    {
+        using var client = CreateClient();
+        var auth = await RegisterOwnerAsync(client);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth.AccessToken);
+
+        for (var index = 1; index <= 3; index++)
+        {
+            var created = await client.PostAsJsonAsync("/api/queue/barbers", new { name = $"Barber {index}", chairNumber = index });
+            Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        }
+
+        var rejected = await client.PostAsJsonAsync("/api/queue/barbers", new { name = "Barber 4", chairNumber = 4 });
+        Assert.Equal(HttpStatusCode.BadRequest, rejected.StatusCode);
     }
 
     [Fact]

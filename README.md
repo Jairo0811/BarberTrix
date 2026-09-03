@@ -121,7 +121,7 @@ Las capacidades se validan en servidor; ocultar o bloquear una opción en React 
 | Capacidad | Free | Starter | Pro | Business |
 |---|:---:|:---:|:---:|:---:|
 | Cola por llegada | ✅ 100/mes (+10 tolerancia) | ✅ 1,000/mes | ✅ alto volumen | ✅ alto volumen |
-| Barberos activos | 2 | 5 | 10 | Ilimitados |
+| Barberos activos | **3** | 5 | 10 | Ilimitados |
 | Servicios activos | 5 | Ilimitados | Ilimitados | Ilimitados |
 | Historial de turnos | 7 días | 90 días | Completo | Completo |
 | Notificaciones esenciales | ✅ | ✅ | ✅ | ✅ |
@@ -165,6 +165,21 @@ Características de i18n:
 
 ### 🟣 Backend
 
+<p align="left">
+  <img src="https://skillicons.dev/icons?i=dotnet&theme=dark" height="48" alt=".NET" />
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/csharp/csharp-original.svg" height="48" alt="C#" />
+</p>
+
+<p align="left">
+  <img src="https://img.shields.io/badge/.NET-10-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt=".NET 10" />
+  <img src="https://img.shields.io/badge/ASP.NET_Core-Web_API-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt="ASP.NET Core Web API" />
+  <img src="https://img.shields.io/badge/Entity_Framework_Core-ORM-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt="Entity Framework Core" />
+  <img src="https://img.shields.io/badge/JWT-Refresh_Rotation-111827?style=flat-square&logo=jsonwebtokens&logoColor=white" alt="JWT con refresh rotation" />
+  <img src="https://img.shields.io/badge/SignalR-Realtime-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt="SignalR" />
+  <img src="https://img.shields.io/badge/OpenAPI-Development-6BA539?style=flat-square&logo=openapiinitiative&logoColor=white" alt="OpenAPI" />
+  <img src="https://img.shields.io/badge/PayPal-REST_API-003087?style=flat-square&logo=paypal&logoColor=white" alt="PayPal REST API" />
+</p>
+
 - .NET 10;
 - C#;
 - ASP.NET Core Web API;
@@ -177,6 +192,20 @@ Características de i18n:
 - arquitectura por capas Domain / Application / Infrastructure / API.
 
 ### 🔵 Frontend web
+
+<p align="left">
+  <img src="https://skillicons.dev/icons?i=react,ts,vite,html,css&theme=dark" height="48" alt="React, TypeScript, Vite, HTML y CSS" />
+</p>
+
+<p align="left">
+  <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=111827" alt="React 19" />
+  <img src="https://img.shields.io/badge/React_Router-7.18.3-CA4245?style=flat-square&logo=reactrouter&logoColor=white" alt="React Router 7.18.3" />
+  <img src="https://img.shields.io/badge/TypeScript-5.9-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript 5.9" />
+  <img src="https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite 8" />
+  <img src="https://img.shields.io/badge/Font_Awesome-Icons-528DD7?style=flat-square&logo=fontawesome&logoColor=white" alt="Font Awesome" />
+  <img src="https://img.shields.io/badge/Vitest-4-6E9F18?style=flat-square&logo=vitest&logoColor=white" alt="Vitest 4" />
+  <img src="https://img.shields.io/badge/Playwright-1.62-2EAD33?style=flat-square&logo=playwright&logoColor=white" alt="Playwright 1.62" />
+</p>
 
 - React 19;
 - React Router 7.18.3 con `HashRouter`;
@@ -191,6 +220,17 @@ Características de i18n:
 
 ### 📱 Mobile
 
+<p align="left">
+  <img src="https://img.shields.io/badge/React_Native-0.86.3-61DAFB?style=flat-square&logo=react&logoColor=111827" alt="React Native 0.86.3" />
+  <img src="https://img.shields.io/badge/Expo_SDK-57-000020?style=flat-square&logo=expo&logoColor=white" alt="Expo SDK 57" />
+  <img src="https://img.shields.io/badge/Expo_Router-57-000020?style=flat-square&logo=expo&logoColor=white" alt="Expo Router 57" />
+  <img src="https://img.shields.io/badge/TypeScript-6-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript 6" />
+  <img src="https://img.shields.io/badge/TanStack_Query-5-FF4154?style=flat-square&logo=reactquery&logoColor=white" alt="TanStack Query 5" />
+  <img src="https://img.shields.io/badge/SignalR-Realtime-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt="SignalR" />
+  <img src="https://img.shields.io/badge/Expo_SecureStore-Secure_Session-000020?style=flat-square&logo=expo&logoColor=white" alt="Expo SecureStore" />
+  <img src="https://img.shields.io/badge/Expo_Notifications-Push-000020?style=flat-square&logo=expo&logoColor=white" alt="Expo Notifications" />
+</p>
+
 - React Native 0.86;
 - React 19;
 - Expo SDK 57;
@@ -204,6 +244,21 @@ Características de i18n:
 - export/bundle Android validado en CI.
 
 ### 🗄️ Datos e infraestructura
+
+<p align="left">
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/microsoftsqlserver/microsoftsqlserver-original.svg" height="48" alt="SQL Server" />
+  <img src="https://skillicons.dev/icons?i=docker,nginx,github&theme=dark" height="48" alt="Docker, Nginx y GitHub" />
+</p>
+
+<p align="left">
+  <img src="https://img.shields.io/badge/SQL_Server-2022-CC2927?style=flat-square&logo=microsoftsqlserver&logoColor=white" alt="SQL Server 2022" />
+  <img src="https://img.shields.io/badge/Docker_Compose-Orchestration-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker Compose" />
+  <img src="https://img.shields.io/badge/Nginx-Frontend-009639?style=flat-square&logo=nginx&logoColor=white" alt="Nginx" />
+  <img src="https://img.shields.io/badge/Netlify-Frontend_Reference-00C7B7?style=flat-square&logo=netlify&logoColor=white" alt="Netlify" />
+  <img src="https://img.shields.io/badge/GitHub_Actions-CI-2088FF?style=flat-square&logo=githubactions&logoColor=white" alt="GitHub Actions" />
+  <img src="https://img.shields.io/badge/CodeQL-Security-181717?style=flat-square&logo=github&logoColor=white" alt="CodeQL" />
+  <img src="https://img.shields.io/badge/Gitleaks-Secret_Scan-6E40C9?style=flat-square&logo=github&logoColor=white" alt="Gitleaks" />
+</p>
 
 - SQL Server 2022;
 - Docker + Docker Compose;

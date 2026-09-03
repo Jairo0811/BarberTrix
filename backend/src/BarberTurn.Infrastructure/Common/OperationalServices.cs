@@ -96,7 +96,7 @@ internal sealed class PlanLimitService(ApplicationDbContext dbContext, IConfigur
 
         var barberLimit = isSystemAdmin ? Unlimited : isDemo ? 3 : effectivePlan switch
         {
-            SubscriptionPlan.Free => 2,
+            SubscriptionPlan.Free => 3,
             SubscriptionPlan.Starter => 5,
             SubscriptionPlan.Pro => 10,
             _ => Unlimited

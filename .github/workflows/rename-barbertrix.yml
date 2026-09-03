@@ -62,7 +62,6 @@ jobs:
                   value = value.replace(old, new)
               return value
 
-          # Rename files first, then directories bottom-up. Git will infer renames after git add -A.
           for current_root, dirs, files in os.walk('.', topdown=False):
               if current_root.startswith('./.git'):
                   continue
@@ -112,3 +111,5 @@ jobs:
           fi
           git commit -m 'refactor: complete BarberTurn to BarberTrix rename'
           git push origin HEAD:refactor/rename-barberturn-to-barbertrix
+
+# One-time migration workflow. Remove after PR #92 is complete.

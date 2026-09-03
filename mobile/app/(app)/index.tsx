@@ -7,6 +7,8 @@ import { PushOptInCard } from '@/notifications/PushOptInCard';
 import { usePushNotifications } from '@/notifications/PushNotificationsProvider';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 import { BrandLogo } from '@/ui/BrandLogo';
+import { BrandedBackground } from '@/ui/BrandedBackground';
+import { MobileBottomNav } from '@/ui/MobileBottomNav';
 
 export default function HomeScreen() {
   const { session, signOut } = useAuth();
@@ -17,98 +19,104 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.backgroundDecor}>
-        <View style={styles.glow} />
-      </View>
+      <BrandedBackground compact />
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.topbar}>
-          <BrandLogo compact />
+      <View style={styles.shell}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.topbar}>
+            <BrandLogo compact />
 
-          <Pressable accessibilityRole="button" onPress={signOut} style={({ pressed }) => [styles.logout, pressed && styles.logoutPressed]}>
-            <Text style={styles.logoutText}>{t('home.signOut')}</Text>
+            <Pressable
+              accessibilityRole="button"
+              onPress={signOut}
+              style={({ pressed }) => [styles.logout, pressed && styles.logoutPressed]}
+            >
+              <Text style={styles.logoutText}>{t('home.signOut')}</Text>
+            </Pressable>
+          </View>
+
+          <View style={styles.hero}>
+            <Text style={styles.eyebrow}>BARBERTRIX MOBILE</Text>
+            <Text style={styles.title}>{t('home.hello', { name: session?.user.name ?? t('home.team') })}</Text>
+            <View style={styles.roleBadge}>
+              <View style={styles.roleDot} />
+              <Text style={styles.roleText}>{roleLabel}</Text>
+            </View>
+            <Text style={styles.body}>{t('home.body')}</Text>
+          </View>
+
+          <View style={styles.metricsRow}>
+            <View style={styles.metricCard}>
+              <Text style={styles.metricValue}>LIVE</Text>
+              <Text style={styles.metricLabel}>{t('home.requests')}</Text>
+            </View>
+            <View style={styles.metricCard}>
+              <Text style={styles.metricValue}>{roleLabel || '—'}</Text>
+              <Text style={styles.metricLabel}>BarberTrix</Text>
+            </View>
+          </View>
+
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push('/(app)/turn-requests')}
+            style={({ pressed }) => [styles.primaryCard, pressed && styles.primaryCardPressed]}
+          >
+            <View style={styles.cardGlow} />
+            <View style={styles.cardHeader}>
+              <View style={styles.cardIcon}>
+                <Text style={styles.cardIconText}>↻</Text>
+              </View>
+              <View style={styles.liveBadge}>
+                <View style={styles.liveDot} />
+                <Text style={styles.liveText}>LIVE</Text>
+              </View>
+            </View>
+            <Text style={styles.cardTitle}>{t('home.requests')}</Text>
+            <Text style={styles.cardText}>{t('home.requestsText')}</Text>
+            <View style={styles.cardAction}>
+              <Text style={styles.cardActionText}>{t('home.requests')}</Text>
+              <Text style={styles.cardArrow}>→</Text>
+            </View>
           </Pressable>
-        </View>
 
-        <View style={styles.hero}>
-          <Text style={styles.eyebrow}>{t('mobile.homeEyebrow')}</Text>
-          <Text style={styles.title}>{t('home.hello', { name: session?.user.name ?? t('home.team') })}</Text>
-          <View style={styles.roleBadge}>
-            <View style={styles.roleDot} />
-            <Text style={styles.roleText}>{roleLabel}</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionEyebrow}>BARBERTRIX</Text>
+            <Text style={styles.sectionTitle}>{t('home.pushTitle')}</Text>
           </View>
-          <Text style={styles.body}>{t('home.body')}</Text>
-        </View>
 
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => router.push('/(app)/turn-requests')}
-          style={({ pressed }) => [styles.primaryCard, pressed && styles.primaryCardPressed]}
-        >
-          <View style={styles.cardGlow} />
-          <View style={styles.cardHeader}>
-            <View style={styles.cardIcon}>
-              <Text style={styles.cardIconText}>↻</Text>
-            </View>
-            <View style={styles.liveBadge}>
-              <View style={styles.liveDot} />
-              <Text style={styles.liveText}>LIVE</Text>
-            </View>
+          <PushOptInCard
+            status={push.status}
+            message={push.message}
+            title={t('home.pushTitle')}
+            body={t('home.pushBody')}
+            onEnable={() => push.enableForStaff()}
+          />
+
+          <View style={styles.footerCard}>
+            <View style={styles.footerLine} />
+            <Text style={styles.footerBrand}>BarberTrix</Text>
+            <Text style={styles.footerText}>Mobile workspace</Text>
           </View>
-          <Text style={styles.cardTitle}>{t('home.requests')}</Text>
-          <Text style={styles.cardText}>{t('home.requestsText')}</Text>
-          <View style={styles.cardAction}>
-            <Text style={styles.cardActionText}>{t('home.requests')}</Text>
-            <Text style={styles.cardArrow}>→</Text>
-          </View>
-        </Pressable>
+        </ScrollView>
 
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionEyebrow}>BARBERTRIX</Text>
-          <Text style={styles.sectionTitle}>{t('home.pushTitle')}</Text>
+        <View style={styles.navWrap}>
+          <MobileBottomNav active="home" />
         </View>
-
-        <PushOptInCard
-          status={push.status}
-          message={push.message}
-          title={t('home.pushTitle')}
-          body={t('home.pushBody')}
-          onEnable={() => push.enableForStaff()}
-        />
-
-        <View style={styles.footerCard}>
-          <View style={styles.footerLine} />
-          <Text style={styles.footerBrand}>BarberTrix</Text>
-          <Text style={styles.footerText}>Mobile workspace</Text>
-        </View>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
-  backgroundDecor: {
-    ...StyleSheet.absoluteFill,
-    overflow: 'hidden',
-    pointerEvents: 'none',
-  },
-  glow: {
-    position: 'absolute',
-    width: 420,
-    height: 420,
-    borderRadius: 210,
-    top: -250,
-    right: -190,
-    backgroundColor: 'rgba(22, 135, 255, 0.12)',
-  },
+  shell: { flex: 1 },
   content: {
     width: '100%',
     maxWidth: 760,
     alignSelf: 'center',
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.lg,
-    paddingBottom: 48,
+    paddingBottom: spacing.xl,
     gap: spacing.xl,
   },
   topbar: {
@@ -129,7 +137,7 @@ const styles = StyleSheet.create({
   },
   logoutPressed: { backgroundColor: colors.surfaceSoft },
   logoutText: { color: colors.textMuted, fontSize: 12, fontWeight: '800' },
-  hero: { gap: spacing.sm, paddingTop: spacing.md },
+  hero: { gap: spacing.sm, paddingTop: spacing.sm },
   eyebrow: { ...typography.eyebrow, color: colors.primaryGlow },
   title: { ...typography.title, color: colors.text },
   roleBadge: {
@@ -147,6 +155,20 @@ const styles = StyleSheet.create({
   roleDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.success },
   roleText: { color: colors.primaryGlow, fontSize: 11, fontWeight: '900' },
   body: { ...typography.body, color: colors.textMuted, maxWidth: 620 },
+  metricsRow: { flexDirection: 'row', gap: spacing.sm },
+  metricCard: {
+    flex: 1,
+    minHeight: 88,
+    justifyContent: 'center',
+    gap: 5,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: 'rgba(10, 18, 33, 0.84)',
+  },
+  metricValue: { color: colors.text, fontSize: 15, fontWeight: '900' },
+  metricLabel: { color: colors.textSubtle, fontSize: 11, fontWeight: '700' },
   primaryCard: {
     position: 'relative',
     overflow: 'hidden',
@@ -204,4 +226,12 @@ const styles = StyleSheet.create({
   footerLine: { width: 48, height: 2, borderRadius: 2, backgroundColor: colors.borderStrong, marginBottom: 4 },
   footerBrand: { color: colors.textMuted, fontWeight: '900', fontSize: 12 },
   footerText: { color: colors.textSubtle, fontSize: 10, letterSpacing: 1 },
+  navWrap: {
+    width: '100%',
+    maxWidth: 760,
+    alignSelf: 'center',
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.sm,
+    backgroundColor: 'rgba(5, 9, 18, 0.92)',
+  },
 });

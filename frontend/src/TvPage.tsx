@@ -1,9 +1,10 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { HubConnectionBuilder } from '@microsoft/signalr'
 import { API_URL, ApiClientError, publicApi } from './api'
 import { useI18n } from './i18n'
 import { turnStatusLabel } from './i18n/domainLabels'
 import { getHomeAuxCopy } from './i18n/homeAuxCopy'
+import { clampTvVolume, collectNewCalledTurns, TvNarrator } from './features/tv/tvNarration'
 import './tv.css'
 
 type TvTurn = { ticketNumber: string; status: string; barberName?: string; chairNumber?: number }
@@ -13,10 +14,22 @@ type PairResponse = { displayToken: string; displayId: string; displayName: stri
 type ConnectionState = 'connected' | 'reconnecting' | 'offline'
 
 const displayTokenStorageKey = 'barbertrix.tv.displayToken'
+const audioEnabledStorageKey = 'barbertrix.tv.audioEnabled'
+const audioVolumeStorageKey = 'barbertrix.tv.volume'
 const displayTokenHeader = 'X-BarberTrix-TV-Token'
+const defaultAudioVolume = 0.85
 
 function readDisplayToken() {
   return localStorage.getItem(displayTokenStorageKey)?.trim() || null
+}
+
+function readAudioEnabled() {
+  return localStorage.getItem(audioEnabledStorageKey) !== 'false'
+}
+
+function readAudioVolume() {
+  const stored = localStorage.getItem(audioVolumeStorageKey)
+  return stored === null ? defaultAudioVolume : clampTvVolume(Number(stored))
 }
 
 export default function TvPage() {
@@ -27,7 +40,36 @@ export default function TvPage() {
   const [pairing, setPairing] = useState(false)
   const [pairingError, setPairingError] = useState('')
   const [connectionState, setConnectionState] = useState<ConnectionState>('offline')
+  const [audioEnabled, setAudioEnabled] = useState(readAudioEnabled)
+  const [audioVolume, setAudioVolume] = useState(readAudioVolume)
+  const narratorRef = useRef<TvNarrator | null>(null)
+  const calledTurnKeysRef = useRef<Set<string> | null>(null)
   const auxCopy = getHomeAuxCopy(locale)
+
+  const getNarrator = () => {
+    narratorRef.current ??= new TvNarrator()
+    return narratorRef.current
+  }
+
+  useEffect(() => () => narratorRef.current?.cancel(), [])
+
+  useEffect(() => {
+    calledTurnKeysRef.current = null
+    narratorRef.current?.cancel()
+  }, [displayToken])
+
+  useEffect(() => {
+    if (!snapshot) {
+      calledTurnKeysRef.current = null
+      return
+    }
+
+    const delta = collectNewCalledTurns(calledTurnKeysRef.current, snapshot.queue.turns)
+    calledTurnKeysRef.current = delta.currentKeys
+    if (audioEnabled && delta.newTurns.length > 0) {
+      getNarrator().announce(delta.newTurns, audioVolume)
+    }
+  }, [snapshot, audioEnabled, audioVolume])
 
   useEffect(() => {
     if (!displayToken) return
@@ -124,6 +166,27 @@ export default function TvPage() {
     }
   }
 
+  function toggleAudio() {
+    const next = !audioEnabled
+    localStorage.setItem(audioEnabledStorageKey, String(next))
+    setAudioEnabled(next)
+    if (!next) narratorRef.current?.cancel()
+  }
+
+  function changeAudioVolume(nextPercent: number) {
+    const next = clampTvVolume(nextPercent / 100)
+    localStorage.setItem(audioVolumeStorageKey, String(next))
+    setAudioVolume(next)
+  }
+
+  function testAudio() {
+    if (!audioEnabled) {
+      localStorage.setItem(audioEnabledStorageKey, 'true')
+      setAudioEnabled(true)
+    }
+    getNarrator().test(audioVolume)
+  }
+
   const calledTurns = snapshot?.queue.turns.filter(turn => turn.status === 'Called') ?? []
   const inServiceTurns = snapshot?.queue.turns.filter(turn => turn.status === 'InService') ?? []
   const waitingTurns = snapshot?.queue.turns.filter(turn => turn.status === 'Waiting') ?? []
@@ -166,7 +229,30 @@ export default function TvPage() {
     <header className="tv-header">
       <img src="/branding/barberturn-logo.png" alt="BarberTrix" />
       <div><span className="tv-eyebrow">{t('tv.liveQueue')}</span><h1>{snapshot.shopName}</h1><small>{snapshot.displayName}</small></div>
-      <aside><strong>{snapshot.queue.estimatedWaitMinutes} min</strong><small>{t('tv.estimatedWait')}</small><span className={`tv-connection ${connectionState}`}>{t(`tv.connection.${connectionState}`)}</span></aside>
+      <aside>
+        <strong>{snapshot.queue.estimatedWaitMinutes} min</strong>
+        <small>{t('tv.estimatedWait')}</small>
+        <span className={`tv-connection ${connectionState}`}>{t(`tv.connection.${connectionState}`)}</span>
+        <div className="tv-audio-controls">
+          <button type="button" className={audioEnabled ? 'active' : ''} aria-pressed={audioEnabled} onClick={toggleAudio}>
+            {audioEnabled ? t('tv.audioOn') : t('tv.audioOff')}
+          </button>
+          <label className="tv-volume-control">
+            <span>{t('tv.audioVolume')}</span>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="5"
+              value={Math.round(audioVolume * 100)}
+              aria-label={t('tv.audioVolume')}
+              disabled={!audioEnabled}
+              onChange={event => changeAudioVolume(Number(event.target.value))}
+            />
+          </label>
+          <button type="button" onClick={testAudio}>{t('tv.audioTest')}</button>
+        </div>
+      </aside>
     </header>
 
     <section className="tv-now-section" aria-live="polite">

@@ -30,6 +30,9 @@ public static class ApiErrorCodes
     public const string PaymentInvalid = "PAYMENT_INVALID";
     public const string BillingInvalid = "BILLING_INVALID";
     public const string BillingWebhookInvalid = "BILLING_WEBHOOK_INVALID";
+    public const string TvInvalid = "TV_INVALID";
+    public const string TvPairingInvalid = "TV_PAIRING_INVALID";
+    public const string TvSessionInvalid = "TV_SESSION_INVALID";
     public const string DemoFeatureUnavailable = "DEMO_FEATURE_UNAVAILABLE";
     public const string TenantContextInvalid = "TENANT_CONTEXT_INVALID";
 }

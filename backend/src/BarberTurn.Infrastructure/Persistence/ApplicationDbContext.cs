@@ -26,6 +26,7 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
     public DbSet<PaymentRecord> Payments => Set<PaymentRecord>();
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
     public DbSet<ShopLocation> ShopLocations => Set<ShopLocation>();
+    public DbSet<TvDisplay> TvDisplays => Set<TvDisplay>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -308,6 +309,19 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
             entity.HasOne<Turn>().WithMany().HasForeignKey(x => x.TurnId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<Appointment>().WithMany().HasForeignKey(x => x.AppointmentId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<Customer>().WithMany().HasForeignKey(x => x.CustomerId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<TvDisplay>(entity =>
+        {
+            entity.ToTable("TvDisplays");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Name).HasMaxLength(120).IsRequired();
+            entity.Property(x => x.PairingCodeHash).HasMaxLength(64);
+            entity.Property(x => x.DisplayTokenHash).HasMaxLength(64);
+            entity.HasIndex(x => x.PairingCodeHash).IsUnique().HasFilter("[PairingCodeHash] IS NOT NULL");
+            entity.HasIndex(x => x.DisplayTokenHash).IsUnique().HasFilter("[DisplayTokenHash] IS NOT NULL");
+            entity.HasIndex(x => new { x.BarberShopId, x.IsActive });
+            entity.HasOne<BarberShop>().WithMany().HasForeignKey(x => x.BarberShopId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Subscription>(entity =>

@@ -113,7 +113,7 @@ function RouteEffects() {
   useEffect(() => {
     if (isAdminRoute) return
 
-    document.title = route === 'home' ? homeTitle : `${currentView} | BarberTurn`
+    document.title = route === 'home' ? homeTitle : `${currentView} | BarberTrix`
 
     const frame = window.requestAnimationFrame(() => {
       const main = document.querySelector<HTMLElement>('main')
@@ -138,12 +138,14 @@ function RouteEffects() {
 
 function AppRoutes() {
   const { t } = useI18n()
+  const location = useLocation()
+  const isTvRoute = location.pathname === '/tv'
 
   return (
     <>
       <InPageAnchorCompatibility />
       <RouteEffects />
-      <LanguageSwitcher />
+      {!isTvRoute && <LanguageSwitcher />}
       <Suspense fallback={<main><p>{t('app.loading')}</p></main>}>
         <Routes>
           <Route path="/" element={<HomePage />} />

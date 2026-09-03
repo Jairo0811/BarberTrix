@@ -29,6 +29,7 @@ builder.Services.AddRateLimiter(options =>
     options.AddPolicy("auth", context => RateLimitPartition.GetFixedWindowLimiter(context.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions { PermitLimit = isTesting ? 1000 : 10, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
     options.AddPolicy("registration", context => RateLimitPartition.GetFixedWindowLimiter(context.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions { PermitLimit = isTesting ? 1000 : 5, Window = TimeSpan.FromHours(1), QueueLimit = 0 }));
     options.AddPolicy("publicQueue", context => RateLimitPartition.GetFixedWindowLimiter(context.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions { PermitLimit = isTesting ? 1000 : 60, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+    options.AddPolicy("tvPairing", context => RateLimitPartition.GetFixedWindowLimiter(context.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions { PermitLimit = isTesting ? 1000 : 12, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
     options.AddPolicy("webhooks", context => RateLimitPartition.GetFixedWindowLimiter(context.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions { PermitLimit = isTesting ? 1000 : 120, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
 });
 builder.Services.ConfigureHttpJsonOptions(options =>
@@ -94,6 +95,7 @@ app.MapQueueEndpoints();
 app.MapAppointmentEndpoints();
 app.MapTurnRequestEndpoints();
 app.MapPushEndpoints();
+app.MapTvEndpoints();
 app.MapCommercialEndpoints();
 app.MapCustomerCrmEndpoints();
 app.MapCashEndpoints();

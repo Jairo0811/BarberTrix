@@ -1,11 +1,12 @@
 using BarberTurn.Application.Common;
+using BarberTurn.Application.Tv;
 using BarberTurn.Infrastructure.Persistence;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace BarberTurn.Api.Realtime;
 
-public sealed class QueueHub(ApplicationDbContext dbContext) : Hub
+public sealed class QueueHub(ApplicationDbContext dbContext, ITvDisplayService tvDisplayService) : Hub
 {
     public override async Task OnConnectedAsync()
     {
@@ -16,7 +17,14 @@ public sealed class QueueHub(ApplicationDbContext dbContext) : Hub
 
     public Task<bool> JoinPublicShop(string slug) => JoinBySlugAsync(slug, PublicGroup);
 
-    public Task<bool> JoinTvShop(string slug) => JoinBySlugAsync(slug, TvGroup);
+    public async Task<bool> JoinTvDisplay(string displayToken)
+    {
+        var session = await tvDisplayService.ResolveSessionAsync(displayToken, Context.ConnectionAborted);
+        if (session is null)
+            return false;
+        await Groups.AddToGroupAsync(Context.ConnectionId, TvGroup(session.BarberShopId));
+        return true;
+    }
 
     private async Task<bool> JoinBySlugAsync(string slug, Func<Guid, string> groupFactory)
     {

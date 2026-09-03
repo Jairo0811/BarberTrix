@@ -2,6 +2,28 @@
   <img src="docs/images/barberturn-logo.png" alt="Logo de BarberTrix" width="720" />
 </p>
 
+<p align="center">
+  <img src="https://skillicons.dev/icons?i=dotnet,react,ts,vite,docker,nginx,github&theme=dark" alt="Tecnologías principales de BarberTrix" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/.NET-10-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt=".NET 10" />
+  <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=111827" alt="React 19" />
+  <img src="https://img.shields.io/badge/Expo_SDK-57-000020?style=flat-square&logo=expo&logoColor=white" alt="Expo SDK 57" />
+  <img src="https://img.shields.io/badge/SQL_Server-2022-CC2927?style=flat-square&logo=microsoftsqlserver&logoColor=white" alt="SQL Server 2022" />
+  <img src="https://img.shields.io/badge/i18n-10_locales-0EA5E9?style=flat-square" alt="10 idiomas oficiales" />
+  <img src="https://img.shields.io/badge/Accesibilidad-NORTIC_B2%20%2F%20WCAG-22C55E?style=flat-square" alt="Base de accesibilidad alineada con NORTIC B2 y WCAG" />
+</p>
+
+<p align="center">
+  <a href="https://github.com/Jairo0811/BarberTrix/actions/workflows/ci.yml">
+    <img src="https://github.com/Jairo0811/BarberTrix/actions/workflows/ci.yml/badge.svg" alt="CI" />
+  </a>
+  <a href="https://github.com/Jairo0811/BarberTrix/actions/workflows/security.yml">
+    <img src="https://github.com/Jairo0811/BarberTrix/actions/workflows/security.yml/badge.svg" alt="Security" />
+  </a>
+</p>
+
 # BarberTrix
 
 **BarberTrix** es una plataforma SaaS multi-tenant y multi-superficie para barberías: operación Web/Desktop, aplicación móvil para profesionales y clientes, BarberTrix TV, fila digital, citas, CRM, caja, reportes, equipos, sucursales, suscripciones y Marketplace/Discovery.
@@ -60,8 +82,6 @@ El modelo utiliza memberships, solicitudes e invitaciones en lugar de duplicar i
 
 ## 🧪 Usuarios de prueba
 
-El entorno de desarrollo puede sembrar perfiles diferenciados para validar permisos y experiencia por rol.
-
 | Perfil | Correo | Experiencia |
 |---|---|---|
 | Administrador de prueba | `admin@barbertrix.com.do` | Administración y validación de capacidades/planes |
@@ -72,8 +92,6 @@ El entorno de desarrollo puede sembrar perfiles diferenciados para validar permi
 > Las contraseñas de prueba **no se almacenan en el repositorio**. Se obtienen de la configuración segura de desarrollo (`SystemAdmin:Password` / `DemoAdmin:Password`). El seeder migra el correo administrativo histórico `admin@barberturn.com.do` a `admin@barbertrix.com.do` cuando corresponde.
 
 ## 💳 Planes
-
-Las capacidades se validan en servidor; ocultar una función en la interfaz nunca es el único control.
 
 | Capacidad | Free | Pro | Business |
 |---|:---:|:---:|:---:|
@@ -96,25 +114,74 @@ BarberTrix mantiene 10 locales oficiales en Web y Mobile: `es-419`, `en`, `pt-BR
 
 ## 🧰 Stack tecnológico
 
-### Backend
-- .NET 10 / C#;
+### 🟣 Backend
+
+<p align="left">
+  <img src="https://skillicons.dev/icons?i=dotnet&theme=dark" height="48" alt=".NET" />
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/csharp/csharp-original.svg" height="48" alt="C#" />
+</p>
+
+<p align="left">
+  <img src="https://img.shields.io/badge/.NET-10-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt=".NET 10" />
+  <img src="https://img.shields.io/badge/ASP.NET_Core-Web_API-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt="ASP.NET Core Web API" />
+  <img src="https://img.shields.io/badge/Entity_Framework_Core-ORM-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt="Entity Framework Core" />
+  <img src="https://img.shields.io/badge/JWT-Refresh_Rotation-111827?style=flat-square&logo=jsonwebtokens&logoColor=white" alt="JWT con refresh rotation" />
+  <img src="https://img.shields.io/badge/SignalR-Realtime-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt="SignalR" />
+  <img src="https://img.shields.io/badge/OpenAPI-Development-6BA539?style=flat-square&logo=openapiinitiative&logoColor=white" alt="OpenAPI" />
+  <img src="https://img.shields.io/badge/PayPal-REST_API-003087?style=flat-square&logo=paypal&logoColor=white" alt="PayPal REST API" />
+</p>
+
+- .NET 10;
+- C#;
 - ASP.NET Core Web API;
 - Entity Framework Core;
 - SQL Server 2022;
 - JWT + refresh rotation;
 - SignalR;
+- OpenAPI en Development;
 - PayPal REST API;
-- Domain / Application / Infrastructure / API.
+- arquitectura por capas Domain / Application / Infrastructure / API.
 
-### Web / Desktop
+### 🔵 Frontend web
+
+<p align="left">
+  <img src="https://skillicons.dev/icons?i=react,ts,vite,html,css&theme=dark" height="48" alt="React, TypeScript, Vite, HTML y CSS" />
+</p>
+
+<p align="left">
+  <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=111827" alt="React 19" />
+  <img src="https://img.shields.io/badge/React_Router-7.18.3-CA4245?style=flat-square&logo=reactrouter&logoColor=white" alt="React Router 7.18.3" />
+  <img src="https://img.shields.io/badge/TypeScript-5.9-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript 5.9" />
+  <img src="https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite 8" />
+  <img src="https://img.shields.io/badge/Font_Awesome-Icons-528DD7?style=flat-square&logo=fontawesome&logoColor=white" alt="Font Awesome" />
+  <img src="https://img.shields.io/badge/Vitest-4-6E9F18?style=flat-square&logo=vitest&logoColor=white" alt="Vitest 4" />
+  <img src="https://img.shields.io/badge/Playwright-1.62-2EAD33?style=flat-square&logo=playwright&logoColor=white" alt="Playwright 1.62" />
+</p>
+
 - React 19;
-- React Router + HashRouter;
-- TypeScript;
-- Vite;
-- Vitest / React Testing Library;
+- React Router 7.18.3 con `HashRouter`;
+- TypeScript 5.9;
+- Vite 8;
+- CSS modularizado por ownership global / portal / shared / feature;
+- Font Awesome;
+- QRCode;
+- SweetAlert2;
+- Vitest + React Testing Library;
 - Playwright.
 
-### Mobile
+### 📱 Mobile
+
+<p align="left">
+  <img src="https://img.shields.io/badge/React_Native-0.86.3-61DAFB?style=flat-square&logo=react&logoColor=111827" alt="React Native 0.86.3" />
+  <img src="https://img.shields.io/badge/Expo_SDK-57-000020?style=flat-square&logo=expo&logoColor=white" alt="Expo SDK 57" />
+  <img src="https://img.shields.io/badge/Expo_Router-57-000020?style=flat-square&logo=expo&logoColor=white" alt="Expo Router 57" />
+  <img src="https://img.shields.io/badge/TypeScript-6-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript 6" />
+  <img src="https://img.shields.io/badge/TanStack_Query-5-FF4154?style=flat-square&logo=reactquery&logoColor=white" alt="TanStack Query 5" />
+  <img src="https://img.shields.io/badge/SignalR-Realtime-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt="SignalR" />
+  <img src="https://img.shields.io/badge/Expo_SecureStore-Secure_Session-000020?style=flat-square&logo=expo&logoColor=white" alt="Expo SecureStore" />
+  <img src="https://img.shields.io/badge/Expo_Notifications-Push-000020?style=flat-square&logo=expo&logoColor=white" alt="Expo Notifications" />
+</p>
+
 - React Native 0.86;
 - React 19;
 - Expo SDK 57;
@@ -123,15 +190,24 @@ BarberTrix mantiene 10 locales oficiales en Web y Mobile: `es-419`, `en`, `pt-BR
 - TanStack Query;
 - SignalR;
 - Expo SecureStore;
-- Expo Notifications.
+- Expo Notifications;
+- typed routes regenerados antes de `tsc --noEmit`;
+- export/bundle Android validado en CI.
 
-### Infraestructura
+### 🗄️ Datos e infraestructura
+
+<p align="left">
+  <img src="https://skillicons.dev/icons?i=docker,nginx,github&theme=dark" height="48" alt="Docker, Nginx y GitHub" />
+</p>
+
 - SQL Server 2022;
-- Docker / Docker Compose;
+- Docker + Docker Compose;
 - Nginx;
+- Netlify para el frontend público de referencia;
 - GitHub Actions;
 - CodeQL;
-- Gitleaks.
+- Gitleaks;
+- cobertura backend/frontend con gates progresivos.
 
 ## 🏗️ Arquitectura
 
@@ -157,10 +233,6 @@ BarberTrix mantiene 10 locales oficiales en Web y Mobile: `es-419`, `en`, `pt-BR
 - rate limiting en endpoints públicos;
 - entitlements aplicados en servidor;
 - CI con auditorías, CodeQL y Gitleaks.
-
-## 🧪 Validación
-
-`main` se protege mediante GitHub Actions para backend .NET, frontend React, Mobile Expo, auditoría de dependencias, typecheck, Playwright E2E, E2E full-stack con SQL Server, contenedores de producción y análisis de seguridad.
 
 ## 🌐 Producción
 

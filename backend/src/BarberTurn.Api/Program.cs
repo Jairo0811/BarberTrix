@@ -94,6 +94,7 @@ app.MapBarberOnboardingEndpoints();
 app.MapQueueEndpoints();
 app.MapAppointmentEndpoints();
 app.MapTurnRequestEndpoints();
+app.MapDiscoveryEndpoints();
 app.MapPushEndpoints();
 app.MapTvEndpoints();
 app.MapCommercialEndpoints();

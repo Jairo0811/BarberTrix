@@ -5,7 +5,7 @@ export type MobileUser = {
   barberShopId: string | null;
   barberId?: string | null;
   name: string;
-  role: 'Owner' | 'Administrator' | 'Receptionist' | 'Barber' | string;
+  role: 'Owner' | 'Administrator' | 'Receptionist' | 'Barber' | 'Client' | string;
   isEmailVerified: boolean;
   sessionScope: 'Tenant' | 'Onboarding';
 };

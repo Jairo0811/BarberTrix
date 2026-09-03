@@ -54,7 +54,8 @@ public enum UserRole
     Owner = 1,
     Administrator = 2,
     Receptionist = 3,
-    Barber = 4
+    Barber = 4,
+    Client = 5
 }
 
 public sealed class User : BaseEntity
@@ -85,6 +86,9 @@ public sealed class User : BaseEntity
     public static User CreateIndependentBarber(string name, string email, string passwordHash) =>
         new(null, name, email, passwordHash, UserRole.Barber, null);
 
+    public static User CreateClient(string name, string email, string passwordHash) =>
+        new(null, name, email, passwordHash, UserRole.Client, null);
+
     public Guid? BarberShopId { get; private set; }
     public string Name { get; private set; } = string.Empty;
     public string Email { get; private set; } = string.Empty;
@@ -101,6 +105,16 @@ public sealed class User : BaseEntity
             throw new ArgumentException("Password hash is required.", nameof(passwordHash));
 
         PasswordHash = passwordHash;
+        SecurityStamp = Guid.NewGuid().ToString("N");
+        Touch();
+    }
+
+    public void ChangeEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email) || !email.Contains('@'))
+            throw new ArgumentException("A valid email is required.", nameof(email));
+
+        Email = email.Trim().ToLowerInvariant();
         SecurityStamp = Guid.NewGuid().ToString("N");
         Touch();
     }
@@ -125,6 +139,8 @@ public sealed class User : BaseEntity
             throw new ArgumentException("Barbershop is required.", nameof(barberShopId));
         if (BarberShopId.HasValue && BarberShopId.Value != barberShopId)
             throw new InvalidOperationException("The user already belongs to another barbershop.");
+        if (role == UserRole.Client)
+            throw new ArgumentException("Client accounts cannot be assigned to a barbershop tenant.", nameof(role));
         if (role == UserRole.Barber && barberId is null)
             throw new ArgumentException("A barber tenant assignment requires an operational barber.", nameof(barberId));
 

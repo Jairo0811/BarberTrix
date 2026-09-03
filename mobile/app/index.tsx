@@ -1,22 +1,24 @@
 import { Redirect } from 'expo-router';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useAuth } from '@/auth/AuthProvider';
+import { colors } from '@/theme/tokens';
 
 export default function IndexScreen() {
-  const { status } = useAuth();
+  const { status, session } = useAuth();
 
   if (status === 'loading') {
     return (
-      <View accessibilityLabel="Cargando BarberTurn" style={styles.loading}>
-        <ActivityIndicator size="large" />
+      <View accessibilityLabel="Cargando BarberTrix" style={styles.loading}>
+        <ActivityIndicator color={colors.primaryGlow} size="large" />
       </View>
     );
   }
 
+  if (session?.user.role === 'Client') return <Redirect href="/discover" />;
   if (status === 'onboarding') return <Redirect href="/onboarding" />;
-  return <Redirect href={status === 'authenticated' ? '/(app)' : '/(auth)/login'} />;
+  return <Redirect href={status === 'authenticated' ? '/(app)' : '/discover'} />;
 }
 
 const styles = StyleSheet.create({
-  loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#f7f7f5' },
+  loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
 });

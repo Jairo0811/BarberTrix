@@ -25,13 +25,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   logo: {
-    width: 300,
-    maxWidth: '88%',
-    height: 112,
+    width: 270,
+    maxWidth: '82%',
+    height: 100,
   },
   compactLogo: {
-    width: 180,
-    maxWidth: 180,
+    width: 176,
+    maxWidth: 176,
     height: 58,
   },
 });

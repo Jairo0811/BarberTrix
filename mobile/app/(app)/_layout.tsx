@@ -5,7 +5,7 @@ import { colors } from '@/theme/tokens';
 import { BrandedBackground } from '@/ui/BrandedBackground';
 
 export default function AuthenticatedLayout() {
-  const { status } = useAuth();
+  const { status, session } = useAuth();
 
   if (status === 'loading') {
     return (
@@ -16,11 +16,9 @@ export default function AuthenticatedLayout() {
     );
   }
 
+  if (session?.user.role === 'Client') return <Redirect href="/discover" />;
   if (status === 'onboarding') return <Redirect href="/onboarding" />;
-
-  if (status !== 'authenticated') {
-    return <Redirect href="/(auth)/login" />;
-  }
+  if (status !== 'authenticated') return <Redirect href="/(auth)/login" />;
 
   return <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }} />;
 }

@@ -162,7 +162,7 @@ internal sealed class TvDisplayService(
             var code = RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6", System.Globalization.CultureInfo.InvariantCulture);
             var codeHash = Hash(code);
             var collision = await dbContext.TvDisplays.AsNoTracking().AnyAsync(
-                item => item.PairingCodeHash == codeHash && item.PairingExpiresAtUtc > DateTimeOffset.UtcNow,
+                item => item.PairingCodeHash == codeHash,
                 cancellationToken);
             if (collision)
                 continue;

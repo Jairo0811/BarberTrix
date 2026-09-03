@@ -23,7 +23,7 @@ jobs:
         env:
           ACCEPT_EULA: Y
           MSSQL_PID: Developer
-          MSSQL_SA_PASSWORD: BarberTurn_CI_2026!Secure
+          MSSQL_SA_PASSWORD: BarberTrix_CI_2026!Secure
         ports:
           - 1433:1433
         options: >-
@@ -33,8 +33,8 @@ jobs:
           --health-retries 15
           --health-start-period 20s
     env:
-      BARBERTURN_TEST_CONNECTION: "Server=localhost,1433;Database=BarberTurnCi;User Id=sa;Password=BarberTurn_CI_2026!Secure;Encrypt=True;TrustServerCertificate=True"
-      ConnectionStrings__DefaultConnection: "Server=localhost,1433;Database=BarberTurnCi;User Id=sa;Password=BarberTurn_CI_2026!Secure;Encrypt=True;TrustServerCertificate=True"
+      BARBERTRIX_TEST_CONNECTION: "Server=localhost,1433;Database=BarberTrixCi;User Id=sa;Password=BarberTrix_CI_2026!Secure;Encrypt=True;TrustServerCertificate=True"
+      ConnectionStrings__DefaultConnection: "Server=localhost,1433;Database=BarberTrixCi;User Id=sa;Password=BarberTrix_CI_2026!Secure;Encrypt=True;TrustServerCertificate=True"
       Jwt__Key: "ci-only-jwt-key-with-more-than-thirty-two-characters-2026"
     steps:
       - uses: actions/checkout@v4
@@ -43,13 +43,13 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - name: Restore
-        run: dotnet restore BarberTurn.sln
+        run: dotnet restore BarberTrix.sln
       - name: Build
-        run: dotnet build BarberTurn.sln --configuration Release --no-restore
+        run: dotnet build BarberTrix.sln --configuration Release --no-restore
       - name: Test with coverage
-        run: dotnet test BarberTurn.sln --configuration Release --no-build --no-restore --collect:"XPlat Code Coverage" --results-directory backend/TestResults
+        run: dotnet test BarberTrix.sln --configuration Release --no-build --no-restore --collect:"XPlat Code Coverage" --results-directory backend/TestResults
       - name: Validate critical backend coverage
-        run: python3 backend/scripts/check_coverage.py --reports backend/TestResults --assembly BarberTurn.Domain --class-name BarberTurn.Domain.Entities.Turn --minimum 70
+        run: python3 backend/scripts/check_coverage.py --reports backend/TestResults --assembly BarberTrix.Domain --class-name BarberTrix.Domain.Entities.Turn --minimum 70
       - name: Upload backend coverage
         if: always()
         uses: actions/upload-artifact@v4
@@ -61,8 +61,8 @@ jobs:
       - name: Validate migration script
         run: |
           dotnet tool install --global dotnet-ef --version "10.0.*"
-          dotnet ef migrations has-pending-model-changes --project backend/src/BarberTurn.Infrastructure --startup-project backend/src/BarberTurn.Api --no-build --configuration Release
-          dotnet ef migrations script --idempotent --project backend/src/BarberTurn.Infrastructure --startup-project backend/src/BarberTurn.Api --no-build --configuration Release --output migration.sql
+          dotnet ef migrations has-pending-model-changes --project backend/src/BarberTrix.Infrastructure --startup-project backend/src/BarberTrix.Api --no-build --configuration Release
+          dotnet ef migrations script --idempotent --project backend/src/BarberTrix.Infrastructure --startup-project backend/src/BarberTrix.Api --no-build --configuration Release --output migration.sql
 
   frontend:
     name: Frontend (React)
@@ -164,7 +164,7 @@ jobs:
         env:
           ACCEPT_EULA: Y
           MSSQL_PID: Developer
-          MSSQL_SA_PASSWORD: BarberTurn_CI_2026!Secure
+          MSSQL_SA_PASSWORD: BarberTrix_CI_2026!Secure
         ports:
           - 1433:1433
         options: >-
@@ -174,8 +174,8 @@ jobs:
           --health-retries 15
           --health-start-period 20s
     env:
-      BARBERTURN_FULLSTACK_CONNECTION: "Server=localhost,1433;Database=BarberTurnFullstackCi;User Id=sa;Password=BarberTurn_CI_2026!Secure;Encrypt=True;TrustServerCertificate=True"
-      BARBERTURN_FULLSTACK_JWT_KEY: "ci-only-fullstack-jwt-key-with-more-than-thirty-two-characters-2026"
+      BARBERTRIX_FULLSTACK_CONNECTION: "Server=localhost,1433;Database=BarberTrixFullstackCi;User Id=sa;Password=BarberTrix_CI_2026!Secure;Encrypt=True;TrustServerCertificate=True"
+      BARBERTRIX_FULLSTACK_JWT_KEY: "ci-only-fullstack-jwt-key-with-more-than-thirty-two-characters-2026"
     steps:
       - uses: actions/checkout@v4
       - name: Setup .NET
@@ -189,9 +189,9 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - name: Restore backend
-        run: dotnet restore BarberTurn.sln
+        run: dotnet restore BarberTrix.sln
       - name: Build backend
-        run: dotnet build BarberTurn.sln --configuration Release --no-restore
+        run: dotnet build BarberTrix.sln --configuration Release --no-restore
       - name: Install frontend dependencies
         working-directory: frontend
         run: npm ci
@@ -218,5 +218,5 @@ jobs:
     needs: [backend, frontend, mobile, frontend-e2e, fullstack-e2e]
     steps:
       - uses: actions/checkout@v4
-      - run: docker build -f backend/Dockerfile -t barberturn-api:ci .
-      - run: docker build -f frontend/Dockerfile -t barberturn-web:ci .
+      - run: docker build -f backend/Dockerfile -t barbertrix-api:ci .
+      - run: docker build -f frontend/Dockerfile -t barbertrix-web:ci .

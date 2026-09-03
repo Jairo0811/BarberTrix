@@ -1,0 +1,110 @@
+name: Complete BarberTrix technical rename
+
+on:
+  push:
+    branches: [refactor/rename-barberturn-to-barbertrix]
+
+permissions:
+  contents: write
+
+jobs:
+  rename:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Replace legacy identifiers and rename paths
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          import os
+          import shutil
+
+          root = Path('.')
+          replacements = (
+              ('BARBERTURN', 'BARBERTRIX'),
+              ('BarberTurn', 'BarberTrix'),
+              ('barberturn', 'barbertrix'),
+              ('Barber Turn', 'BarberTrix'),
+          )
+          text_suffixes = {
+              '.cs', '.csproj', '.sln', '.json', '.yml', '.yaml', '.md', '.ts', '.tsx',
+              '.js', '.jsx', '.css', '.html', '.xml', '.props', '.targets', '.txt', '.ps1',
+              '.sh', '.env', '.example', '.config', '.toml', '.ini'
+          }
+          text_names = {'Dockerfile', '.dockerignore', '.editorconfig', '.gitignore', 'package-lock.json', 'package.json'}
+
+          for path in list(root.rglob('*')):
+              if not path.is_file() or '.git' in path.parts:
+                  continue
+              if path.suffix.lower() not in text_suffixes and path.name not in text_names:
+                  continue
+              try:
+                  text = path.read_text(encoding='utf-8')
+              except UnicodeDecodeError:
+                  continue
+              updated = text
+              for old, new in replacements:
+                  updated = updated.replace(old, new)
+              if updated != text:
+                  path.write_text(updated, encoding='utf-8')
+
+          def renamed_name(name: str) -> str:
+              value = name
+              for old, new in replacements[:3]:
+                  value = value.replace(old, new)
+              return value
+
+          for current_root, dirs, files in os.walk('.', topdown=False):
+              if current_root.startswith('./.git'):
+                  continue
+              base = Path(current_root)
+              for file_name in files:
+                  new_name = renamed_name(file_name)
+                  if new_name == file_name:
+                      continue
+                  source = base / file_name
+                  target = base / new_name
+                  if target.exists():
+                      target.unlink()
+                  source.rename(target)
+              for dir_name in dirs:
+                  if dir_name == '.git':
+                      continue
+                  new_name = renamed_name(dir_name)
+                  if new_name == dir_name:
+                      continue
+                  source = base / dir_name
+                  target = base / new_name
+                  if target.exists():
+                      shutil.rmtree(target)
+                  source.rename(target)
+          PY
+
+          git add -A
+
+          if git grep -Iin -E 'barberturn|BARBERTURN' -- . ':!CHANGELOG.md' ; then
+            echo 'Legacy BarberTurn identifier still exists in active tracked files.'
+            exit 1
+          fi
+
+          if git ls-files | grep -i 'barberturn'; then
+            echo 'Legacy BarberTurn path still exists.'
+            exit 1
+          fi
+
+      - name: Commit complete rename
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if git diff --cached --quiet; then
+            echo 'No rename changes pending.'
+            exit 0
+          fi
+          git commit -m 'refactor: complete BarberTurn to BarberTrix rename'
+          git push origin HEAD:refactor/rename-barberturn-to-barbertrix

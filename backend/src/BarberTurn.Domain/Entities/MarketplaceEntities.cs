@@ -14,6 +14,7 @@ public sealed class PublicShopProfile : BaseEntity
     }
 
     public Guid BarberShopId { get; private set; }
+    public BarberShop BarberShop { get; private set; } = null!;
     [MaxLength(1000)] public string? Description { get; private set; }
     [MaxLength(40)] public string? PublicPhone { get; private set; }
     [MaxLength(40)] public string? WhatsAppPhone { get; private set; }

@@ -13,13 +13,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MobileApiError } from '@/api/httpClient';
 import { useAuth } from '@/auth/AuthProvider';
 import { useI18n } from '@/i18n/I18nProvider';
-import { colors, radius, spacing, typography } from '@/theme/tokens';
+import { colors, radius, spacing } from '@/theme/tokens';
+import { BrandLogo } from '@/ui/BrandLogo';
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
   const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
 
@@ -46,106 +48,106 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View pointerEvents="none" style={styles.backgroundDecor}>
-        <View style={styles.glowPrimary} />
-        <View style={styles.glowSecondary} />
-        <View style={styles.gridLineOne} />
-        <View style={styles.gridLineTwo} />
+      <View style={styles.backgroundDecor}>
+        <View style={styles.glowTop} />
+        <View style={styles.glowBottom} />
       </View>
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
         <ScrollView
-          keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.shell}>
-            <View style={styles.brandRow}>
-              <View style={styles.brandMark} accessibilityElementsHidden>
-                <Text style={styles.brandMarkText}>BT</Text>
-              </View>
-              <View>
-                <Text style={styles.brand}>BarberTrix</Text>
-                <Text style={styles.brandMeta}>MOBILE</Text>
-              </View>
-            </View>
-
-            <View style={styles.heroCopy}>
-              <Text style={styles.eyebrow}>BARBERTRIX</Text>
-              <Text style={styles.title}>{t('login.title')}</Text>
-              <Text style={styles.subtitle}>{t('login.subtitle')}</Text>
-            </View>
-
+          <View style={styles.panel}>
             <View style={styles.card}>
-              <View style={styles.cardAccent} />
+              <View style={styles.cardTopAccent} />
 
-              <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>{t('login.email')}</Text>
-                <View style={styles.inputShell}>
-                  <View style={styles.inputIcon} accessibilityElementsHidden>
-                    <Text style={styles.inputIconText}>@</Text>
-                  </View>
-                  <TextInput
-                    accessibilityLabel={t('login.email')}
-                    autoCapitalize="none"
-                    autoComplete="email"
-                    keyboardType="email-address"
-                    placeholder={t('login.email')}
-                    placeholderTextColor={colors.textSubtle}
-                    value={email}
-                    onChangeText={setEmail}
-                    style={styles.input}
-                  />
-                </View>
+              <BrandLogo />
+
+              <View style={styles.heading}>
+                <Text style={styles.title}>{t('login.title')}</Text>
+                <Text style={styles.subtitle}>{t('login.subtitle')}</Text>
               </View>
 
-              <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>{t('login.password')}</Text>
-                <View style={styles.inputShell}>
-                  <View style={styles.inputIcon} accessibilityElementsHidden>
-                    <Text style={styles.inputIconText}>●</Text>
+              <View style={styles.form}>
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>{t('login.email')}</Text>
+                  <View style={styles.inputShell}>
+                    <Text accessibilityElementsHidden style={styles.fieldIcon}>@</Text>
+                    <TextInput
+                      accessibilityLabel={t('login.email')}
+                      autoCapitalize="none"
+                      autoComplete="email"
+                      keyboardType="email-address"
+                      onChangeText={setEmail}
+                      placeholder={t('login.email')}
+                      placeholderTextColor={colors.textSubtle}
+                      style={styles.input}
+                      value={email}
+                    />
                   </View>
-                  <TextInput
-                    accessibilityLabel={t('login.password')}
-                    autoComplete="current-password"
-                    placeholder={t('login.password')}
-                    placeholderTextColor={colors.textSubtle}
-                    secureTextEntry
-                    value={password}
-                    onChangeText={setPassword}
-                    onSubmitEditing={submit}
-                    style={styles.input}
-                  />
                 </View>
+
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>{t('login.password')}</Text>
+                  <View style={styles.inputShell}>
+                    <Text accessibilityElementsHidden style={styles.fieldIcon}>●</Text>
+                    <TextInput
+                      accessibilityLabel={t('login.password')}
+                      autoComplete="current-password"
+                      onChangeText={setPassword}
+                      onSubmitEditing={submit}
+                      placeholder="••••••••••••"
+                      placeholderTextColor={colors.textSubtle}
+                      secureTextEntry={!showPassword}
+                      style={styles.passwordInput}
+                      value={password}
+                    />
+                    <Pressable
+                      accessibilityLabel={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                      accessibilityRole="button"
+                      onPress={() => setShowPassword(value => !value)}
+                      style={({ pressed }) => [styles.passwordToggle, pressed && styles.passwordTogglePressed]}
+                    >
+                      <Text style={styles.passwordToggleText}>{showPassword ? 'Ocultar' : 'Mostrar'}</Text>
+                    </Pressable>
+                  </View>
+                </View>
+
+                {error ? (
+                  <View style={styles.errorBox}>
+                    <Text accessibilityRole="alert" style={styles.error}>{error}</Text>
+                  </View>
+                ) : null}
+
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled }}
+                  disabled={disabled}
+                  onPress={submit}
+                  style={({ pressed }) => [
+                    styles.submitButton,
+                    disabled && styles.submitButtonDisabled,
+                    pressed && !disabled && styles.submitButtonPressed,
+                  ]}
+                >
+                  <Text style={styles.submitButtonText}>
+                    {submitting ? t('login.submitting') : t('login.submit')}
+                  </Text>
+                </Pressable>
               </View>
 
-              {error ? (
-                <View style={styles.errorBox}>
-                  <Text accessibilityRole="alert" style={styles.error}>{error}</Text>
-                </View>
-              ) : null}
+              <View style={styles.separator}>
+                <View style={styles.separatorLine} />
+                <Text style={styles.separatorText}>BARBERTRIX MOBILE</Text>
+                <View style={styles.separatorLine} />
+              </View>
 
-              <Pressable
-                accessibilityRole="button"
-                accessibilityState={{ disabled }}
-                disabled={disabled}
-                onPress={submit}
-                style={({ pressed }) => [
-                  styles.button,
-                  disabled && styles.buttonDisabled,
-                  pressed && !disabled && styles.buttonPressed,
-                ]}
-              >
-                <Text style={styles.buttonText}>
-                  {submitting ? t('login.submitting') : t('login.submit')}
-                </Text>
-                <Text style={styles.buttonArrow} accessibilityElementsHidden>→</Text>
-              </Pressable>
-            </View>
-
-            <View style={styles.customerCard}>
-              <View style={styles.customerDot} />
-              <Text style={styles.customerHint}>{t('login.customerHint')}</Text>
+              <View style={styles.customerInfo}>
+                <View style={styles.customerDot} />
+                <Text style={styles.customerHint}>{t('login.customerHint')}</Text>
+              </View>
             </View>
           </View>
         </ScrollView>
@@ -157,118 +159,131 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   safe: { flex: 1, backgroundColor: colors.background },
-  backgroundDecor: { ...StyleSheet.absoluteFillObject, overflow: 'hidden' },
-  glowPrimary: {
+  backgroundDecor: {
+    ...StyleSheet.absoluteFill,
+    overflow: 'hidden',
+    pointerEvents: 'none',
+  },
+  glowTop: {
+    position: 'absolute',
+    width: 520,
+    height: 520,
+    borderRadius: 260,
+    top: -310,
+    right: -250,
+    backgroundColor: 'rgba(22, 135, 255, 0.13)',
+  },
+  glowBottom: {
     position: 'absolute',
     width: 360,
     height: 360,
     borderRadius: 180,
-    backgroundColor: 'rgba(22, 135, 255, 0.13)',
-    top: -150,
-    right: -120,
+    bottom: -250,
+    left: -210,
+    backgroundColor: 'rgba(22, 135, 255, 0.07)',
   },
-  glowSecondary: {
-    position: 'absolute',
-    width: 260,
-    height: 260,
-    borderRadius: 130,
-    backgroundColor: 'rgba(88, 168, 255, 0.06)',
-    bottom: -110,
-    left: -120,
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingVertical: spacing.xxl,
   },
-  gridLineOne: {
-    position: 'absolute',
-    width: 1,
-    height: '100%',
-    left: '18%',
-    backgroundColor: 'rgba(88, 168, 255, 0.035)',
-  },
-  gridLineTwo: {
-    position: 'absolute',
-    width: 1,
-    height: '100%',
-    right: '14%',
-    backgroundColor: 'rgba(88, 168, 255, 0.03)',
-  },
-  scrollContent: { flexGrow: 1, justifyContent: 'center' },
-  shell: {
+  panel: {
     width: '100%',
-    maxWidth: 560,
+    maxWidth: 650,
     alignSelf: 'center',
     paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.xxxl,
-    gap: spacing.xl,
   },
-  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  brandMark: {
-    width: 50,
-    height: 50,
-    borderRadius: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primarySoft,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.28,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 7,
-  },
-  brandMarkText: { color: colors.primaryGlow, fontSize: 18, fontWeight: '900', letterSpacing: -1 },
-  brand: { color: colors.text, fontSize: 22, fontWeight: '900', letterSpacing: -0.7 },
-  brandMeta: { marginTop: 2, color: colors.primaryGlow, fontSize: 9, fontWeight: '900', letterSpacing: 2.1 },
-  heroCopy: { gap: 10 },
-  eyebrow: { ...typography.eyebrow, color: colors.primaryGlow },
-  title: { ...typography.title, color: colors.text, maxWidth: 480 },
-  subtitle: { ...typography.body, color: colors.textMuted, maxWidth: 460 },
   card: {
     position: 'relative',
     overflow: 'hidden',
-    padding: spacing.xl,
-    gap: spacing.lg,
-    borderRadius: radius.xl,
-    backgroundColor: 'rgba(10, 18, 33, 0.96)',
+    width: '100%',
+    paddingHorizontal: spacing.xxl,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.xxl,
+    borderRadius: radius.lg,
+    backgroundColor: 'rgba(11, 20, 35, 0.98)',
     borderWidth: 1,
-    borderColor: colors.border,
-    shadowColor: colors.black,
-    shadowOpacity: 0.38,
-    shadowRadius: 30,
-    shadowOffset: { width: 0, height: 18 },
-    elevation: 12,
+    borderColor: 'rgba(126, 157, 205, 0.20)',
   },
-  cardAccent: {
+  cardTopAccent: {
     position: 'absolute',
     top: 0,
-    left: 24,
-    right: 24,
+    left: 26,
+    right: 26,
     height: 2,
     borderBottomLeftRadius: 4,
     borderBottomRightRadius: 4,
     backgroundColor: colors.primary,
-    opacity: 0.78,
+  },
+  heading: {
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 2,
+  },
+  title: {
+    color: colors.text,
+    fontSize: 28,
+    lineHeight: 34,
+    fontWeight: '900',
+    textAlign: 'center',
+    letterSpacing: -0.65,
+  },
+  subtitle: {
+    color: '#8D9AB0',
+    fontSize: 14,
+    lineHeight: 21,
+    textAlign: 'center',
+  },
+  form: {
+    gap: spacing.lg,
+    marginTop: spacing.xxl,
   },
   fieldGroup: { gap: 8 },
-  fieldLabel: { color: '#C9D1DF', fontSize: 13, fontWeight: '800' },
+  fieldLabel: {
+    color: '#C9D1DF',
+    fontSize: 13,
+    fontWeight: '800',
+  },
   inputShell: {
-    minHeight: 56,
+    minHeight: 54,
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: radius.md,
+    borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: '#08111F',
-    overflow: 'hidden',
+    borderColor: 'rgba(140, 170, 214, 0.22)',
+    backgroundColor: 'rgba(9, 17, 30, 0.94)',
   },
-  inputIcon: { width: 48, alignItems: 'center', justifyContent: 'center' },
-  inputIconText: { color: colors.primaryGlow, fontSize: 14, fontWeight: '900' },
+  fieldIcon: {
+    width: 46,
+    color: '#66809F',
+    textAlign: 'center',
+    fontSize: 14,
+    fontWeight: '900',
+  },
   input: {
     flex: 1,
-    minHeight: 54,
+    minHeight: 52,
     paddingRight: 16,
     color: colors.text,
     fontSize: 16,
-    outlineStyle: Platform.OS === 'web' ? 'none' : undefined,
+  },
+  passwordInput: {
+    flex: 1,
+    minHeight: 52,
+    paddingRight: 8,
+    color: colors.text,
+    fontSize: 16,
+  },
+  passwordToggle: {
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+  },
+  passwordTogglePressed: { opacity: 0.72 },
+  passwordToggleText: {
+    color: colors.primaryGlow,
+    fontSize: 12,
+    fontWeight: '900',
   },
   errorBox: {
     paddingHorizontal: 13,
@@ -278,36 +293,68 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 122, 122, 0.24)',
   },
-  error: { color: '#FFABAB', fontWeight: '800', lineHeight: 20, textAlign: 'center' },
-  button: {
-    minHeight: 56,
-    marginTop: 2,
-    borderRadius: radius.md,
-    paddingHorizontal: 20,
-    flexDirection: 'row',
+  error: {
+    color: '#FFABAB',
+    fontWeight: '800',
+    lineHeight: 20,
+    textAlign: 'center',
+  },
+  submitButton: {
+    minHeight: 54,
+    borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.28,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 8,
   },
-  buttonPressed: { backgroundColor: colors.primaryPressed, transform: [{ translateY: 1 }] },
-  buttonDisabled: { opacity: 0.48, shadowOpacity: 0 },
-  buttonText: { color: colors.white, fontWeight: '900', fontSize: 16 },
-  buttonArrow: { position: 'absolute', right: 20, color: colors.white, fontSize: 22, fontWeight: '600' },
-  customerCard: {
+  submitButtonPressed: {
+    backgroundColor: colors.primaryPressed,
+    transform: [{ translateY: 1 }],
+  },
+  submitButtonDisabled: { opacity: 0.48 },
+  submitButtonText: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  separator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: spacing.xl,
+  },
+  separatorLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.075)',
+  },
+  separatorText: {
+    color: '#6F7C90',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+  },
+  customerInfo: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 10,
+    marginTop: spacing.lg,
     padding: spacing.md,
-    borderRadius: radius.md,
-    backgroundColor: 'rgba(7, 16, 29, 0.68)',
+    borderRadius: radius.sm,
+    backgroundColor: 'rgba(5, 12, 23, 0.56)',
     borderWidth: 1,
-    borderColor: 'rgba(126, 157, 205, 0.10)',
+    borderColor: 'rgba(120, 153, 198, 0.14)',
   },
-  customerDot: { width: 8, height: 8, marginTop: 6, borderRadius: 4, backgroundColor: colors.success },
-  customerHint: { flex: 1, color: colors.textSubtle, fontSize: 12, lineHeight: 19 },
+  customerDot: {
+    width: 8,
+    height: 8,
+    marginTop: 6,
+    borderRadius: 4,
+    backgroundColor: colors.success,
+  },
+  customerHint: {
+    flex: 1,
+    color: colors.textSubtle,
+    fontSize: 12,
+    lineHeight: 19,
+  },
 });

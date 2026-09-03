@@ -45,6 +45,8 @@ jobs:
           for path in list(root.rglob('*')):
               if not path.is_file() or '.git' in path.parts:
                   continue
+              if path.parts[:2] == ('.github', 'workflows'):
+                  continue
               if path.suffix.lower() not in text_suffixes and path.name not in text_names:
                   continue
               try:
@@ -64,7 +66,7 @@ jobs:
               return value
 
           for current_root, dirs, files in os.walk('.', topdown=False):
-              if current_root.startswith('./.git'):
+              if current_root.startswith('./.git') or current_root.startswith('./.github/workflows'):
                   continue
               base = Path(current_root)
               for file_name in files:
@@ -91,12 +93,12 @@ jobs:
 
           git add -A
 
-          if git grep -Iin -E 'barberturn|BARBERTURN' -- . ':!CHANGELOG.md' ; then
-            echo 'Legacy BarberTurn identifier still exists in active tracked files.'
+          if git grep -Iin -E 'barberturn|BARBERTURN' -- . ':!.github/workflows/*' ; then
+            echo 'Legacy BarberTurn identifier still exists outside workflow files.'
             exit 1
           fi
 
-          if git ls-files | grep -i 'barberturn'; then
+          if git ls-files | grep -vi '^.github/workflows/' | grep -i 'barberturn'; then
             echo 'Legacy BarberTurn path still exists.'
             exit 1
           fi

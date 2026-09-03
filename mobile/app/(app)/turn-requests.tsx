@@ -10,6 +10,7 @@ import { createTurnRequestRealtimeConnection } from '@/realtime/turnRequestRealt
 import { acceptTurnRequest, counterProposeTurnRequest, getStaffTurnRequests, rejectTurnRequest } from '@/turnRequests/turnRequestApi';
 import type { TurnRequest } from '@/turnRequests/types';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
+import { BrandLogo } from '@/ui/BrandLogo';
 
 export default function StaffTurnRequestsScreen() {
   const { session, refresh } = useAuth();
@@ -69,7 +70,7 @@ export default function StaffTurnRequestsScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View pointerEvents="none" style={styles.backgroundDecor}>
+      <View style={styles.backgroundDecor}>
         <View style={styles.glow} />
       </View>
 
@@ -85,12 +86,15 @@ export default function StaffTurnRequestsScreen() {
           />
         )}
       >
-        <View style={styles.header}>
+        <View style={styles.brandBar}>
+          <BrandLogo compact />
           <Pressable onPress={() => router.back()} style={({ pressed }) => [styles.back, pressed && styles.backPressed]}>
             <Text style={styles.backArrow}>←</Text>
             <Text style={styles.backText}>{t('staffRequests.back')}</Text>
           </Pressable>
+        </View>
 
+        <View style={styles.header}>
           <View style={styles.headerCopy}>
             <Text style={styles.eyebrow}>{t('staffRequests.eyebrow')}</Text>
             <Text style={styles.title}>{t('staffRequests.title')}</Text>
@@ -209,7 +213,11 @@ export default function StaffTurnRequestsScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
-  backgroundDecor: { ...StyleSheet.absoluteFillObject, overflow: 'hidden' },
+  backgroundDecor: {
+    ...StyleSheet.absoluteFill,
+    overflow: 'hidden',
+    pointerEvents: 'none',
+  },
   glow: {
     position: 'absolute',
     width: 360,
@@ -227,13 +235,19 @@ const styles = StyleSheet.create({
     paddingBottom: 54,
     gap: spacing.md,
   },
+  brandBar: {
+    minHeight: 66,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
   header: { gap: spacing.lg, marginBottom: spacing.sm },
   headerCopy: { gap: 6 },
   eyebrow: { ...typography.eyebrow, color: colors.primaryGlow },
   title: { ...typography.title, color: colors.text },
   subtitle: { ...typography.body, color: colors.textMuted },
   back: {
-    alignSelf: 'flex-start',
     minHeight: 42,
     flexDirection: 'row',
     alignItems: 'center',
@@ -279,11 +293,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     padding: spacing.lg,
     gap: spacing.md,
-    shadowColor: colors.black,
-    shadowOpacity: 0.28,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 7,
   },
   cardAccent: { position: 'absolute', left: 0, top: 18, bottom: 18, width: 3, borderRadius: 3, backgroundColor: colors.primary },
   cardTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 },

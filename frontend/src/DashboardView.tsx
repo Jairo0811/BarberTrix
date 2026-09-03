@@ -8,6 +8,7 @@ import {
   faHouse,
   faListOl,
   faScissors,
+  faTv,
   faUserGroup,
   faUserTie,
   faUsers,
@@ -100,10 +101,11 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
     { id: 'customers', label: copy.customers, icon: faUsers },
     { id: 'payments', label: copy.payments, icon: faCashRegister, requiresCatalogAccess: true },
     { id: 'reports', label: copy.reports, icon: faChartColumn, requiresCatalogAccess: true },
+    { id: 'tv', label: t('tvAdmin.nav'), icon: faTv, requiresCatalogAccess: true },
     { id: 'team', label: copy.team, icon: faUserGroup, requiresCatalogAccess: true },
     { id: 'locations', label: copy.locations, icon: faBuilding, requiresOwner: true },
     { id: 'billing', label: copy.billing, icon: faCreditCard, requiresOwner: true },
-  ], [copy])
+  ], [copy, t])
 
   const visibleNavItems = useMemo(
     () => navItems.filter(item => (!item.requiresCatalogAccess || canManageCatalog) && (!item.requiresOwner || hasOwnerAccess)),
@@ -122,7 +124,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
 
   useEffect(() => {
     const label = navItems.find(item => item.id === navigation.activePage)?.label ?? copy.dashboard
-    document.title = `${label} | BarberTurn`
+    document.title = `${label} | BarberTrix`
   }, [copy.dashboard, navItems, navigation.activePage])
 
   const today = new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date())
@@ -171,7 +173,7 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
       onNavigate={navigation.navigateToPage} onOpenMobileNav={navigation.openMobileNav} onCloseMobileNav={navigation.closeMobileNav}
       onLogout={onLogout} formatRole={localizeRole}>
       {renderPage(navigation.activePage)}
-      <footer className="dashboard-footer"><span>© {currentYear} BarberTurn. {copy.rights}</span><span>{dashboardSlogan}</span></footer>
+      <footer className="dashboard-footer"><span>© {currentYear} BarberTrix. {copy.rights}</span><span>{dashboardSlogan}</span></footer>
     </AdminDashboardLayout>
   )
 }

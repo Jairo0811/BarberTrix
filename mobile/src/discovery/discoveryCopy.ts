@@ -1,6 +1,6 @@
 import type { Locale } from '@/i18n/types';
 
-type DiscoveryCopy = {
+export type DiscoveryCopy = {
   eyebrow: string;
   title: string;
   subtitle: string;
@@ -17,7 +17,7 @@ type DiscoveryCopy = {
   error: string;
 };
 
-export const discoveryCopy: Record<Locale, DiscoveryCopy> = {
+const copyByLocale: Partial<Record<Locale, DiscoveryCopy>> = {
   'es-419': { eyebrow: 'DESCUBRE', title: 'Tu próximo corte, sin perder tiempo.', subtitle: 'Compara barberías por demanda real, barberos disponibles y espera estimada.', searchPlaceholder: 'Buscar barbería', liveWait: 'Espera estimada', noWait: 'Sin fila ahora', unavailable: 'Sin estimación', waiting: 'en espera', availableBarbers: 'barberos disponibles', from: 'Desde', request: 'Ver disponibilidad', staffLogin: 'Acceso para profesionales', empty: 'No encontramos barberías con ese nombre.', error: 'No pudimos cargar las barberías. Intenta nuevamente.' },
   en: { eyebrow: 'DISCOVER', title: 'Your next cut, without wasting time.', subtitle: 'Compare barbershops by live demand, available barbers and estimated wait.', searchPlaceholder: 'Search barbershops', liveWait: 'Estimated wait', noWait: 'No line right now', unavailable: 'No estimate', waiting: 'waiting', availableBarbers: 'barbers available', from: 'From', request: 'View availability', staffLogin: 'Professional sign in', empty: 'No barbershops matched your search.', error: 'We could not load barbershops. Please try again.' },
   'pt-BR': { eyebrow: 'DESCUBRA', title: 'Seu próximo corte, sem perder tempo.', subtitle: 'Compare barbearias por demanda ao vivo, barbeiros disponíveis e espera estimada.', searchPlaceholder: 'Buscar barbearia', liveWait: 'Espera estimada', noWait: 'Sem fila agora', unavailable: 'Sem estimativa', waiting: 'aguardando', availableBarbers: 'barbeiros disponíveis', from: 'A partir de', request: 'Ver disponibilidade', staffLogin: 'Acesso profissional', empty: 'Nenhuma barbearia encontrada.', error: 'Não foi possível carregar as barbearias.' },
@@ -29,3 +29,20 @@ export const discoveryCopy: Record<Locale, DiscoveryCopy> = {
   ko: { eyebrow: '둘러보기', title: '기다림을 줄이고 다음 커트를 만나세요.', subtitle: '실시간 대기 수요, 이용 가능한 바버, 예상 대기 시간으로 비교하세요.', searchPlaceholder: '바버샵 검색', liveWait: '예상 대기', noWait: '현재 대기 없음', unavailable: '예상 없음', waiting: '명 대기', availableBarbers: '명 이용 가능', from: '최저', request: '예약 가능 시간 보기', staffLogin: '전문가 로그인', empty: '검색 결과가 없습니다.', error: '바버샵을 불러오지 못했습니다.' },
   'zh-CN': { eyebrow: '发现', title: '少等待，更快开始下一次理发。', subtitle: '按实时客流、可用理发师和预计等待时间比较理发店。', searchPlaceholder: '搜索理发店', liveWait: '预计等待', noWait: '当前无需排队', unavailable: '暂无预计', waiting: '人等待', availableBarbers: '位理发师可用', from: '起价', request: '查看可用时间', staffLogin: '专业人员登录', empty: '没有找到匹配的理发店。', error: '无法加载理发店，请重试。' },
 };
+
+export function getDiscoveryCopy(locale: Locale): DiscoveryCopy {
+  const exact = copyByLocale[locale];
+  if (exact) return exact;
+
+  const language = locale.toLowerCase().split('-')[0];
+  if (language === 'es') return copyByLocale['es-419']!;
+  if (language === 'pt') return copyByLocale['pt-BR']!;
+  if (language === 'fr') return copyByLocale.fr!;
+  if (language === 'de') return copyByLocale.de!;
+  if (language === 'it') return copyByLocale.it!;
+  if (language === 'ja') return copyByLocale.ja!;
+  if (language === 'ko') return copyByLocale.ko!;
+  if (language === 'zh') return copyByLocale['zh-CN']!;
+  if (language === 'ht') return copyByLocale.ht!;
+  return copyByLocale.en!;
+}

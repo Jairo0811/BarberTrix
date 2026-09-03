@@ -27,4 +27,12 @@ jobs:
           dotnet tool install --global dotnet-ef --version "10.0.*"
           dotnet ef migrations add BarberTrixTvDisplays --project backend/src/BarberTurn.Infrastructure --startup-project backend/src/BarberTurn.Api
           git status --short
-          git diff --no-color -- backend/src/BarberTurn.Infrastructure/Persistence/Migrations
+      - name: Export generated EF files
+        uses: actions/upload-artifact@v4
+        with:
+          name: barbertrix-tv-ef-migration
+          path: |
+            backend/src/BarberTurn.Infrastructure/Persistence/Migrations/*BarberTrixTvDisplays*.cs
+            backend/src/BarberTurn.Infrastructure/Persistence/Migrations/ApplicationDbContextModelSnapshot.cs
+          if-no-files-found: error
+          retention-days: 1

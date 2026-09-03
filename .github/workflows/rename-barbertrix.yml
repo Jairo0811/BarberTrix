@@ -34,7 +34,8 @@ jobs:
           text_suffixes = {
               '.cs', '.csproj', '.sln', '.json', '.yml', '.yaml', '.md', '.ts', '.tsx',
               '.js', '.jsx', '.css', '.html', '.xml', '.props', '.targets', '.txt', '.ps1',
-              '.sh', '.env', '.example', '.config', '.toml', '.ini'
+              '.sh', '.env', '.example', '.config', '.toml', '.ini', '.sql', '.http', '.svg',
+              '.properties'
           }
           text_names = {
               'Dockerfile', '.dockerignore', '.editorconfig', '.gitignore',

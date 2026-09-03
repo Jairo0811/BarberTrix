@@ -32,6 +32,10 @@ function toSession(response: MobileAuthResponse): MobileSession {
   };
 }
 
+function isClient(response: MobileAuthResponse) {
+  return response.role === 'Client';
+}
+
 async function persistRefresh(response: MobileAuthResponse) {
   await secureSessionStore.write({
     refreshToken: response.refreshToken,
@@ -46,7 +50,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const applyAuthResponse = useCallback(async (response: MobileAuthResponse) => {
     await persistRefresh(response);
     setSession(toSession(response));
-    setStatus(response.sessionScope === 'Onboarding' ? 'onboarding' : 'authenticated');
+    setStatus(response.sessionScope === 'Onboarding' && !isClient(response) ? 'onboarding' : 'authenticated');
   }, []);
 
   const clearSession = useCallback(async () => {
@@ -98,19 +102,23 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const signIn = useCallback(async (email: string, password: string) => {
     const response = await login(email, password);
     await applyAuthResponse(response);
+    if (isClient(response)) {
+      router.replace('/discover');
+      return;
+    }
     router.replace(response.sessionScope === 'Onboarding' ? '/onboarding' : '/(app)');
   }, [applyAuthResponse]);
 
   const signOut = useCallback(async () => {
     const stored = await secureSessionStore.read();
-    if (session) {
-      try { await disableStaffPush(session.accessToken, session.user.id); } catch { /* Push cleanup is best effort. */ }
+    if (session?.user.role !== 'Client') {
+      try { if (session) await disableStaffPush(session.accessToken, session.user.id); } catch { /* Push cleanup is best effort. */ }
     }
     if (stored) {
       try { await logout(stored.refreshToken); } catch { /* Local sign-out must still succeed. */ }
     }
     await clearSession();
-    router.replace('/(auth)/login');
+    router.replace('/discover');
   }, [clearSession, session]);
 
   const value = useMemo<AuthContextValue>(() => ({ status, session, signIn, signOut, refresh }), [refresh, session, signIn, signOut, status]);

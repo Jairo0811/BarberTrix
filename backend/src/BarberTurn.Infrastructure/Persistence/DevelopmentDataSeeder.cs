@@ -140,7 +140,9 @@ public sealed class DevelopmentDataSeeder(
         {
             user = CreateTenantUser(shop.Id, "Dueño Barbero", OwnerBarberEmail, password, UserRole.Owner, operational.Id);
             dbContext.Users.Add(user);
-            dbContext.BarberProfiles.Add(new BarberProfile(user.Id, user.Name, "Propietario que también atiende clientes."));
+            var profile = new BarberProfile(user.Id, user.Name);
+            profile.Update(user.Name, "Propietario que también atiende clientes.", true);
+            dbContext.BarberProfiles.Add(profile);
         }
         else
         {

@@ -157,6 +157,16 @@ internal sealed class TvDisplayService(
 
     private async Task<TvPairingCodeResponse> IssuePairingCodeCoreAsync(TvDisplay display, CancellationToken cancellationToken)
     {
+        var now = DateTimeOffset.UtcNow;
+        var expiredDisplays = await dbContext.TvDisplays
+            .Where(item => item.PairingCodeHash != null && item.PairingExpiresAtUtc <= now)
+            .ToListAsync(cancellationToken);
+        var releasedAny = false;
+        foreach (var expiredDisplay in expiredDisplays)
+            releasedAny |= expiredDisplay.ClearExpiredPairingCode(now);
+        if (releasedAny)
+            await dbContext.SaveChangesAsync(cancellationToken);
+
         for (var attempt = 0; attempt < 12; attempt++)
         {
             var code = RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6", System.Globalization.CultureInfo.InvariantCulture);

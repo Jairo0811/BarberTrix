@@ -1,8 +1,8 @@
 import * as Crypto from 'expo-crypto';
 import * as SecureStore from 'expo-secure-store';
 
-const INSTALLATION_KEY = 'barberturn.push.installation-id';
-const REGISTRY_KEY = 'barberturn.push.registry';
+const INSTALLATION_KEY = 'barbertrix.push.installation-id';
+const REGISTRY_KEY = 'barbertrix.push.registry';
 
 type PublicRegistration = { slug: string; requestId: string };
 type PushRegistry = { staffUserId?: string; publicRequests: PublicRegistration[] };

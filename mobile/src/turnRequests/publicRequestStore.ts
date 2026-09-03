@@ -1,6 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 
-const PREFIX = 'barberturn.turn-request.';
+const PREFIX = 'barbertrix.turn-request.';
 
 function key(requestId: string) {
   return `${PREFIX}${requestId}`;

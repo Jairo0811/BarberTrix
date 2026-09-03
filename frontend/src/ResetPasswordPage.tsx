@@ -57,7 +57,7 @@ export default function ResetPasswordPage() {
     <main className="recovery-page" aria-labelledby="reset-password-title">
       <section className="recovery-card">
         <a className="recovery-logo" href="#/" aria-label={t('common.backHome')}>
-          <img src="/branding/barberturn-logo.png" alt="BarberTurn" />
+          <img src="/branding/barbertrix-logo.png" alt="BarberTrix" />
         </a>
 
         {!token ? (

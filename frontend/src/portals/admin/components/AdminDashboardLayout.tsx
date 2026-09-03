@@ -35,7 +35,7 @@ export default function AdminDashboardLayout({ auth, isDemo, canManageCatalog, c
 
       <aside id="dashboard-sidebar" ref={sidebarRef} className={`dashboard-sidebar${mobileNavOpen ? ' mobile-open' : ''}`} aria-label={c.panelNavigation}>
         <div className="dashboard-brand-row">
-          <div className="dashboard-brand"><img src="/branding/barberturn-logo.png" alt="BarberTurn" /></div>
+          <div className="dashboard-brand"><img src="/branding/barbertrix-logo.png" alt="BarberTrix" /></div>
           <button className="dashboard-sidebar-close" type="button" aria-label={c.closeMenu} onClick={onCloseMobileNav}><FontAwesomeIcon icon={faXmark} /></button>
         </div>
 

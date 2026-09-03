@@ -19,16 +19,16 @@ El proyecto sigue [Semantic Versioning](https://semver.org/) y el formato de [Ke
 ### Added
 
 - turnos públicos con consulta privada, cancelación e idempotencia;
-- SignalR y BarberTurn TV;
+- SignalR y BarberTrix TV;
 - agenda híbrida, clientes, caja y reportes;
 - equipo, invitaciones y permisos por rol;
 - sesiones rotatorias, verificación de correo, auditoría y protección antiabuso;
 - planes, límites, sucursales y suscripciones PayPal;
 - demo aislada por sesión;
 - despliegue Docker de producción y controles de seguridad en CI;
-- BarberTurn Mobile M0/M1 con Expo Router, sesiones nativas y secretos en SecureStore;
-- BarberTurn Mobile M2 con solicitudes cliente → barbero, seguimiento privado, bandeja de personal y SignalR.
-- BarberTurn Mobile M3 con opt-in de notificaciones, registro seguro por instalación, navegación push allowlisted y outbox Expo con reintentos;
+- BarberTrix Mobile M0/M1 con Expo Router, sesiones nativas y secretos en SecureStore;
+- BarberTrix Mobile M2 con solicitudes cliente → barbero, seguimiento privado, bandeja de personal y SignalR.
+- BarberTrix Mobile M3 con opt-in de notificaciones, registro seguro por instalación, navegación push allowlisted y outbox Expo con reintentos;
 - creación administrativa de citas para Owner, Administrator y Receptionist reutilizando las reglas de disponibilidad y concurrencia de la agenda;
 - ficha CRM por cliente con visitas completadas, última visita, gasto acumulado por moneda, actividad reciente y notas internas versionadas en auditoría;
 - Caja 2.0 con apertura/cierre de sesión, fondo inicial, entradas y salidas manuales, conciliación esperado vs contado, historial de cierres y reembolsos trazables;

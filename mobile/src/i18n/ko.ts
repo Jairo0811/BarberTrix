@@ -12,7 +12,7 @@ const ko: Dictionary = {
   'login.customerHint': '고객은 계정을 만들지 않고 바버샵 링크를 통해 대기를 요청할 수 있습니다.',
   'home.hello': '안녕하세요, {{name}}님.',
   'home.team': '팀',
-  'home.body': 'BarberTurn이 백그라운드에 있어도 M3가 새로운 요청을 팀에 알려줍니다.',
+  'home.body': 'BarberTrix이 백그라운드에 있어도 M3가 새로운 요청을 팀에 알려줍니다.',
   'home.requests': '대기 요청',
   'home.requestsText': '대기 중인 요청을 관리하고 실시간 변경 사항을 받아보세요.',
   'home.pushTitle': '새 요청을 놓치지 마세요',

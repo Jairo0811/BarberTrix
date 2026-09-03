@@ -7,7 +7,7 @@ const owner = {
 }
 
 test('commercial demo exposes core flow and locks sensitive modules', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('barberturn.locale', 'es-419'))
+  await page.addInitScript(() => localStorage.setItem('barbertrix.locale', 'es-419'))
   await installMockBackend(page, { plan: 'Starter', demo: true })
   await page.goto('/#/demo')
 
@@ -38,7 +38,7 @@ test('barber opens the operational portal without administration access', async 
 })
 
 test('public customer portal loads without an authenticated account', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('barberturn.locale', 'es-419'))
+  await page.addInitScript(() => localStorage.setItem('barbertrix.locale', 'es-419'))
   await installMockBackend(page, { plan: 'Pro' })
   await page.goto('/#/customer?shop=central')
 
@@ -57,11 +57,11 @@ test('Starter owner sees routed Pro paywalls and can access billing', async ({ p
 
   await page.getByRole('button', { name: 'Citas' }).click()
   await expect(page).toHaveURL(/#\/app\/appointments$/)
-  await expect(page.getByRole('link', { name: 'Disponible con BarberTurn Pro' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Disponible con BarberTrix Pro' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Reportes' }).click()
   await expect(page).toHaveURL(/#\/app\/reports$/)
-  await expect(page.getByRole('link', { name: 'Disponible con BarberTurn Business' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Disponible con BarberTrix Business' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Suscripción' }).click()
   await expect(page).toHaveURL(/#\/app\/billing$/)

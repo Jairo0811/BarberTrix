@@ -42,11 +42,11 @@ export async function createPushSubscriptionInput(askForPermission = true): Prom
   if (Platform.OS !== 'android' && Platform.OS !== 'ios')
     throw new PushRegistrationError('unsupported', 'Las notificaciones push requieren Android o iOS.');
   if (!await ensurePermission(askForPermission))
-    throw new PushRegistrationError('denied', 'Activa las notificaciones de BarberTurn en los ajustes del dispositivo.');
+    throw new PushRegistrationError('denied', 'Activa las notificaciones de BarberTrix en los ajustes del dispositivo.');
 
   const easProjectId = projectId();
   if (!easProjectId)
-    throw new PushRegistrationError('misconfigured', 'Falta configurar el EAS project ID de BarberTurn.');
+    throw new PushRegistrationError('misconfigured', 'Falta configurar el EAS project ID de BarberTrix.');
 
   try {
     const [{ data: expoPushToken }, installationId] = await Promise.all([

@@ -30,7 +30,7 @@ const dictionary = {
   "adminTitle": "Panel de administración",
   "demoSubtitle": "Explora el flujo completo con datos temporales y acciones seguras.",
   "adminSubtitle": "Supervisa la cola, el equipo y el catálogo desde un único lugar.",
-  "demoBannerTitle": "Estás explorando BarberTurn en modo demo",
+  "demoBannerTitle": "Estás explorando BarberTrix en modo demo",
   "demoBannerText": "Puedes crear turnos, cambiar estados y recorrer el flujo operativo. Los datos de esta sesión son temporales.",
   "testEnvironment": "ENTORNO DE PRUEBA",
   "adminBannerTitle": "Centro de administración activo",

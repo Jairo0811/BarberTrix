@@ -18,7 +18,7 @@ const barberAuth: Auth = {
 describe('BarberPortal', () => {
   beforeEach(() => {
     localStorage.clear()
-    localStorage.setItem('barberturn.locale', 'es-419')
+    localStorage.setItem('barbertrix.locale', 'es-419')
     apiMock.mockImplementation((path: string) => {
       if (path === '/api/queue/barbers') return Promise.resolve([{ id: 'barber-1', name: 'Carlos', chairNumber: 2, status: 'Available', isActive: true }])
       if (path === '/api/queue/turns') return Promise.resolve([])
@@ -33,7 +33,7 @@ describe('BarberPortal', () => {
     expect(await screen.findByRole('heading', { name: 'Tu trabajo de hoy, sin ruido administrativo.' })).toBeInTheDocument()
     expect((await screen.findAllByText('Disponible')).length).toBeGreaterThanOrEqual(2)
     expect(screen.queryByText('Available')).not.toBeInTheDocument()
-    expect(screen.getByText('Disponible con BarberTurn Pro')).toBeInTheDocument()
+    expect(screen.getByText('Disponible con BarberTrix Pro')).toBeInTheDocument()
     expect(screen.queryByText('Suscripción')).not.toBeInTheDocument()
   })
 })

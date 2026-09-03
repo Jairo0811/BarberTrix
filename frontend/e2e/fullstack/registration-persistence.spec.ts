@@ -7,7 +7,7 @@ test('owner registration persists through the real API and SQL Server', async ({
   const email = `fullstack-${suffix}@example.com`
   const password = 'Fullstack123!'
 
-  await page.addInitScript(() => localStorage.setItem('barberturn.locale', 'es-419'))
+  await page.addInitScript(() => localStorage.setItem('barbertrix.locale', 'es-419'))
   await page.goto('/#/register')
 
   await page.locator('input[name="shopName"]').fill(shopName)

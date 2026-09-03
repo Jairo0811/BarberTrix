@@ -1,4 +1,4 @@
-# MVP de BarberTurn
+# MVP de BarberTrix
 
 ## Objetivo
 
@@ -33,7 +33,7 @@ Obtiene un turno y consulta el estado de la fila. El MVP permitirá turnos sin c
 7. Finalizar un turno.
 8. Cancelar un turno.
 9. Marcar un cliente como no presentado.
-10. Mostrar el estado de la fila en BarberTurn TV.
+10. Mostrar el estado de la fila en BarberTrix TV.
 
 ## Reglas iniciales
 

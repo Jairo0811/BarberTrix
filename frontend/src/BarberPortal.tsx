@@ -83,7 +83,7 @@ export default function BarberPortal({ auth, onLogout }: { auth: Auth; onLogout:
 
   return <main className="role-portal barber-portal">
     <header className="role-portal-header">
-      <a href="#/"><img src="/branding/barberturn-logo.png" alt="BarberTurn" /></a>
+      <a href="#/"><img src="/branding/barbertrix-logo.png" alt="BarberTrix" /></a>
       <div className="role-portal-user">
         <div><strong>{auth.name}</strong><span>{t('barber.portal')}</span></div>
         <button onClick={onLogout}><FontAwesomeIcon icon={faRightFromBracket} /> {t('logout')}</button>

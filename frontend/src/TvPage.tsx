@@ -196,7 +196,7 @@ export default function TvPage() {
 
   if (!displayToken) return <main className="tv-page tv-setup-page">
     <section className="tv-setup-card">
-      <img src="/branding/barberturn-logo.png" alt="BarberTrix" />
+      <img src="/branding/barbertrix-logo.png" alt="BarberTrix" />
       <span className="tv-eyebrow">{t('tv.brand')}</span>
       <h1>{t('tv.setupTitle')}</h1>
       <p>{t('tv.setupText')}</p>
@@ -220,14 +220,14 @@ export default function TvPage() {
   </main>
 
   if (!snapshot) return <main className="tv-page tv-loading-page">
-    <img src="/branding/barberturn-logo.png" alt="BarberTrix" />
+    <img src="/branding/barbertrix-logo.png" alt="BarberTrix" />
     <h1>{t('tv.loadingDisplay')}</h1>
     <span className={`tv-connection ${connectionState}`}>{t(`tv.connection.${connectionState}`)}</span>
   </main>
 
   return <main className="tv-page">
     <header className="tv-header">
-      <img src="/branding/barberturn-logo.png" alt="BarberTrix" />
+      <img src="/branding/barbertrix-logo.png" alt="BarberTrix" />
       <div><span className="tv-eyebrow">{t('tv.liveQueue')}</span><h1>{snapshot.shopName}</h1><small>{snapshot.displayName}</small></div>
       <aside>
         <strong>{snapshot.queue.estimatedWaitMinutes} min</strong>

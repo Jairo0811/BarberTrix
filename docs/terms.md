@@ -1,12 +1,12 @@
-# Términos de servicio de BarberTurn
+# Términos de servicio de BarberTrix
 
 Última actualización: 25 de agosto de 2026.
 
 > Borrador operativo. Requiere revisión legal y completar identidad del proveedor, jurisdicción, impuestos, política de reembolsos y canales formales antes del lanzamiento público.
 
-BarberTurn ofrece software para administrar filas, citas, clientes, equipo, caja y reportes de barberías. La barbería conserva la responsabilidad sobre los servicios que presta, precios, personal, atención al cliente, impuestos y uso lícito de los datos introducidos.
+BarberTrix ofrece software para administrar filas, citas, clientes, equipo, caja y reportes de barberías. La barbería conserva la responsabilidad sobre los servicios que presta, precios, personal, atención al cliente, impuestos y uso lícito de los datos introducidos.
 
-El titular de la cuenta debe proporcionar información veraz, proteger sus credenciales y asignar permisos adecuados. No puede usar BarberTurn para actividades ilícitas, interferir con el servicio, intentar acceder a otros tenants o introducir malware.
+El titular de la cuenta debe proporcionar información veraz, proteger sus credenciales y asignar permisos adecuados. No puede usar BarberTrix para actividades ilícitas, interferir con el servicio, intentar acceder a otros tenants o introducir malware.
 
 Los planes, límites y precios vigentes se muestran antes de contratar. Las suscripciones pagadas se procesan mediante PayPal y pueden cancelarse conforme a la opción indicada en el panel. La falta de pago puede limitar funciones o suspender la cuenta, sin impedir las obligaciones de conservación exigidas por ley.
 

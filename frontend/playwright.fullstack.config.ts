@@ -1,16 +1,16 @@
 import { defineConfig, devices } from '@playwright/test'
 
-const webUrl = process.env.BARBERTURN_FULLSTACK_WEB_URL ?? 'http://127.0.0.1:4174'
-const apiUrl = process.env.BARBERTURN_FULLSTACK_API_URL ?? 'http://127.0.0.1:8080'
-const connectionString = process.env.BARBERTURN_FULLSTACK_CONNECTION
-const jwtKey = process.env.BARBERTURN_FULLSTACK_JWT_KEY
+const webUrl = process.env.BARBERTRIX_FULLSTACK_WEB_URL ?? 'http://127.0.0.1:4174'
+const apiUrl = process.env.BARBERTRIX_FULLSTACK_API_URL ?? 'http://127.0.0.1:8080'
+const connectionString = process.env.BARBERTRIX_FULLSTACK_CONNECTION
+const jwtKey = process.env.BARBERTRIX_FULLSTACK_JWT_KEY
 
 if (!connectionString) {
-  throw new Error('BARBERTURN_FULLSTACK_CONNECTION is required to run full-stack E2E tests.')
+  throw new Error('BARBERTRIX_FULLSTACK_CONNECTION is required to run full-stack E2E tests.')
 }
 
 if (!jwtKey) {
-  throw new Error('BARBERTURN_FULLSTACK_JWT_KEY is required to run full-stack E2E tests.')
+  throw new Error('BARBERTRIX_FULLSTACK_JWT_KEY is required to run full-stack E2E tests.')
 }
 
 export default defineConfig({
@@ -32,7 +32,7 @@ export default defineConfig({
   projects: [{ name: 'chromium-fullstack', use: { ...devices['Desktop Chrome'] } }],
   webServer: [
     {
-      command: 'dotnet run --project ../backend/src/BarberTurn.Api/BarberTurn.Api.csproj --configuration Release --no-build --no-launch-profile',
+      command: 'dotnet run --project ../backend/src/BarberTrix.Api/BarberTrix.Api.csproj --configuration Release --no-build --no-launch-profile',
       url: `${apiUrl}/health`,
       reuseExistingServer: !process.env.CI,
       timeout: 180_000,

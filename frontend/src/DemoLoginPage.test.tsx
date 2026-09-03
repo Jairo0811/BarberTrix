@@ -20,8 +20,8 @@ describe('DemoLoginPage', () => {
   it('creates a temporary demo session and returns to login', async () => {
     render(<I18nProvider><DemoLoginPage /></I18nProvider>)
 
-    await waitFor(() => expect(sessionStorage.getItem('barberturn.demo')).toBe('true'))
-    expect(JSON.parse(sessionStorage.getItem('barberturn.auth') ?? '{}').accessToken).toBe('demo-token')
+    await waitFor(() => expect(sessionStorage.getItem('barbertrix.demo')).toBe('true'))
+    expect(JSON.parse(sessionStorage.getItem('barbertrix.auth') ?? '{}').accessToken).toBe('demo-token')
     expect(window.location.hash).toBe('#/login')
   })
 })

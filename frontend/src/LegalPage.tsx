@@ -13,7 +13,7 @@ export default function LegalPage({ kind }: { kind: 'terms' | 'privacy' }) {
 
   return <main className="login-shell"><article className="login-card legal-card">
     <a className="back-home-link" href="#/">← {t('legal.backHome')}</a>
-    <img className="legal-logo" src="/branding/barberturn-logo.png" alt="BarberTurn" />
+    <img className="legal-logo" src="/branding/barbertrix-logo.png" alt="BarberTrix" />
     <h1>{privacy ? t('legal.privacyTitle') : t('legal.termsTitle')}</h1>
     <p className="login-subtitle">{t('legal.lastUpdated', { date: formattedDate })}</p>
     {paragraphKeys.map(key => <p key={key}>{t(key)}</p>)}

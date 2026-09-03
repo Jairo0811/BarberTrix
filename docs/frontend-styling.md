@@ -1,6 +1,6 @@
 # Frontend styling architecture
 
-BarberTurn mantiene CSS plano junto a React/Vite. La regla principal es **ownership por contexto**: un selector específico de un feature debe vivir con ese feature; los estilos compartidos deben contener únicamente primitivas reutilizadas por más de un módulo.
+BarberTrix mantiene CSS plano junto a React/Vite. La regla principal es **ownership por contexto**: un selector específico de un feature debe vivir con ese feature; los estilos compartidos deben contener únicamente primitivas reutilizadas por más de un módulo.
 
 ## Capas
 

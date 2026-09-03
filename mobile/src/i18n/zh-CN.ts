@@ -12,7 +12,7 @@ const zhCN: Dictionary = {
   'login.customerHint': '顾客无需创建账户，即可通过理发店链接申请排队。',
   'home.hello': '你好，{{name}}。',
   'home.team': '团队',
-  'home.body': '即使 BarberTurn 在后台运行，M3 也会让团队及时了解新的请求。',
+  'home.body': '即使 BarberTrix 在后台运行，M3 也会让团队及时了解新的请求。',
   'home.requests': '排队请求',
   'home.requestsText': '管理待处理请求并接收实时更新。',
   'home.pushTitle': '不要错过新的请求',

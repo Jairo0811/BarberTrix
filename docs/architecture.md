@@ -1,8 +1,8 @@
-# Arquitectura de BarberTurn
+# Arquitectura de BarberTrix
 
 ## Objetivo
 
-BarberTurn debe crecer desde un gestor simple de filas hasta una plataforma multi-barbería sin acoplar el dominio a detalles de infraestructura o interfaz.
+BarberTrix debe crecer desde un gestor simple de filas hasta una plataforma multi-barbería sin acoplar el dominio a detalles de infraestructura o interfaz.
 
 ## Decisiones principales
 
@@ -19,27 +19,27 @@ Estructura objetivo inicial:
 
 ```text
 backend/
-├── BarberTurn.sln
+├── BarberTrix.sln
 └── src/
-    ├── BarberTurn.Api/
-    ├── BarberTurn.Application/
-    ├── BarberTurn.Domain/
-    └── BarberTurn.Infrastructure/
+    ├── BarberTrix.Api/
+    ├── BarberTrix.Application/
+    ├── BarberTrix.Domain/
+    └── BarberTrix.Infrastructure/
 ```
 
-### BarberTurn.Domain
+### BarberTrix.Domain
 
 Contendrá entidades, value objects, enums, reglas e invariantes del negocio. No dependerá de Entity Framework, ASP.NET Core ni servicios externos.
 
-### BarberTurn.Application
+### BarberTrix.Application
 
 Contendrá casos de uso, contratos, DTOs, validadores y orquestación. Dependerá del dominio, pero no de implementaciones de infraestructura.
 
-### BarberTurn.Infrastructure
+### BarberTrix.Infrastructure
 
 Implementará persistencia, autenticación, proveedores externos y demás detalles técnicos.
 
-### BarberTurn.Api
+### BarberTrix.Api
 
 Será el punto de entrada HTTP y SignalR. Se encargará de composición, middleware, autenticación, autorización y exposición de endpoints.
 

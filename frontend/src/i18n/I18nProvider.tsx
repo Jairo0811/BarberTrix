@@ -3,7 +3,7 @@ import { dictionaries } from './dictionaries'
 import { normalizeStoredLocale, officialLocales, officialLocaleSet } from './officialLocales'
 import type { Locale, TranslationValues } from './types'
 
-const storageKey = 'barberturn.locale'
+const storageKey = 'barbertrix.locale'
 export type LocalePreference = 'system' | Locale
 
 export const automaticLocales = new Set<Locale>(officialLocales)

@@ -202,7 +202,7 @@ export default function PublicBookingPage() {
 
   return <main className="public-booking">
     <section className="booking-card">
-      <a href="#/"><img src="/branding/barberturn-logo.png" alt="BarberTurn" /></a>
+      <a href="#/"><img src="/branding/barbertrix-logo.png" alt="BarberTrix" /></a>
       <p className="booking-kicker">{shop?.name}</p>
       <h1>{t('booking.title')}</h1>
 

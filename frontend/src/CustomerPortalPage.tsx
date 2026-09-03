@@ -49,11 +49,11 @@ export default function CustomerPortalPage() {
   </section></main>
 
   const appointmentsEnabled = capabilities?.canUseAppointments === true
-  const shopName = shop?.name?.toUpperCase() || 'BARBERTURN'
+  const shopName = shop?.name?.toUpperCase() || 'BARBERTRIX'
 
   return <main className="customer-portal">
     <header className="customer-portal-header">
-      <a href="#/"><img src="/branding/barberturn-logo.png" alt="BarberTurn" /></a>
+      <a href="#/"><img src="/branding/barbertrix-logo.png" alt="BarberTrix" /></a>
       <span>{t('customer.portalTitle')}</span>
     </header>
 

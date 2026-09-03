@@ -4,11 +4,11 @@ services:
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_PID: Developer
-      MSSQL_SA_PASSWORD: ${BARBERTURN_DB_PASSWORD:?Set BARBERTURN_DB_PASSWORD in .env}
+      MSSQL_SA_PASSWORD: ${BARBERTRIX_DB_PASSWORD:?Set BARBERTRIX_DB_PASSWORD in .env}
     ports:
-      - "${BARBERTURN_DB_PORT:-14330}:1433"
+      - "${BARBERTRIX_DB_PORT:-14330}:1433"
     volumes:
-      - barberturn-sqlserver:/var/opt/mssql
+      - barbertrix-sqlserver:/var/opt/mssql
     healthcheck:
       test: ["CMD-SHELL", "bash -c 'cat < /dev/null > /dev/tcp/localhost/1433'"]
       interval: 10s
@@ -22,10 +22,10 @@ services:
       dockerfile: backend/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=BarberTurnDb;User Id=sa;Password=${BARBERTURN_DB_PASSWORD};Encrypt=True;TrustServerCertificate=True"
-      Jwt__Issuer: BarberTurn.Api
-      Jwt__Audience: BarberTurn.Web
-      Jwt__Key: ${BARBERTURN_JWT_KEY:?Set BARBERTURN_JWT_KEY in .env}
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=BarberTrixDb;User Id=sa;Password=${BARBERTRIX_DB_PASSWORD};Encrypt=True;TrustServerCertificate=True"
+      Jwt__Issuer: BarberTrix.Api
+      Jwt__Audience: BarberTrix.Web
+      Jwt__Key: ${BARBERTRIX_JWT_KEY:?Set BARBERTRIX_JWT_KEY in .env}
       Database__ApplyMigrations: "true"
       Demo__Enabled: "true"
       PasswordReset__FrontendBaseUrl: http://localhost:8081
@@ -47,4 +47,4 @@ services:
       - api
 
 volumes:
-  barberturn-sqlserver:
+  barbertrix-sqlserver:

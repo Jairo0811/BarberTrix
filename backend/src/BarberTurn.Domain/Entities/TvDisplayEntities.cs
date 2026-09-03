@@ -39,6 +39,17 @@ public sealed class TvDisplay : BaseEntity
         Touch();
     }
 
+    public bool ClearExpiredPairingCode(DateTimeOffset nowUtc)
+    {
+        if (PairingCodeHash is null || PairingExpiresAtUtc is null || PairingExpiresAtUtc > nowUtc)
+            return false;
+
+        PairingCodeHash = null;
+        PairingExpiresAtUtc = null;
+        Touch();
+        return true;
+    }
+
     public void Pair(string displayTokenHash)
     {
         if (string.IsNullOrWhiteSpace(displayTokenHash))

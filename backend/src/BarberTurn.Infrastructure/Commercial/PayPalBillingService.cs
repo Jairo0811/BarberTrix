@@ -83,8 +83,8 @@ internal sealed class PayPalBillingService(
     public async Task<CheckoutResponse> CreateCheckoutAsync(Guid barberShopId, CheckoutRequest request, CancellationToken cancellationToken = default)
     {
         _ = await dbContext.BarberShops.AsNoTracking().SingleAsync(x => x.Id == barberShopId, cancellationToken);
-        if (request.Plan == SubscriptionPlan.Free)
-            throw new InvalidOperationException("Free does not require a PayPal subscription.");
+        if (!request.Plan.IsPurchasable())
+            throw new InvalidOperationException("Only Pro and Business require a PayPal subscription.");
         ValidateRedirect(request.ReturnUrl);
         ValidateRedirect(request.CancelUrl);
         var planId = configuration[$"PayPal:PlanIds:{request.Plan}"];
@@ -98,7 +98,7 @@ internal sealed class PayPalBillingService(
         {
             plan_id = planId,
             custom_id = $"{barberShopId:N}:{request.Plan}",
-            application_context = new { brand_name = "BarberTurn", user_action = "SUBSCRIBE_NOW", return_url = request.ReturnUrl, cancel_url = request.CancelUrl }
+            application_context = new { brand_name = "BarberTrix", user_action = "SUBSCRIBE_NOW", return_url = request.ReturnUrl, cancel_url = request.CancelUrl }
         });
         using var response = await httpClient.SendAsync(message, cancellationToken);
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -124,6 +124,8 @@ internal sealed class PayPalBillingService(
         if (customId is null || !customId.StartsWith(barberShopId.ToString("N"), StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("The PayPal subscription does not belong to this barbershop.");
         var plan = Enum.TryParse<SubscriptionPlan>(customId.Split(':').ElementAtOrDefault(1), true, out var parsed) ? parsed : SubscriptionPlan.Pro;
+        if (!plan.IsPurchasable())
+            throw new InvalidOperationException("This legacy checkout is no longer available. Start a new Pro or Business checkout.");
         var start = root.TryGetProperty("start_time", out var startValue) && DateTimeOffset.TryParse(startValue.GetString(), out var parsedStart) ? parsedStart : DateTimeOffset.UtcNow;
         var next = root.TryGetProperty("billing_info", out var billing) && billing.TryGetProperty("next_billing_time", out var nextValue) && DateTimeOffset.TryParse(nextValue.GetString(), out var parsedNext) ? parsedNext : start.AddMonths(1);
         var existing = await dbContext.Subscriptions.OrderByDescending(x => x.CreatedAtUtc).FirstOrDefaultAsync(x => x.BarberShopId == barberShopId && x.ProviderSubscriptionId == request.ProviderOrderId, cancellationToken);
@@ -142,11 +144,11 @@ internal sealed class PayPalBillingService(
 
     public async Task<SubscriptionResponse> GetSubscriptionAsync(Guid barberShopId, CancellationToken cancellationToken = default)
     {
-        var shop = await dbContext.BarberShops.AsNoTracking().SingleAsync(x => x.Id == barberShopId, cancellationToken);
+        _ = await dbContext.BarberShops.AsNoTracking().SingleAsync(x => x.Id == barberShopId, cancellationToken);
         var subscription = await dbContext.Subscriptions.AsNoTracking().Where(x => x.BarberShopId == barberShopId).OrderByDescending(x => x.CreatedAtUtc).FirstOrDefaultAsync(cancellationToken);
         return subscription is null || subscription.Status is not (SubscriptionStatus.Active or SubscriptionStatus.Trialing)
             ? new SubscriptionResponse(SubscriptionPlan.Free, SubscriptionStatus.Active, "Free", null, false)
-            : new SubscriptionResponse(subscription.Plan, subscription.Status, subscription.Provider, subscription.PeriodEndsAtUtc, subscription.CancelAtPeriodEnd);
+            : new SubscriptionResponse(subscription.Plan.NormalizeCommercial(), subscription.Status, subscription.Provider, subscription.PeriodEndsAtUtc, subscription.CancelAtPeriodEnd);
     }
 
     public async Task<SubscriptionResponse> CancelAsync(Guid barberShopId, bool atPeriodEnd, CancellationToken cancellationToken = default)
@@ -156,7 +158,7 @@ internal sealed class PayPalBillingService(
         if (!string.IsNullOrWhiteSpace(subscription.ProviderSubscriptionId))
         {
             using var message = await CreateRequestAsync(HttpMethod.Post, $"/v1/billing/subscriptions/{Uri.EscapeDataString(subscription.ProviderSubscriptionId)}/cancel", cancellationToken);
-            message.Content = JsonContent.Create(new { reason = "Cancelled by BarberTurn account owner" });
+            message.Content = JsonContent.Create(new { reason = "Cancelled by BarberTrix account owner" });
             using var response = await httpClient.SendAsync(message, cancellationToken);
             _ = await response.Content.ReadAsStringAsync(cancellationToken);
             EnsureSuccess(response);
@@ -251,9 +253,10 @@ internal sealed class PayPalBillingService(
 
         ApplyWebhookEvent(subscription, eventType, resource, occurredAt.Value);
         var shop = await dbContext.BarberShops.SingleAsync(x => x.Id == subscription.BarberShopId, cancellationToken);
+        var activePlan = subscription.Plan.NormalizeCommercial();
         shop.ChangeSubscription(
-            subscription.Status is SubscriptionStatus.Active or SubscriptionStatus.Trialing ? subscription.Plan : SubscriptionPlan.Free,
-            subscription.Status is SubscriptionStatus.Active or SubscriptionStatus.Trialing ? subscription.Status : SubscriptionStatus.Active);
+            subscription.Status is SubscriptionStatus.Active or SubscriptionStatus.Trialing ? activePlan : SubscriptionPlan.Free,
+            subscription.Status is SubscriptionStatus.Active or SubscriptionStatus.Trialing && activePlan != SubscriptionPlan.Free ? subscription.Status : SubscriptionStatus.Active);
         await InsertWebhookReceiptAsync(eventId, eventType, providerId, occurredAt.Value, true, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);

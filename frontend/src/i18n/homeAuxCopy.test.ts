@@ -3,12 +3,14 @@ import { eastAsiaHomeAuxCopy, getProductHomeAuxCopy } from './eastAsiaHomeAuxCop
 import { getHomeAuxCopy, homeAuxCopy } from './homeAuxCopy'
 
 const completeLocales = ['es-419', 'en', 'es-ES', 'pt-BR', 'fr', 'de', 'it', 'nl', 'ht', 'ja'] as const
+const commercialPlanNames = ['Free', 'Pro', 'Business']
 
 describe('home auxiliary localization', () => {
   it.each(completeLocales)('provides complete pricing and footer copy for %s', locale => {
     const copy = getHomeAuxCopy(locale)
     expect(copy).toBe(homeAuxCopy[locale])
-    expect(copy.plans).toHaveLength(4)
+    expect(copy.plans).toHaveLength(3)
+    expect(copy.plans.map(plan => plan.name)).toEqual(commercialPlanNames)
     expect(copy.plans.every(plan => plan.description.length > 0 && plan.features.length >= 5)).toBe(true)
     expect(copy.supportSubject).toBeTruthy()
     expect(copy.slogan).toBeTruthy()
@@ -19,7 +21,8 @@ describe('home auxiliary localization', () => {
   it.each(['ko', 'zh-CN'] as const)('provides complete East Asian pricing and footer copy for %s', locale => {
     const copy = getProductHomeAuxCopy(locale)
     expect(copy).toBe(eastAsiaHomeAuxCopy[locale])
-    expect(copy.plans).toHaveLength(4)
+    expect(copy.plans).toHaveLength(3)
+    expect(copy.plans.map(plan => plan.name)).toEqual(commercialPlanNames)
     expect(copy.plans.every(plan => plan.description.length > 0 && plan.features.length >= 5)).toBe(true)
     expect(copy.supportSubject).toBeTruthy()
     expect(copy.slogan).toBeTruthy()

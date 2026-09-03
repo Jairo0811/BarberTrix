@@ -1,7 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { MobileApiError } from '@/api/httpClient';
 import { useAuth } from '@/auth/AuthProvider';
@@ -11,6 +10,8 @@ import { acceptTurnRequest, counterProposeTurnRequest, getStaffTurnRequests, rej
 import type { TurnRequest } from '@/turnRequests/types';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 import { BrandLogo } from '@/ui/BrandLogo';
+import { BrandedBackground } from '@/ui/BrandedBackground';
+import { MobileBottomNav } from '@/ui/MobileBottomNav';
 
 export default function StaffTurnRequestsScreen() {
   const { session, refresh } = useAuth();
@@ -70,197 +71,214 @@ export default function StaffTurnRequestsScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.backgroundDecor}>
-        <View style={styles.glow} />
-      </View>
+      <BrandedBackground compact />
 
-      <ScrollView
-        contentContainerStyle={styles.content}
-        refreshControl={(
-          <RefreshControl
-            refreshing={requestQuery.isRefetching}
-            onRefresh={() => requestQuery.refetch()}
-            tintColor={colors.primaryGlow}
-            colors={[colors.primary]}
-            progressBackgroundColor={colors.surfaceStrong}
-          />
-        )}
-      >
-        <View style={styles.brandBar}>
-          <BrandLogo compact />
-          <Pressable onPress={() => router.back()} style={({ pressed }) => [styles.back, pressed && styles.backPressed]}>
-            <Text style={styles.backArrow}>←</Text>
-            <Text style={styles.backText}>{t('staffRequests.back')}</Text>
-          </Pressable>
-        </View>
+      <View style={styles.shell}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          refreshControl={(
+            <RefreshControl
+              refreshing={requestQuery.isRefetching}
+              onRefresh={() => requestQuery.refetch()}
+              tintColor={colors.primaryGlow}
+              colors={[colors.primary]}
+              progressBackgroundColor={colors.surfaceStrong}
+            />
+          )}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.topbar}>
+            <BrandLogo compact />
+            <View style={styles.liveBadge}>
+              <View style={styles.liveDot} />
+              <Text style={styles.liveText}>REALTIME</Text>
+            </View>
+          </View>
 
-        <View style={styles.header}>
           <View style={styles.headerCopy}>
             <Text style={styles.eyebrow}>{t('staffRequests.eyebrow')}</Text>
             <Text style={styles.title}>{t('staffRequests.title')}</Text>
             <Text style={styles.subtitle}>{t('staffRequests.subtitle')}</Text>
           </View>
-        </View>
 
-        {requestQuery.isLoading ? <ActivityIndicator color={colors.primaryGlow} size="large" /> : null}
-
-        {requestQuery.error ? (
-          <View style={styles.errorBox}>
-            <Text accessibilityRole="alert" style={styles.error}>{t('staffRequests.loadError')}</Text>
-          </View>
-        ) : null}
-
-        {!requestQuery.isLoading && actionable.length === 0 ? (
-          <View style={styles.empty}>
-            <View style={styles.emptyIcon}><Text style={styles.emptyIconText}>✓</Text></View>
-            <View style={styles.emptyCopy}>
-              <Text style={styles.emptyTitle}>{t('staffRequests.emptyTitle')}</Text>
-              <Text style={styles.subtitle}>{t('staffRequests.emptyText')}</Text>
+          <View style={styles.summaryRow}>
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryValue}>{actionable.length}</Text>
+              <Text style={styles.summaryLabel}>{t('staffRequests.status.Pending')}</Text>
+            </View>
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryValue}>{history.length}</Text>
+              <Text style={styles.summaryLabel}>{t('staffRequests.recent')}</Text>
             </View>
           </View>
-        ) : null}
 
-        {actionable.map(request => (
-          <View key={request.id} style={styles.card}>
-            <View style={styles.cardAccent} />
-            <View style={styles.cardTop}>
+          {requestQuery.isLoading ? <ActivityIndicator color={colors.primaryGlow} size="large" /> : null}
+
+          {requestQuery.error ? (
+            <View style={styles.errorBox}>
+              <Text accessibilityRole="alert" style={styles.error}>{t('staffRequests.loadError')}</Text>
+            </View>
+          ) : null}
+
+          {!requestQuery.isLoading && actionable.length === 0 ? (
+            <View style={styles.empty}>
+              <View style={styles.emptyIcon}><Text style={styles.emptyIconText}>✓</Text></View>
+              <View style={styles.emptyCopy}>
+                <Text style={styles.emptyTitle}>{t('staffRequests.emptyTitle')}</Text>
+                <Text style={styles.subtitle}>{t('staffRequests.emptyText')}</Text>
+              </View>
+            </View>
+          ) : null}
+
+          {actionable.map(request => (
+            <View key={request.id} style={styles.card}>
+              <View style={styles.cardAccent} />
+              <View style={styles.cardTop}>
+                <View style={styles.cardCopy}>
+                  <Text style={styles.customer}>{request.customerName}</Text>
+                  <Text style={styles.service}>{request.serviceName} · {request.barberName}</Text>
+                </View>
+                <View style={styles.badge}>
+                  <View style={styles.badgeDot} />
+                  <Text style={styles.badgeText}>{statusLabel(request)}</Text>
+                </View>
+              </View>
+
+              <View style={styles.timeRow}>
+                <Text style={styles.timeIcon}>◷</Text>
+                <Text style={styles.time}>{formatDate(request.effectiveStartsAtUtc)}</Text>
+              </View>
+
+              {request.notes ? <Text style={styles.notes}>“{request.notes}”</Text> : null}
+              {request.status === 'CounterProposed' ? <Text style={styles.counter}>{t('staffRequests.counterWaiting')}</Text> : null}
+
+              {request.status === 'Pending' ? (
+                <View style={styles.actions}>
+                  <Pressable
+                    accessibilityRole="button"
+                    disabled={mutate.isPending}
+                    onPress={() => mutate.mutate({ kind: 'accept', id: request.id })}
+                    style={({ pressed }) => [styles.primary, pressed && styles.primaryPressed, mutate.isPending && styles.disabled]}
+                  >
+                    <Text style={styles.primaryText}>{t('staffRequests.accept')}</Text>
+                  </Pressable>
+                  <Pressable
+                    accessibilityRole="button"
+                    disabled={mutate.isPending}
+                    onPress={() => mutate.mutate({ kind: 'reject', id: request.id })}
+                    style={({ pressed }) => [styles.danger, pressed && styles.dangerPressed, mutate.isPending && styles.disabled]}
+                  >
+                    <Text style={styles.dangerText}>{t('staffRequests.reject')}</Text>
+                  </Pressable>
+                </View>
+              ) : null}
+
+              {request.status === 'Pending' ? (
+                <View style={styles.counterActions}>
+                  {[30, 60, 90].map(minutes => {
+                    const proposed = new Date(new Date(request.requestedStartsAtUtc).getTime() + minutes * 60_000).toISOString();
+                    return (
+                      <Pressable
+                        accessibilityRole="button"
+                        key={minutes}
+                        disabled={mutate.isPending}
+                        onPress={() => mutate.mutate({ kind: 'counter', id: request.id, startsAt: proposed })}
+                        style={({ pressed }) => [styles.counterButton, pressed && styles.counterButtonPressed, mutate.isPending && styles.disabled]}
+                      >
+                        <Text style={styles.counterButtonText}>+{minutes} min</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              ) : null}
+            </View>
+          ))}
+
+          {mutate.error ? (
+            <View style={styles.errorBox}>
+              <Text accessibilityRole="alert" style={styles.error}>{t('staffRequests.actionError')}</Text>
+            </View>
+          ) : null}
+
+          {history.length > 0 ? (
+            <View style={styles.sectionHeading}>
+              <Text style={styles.sectionEyebrow}>BARBERTRIX</Text>
+              <Text style={styles.sectionTitle}>{t('staffRequests.recent')}</Text>
+            </View>
+          ) : null}
+
+          {history.map(request => (
+            <View key={request.id} style={styles.historyCard}>
+              <View style={styles.historyMarker} />
               <View style={styles.cardCopy}>
-                <Text style={styles.customer}>{request.customerName}</Text>
-                <Text style={styles.service}>{request.serviceName} · {request.barberName}</Text>
+                <Text style={styles.historyTitle}>{request.customerName} · {request.serviceName}</Text>
+                <Text style={styles.subtitle}>{formatDate(request.effectiveStartsAtUtc)}</Text>
               </View>
-              <View style={styles.badge}>
-                <View style={styles.badgeDot} />
-                <Text style={styles.badgeText}>{statusLabel(request)}</Text>
+              <View style={styles.historyBadge}>
+                <Text style={styles.historyBadgeText}>{statusLabel(request)}</Text>
               </View>
             </View>
+          ))}
+        </ScrollView>
 
-            <View style={styles.timeRow}>
-              <Text style={styles.timeIcon}>◷</Text>
-              <Text style={styles.time}>{formatDate(request.effectiveStartsAtUtc)}</Text>
-            </View>
-
-            {request.notes ? <Text style={styles.notes}>“{request.notes}”</Text> : null}
-            {request.status === 'CounterProposed' ? <Text style={styles.counter}>{t('staffRequests.counterWaiting')}</Text> : null}
-
-            {request.status === 'Pending' ? (
-              <View style={styles.actions}>
-                <Pressable
-                  disabled={mutate.isPending}
-                  onPress={() => mutate.mutate({ kind: 'accept', id: request.id })}
-                  style={({ pressed }) => [styles.primary, pressed && styles.primaryPressed, mutate.isPending && styles.disabled]}
-                >
-                  <Text style={styles.primaryText}>{t('staffRequests.accept')}</Text>
-                </Pressable>
-                <Pressable
-                  disabled={mutate.isPending}
-                  onPress={() => mutate.mutate({ kind: 'reject', id: request.id })}
-                  style={({ pressed }) => [styles.danger, pressed && styles.dangerPressed, mutate.isPending && styles.disabled]}
-                >
-                  <Text style={styles.dangerText}>{t('staffRequests.reject')}</Text>
-                </Pressable>
-              </View>
-            ) : null}
-
-            {request.status === 'Pending' ? (
-              <View style={styles.counterActions}>
-                {[30, 60, 90].map(minutes => {
-                  const proposed = new Date(new Date(request.requestedStartsAtUtc).getTime() + minutes * 60_000).toISOString();
-                  return (
-                    <Pressable
-                      key={minutes}
-                      disabled={mutate.isPending}
-                      onPress={() => mutate.mutate({ kind: 'counter', id: request.id, startsAt: proposed })}
-                      style={({ pressed }) => [styles.counterButton, pressed && styles.counterButtonPressed, mutate.isPending && styles.disabled]}
-                    >
-                      <Text style={styles.counterButtonText}>+{minutes} min</Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            ) : null}
-          </View>
-        ))}
-
-        {mutate.error ? (
-          <View style={styles.errorBox}>
-            <Text accessibilityRole="alert" style={styles.error}>{t('staffRequests.actionError')}</Text>
-          </View>
-        ) : null}
-
-        {history.length > 0 ? (
-          <View style={styles.sectionHeading}>
-            <Text style={styles.sectionEyebrow}>BARBERTRIX</Text>
-            <Text style={styles.sectionTitle}>{t('staffRequests.recent')}</Text>
-          </View>
-        ) : null}
-
-        {history.map(request => (
-          <View key={request.id} style={styles.historyCard}>
-            <View style={styles.historyMarker} />
-            <View style={styles.cardCopy}>
-              <Text style={styles.historyTitle}>{request.customerName} · {request.serviceName}</Text>
-              <Text style={styles.subtitle}>{formatDate(request.effectiveStartsAtUtc)}</Text>
-            </View>
-            <View style={styles.historyBadge}>
-              <Text style={styles.historyBadgeText}>{statusLabel(request)}</Text>
-            </View>
-          </View>
-        ))}
-      </ScrollView>
+        <View style={styles.navWrap}>
+          <MobileBottomNav active="requests" />
+        </View>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
-  backgroundDecor: {
-    ...StyleSheet.absoluteFill,
-    overflow: 'hidden',
-    pointerEvents: 'none',
-  },
-  glow: {
-    position: 'absolute',
-    width: 360,
-    height: 360,
-    borderRadius: 180,
-    top: -200,
-    right: -160,
-    backgroundColor: 'rgba(22, 135, 255, 0.10)',
-  },
+  shell: { flex: 1 },
   content: {
     width: '100%',
     maxWidth: 780,
     alignSelf: 'center',
     padding: spacing.xl,
-    paddingBottom: 54,
+    paddingBottom: spacing.xl,
     gap: spacing.md,
   },
-  brandBar: {
+  topbar: {
     minHeight: 66,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.md,
+    marginBottom: spacing.sm,
   },
-  header: { gap: spacing.lg, marginBottom: spacing.sm },
-  headerCopy: { gap: 6 },
+  liveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
+    backgroundColor: colors.successSoft,
+    borderWidth: 1,
+    borderColor: 'rgba(84, 214, 138, 0.22)',
+  },
+  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.success },
+  liveText: { color: colors.success, fontSize: 9, fontWeight: '900', letterSpacing: 1 },
+  headerCopy: { gap: 6, marginBottom: spacing.sm },
   eyebrow: { ...typography.eyebrow, color: colors.primaryGlow },
   title: { ...typography.title, color: colors.text },
   subtitle: { ...typography.body, color: colors.textMuted },
-  back: {
-    minHeight: 42,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  summaryRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
+  summaryCard: {
+    flex: 1,
+    minHeight: 88,
+    justifyContent: 'center',
+    gap: 4,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingHorizontal: 13,
-    backgroundColor: 'rgba(255,255,255,0.025)',
+    backgroundColor: 'rgba(10, 18, 33, 0.84)',
   },
-  backPressed: { backgroundColor: colors.surfaceSoft },
-  backArrow: { color: colors.primaryGlow, fontSize: 18, fontWeight: '800' },
-  backText: { color: colors.textMuted, fontWeight: '800', fontSize: 12 },
+  summaryValue: { color: colors.text, fontSize: 26, fontWeight: '900' },
+  summaryLabel: { color: colors.textSubtle, fontSize: 11, fontWeight: '800' },
   empty: {
     backgroundColor: colors.surface,
     borderWidth: 1,
@@ -379,4 +397,12 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 122, 122, 0.22)',
   },
   error: { color: colors.danger, fontWeight: '700', lineHeight: 20 },
+  navWrap: {
+    width: '100%',
+    maxWidth: 780,
+    alignSelf: 'center',
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.sm,
+    backgroundColor: 'rgba(5, 9, 18, 0.92)',
+  },
 });

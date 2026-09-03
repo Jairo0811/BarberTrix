@@ -4,7 +4,7 @@ import { useAuth } from '@/auth/AuthProvider';
 import { colors } from '@/theme/tokens';
 
 export default function IndexScreen() {
-  const { status } = useAuth();
+  const { status, session } = useAuth();
 
   if (status === 'loading') {
     return (
@@ -14,6 +14,7 @@ export default function IndexScreen() {
     );
   }
 
+  if (session?.user.role === 'Client') return <Redirect href="/discover" />;
   if (status === 'onboarding') return <Redirect href="/onboarding" />;
   return <Redirect href={status === 'authenticated' ? '/(app)' : '/discover'} />;
 }

@@ -100,8 +100,8 @@ export default function HomePage() {
   return (
     <main className="home-page">
       <header className="home-nav">
-        <a className="home-brand" href="#inicio" aria-label={`BarberTurn ${t('home.nav.home')}`} onClick={() => selectSection('inicio')}>
-          <img src="/branding/barberturn-logo.png" alt="BarberTurn" />
+        <a className="home-brand" href="#inicio" aria-label={`BarberTrix ${t('home.nav.home')}`} onClick={() => selectSection('inicio')}>
+          <img src="/branding/barberturn-logo.png" alt="BarberTrix" />
         </a>
 
         <nav className={`home-links${mobileMenuOpen ? ' mobile-open' : ''}`} aria-label={t('home.nav.home')}>
@@ -148,7 +148,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="home-stats" aria-label="BarberTurn">
+      <section className="home-stats" aria-label="BarberTrix">
         {capabilityHighlights.map(item => (
           <article key={item.value}>
             <span className="home-stat-icon" aria-hidden="true"><FontAwesomeIcon icon={item.icon} /></span>
@@ -239,12 +239,12 @@ export default function HomePage() {
       </section>
 
       <footer className="home-footer">
-        <img src="/branding/barberturn-logo.png" alt="BarberTurn" />
+        <img src="/branding/barberturn-logo.png" alt="BarberTrix" />
         <p>{homeAux.slogan}</p>
         <a className="footer-support-link" href={buildSupportEmailHref()}>{t('common.support')}</a>
         <a className="footer-support-link" href="#/terms">{homeAux.terms}</a>
         <a className="footer-support-link" href="#/privacy">{homeAux.privacy}</a>
-        <span>© {currentYear} BarberTurn. {t('home.footer.rights')}</span>
+        <span>© {currentYear} BarberTrix. {t('home.footer.rights')}</span>
       </footer>
     </main>
   )

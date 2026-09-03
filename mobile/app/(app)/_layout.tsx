@@ -1,6 +1,8 @@
 import { Redirect, Stack } from 'expo-router';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useAuth } from '@/auth/AuthProvider';
+import { colors } from '@/theme/tokens';
+import { BrandedBackground } from '@/ui/BrandedBackground';
 
 export default function AuthenticatedLayout() {
   const { status } = useAuth();
@@ -8,7 +10,8 @@ export default function AuthenticatedLayout() {
   if (status === 'loading') {
     return (
       <View accessibilityLabel="Restaurando sesión" style={styles.loading}>
-        <ActivityIndicator size="large" />
+        <BrandedBackground compact />
+        <ActivityIndicator color={colors.primaryGlow} size="large" />
       </View>
     );
   }
@@ -19,9 +22,9 @@ export default function AuthenticatedLayout() {
     return <Redirect href="/(auth)/login" />;
   }
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }} />;
 }
 
 const styles = StyleSheet.create({
-  loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#f7f7f5' },
+  loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
 });

@@ -6,6 +6,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { PushOptInCard } from '@/notifications/PushOptInCard';
 import { usePushNotifications } from '@/notifications/PushNotificationsProvider';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
+import { BrandLogo } from '@/ui/BrandLogo';
 
 export default function HomeScreen() {
   const { session, signOut } = useAuth();
@@ -16,21 +17,13 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View pointerEvents="none" style={styles.backgroundDecor}>
+      <View style={styles.backgroundDecor}>
         <View style={styles.glow} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.topbar}>
-          <View style={styles.brandRow}>
-            <View style={styles.brandMark}>
-              <Text style={styles.brandMarkText}>BT</Text>
-            </View>
-            <View>
-              <Text style={styles.brand}>BarberTrix</Text>
-              <Text style={styles.brandMeta}>MOBILE</Text>
-            </View>
-          </View>
+          <BrandLogo compact />
 
           <Pressable accessibilityRole="button" onPress={signOut} style={({ pressed }) => [styles.logout, pressed && styles.logoutPressed]}>
             <Text style={styles.logoutText}>{t('home.signOut')}</Text>
@@ -71,10 +64,8 @@ export default function HomeScreen() {
         </Pressable>
 
         <View style={styles.sectionHeader}>
-          <View>
-            <Text style={styles.sectionEyebrow}>BARBERTRIX</Text>
-            <Text style={styles.sectionTitle}>{t('home.pushTitle')}</Text>
-          </View>
+          <Text style={styles.sectionEyebrow}>BARBERTRIX</Text>
+          <Text style={styles.sectionTitle}>{t('home.pushTitle')}</Text>
         </View>
 
         <PushOptInCard
@@ -97,7 +88,11 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
-  backgroundDecor: { ...StyleSheet.absoluteFillObject, overflow: 'hidden' },
+  backgroundDecor: {
+    ...StyleSheet.absoluteFill,
+    overflow: 'hidden',
+    pointerEvents: 'none',
+  },
   glow: {
     position: 'absolute',
     width: 420,
@@ -116,21 +111,13 @@ const styles = StyleSheet.create({
     paddingBottom: 48,
     gap: spacing.xl,
   },
-  topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
-  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 11 },
-  brandMark: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+  topbar: {
+    minHeight: 66,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primarySoft,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
+    justifyContent: 'space-between',
+    gap: spacing.md,
   },
-  brandMarkText: { color: colors.primaryGlow, fontSize: 16, fontWeight: '900', letterSpacing: -0.8 },
-  brand: { color: colors.text, fontSize: 19, fontWeight: '900', letterSpacing: -0.6 },
-  brandMeta: { marginTop: 1, color: colors.primaryGlow, fontSize: 8, fontWeight: '900', letterSpacing: 1.8 },
   logout: {
     minHeight: 42,
     justifyContent: 'center',
@@ -169,11 +156,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderStrong,
     backgroundColor: colors.surface,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 14 },
-    elevation: 8,
   },
   primaryCardPressed: { transform: [{ scale: 0.995 }], backgroundColor: colors.surfaceStrong },
   cardGlow: {

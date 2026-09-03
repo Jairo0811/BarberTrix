@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Establecer una base ejecutable, segura y mantenible sobre la cual implementar el núcleo de turnos de BarberTurn.
+Establecer una base ejecutable, segura y mantenible sobre la cual implementar el núcleo de turnos de BarberTrix.
 
 ## Implementado
 
@@ -27,7 +27,7 @@ Establecer una base ejecutable, segura y mantenible sobre la cual implementar el
 - TypeScript.
 - Vite 8.
 - Layout inicial responsive.
-- Identidad visual oscura con acento azul BarberTurn.
+- Identidad visual oscura con acento azul BarberTrix.
 - Hero de producto.
 - Vista previa de indicadores y fila en vivo.
 

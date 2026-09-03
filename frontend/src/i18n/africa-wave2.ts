@@ -14,16 +14,16 @@ const make = (languageLabel: string, language: string, signIn: string, hello: st
 })
 
 export const africaWave2: Record<string, Dictionary> = {
-  wo: make('Làkk', 'BarberTurn', 'Dugg', 'Dalal ak jàmm', 'Rëdd', 'Génn', 'Yëgle yi'),
-  ln: make('Lokóta', 'BarberTurn', 'Kokɔta', 'Mbote', 'Molɔngɔ', 'Kobima', 'Mayebisi'),
-  rw: make('Ururimi', 'BarberTurn', 'Injira', 'Muraho', 'Umurongo', 'Sohoka', 'Imenyesha'),
-  rn: make('Ururimi', 'BarberTurn', 'Injira', 'Bwakeye', 'Umurongo', 'Sohoka', 'Amatangazo'),
-  st: make('Puo', 'BarberTurn', 'Kena', 'Lumela', 'Mola', 'Tsoa', 'Ditsebiso'),
-  tn: make('Puo', 'BarberTurn', 'Tsena', 'Dumela', 'Mola', 'Tswa', 'Dikitsiso'),
-  sn: make('Mutauro', 'BarberTurn', 'Pinda', 'Mhoro', 'Mutsetse', 'Buda', 'Zviziviso'),
-  ny: make('Chilankhulo', 'BarberTurn', 'Lowani', 'Moni', 'Mzere', 'Tulukani', 'Zidziwitso'),
-  mg: make('Fiteny', 'BarberTurn', 'Hiditra', 'Salama', 'Filaharana', 'Hivoaka', 'Fampandrenesana'),
-  ti: make('ቋንቋ', 'BarberTurn', 'እቶ', 'ሰላም', 'ተራ', 'ውጻእ', 'ምልክታታት'),
-  om: make('Afaan', 'BarberTurn', 'Seeni', 'Akkam', 'Hiriira', 'Ba’i', 'Beeksisa'),
-  ak: make('Kasa', 'BarberTurn', 'Kɔ mu', 'Maakye', 'Ntoatoaso', 'Pue', 'Nkaebɔ'),
+  wo: make('Làkk', 'BarberTrix', 'Dugg', 'Dalal ak jàmm', 'Rëdd', 'Génn', 'Yëgle yi'),
+  ln: make('Lokóta', 'BarberTrix', 'Kokɔta', 'Mbote', 'Molɔngɔ', 'Kobima', 'Mayebisi'),
+  rw: make('Ururimi', 'BarberTrix', 'Injira', 'Muraho', 'Umurongo', 'Sohoka', 'Imenyesha'),
+  rn: make('Ururimi', 'BarberTrix', 'Injira', 'Bwakeye', 'Umurongo', 'Sohoka', 'Amatangazo'),
+  st: make('Puo', 'BarberTrix', 'Kena', 'Lumela', 'Mola', 'Tsoa', 'Ditsebiso'),
+  tn: make('Puo', 'BarberTrix', 'Tsena', 'Dumela', 'Mola', 'Tswa', 'Dikitsiso'),
+  sn: make('Mutauro', 'BarberTrix', 'Pinda', 'Mhoro', 'Mutsetse', 'Buda', 'Zviziviso'),
+  ny: make('Chilankhulo', 'BarberTrix', 'Lowani', 'Moni', 'Mzere', 'Tulukani', 'Zidziwitso'),
+  mg: make('Fiteny', 'BarberTrix', 'Hiditra', 'Salama', 'Filaharana', 'Hivoaka', 'Fampandrenesana'),
+  ti: make('ቋንቋ', 'BarberTrix', 'እቶ', 'ሰላም', 'ተራ', 'ውጻእ', 'ምልክታታት'),
+  om: make('Afaan', 'BarberTrix', 'Seeni', 'Akkam', 'Hiriira', 'Ba’i', 'Beeksisa'),
+  ak: make('Kasa', 'BarberTrix', 'Kɔ mu', 'Maakye', 'Ntoatoaso', 'Pue', 'Nkaebɔ'),
 }

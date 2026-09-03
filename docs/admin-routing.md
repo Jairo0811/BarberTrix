@@ -1,6 +1,6 @@
 # Navegación administrativa
 
-BarberTurn utiliza React Router con `HashRouter` como router único del frontend web. Se conserva el contrato `#/...` para mantener compatibilidad con despliegues estáticos/Nginx sin exigir rewrites del servidor y para no romper deep links existentes.
+BarberTrix utiliza React Router con `HashRouter` como router único del frontend web. Se conserva el contrato `#/...` para mantener compatibilidad con despliegues estáticos/Nginx sin exigir rewrites del servidor y para no romper deep links existentes.
 
 ## Rutas administrativas
 

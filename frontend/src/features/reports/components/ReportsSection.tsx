@@ -131,7 +131,7 @@ export default function ReportsSection({ isDemo, capabilities }: Props) {
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
     const anchor = document.createElement('a')
     anchor.href = url
-    anchor.download = `barberturn-report-${report.from}-${report.to}.csv`
+    anchor.download = `barbertrix-report-${report.from}-${report.to}.csv`
     anchor.click()
     URL.revokeObjectURL(url)
   }

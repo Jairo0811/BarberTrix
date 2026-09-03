@@ -101,7 +101,7 @@ export default function HomePage() {
     <main className="home-page">
       <header className="home-nav">
         <a className="home-brand" href="#inicio" aria-label={`BarberTrix ${t('home.nav.home')}`} onClick={() => selectSection('inicio')}>
-          <img src="/branding/barberturn-logo.png" alt="BarberTrix" />
+          <img src="/branding/barbertrix-logo.png" alt="BarberTrix" />
         </a>
 
         <nav className={`home-links${mobileMenuOpen ? ' mobile-open' : ''}`} aria-label={t('home.nav.home')}>
@@ -144,7 +144,7 @@ export default function HomePage() {
 
         <div className="home-hero-visual" aria-hidden="true">
           <div className="home-hero-glow" />
-          <img src="/branding/barberturn-home-chair.png" alt="" />
+          <img src="/branding/barbertrix-home-chair.png" alt="" />
         </div>
       </section>
 
@@ -239,7 +239,7 @@ export default function HomePage() {
       </section>
 
       <footer className="home-footer">
-        <img src="/branding/barberturn-logo.png" alt="BarberTrix" />
+        <img src="/branding/barbertrix-logo.png" alt="BarberTrix" />
         <p>{homeAux.slogan}</p>
         <a className="footer-support-link" href={buildSupportEmailHref()}>{t('common.support')}</a>
         <a className="footer-support-link" href="#/terms">{homeAux.terms}</a>

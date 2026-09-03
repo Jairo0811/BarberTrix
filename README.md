@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/images/barberturn-logo.png" alt="Logo de BarberTrix" width="720" />
+  <img src="docs/images/barbertrix-logo.png" alt="Logo de BarberTrix" width="720" />
 </p>
 
 <p align="center">
@@ -89,7 +89,7 @@ El modelo utiliza memberships, solicitudes e invitaciones en lugar de duplicar i
 | Dueño + barbero | `dueno.barbero@barbertrix.com.do` | Gestión del negocio + operación como barbero |
 | Cliente | `cliente@barbertrix.com.do` | Discovery y experiencia cliente |
 
-> Las contraseñas de prueba **no se almacenan en el repositorio**. Se obtienen de la configuración segura de desarrollo (`SystemAdmin:Password` / `DemoAdmin:Password`). El seeder migra el correo administrativo histórico `admin@barberturn.com.do` a `admin@barbertrix.com.do` cuando corresponde.
+> Las contraseñas de prueba **no se almacenan en el repositorio**. Se obtienen de la configuración segura de desarrollo (`SystemAdmin:Password` / `DemoAdmin:Password`). El seeder migra el correo administrativo histórico `admin@barbertrix.com.do` a `admin@barbertrix.com.do` cuando corresponde.
 
 ## 💳 Planes
 

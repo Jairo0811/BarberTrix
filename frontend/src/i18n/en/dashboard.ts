@@ -30,7 +30,7 @@ const dictionary = {
   "adminTitle": "Administration dashboard",
   "demoSubtitle": "Explore the complete workflow with temporary data and safe actions.",
   "adminSubtitle": "Monitor the queue, team and service catalog from one place.",
-  "demoBannerTitle": "You are exploring BarberTurn in demo mode",
+  "demoBannerTitle": "You are exploring BarberTrix in demo mode",
   "demoBannerText": "You can create queue tickets, change statuses and walk through the operational flow. This session data is temporary.",
   "testEnvironment": "TEST ENVIRONMENT",
   "adminBannerTitle": "Administration center active",

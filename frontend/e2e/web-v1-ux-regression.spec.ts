@@ -50,7 +50,7 @@ test('barber portal exposes empty operational states without mobile overflow', a
 })
 
 test('customer portal remains responsive on desktop tablet and mobile', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('barberturn.locale', 'es-419'))
+  await page.addInitScript(() => localStorage.setItem('barbertrix.locale', 'es-419'))
   await installMockBackend(page, { plan: 'Pro' })
 
   for (const viewport of [
@@ -67,7 +67,7 @@ test('customer portal remains responsive on desktop tablet and mobile', async ({
 })
 
 test('customer portal exposes deterministic loading and error feedback', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('barberturn.locale', 'es-419'))
+  await page.addInitScript(() => localStorage.setItem('barbertrix.locale', 'es-419'))
   await installMockBackend(page, { plan: 'Pro' })
   await page.route('http://localhost:8080/api/public/shops/central', async route => {
     await new Promise(resolve => setTimeout(resolve, 500))

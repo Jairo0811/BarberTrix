@@ -19,9 +19,9 @@ const starterCapabilities: Capabilities = {
 
 describe('Reports capability paywall', () => {
   it('keeps a Starter-only feature visible with its Business CTA', () => {
-    localStorage.setItem('barberturn.locale', 'es-419')
+    localStorage.setItem('barbertrix.locale', 'es-419')
     render(<I18nProvider><ReportsSection isDemo={false} capabilities={starterCapabilities} /></I18nProvider>)
     expect(screen.getByText('🔒 Reportes avanzados')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Disponible con BarberTurn Business' })).toHaveAttribute('href', '#/app/billing')
+    expect(screen.getByRole('link', { name: 'Disponible con BarberTrix Business' })).toHaveAttribute('href', '#/app/billing')
   })
 })

@@ -1,6 +1,6 @@
-# BarberTurn Mobile
+# BarberTrix Mobile
 
-Aplicación móvil nativa multiplataforma de BarberTurn construida con React Native + Expo.
+Aplicación móvil nativa multiplataforma de BarberTrix construida con React Native + Expo.
 
 ## Alcance actual — M0 + M1 + M2 + M3
 
@@ -13,12 +13,12 @@ Aplicación móvil nativa multiplataforma de BarberTurn construida con React Nat
 - access token únicamente en memoria;
 - refresh token rotatorio persistido exclusivamente con Expo SecureStore (Keychain/Keystore);
 - restauración automática de sesión y logout con revocación del refresh token;
-- deep-link scheme `barberturn://`;
+- deep-link scheme `barbertrix://`;
 - interfaz light-only coherente con la web.
 
 ### M2 — TurnRequest
 
-M2 separa una **solicitud** de una **cita confirmada**. Un cliente anónimo puede abrir `barberturn://request/{slug}`, elegir servicio, un barbero específico y un horario disponible, y enviar la solicitud sin crear una cuenta.
+M2 separa una **solicitud** de una **cita confirmada**. Un cliente anónimo puede abrir `barbertrix://request/{slug}`, elegir servicio, un barbero específico y un horario disponible, y enviar la solicitud sin crear una cuenta.
 
 El ciclo de estados es:
 
@@ -55,12 +55,12 @@ En Android Emulator, una API levantada en el host suele requerir `http://10.0.2.
 
 ## Seguridad de sesión
 
-La web conserva su cookie HttpOnly `barberturn.refresh`. La app móvil utiliza `/api/auth/mobile/login`, `/api/auth/mobile/refresh` y `/api/auth/mobile/logout`. El backend sigue almacenando únicamente el hash del refresh token; el valor bruto solo existe en el dispositivo y rota en cada refresh.
+La web conserva su cookie HttpOnly `barbertrix.refresh`. La app móvil utiliza `/api/auth/mobile/login`, `/api/auth/mobile/refresh` y `/api/auth/mobile/logout`. El backend sigue almacenando únicamente el hash del refresh token; el valor bruto solo existe en el dispositivo y rota en cada refresh.
 
 Nunca persistir access tokens, refresh tokens o capability tokens en AsyncStorage.
 
 ## Realtime y push
 
-SignalR refresca la bandeja mientras BarberTurn Mobile está abierta, con polling de respaldo. M3 complementa ese canal con push del sistema operativo; la API sigue siendo la fuente de verdad al abrir el aviso.
+SignalR refresca la bandeja mientras BarberTrix Mobile está abierta, con polling de respaldo. M3 complementa ese canal con push del sistema operativo; la API sigue siendo la fuente de verdad al abrir el aviso.
 
 En el backend, `Push__Enabled=true` activa el worker. `Push__AccessToken` es opcional y solo se configura cuando el proyecto Expo usa seguridad reforzada de acceso.

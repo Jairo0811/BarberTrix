@@ -78,10 +78,10 @@ export default function RegisterPage() {
 
   return (
     <main className="register-page" aria-labelledby="register-title">
-      <section className="register-showcase" aria-label="BarberTurn">
+      <section className="register-showcase" aria-label="BarberTrix">
         <div className="register-showcase-overlay" aria-hidden="true" />
         <div className="register-brand">
-          <img src="/branding/barberturn-logo.png" alt="BarberTurn" />
+          <img src="/branding/barbertrix-logo.png" alt="BarberTrix" />
         </div>
 
         <div className="register-copy-block">

@@ -1,10 +1,10 @@
-# Cierre de BarberTurn Web v1
+# Cierre de BarberTrix Web v1
 
-Este documento separa el cierre técnico de la web de las dependencias externas necesarias para una salida comercial pública. BarberTurn Mobile queda fuera de este checklist y evoluciona como una línea de producto independiente sobre la misma API.
+Este documento separa el cierre técnico de la web de las dependencias externas necesarias para una salida comercial pública. BarberTrix Mobile queda fuera de este checklist y evoluciona como una línea de producto independiente sobre la misma API.
 
 ## Estado actual
 
-La web dispone de autenticación, multi-tenancy, cola, citas, clientes, caja, reportes, equipo, sucursales, Barber Portal, Customer Portal, BarberTurn TV, demo comercial, planes, capacidades, PayPal SaaS, SignalR, i18n, accesibilidad base, CI, análisis de seguridad, cobertura progresiva, observabilidad estructurada y SQL Server con mínimo privilegio.
+La web dispone de autenticación, multi-tenancy, cola, citas, clientes, caja, reportes, equipo, sucursales, Barber Portal, Customer Portal, BarberTrix TV, demo comercial, planes, capacidades, PayPal SaaS, SignalR, i18n, accesibilidad base, CI, análisis de seguridad, cobertura progresiva, observabilidad estructurada y SQL Server con mínimo privilegio.
 
 El cierre de integridad crítica incluye protección frente a doble reserva concurrente, replay/duplicados y eventos fuera de orden de PayPal, idempotencia de reintentos de la cola pública, autorización del barbero sobre sus propios turnos y E2E real de React + ASP.NET Core + SQL Server separado de la suite determinista con backend simulado.
 
@@ -69,4 +69,4 @@ Una salida comercial pública requiere además:
 
 ## Fuera del alcance de este cierre
 
-BarberTurn Mobile (React Native + Expo) no forma parte de la Definition of Done de la web v1. M0/M1 y el flujo M2 de solicitudes cliente → barbero se desarrollan y validan por separado; las notificaciones push corresponden a M3.
+BarberTrix Mobile (React Native + Expo) no forma parte de la Definition of Done de la web v1. M0/M1 y el flujo M2 de solicitudes cliente → barbero se desarrollan y validan por separado; las notificaciones push corresponden a M3.

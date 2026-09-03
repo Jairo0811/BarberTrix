@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <UserSecretsId>BarberTrix.Api-0f45de1e-77bf-4e79-8d29-9f776c1f264a</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../BarberTrix.Application/BarberTrix.Application.csproj" />
+    <ProjectReference Include="../BarberTrix.Infrastructure/BarberTrix.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.*">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.*" />
+    <PackageReference Include="Microsoft.OpenApi" Version="2.11.0" />
+  </ItemGroup>
+</Project>

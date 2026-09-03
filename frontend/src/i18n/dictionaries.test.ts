@@ -28,7 +28,7 @@ describe('i18n dictionary completeness', () => {
     expect(dictionaries['zh-CN']['booking.title']).toBe('你的时间同样重要')
   })
 
-  it('exposes only the ten official BarberTurn product locales', () => {
+  it('exposes only the ten official BarberTrix product locales', () => {
     expect([...officialLocales]).toEqual(officialProductLocales)
   })
 

@@ -7,7 +7,7 @@ import { api, clearAuth, publicApi, readAuth, writeAuth } from './api'
 import { apiErrorMessage } from './apiErrorMessages'
 import SubscriptionBanner from './SubscriptionBanner'
 
-const demoStorageKey = 'barberturn.demo'
+const demoStorageKey = 'barbertrix.demo'
 const DashboardView = lazy(() => import('./DashboardView'))
 const BarberPortal = lazy(() => import('./BarberPortal'))
 
@@ -52,7 +52,7 @@ function BarberOnboardingPanel({ auth, onLogout, onAuthChanged }: { auth: Auth; 
   }
 
   return <main className="login-shell"><section className="login-card">
-    <BarberTurnLogo /><h1>{t('onboarding.title')}</h1>
+    <BarberTrixLogo /><h1>{t('onboarding.title')}</h1>
     <p className="login-subtitle">{t('onboarding.subtitle', { name: auth.name })}</p>
     <div className="login-form"><label className="login-field"><span>{t('onboarding.shop')}</span><div className="input-wrap"><input value={query} onChange={event => setQuery(event.target.value)} placeholder={t('onboarding.shopPlaceholder')} /></div></label>
       <button className="login-submit" disabled={busy} onClick={() => void load(query)}>{busy ? t('onboarding.loading') : t('onboarding.search')}</button></div>
@@ -70,10 +70,10 @@ function BarberOnboardingPanel({ auth, onLogout, onAuthChanged }: { auth: Auth; 
   </section></main>
 }
 
-function BarberTurnLogo() {
+function BarberTrixLogo() {
   return (
-    <div className="official-logo" aria-label="BarberTurn">
-      <img src="/branding/barberturn-logo.png" alt="BarberTurn" />
+    <div className="official-logo" aria-label="BarberTrix">
+      <img src="/branding/barbertrix-logo.png" alt="BarberTrix" />
     </div>
   )
 }
@@ -90,10 +90,10 @@ export default function App() {
   useEffect(() => {
     if (!auth) return
     if (!auth.isEmailVerified) {
-      document.title = `${t('verification.documentTitle')} | BarberTurn`
+      document.title = `${t('verification.documentTitle')} | BarberTrix`
       return
     }
-    if (auth.role === 'Barber') document.title = `${t('barber.documentTitle')} | BarberTurn`
+    if (auth.role === 'Barber') document.title = `${t('barber.documentTitle')} | BarberTrix`
   }, [auth, t])
 
   async function login(event: FormEvent<HTMLFormElement>) {
@@ -136,7 +136,7 @@ export default function App() {
   }
 
   if (auth && !auth.isEmailVerified) return <main className="login-shell"><section className="login-card">
-    <BarberTurnLogo /><h1>{t('verification.title')}</h1><p className="login-subtitle">{t('verification.text')}</p>
+    <BarberTrixLogo /><h1>{t('verification.title')}</h1><p className="login-subtitle">{t('verification.text')}</p>
     <button className="login-submit" disabled={busy} onClick={() => void resendVerification()}>{busy ? t('verification.sending') : t('verification.resend')}</button>
     <button className="demo-button" type="button" onClick={logout}>{t('logout')}</button>
     {error && <p className="login-error" role="status">{error}</p>}
@@ -160,7 +160,7 @@ export default function App() {
             {t('common.backHome')}
           </a>
 
-          <BarberTurnLogo />
+          <BarberTrixLogo />
           <h1 id="login-title">{t('login.welcome')}</h1>
           <p className="login-subtitle">{t('login.subtitle')}</p>
 

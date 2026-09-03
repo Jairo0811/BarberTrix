@@ -1,6 +1,6 @@
-# BarberTurn — Operación de producción
+# BarberTrix — Operación de producción
 
-Esta guía resume los controles operativos mínimos para desplegar BarberTurn como SaaS comercial.
+Esta guía resume los controles operativos mínimos para desplegar BarberTrix como SaaS comercial.
 
 ## Base de datos y mínimo privilegio
 
@@ -8,15 +8,15 @@ En `docker-compose.production.yml` SQL Server conserva `sa` únicamente para el 
 
 Se crean dos identidades separadas:
 
-- `barberturn_migrator`: utilizada exclusivamente por el job de migraciones y miembro de `db_owner` dentro de `BarberTurnDb`.
-- `barberturn_app`: utilizada por la API y limitada a `db_datareader` + `db_datawriter`.
+- `barbertrix_migrator`: utilizada exclusivamente por el job de migraciones y miembro de `db_owner` dentro de `BarberTrixDb`.
+- `barbertrix_app`: utilizada por la API y limitada a `db_datareader` + `db_datawriter`.
 
 Variables requeridas:
 
 ```text
-BARBERTURN_DB_PASSWORD
-BARBERTURN_DB_MIGRATOR_PASSWORD
-BARBERTURN_DB_APP_PASSWORD
+BARBERTRIX_DB_PASSWORD
+BARBERTRIX_DB_MIGRATOR_PASSWORD
+BARBERTRIX_DB_APP_PASSWORD
 ```
 
 Las tres contraseñas deben ser diferentes, generadas aleatoriamente y almacenadas en un gestor de secretos. No deben versionarse ni reutilizarse entre ambientes.

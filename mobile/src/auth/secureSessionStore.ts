@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 
 import type { StoredRefreshSession } from './types';
 
-const RefreshSessionKey = 'barberturn.mobile.refresh-session.v1';
+const RefreshSessionKey = 'barbertrix.mobile.refresh-session.v1';
 const isWeb = Platform.OS === 'web';
 
 let webSession: StoredRefreshSession | null = null;

@@ -1,4 +1,4 @@
-# Identidad y membresías en BarberTurn
+# Identidad y membresías en BarberTrix
 
 ## Objetivo
 

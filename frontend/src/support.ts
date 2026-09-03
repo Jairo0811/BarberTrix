@@ -8,9 +8,9 @@ export const supportConfig = {
   whatsapp: configuredWhatsApp || '',
 }
 
-export function buildSupportEmailHref(subject = 'Solicitud de soporte BarberTurn') {
+export function buildSupportEmailHref(subject = 'Solicitud de soporte BarberTrix') {
   const body = [
-    'Hola, necesito ayuda con BarberTurn.',
+    'Hola, necesito ayuda con BarberTrix.',
     '',
     'Describe aquí lo ocurrido:',
     '',
@@ -25,6 +25,6 @@ export function buildSupportEmailHref(subject = 'Solicitud de soporte BarberTurn
 export function buildWhatsAppHref() {
   if (!supportConfig.whatsapp) return null
 
-  const message = 'Hola, necesito ayuda con BarberTurn.'
+  const message = 'Hola, necesito ayuda con BarberTrix.'
   return `https://wa.me/18298477528?text=${encodeURIComponent(message)}`
 }

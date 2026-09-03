@@ -246,7 +246,7 @@ export default function AppointmentsSection({ isDemo, shop, capabilities }: Prop
             </form>
           </article>
 
-          {bookingQr && <article className="booking-qr appointment-self-service"><img src={bookingQr} alt={t('appointmentsAdmin.qrAlt')} /><div><strong>{t('appointmentsAdmin.selfService')}</strong><span>{t('appointmentsAdmin.selfServiceText')}</span><a href={bookingQr} download={`barberturn-${shop?.slug ?? 'customers'}-qr.png`}>{t('appointmentsAdmin.downloadQr')}</a></div></article>}
+          {bookingQr && <article className="booking-qr appointment-self-service"><img src={bookingQr} alt={t('appointmentsAdmin.qrAlt')} /><div><strong>{t('appointmentsAdmin.selfService')}</strong><span>{t('appointmentsAdmin.selfServiceText')}</span><a href={bookingQr} download={`barbertrix-${shop?.slug ?? 'customers'}-qr.png`}>{t('appointmentsAdmin.downloadQr')}</a></div></article>}
         </section>}
 
         {editing && <div className="appointment-modal-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setEditing(null) }}>

@@ -6,7 +6,7 @@ All seeded role-test accounts intentionally use the same configured administrato
 
 | Scenario | Email | Role / behavior |
 | --- | --- | --- |
-| System administrator | `admin@barbertrix.com.do` | Administrator on the BarberTrix administration tenant; canonical replacement for `admin@barberturn.com.do`. The seeder migrates the legacy email automatically. |
+| System administrator | `admin@barbertrix.com.do` | Administrator on the BarberTrix administration tenant; canonical replacement for `admin@barbertrix.com.do`. The seeder migrates the legacy email automatically. |
 | Employee barber | `barbero@barbertrix.com.do` | Barber linked to an operational barber/chair inside the administration tenant. Useful for validating barber-only permissions and queue operations. |
 | Owner who also cuts hair | `dueno.barbero@barbertrix.com.do` | Owner of `BarberTrix Owner Lab` (Pro) with an operational barber profile. Useful for validating owner controls plus day-to-day barber behavior. |
 | Customer | `cliente@barbertrix.com.do` | Client identity without tenant access. BarberTrix Mobile routes this account directly to Discovery instead of professional onboarding. |

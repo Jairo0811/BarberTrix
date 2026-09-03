@@ -1,7 +1,7 @@
 import type { Auth } from './types'
 
 export const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
-export const authStorageKey = 'barberturn.auth'
+export const authStorageKey = 'barbertrix.auth'
 
 export class ApiClientError extends Error {
   constructor(
@@ -33,7 +33,7 @@ export function writeAuth(auth: Auth, remember?: boolean) {
   localStorage.removeItem(authStorageKey)
   sessionStorage.removeItem(authStorageKey)
   ;(useLocal ? localStorage : sessionStorage).setItem(authStorageKey, JSON.stringify(auth))
-  window.dispatchEvent(new CustomEvent('barberturn-auth-changed', { detail: auth }))
+  window.dispatchEvent(new CustomEvent('barbertrix-auth-changed', { detail: auth }))
 }
 
 export function clearAuth() {

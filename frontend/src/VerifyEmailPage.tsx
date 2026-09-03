@@ -37,7 +37,7 @@ export default function VerifyEmailPage() {
         : t('verify.invalidOrExpired')
 
   return <main className="login-shell"><section className="login-card">
-    <img className="recovery-logo" src="/branding/barberturn-logo.png" alt="BarberTurn" />
+    <img className="recovery-logo" src="/branding/barbertrix-logo.png" alt="BarberTrix" />
     <h1>{ok ? t('verify.successTitle') : t('verify.title')}</h1>
     <p className={ok || state === 'processing' ? 'login-subtitle' : 'login-error'} role="status">{message}</p>
     <a className="login-submit recovery-link-button" href="#/login">{t('verify.goDashboard')}</a>

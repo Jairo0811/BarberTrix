@@ -51,7 +51,7 @@ export default function AcceptInvitationPage() {
 
   return <main className="login-shell"><section className="login-card">
     <a className="back-home-link" href="#/login">← {t('invitation.backLogin')}</a>
-    <img className="recovery-logo" src="/branding/barberturn-logo.png" alt="BarberTurn" />
+    <img className="recovery-logo" src="/branding/barbertrix-logo.png" alt="BarberTrix" />
     <h1>{t('invitation.title')}</h1>
     <p className="login-subtitle">{t('invitation.subtitle')}</p>
     {!token ? <p className="login-error" role="alert">{t('invitation.invalid')}</p> : <form className="login-form" onSubmit={accept}>

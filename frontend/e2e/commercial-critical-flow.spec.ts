@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 import { installMockBackend } from './fixtures/mockBackend'
 
 test('registration, login and full queue lifecycle', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('barberturn.locale', 'es-419'))
+  await page.addInitScript(() => localStorage.setItem('barbertrix.locale', 'es-419'))
   await installMockBackend(page, { plan: 'Business' })
 
   await page.goto('/#/register')
@@ -16,8 +16,8 @@ test('registration, login and full queue lifecycle', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Panel de administración' })).toBeVisible()
 
   await page.evaluate(() => {
-    localStorage.removeItem('barberturn.auth')
-    sessionStorage.removeItem('barberturn.auth')
+    localStorage.removeItem('barbertrix.auth')
+    sessionStorage.removeItem('barbertrix.auth')
   })
   await page.goto('/?e2e=login#/login')
   await page.getByPlaceholder('ejemplo@barberia.com').fill('jairo@example.com')

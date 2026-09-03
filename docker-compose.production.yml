@@ -1,4 +1,4 @@
-name: barberturn
+name: barbertrix
 
 services:
   sqlserver:
@@ -7,9 +7,9 @@ services:
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_PID: Express
-      MSSQL_SA_PASSWORD: ${BARBERTURN_DB_PASSWORD:?Set BARBERTURN_DB_PASSWORD}
+      MSSQL_SA_PASSWORD: ${BARBERTRIX_DB_PASSWORD:?Set BARBERTRIX_DB_PASSWORD}
     volumes:
-      - barberturn-sqlserver:/var/opt/mssql
+      - barbertrix-sqlserver:/var/opt/mssql
     healthcheck:
       test: ["CMD-SHELL", "bash -c 'cat < /dev/null > /dev/tcp/localhost/1433'"]
       interval: 15s
@@ -21,9 +21,9 @@ services:
     image: mcr.microsoft.com/mssql/server:2022-latest
     restart: "no"
     environment:
-      BARBERTURN_DB_PASSWORD: ${BARBERTURN_DB_PASSWORD:?Set BARBERTURN_DB_PASSWORD}
-      BARBERTURN_DB_APP_PASSWORD: ${BARBERTURN_DB_APP_PASSWORD:?Set BARBERTURN_DB_APP_PASSWORD}
-      BARBERTURN_DB_MIGRATOR_PASSWORD: ${BARBERTURN_DB_MIGRATOR_PASSWORD:?Set BARBERTURN_DB_MIGRATOR_PASSWORD}
+      BARBERTRIX_DB_PASSWORD: ${BARBERTRIX_DB_PASSWORD:?Set BARBERTRIX_DB_PASSWORD}
+      BARBERTRIX_DB_APP_PASSWORD: ${BARBERTRIX_DB_APP_PASSWORD:?Set BARBERTRIX_DB_APP_PASSWORD}
+      BARBERTRIX_DB_MIGRATOR_PASSWORD: ${BARBERTRIX_DB_MIGRATOR_PASSWORD:?Set BARBERTRIX_DB_MIGRATOR_PASSWORD}
     volumes:
       - ./deploy/sql:/bootstrap:ro
     command: ["/bin/bash", "/bootstrap/bootstrap.sh"]
@@ -38,10 +38,10 @@ services:
     restart: "no"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=BarberTurnDb;User Id=barberturn_migrator;Password=${BARBERTURN_DB_MIGRATOR_PASSWORD};Encrypt=True;TrustServerCertificate=True"
-      Jwt__Issuer: BarberTurn.Api
-      Jwt__Audience: BarberTurn.Web
-      Jwt__Key: ${BARBERTURN_JWT_KEY:?Set BARBERTURN_JWT_KEY}
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=BarberTrixDb;User Id=barbertrix_migrator;Password=${BARBERTRIX_DB_MIGRATOR_PASSWORD};Encrypt=True;TrustServerCertificate=True"
+      Jwt__Issuer: BarberTrix.Api
+      Jwt__Audience: BarberTrix.Web
+      Jwt__Key: ${BARBERTRIX_JWT_KEY:?Set BARBERTRIX_JWT_KEY}
       Database__ApplyMigrations: "true"
       Database__MigrationOnly: "true"
     depends_on:
@@ -55,33 +55,33 @@ services:
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=BarberTurnDb;User Id=barberturn_app;Password=${BARBERTURN_DB_APP_PASSWORD};Encrypt=True;TrustServerCertificate=True"
-      Jwt__Issuer: BarberTurn.Api
-      Jwt__Audience: BarberTurn.Web
-      Jwt__Key: ${BARBERTURN_JWT_KEY:?Set BARBERTURN_JWT_KEY}
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=BarberTrixDb;User Id=barbertrix_app;Password=${BARBERTRIX_DB_APP_PASSWORD};Encrypt=True;TrustServerCertificate=True"
+      Jwt__Issuer: BarberTrix.Api
+      Jwt__Audience: BarberTrix.Web
+      Jwt__Key: ${BARBERTRIX_JWT_KEY:?Set BARBERTRIX_JWT_KEY}
       Database__ApplyMigrations: "false"
       Database__MigrationOnly: "false"
       Demo__Enabled: "false"
       Auth__RequireVerifiedEmail: "true"
-      PasswordReset__FrontendBaseUrl: ${BARBERTURN_PUBLIC_ORIGIN:?Set BARBERTURN_PUBLIC_ORIGIN}
-      Cors__AllowedOrigins__0: ${BARBERTURN_PUBLIC_ORIGIN}
+      PasswordReset__FrontendBaseUrl: ${BARBERTRIX_PUBLIC_ORIGIN:?Set BARBERTRIX_PUBLIC_ORIGIN}
+      Cors__AllowedOrigins__0: ${BARBERTRIX_PUBLIC_ORIGIN}
       Email__Enabled: "true"
       Email__ExposeDevelopmentLinks: "false"
-      Email__From: ${BARBERTURN_EMAIL_FROM}
-      Email__Smtp__Host: ${BARBERTURN_SMTP_HOST}
-      Email__Smtp__Port: ${BARBERTURN_SMTP_PORT:-587}
-      Email__Smtp__Username: ${BARBERTURN_SMTP_USERNAME}
-      Email__Smtp__Password: ${BARBERTURN_SMTP_PASSWORD}
+      Email__From: ${BARBERTRIX_EMAIL_FROM}
+      Email__Smtp__Host: ${BARBERTRIX_SMTP_HOST}
+      Email__Smtp__Port: ${BARBERTRIX_SMTP_PORT:-587}
+      Email__Smtp__Username: ${BARBERTRIX_SMTP_USERNAME}
+      Email__Smtp__Password: ${BARBERTRIX_SMTP_PASSWORD}
       HumanVerification__Enabled: "true"
-      HumanVerification__SecretKey: ${BARBERTURN_TURNSTILE_SECRET}
+      HumanVerification__SecretKey: ${BARBERTRIX_TURNSTILE_SECRET}
       PayPal__Sandbox: "false"
-      PayPal__ClientId: ${BARBERTURN_PAYPAL_CLIENT_ID}
-      PayPal__Secret: ${BARBERTURN_PAYPAL_SECRET}
-      PayPal__WebhookId: ${BARBERTURN_PAYPAL_WEBHOOK_ID}
-      PayPal__PlanIds__Pro: ${BARBERTURN_PAYPAL_PRO_PLAN_ID}
-      PayPal__PlanIds__Business: ${BARBERTURN_PAYPAL_BUSINESS_PLAN_ID}
+      PayPal__ClientId: ${BARBERTRIX_PAYPAL_CLIENT_ID}
+      PayPal__Secret: ${BARBERTRIX_PAYPAL_SECRET}
+      PayPal__WebhookId: ${BARBERTRIX_PAYPAL_WEBHOOK_ID}
+      PayPal__PlanIds__Pro: ${BARBERTRIX_PAYPAL_PRO_PLAN_ID}
+      PayPal__PlanIds__Business: ${BARBERTRIX_PAYPAL_BUSINESS_PLAN_ID}
       Push__Enabled: "true"
-      Push__AccessToken: ${BARBERTURN_EXPO_ACCESS_TOKEN:-}
+      Push__AccessToken: ${BARBERTRIX_EXPO_ACCESS_TOKEN:-}
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -102,4 +102,4 @@ services:
       - api
 
 volumes:
-  barberturn-sqlserver:
+  barbertrix-sqlserver:

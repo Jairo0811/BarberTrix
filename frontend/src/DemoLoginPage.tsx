@@ -7,7 +7,7 @@ import { useI18n } from './i18n'
 import './demo-login.css'
 import { API_URL, clearAuth, writeAuth } from './api'
 
-const demoStorageKey = 'barberturn.demo'
+const demoStorageKey = 'barbertrix.demo'
 
 export default function DemoLoginPage() {
   const { t } = useI18n()
@@ -62,7 +62,7 @@ export default function DemoLoginPage() {
     <main className="demo-login-page">
       <section className="demo-login-card" aria-labelledby="demo-login-title">
         <a className="demo-login-logo" href="#/" aria-label={t('common.backHome')}>
-          <img src="/branding/barberturn-logo.png" alt="BarberTurn" />
+          <img src="/branding/barbertrix-logo.png" alt="BarberTrix" />
         </a>
 
         <span className="demo-login-badge"><FontAwesomeIcon icon={faFlask} /> {t('demo.badge')}</span>

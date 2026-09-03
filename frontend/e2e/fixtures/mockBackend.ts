@@ -341,8 +341,8 @@ export async function installMockBackend(page: Page, options: MockOptions = {}) 
 
 export async function seedAuth(page: Page, auth: Record<string, unknown>, demo = false) {
   await page.addInitScript(({ storedAuth, isDemo }) => {
-    localStorage.setItem('barberturn.locale', 'es-419')
-    localStorage.setItem('barberturn.auth', JSON.stringify(storedAuth))
-    if (isDemo) sessionStorage.setItem('barberturn.demo', 'true')
+    localStorage.setItem('barbertrix.locale', 'es-419')
+    localStorage.setItem('barbertrix.auth', JSON.stringify(storedAuth))
+    if (isDemo) sessionStorage.setItem('barbertrix.demo', 'true')
   }, { storedAuth: auth, isDemo: demo })
 }

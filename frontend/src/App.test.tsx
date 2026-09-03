@@ -21,7 +21,7 @@ function renderApp() {
 
 describe('App authentication and role routing', () => {
   beforeEach(() => {
-    localStorage.setItem('barberturn.locale', 'es-419')
+    localStorage.setItem('barbertrix.locale', 'es-419')
     vi.stubGlobal('fetch', vi.fn())
   })
 
@@ -35,7 +35,7 @@ describe('App authentication and role routing', () => {
     await user.click(screen.getByRole('button', { name: 'Iniciar sesión' }))
 
     expect(await screen.findByTestId('admin-dashboard')).toHaveTextContent('Jairo')
-    expect(JSON.parse(localStorage.getItem('barberturn.auth') ?? '{}').role).toBe('Owner')
+    expect(JSON.parse(localStorage.getItem('barbertrix.auth') ?? '{}').role).toBe('Owner')
   })
 
   it('shows a localized error for invalid credentials', async () => {
@@ -53,7 +53,7 @@ describe('App authentication and role routing', () => {
   })
 
   it('redirects a Barber role to the barber portal', async () => {
-    localStorage.setItem('barberturn.auth', JSON.stringify({ ...ownerAuth, role: 'Barber', barberId: 'barber-1' }))
+    localStorage.setItem('barbertrix.auth', JSON.stringify({ ...ownerAuth, role: 'Barber', barberId: 'barber-1' }))
     renderApp()
     expect(await screen.findByTestId('barber-portal')).toHaveTextContent('Barber portal: Jairo')
     expect(screen.queryByTestId('admin-dashboard')).not.toBeInTheDocument()

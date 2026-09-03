@@ -12,7 +12,7 @@ const ja: Dictionary = {
   'login.customerHint': 'お客様はアカウントを作成せず、バーバーショップのリンクから順番を申し込めます。',
   'home.hello': 'こんにちは、{{name}}。',
   'home.team': 'チーム',
-  'home.body': 'M3 は BarberTurn がバックグラウンドにある間も、新しいリクエストをチームに通知します。',
+  'home.body': 'M3 は BarberTrix がバックグラウンドにある間も、新しいリクエストをチームに通知します。',
   'home.requests': '順番リクエスト',
   'home.requestsText': '保留中のリクエストを管理し、リアルタイムで変更を受け取れます。',
   'home.pushTitle': '新しいリクエストを見逃さない',

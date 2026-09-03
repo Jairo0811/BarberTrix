@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from '@/auth/AuthProvider';
 import { I18nProvider } from '@/i18n/I18nProvider';
 import { PushNotificationsProvider } from '@/notifications/PushNotificationsProvider';
+import { colors } from '@/theme/tokens';
 
 export default function RootLayout() {
   const [queryClient] = useState(() => new QueryClient({
@@ -24,8 +25,8 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <PushNotificationsProvider>
-              <StatusBar style="dark" />
-              <Stack screenOptions={{ headerShown: false }} />
+              <StatusBar style="light" backgroundColor={colors.background} />
+              <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }} />
             </PushNotificationsProvider>
           </AuthProvider>
         </QueryClientProvider>

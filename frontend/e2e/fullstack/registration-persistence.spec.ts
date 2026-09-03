@@ -27,7 +27,7 @@ test('owner registration persists through the real API and SQL Server', async ({
   expect((await registrationResponse).ok()).toBeTruthy()
   expect((await initialMetricsResponse).ok()).toBeTruthy()
   await expect(page).toHaveURL(/#\/app\/overview$/)
-  await expect(page).toHaveTitle(/Dashboard \| BarberTurn/)
+  await expect(page).toHaveTitle(/Dashboard \| BarberTrix/)
   await expect(page.getByRole('heading', { name: 'Panel de administración' })).toBeVisible()
   await expect(page.locator('#queue-section')).toHaveCount(0)
 
@@ -57,6 +57,6 @@ test('owner registration persists through the real API and SQL Server', async ({
   expect((await loginResponse).ok()).toBeTruthy()
   expect((await persistedMetricsResponse).ok()).toBeTruthy()
   await expect(page).toHaveURL(/#\/app\/overview$/)
-  await expect(page).toHaveTitle(/Dashboard \| BarberTurn/)
+  await expect(page).toHaveTitle(/Dashboard \| BarberTrix/)
   await expect(page.getByRole('heading', { name: 'Panel de administración' })).toBeVisible()
 })

@@ -18,8 +18,6 @@
   <img src="https://img.shields.io/badge/CI_y_Seguridad-Verde-22C55E?style=flat-square" alt="CI y seguridad" />
 </p>
 
-# BarberTurn 💈
-
 **BarberTurn** es una plataforma SaaS multi-tenant para gestionar la operación diaria de barberías: turnos por llegada, citas, barberos, servicios, CRM de clientes, caja, reportes, BarberTurn TV y suscripciones comerciales.
 
 > **Tu turno. Tu estilo. Tu tiempo.**

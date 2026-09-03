@@ -1,12 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
 namespace BarberTurn.Domain.Entities;
 
 [Table("PublicShopProfiles")]
-[Index(nameof(BarberShopId), IsUnique = true)]
-[Index(nameof(IsPublished))]
 public sealed class PublicShopProfile : BaseEntity
 {
     private PublicShopProfile() { }

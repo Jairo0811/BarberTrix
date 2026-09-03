@@ -15,6 +15,7 @@ import { useAuth } from '@/auth/AuthProvider';
 import { useI18n } from '@/i18n/I18nProvider';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { BrandLogo } from '@/ui/BrandLogo';
+import { BrandedBackground } from '@/ui/BrandedBackground';
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
@@ -48,10 +49,7 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.backgroundDecor}>
-        <View style={styles.glowTop} />
-        <View style={styles.glowBottom} />
-      </View>
+      <BrandedBackground />
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
         <ScrollView
@@ -79,10 +77,12 @@ export default function LoginScreen() {
                       accessibilityLabel={t('login.email')}
                       autoCapitalize="none"
                       autoComplete="email"
+                      autoCorrect={false}
                       keyboardType="email-address"
                       onChangeText={setEmail}
                       placeholder={t('login.email')}
                       placeholderTextColor={colors.textSubtle}
+                      returnKeyType="next"
                       style={styles.input}
                       value={email}
                     />
@@ -100,6 +100,7 @@ export default function LoginScreen() {
                       onSubmitEditing={submit}
                       placeholder="••••••••••••"
                       placeholderTextColor={colors.textSubtle}
+                      returnKeyType="done"
                       secureTextEntry={!showPassword}
                       style={styles.passwordInput}
                       value={password}
@@ -107,6 +108,7 @@ export default function LoginScreen() {
                     <Pressable
                       accessibilityLabel={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                       accessibilityRole="button"
+                      accessibilityState={{ expanded: showPassword }}
                       onPress={() => setShowPassword(value => !value)}
                       style={({ pressed }) => [styles.passwordToggle, pressed && styles.passwordTogglePressed]}
                     >
@@ -138,12 +140,6 @@ export default function LoginScreen() {
                 </Pressable>
               </View>
 
-              <View style={styles.separator}>
-                <View style={styles.separatorLine} />
-                <Text style={styles.separatorText}>BARBERTRIX MOBILE</Text>
-                <View style={styles.separatorLine} />
-              </View>
-
               <View style={styles.customerInfo}>
                 <View style={styles.customerDot} />
                 <Text style={styles.customerHint}>{t('login.customerHint')}</Text>
@@ -159,29 +155,6 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   safe: { flex: 1, backgroundColor: colors.background },
-  backgroundDecor: {
-    ...StyleSheet.absoluteFill,
-    overflow: 'hidden',
-    pointerEvents: 'none',
-  },
-  glowTop: {
-    position: 'absolute',
-    width: 520,
-    height: 520,
-    borderRadius: 260,
-    top: -310,
-    right: -250,
-    backgroundColor: 'rgba(22, 135, 255, 0.13)',
-  },
-  glowBottom: {
-    position: 'absolute',
-    width: 360,
-    height: 360,
-    borderRadius: 180,
-    bottom: -250,
-    left: -210,
-    backgroundColor: 'rgba(22, 135, 255, 0.07)',
-  },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
@@ -310,34 +283,17 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primaryPressed,
     transform: [{ translateY: 1 }],
   },
-  submitButtonDisabled: { opacity: 0.48 },
+  submitButtonDisabled: { opacity: 0.60 },
   submitButtonText: {
     color: colors.white,
     fontSize: 16,
     fontWeight: '900',
   },
-  separator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginTop: spacing.xl,
-  },
-  separatorLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.075)',
-  },
-  separatorText: {
-    color: '#6F7C90',
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1.2,
-  },
   customerInfo: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 10,
-    marginTop: spacing.lg,
+    marginTop: spacing.xl,
     padding: spacing.md,
     borderRadius: radius.sm,
     backgroundColor: 'rgba(5, 12, 23, 0.56)',

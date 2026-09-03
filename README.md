@@ -3,36 +3,66 @@
 </p>
 
 <p align="center">
-  <img src="https://skillicons.dev/icons?i=dotnet,react,ts,vite,docker,nginx,github&theme=dark" alt="Tecnologías principales de BarberTurn" />
+  <img src="https://skillicons.dev/icons?i=dotnet,react,ts,vite,docker,nginx,github&theme=dark" alt="Tecnologías principales de BarberTrix" />
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/.NET-10-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt=".NET 10" />
   <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=111827" alt="React 19" />
+  <img src="https://img.shields.io/badge/Expo_SDK-57-000020?style=flat-square&logo=expo&logoColor=white" alt="Expo SDK 57" />
   <img src="https://img.shields.io/badge/SQL_Server-2022-CC2927?style=flat-square&logo=microsoftsqlserver&logoColor=white" alt="SQL Server 2022" />
-  <img src="https://img.shields.io/badge/CI-GitHub_Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white" alt="GitHub Actions" />
-  <img src="https://img.shields.io/badge/Tests-Vitest%20%7C%20Playwright-22C55E?style=flat-square" alt="Vitest y Playwright" />
-  <img src="https://img.shields.io/badge/i18n-es--419%20%7C%20en%20%7C%20es--ES-0EA5E9?style=flat-square" alt="Idiomas: Español Latino, Inglés y Español de España" />
+  <img src="https://img.shields.io/badge/i18n-10_locales-0EA5E9?style=flat-square" alt="10 idiomas oficiales" />
   <img src="https://img.shields.io/badge/Accesibilidad-NORTIC_B2%20%2F%20WCAG-22C55E?style=flat-square" alt="Base de accesibilidad alineada con NORTIC B2 y WCAG" />
-  <img src="https://img.shields.io/badge/Fases_1--7-Completadas-22C55E?style=flat-square" alt="Fases 1 a 7 completadas" />
-  <img src="https://img.shields.io/badge/CI_y_Seguridad-Verde-22C55E?style=flat-square" alt="CI y seguridad" />
 </p>
 
-**BarberTurn** es una plataforma SaaS multi-tenant para gestionar la operación diaria de barberías: turnos por llegada, citas, barberos, servicios, CRM de clientes, caja, reportes, BarberTurn TV y suscripciones comerciales.
+<p align="center">
+  <a href="https://github.com/Jairo0811/BarberTrix/actions/workflows/ci.yml">
+    <img src="https://github.com/Jairo0811/BarberTrix/actions/workflows/ci.yml/badge.svg" alt="CI" />
+  </a>
+  <a href="https://github.com/Jairo0811/BarberTrix/actions/workflows/security.yml">
+    <img src="https://github.com/Jairo0811/BarberTrix/actions/workflows/security.yml/badge.svg" alt="Security" />
+  </a>
+</p>
+
+**BarberTrix** es una plataforma SaaS multi-tenant para gestionar la operación diaria y comercial de barberías: fila digital por llegada, citas, barberos, servicios, CRM, caja, reportes, equipo, sucursales, suscripciones, autoservicio público, experiencia TV y aplicación móvil.
 
 > **Tu turno. Tu estilo. Tu tiempo.**
 
 La premisa del producto es simple: la tecnología debe adaptarse a la forma de trabajar de la barbería, no al revés.
 
+## 🌐 Producción
+
+Frontend público de referencia:
+
+**https://barbertrixrd.netlify.app**
+
+El frontend se construye con Vite y puede desplegarse como SPA estática. La infraestructura completa de producción también dispone de Docker/Nginx para despliegues controlados junto al backend y SQL Server.
+
 ## 🚀 Estado del proyecto
 
-BarberTurn tiene la **web v1 cerrada técnicamente** y continúa en preparación para una salida comercial controlada. El roadmap técnico de modernización del panel web **Fases 1–7 está completado**: rutas administrativas formales, Citas 2.0, CRM 2.0, Caja 2.0, Business Reports 2.0, arquitectura CSS por ownership y migración a React Router.
+BarberTrix tiene la **web v1 cerrada técnicamente** y continúa en preparación para una salida comercial controlada. El roadmap web de modernización **Fases 1–7 está completado**: rutas administrativas formales, Citas 2.0, CRM 2.0, Caja 2.0, Business Reports 2.0, arquitectura CSS por ownership y migración a React Router.
 
-`main` se mantiene validado mediante CI, pruebas automatizadas, análisis de seguridad, E2E con navegador, E2E full-stack contra SQL Server y construcción de contenedores de producción.
+La línea móvil está activa con **React Native + Expo SDK 57 + Expo Router** e incluye sesión nativa segura, solicitudes cliente → barbero, realtime, notificaciones push y flujos públicos de solicitud/seguimiento.
 
-El checklist de cierre está documentado en [`docs/web-v1-finalization.md`](docs/web-v1-finalization.md). La línea móvil está activa con React Native + Expo: M0/M1 establecen la base y las sesiones nativas seguras; M2 incorpora solicitudes cliente → barbero y M3 añade notificaciones push transaccionales para personal y clientes.
+`main` se valida mediante GitHub Actions con:
 
-### Operación principal
+- backend .NET 10;
+- frontend React;
+- móvil Expo;
+- auditoría de dependencias de producción;
+- validación de alineación Expo;
+- typecheck móvil con regeneración de typed routes;
+- Playwright E2E;
+- E2E full-stack React + API + SQL Server;
+- construcción de contenedores de producción;
+- CodeQL para C# y JavaScript/TypeScript;
+- Gitleaks.
+
+El checklist de cierre web está documentado en [`docs/web-v1-finalization.md`](docs/web-v1-finalization.md).
+
+## ✨ Funcionalidades principales
+
+### Operación de barbería
 
 - 🚶 fila digital por orden de llegada;
 - 📅 agenda operativa con vistas Hoy/Semana, filtros, creación administrativa y reprogramación por disponibilidad;
@@ -42,7 +72,7 @@ El checklist de cierre está documentado en [`docs/web-v1-finalization.md`](docs
 - ❌ estados alternativos `Cancelled` y `NoShow`;
 - 📊 métricas operativas de la cola;
 - ⚡ SignalR para actualización en tiempo real;
-- 📺 BarberTurn TV;
+- 📺 **BarberTrix TV**;
 - 🌐 autoservicio público con tokens opacos.
 
 ### Gestión comercial
@@ -50,7 +80,7 @@ El checklist de cierre está documentado en [`docs/web-v1-finalization.md`](docs
 - 👥 **CRM 2.0** con búsqueda, edición, visitas completadas, última visita, gasto por moneda, actividad reciente y notas internas versionadas;
 - 💵 **Caja 2.0** con apertura/cierre, fondo inicial, entradas/salidas, pagos, reembolsos y conciliación esperado vs. contado;
 - 📈 **Business Reports 2.0** con rangos personalizados, comparación de períodos, métricas por moneda, barbero, servicio, método de pago y horas pico;
-- 📤 exportación CSV y salida optimizada para impresión/PDF;
+- 📤 exportación CSV localizada y salida optimizada para impresión/PDF;
 - 🧑‍🤝‍🧑 equipo, invitaciones y roles;
 - 🏪 sucursales y configuración por barbería;
 - 🧾 auditoría de operaciones;
@@ -58,12 +88,12 @@ El checklist de cierre está documentado en [`docs/web-v1-finalization.md`](docs
 - 💰 suscripciones SaaS mediante PayPal;
 - 🔒 capacidades y límites aplicados también en backend.
 
-### Portales y navegación
+### Portales
 
 - 👑 **Owner / Administrator / Receptionist:** panel administrativo según permisos;
-- ✂️ **Barber Portal:** jornada, cola asignada, estado y citas propias sin ruido administrativo;
+- ✂️ **Barber Portal:** jornada, cola asignada, estado y citas propias;
 - 👤 **Customer Portal:** autoservicio público sin requerir cuenta;
-- 🧪 **Demo comercial limitada:** permite probar el núcleo y mantiene visibles las funciones premium mediante paywalls/CTA sin exponer operaciones sensibles;
+- 🧪 **Demo comercial limitada:** permite probar el núcleo y mantiene visibles funciones premium mediante paywalls/CTA sin exponer operaciones sensibles;
 - 🧭 **React Router + HashRouter:** navegación formal preservando `#/app/*`, deep links y Back/Forward.
 
 Rutas administrativas principales:
@@ -82,7 +112,7 @@ Rutas administrativas principales:
 #/app/billing
 ```
 
-Los clientes pueden tomar turnos y reservar citas sin crear una cuenta. Una cuenta de cliente registrada no forma parte todavía del alcance actual.
+Los clientes pueden tomar turnos, reservar citas y utilizar flujos públicos de solicitud sin crear una cuenta.
 
 ## 💳 Capacidades por plan
 
@@ -96,60 +126,61 @@ Las capacidades se validan en servidor; ocultar o bloquear una opción en React 
 | Historial de turnos | 7 días | 90 días | Completo | Completo |
 | Notificaciones esenciales | ✅ | ✅ | ✅ | ✅ |
 | Citas | ❌ | ❌ | ✅ | ✅ |
-| BarberTurn TV | ❌ | ❌ | ✅ | ✅ |
+| BarberTrix TV | ❌ | ❌ | ✅ | ✅ |
 | Automatizaciones avanzadas | ❌ | ❌ | ✅ | ✅ |
 | Reportes avanzados | ❌ | ❌ | ❌ | ✅ |
 | Multi-location | 1 | 1 | 1 | Hasta 3 |
 
 Free es el piso permanente: cancelar o perder una suscripción no elimina datos ni bloquea seguridad, identidad, notificaciones esenciales o turnos existentes. El backend es la fuente de verdad para entitlements. Consulta [`docs/plans-and-entitlements.md`](docs/plans-and-entitlements.md).
 
+## 🌍 Internacionalización
+
+BarberTrix tiene **10 locales oficiales de producto** y utiliza el mismo catálogo en web y móvil:
+
+| Locale | Idioma |
+|---|---|
+| `es-419` | Español latinoamericano |
+| `en` | English |
+| `pt-BR` | Português do Brasil |
+| `fr` | Français |
+| `ht` | Kreyòl ayisyen |
+| `de` | Deutsch |
+| `it` | Italiano |
+| `ja` | 日本語 |
+| `ko` | 한국어 |
+| `zh-CN` | 简体中文 |
+
+Características de i18n:
+
+- detección automática BCP 47 en web y móvil;
+- todos los locales oficiales son elegibles para modo Auto;
+- todos los locales oficiales son estrictos: no se usa fallback silencioso al inglés;
+- cualquier variante española se normaliza a `es-419`;
+- `zh*` se normaliza a `zh-CN` y `pt*` a `pt-BR`;
+- fechas, horas, monedas, estados, roles y exportaciones CSV utilizan el locale activo;
+- los mensajes técnicos crudos del backend no se muestran directamente en superficies localizadas;
+- `es-ES` permanece únicamente como compatibilidad histórica móvil y se normaliza a `es-419`; no es un locale oficial.
+
 ## 🧰 Stack tecnológico
 
 ### 🟣 Backend
 
-<p align="left">
-  <img src="https://skillicons.dev/icons?i=dotnet&theme=dark" height="48" alt=".NET" />
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/csharp/csharp-original.svg" height="48" alt="C#" />
-</p>
-
-<p align="left">
-  <img src="https://img.shields.io/badge/ASP.NET_Core-Web_API-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt="ASP.NET Core" />
-  <img src="https://img.shields.io/badge/Entity_Framework_Core-ORM-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt="Entity Framework Core" />
-  <img src="https://img.shields.io/badge/JWT-Authentication-000000?style=flat-square&logo=jsonwebtokens&logoColor=white" alt="JWT" />
-  <img src="https://img.shields.io/badge/SignalR-Realtime-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt="SignalR" />
-  <img src="https://img.shields.io/badge/OpenAPI-Documentation-6BA539?style=flat-square&logo=openapiinitiative&logoColor=white" alt="OpenAPI" />
-  <img src="https://img.shields.io/badge/PayPal-REST_API-003087?style=flat-square&logo=paypal&logoColor=white" alt="PayPal REST API" />
-</p>
-
 - .NET 10;
+- C#;
 - ASP.NET Core Web API;
 - Entity Framework Core;
 - SQL Server 2022;
-- JWT;
+- JWT + refresh rotation;
 - SignalR;
 - OpenAPI en Development;
-- PayPal REST API.
+- PayPal REST API;
+- arquitectura por capas Domain / Application / Infrastructure / API.
 
-### 🔵 Frontend
-
-<p align="left">
-  <img src="https://skillicons.dev/icons?i=react,ts,vite,html,css&theme=dark" height="48" alt="React, TypeScript, Vite, HTML y CSS" />
-</p>
-
-<p align="left">
-  <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=111827" alt="React 19" />
-  <img src="https://img.shields.io/badge/React_Router-7.18.3-CA4245?style=flat-square&logo=reactrouter&logoColor=white" alt="React Router 7.18.3" />
-  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript 5" />
-  <img src="https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite 8" />
-  <img src="https://img.shields.io/badge/UI-Responsive-0EA5E9?style=flat-square" alt="Responsive UI" />
-  <img src="https://img.shields.io/badge/Icons-Font_Awesome-528DD7?style=flat-square&logo=fontawesome&logoColor=white" alt="Font Awesome" />
-  <img src="https://img.shields.io/badge/Tests-Vitest-6E9F18?style=flat-square&logo=vitest&logoColor=white" alt="Vitest" />
-  <img src="https://img.shields.io/badge/E2E-Playwright-2EAD33?style=flat-square&logo=playwright&logoColor=white" alt="Playwright" />
-</p>
+### 🔵 Frontend web
 
 - React 19;
 - React Router 7.18.3 con `HashRouter`;
-- TypeScript;
+- TypeScript 5.9;
 - Vite 8;
 - CSS modularizado por ownership global / portal / shared / feature;
 - Font Awesome;
@@ -158,23 +189,26 @@ Free es el piso permanente: cancelar o perder una suscripción no elimina datos 
 - Vitest + React Testing Library;
 - Playwright.
 
+### 📱 Mobile
+
+- React Native 0.86;
+- React 19;
+- Expo SDK 57;
+- Expo Router 57;
+- TypeScript 6;
+- TanStack Query;
+- SignalR;
+- Expo SecureStore;
+- Expo Notifications;
+- typed routes regenerados antes de `tsc --noEmit`;
+- export/bundle Android validado en CI.
+
 ### 🗄️ Datos e infraestructura
 
-<p align="left">
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/microsoftsqlserver/microsoftsqlserver-original.svg" height="48" alt="SQL Server" />
-  <img src="https://skillicons.dev/icons?i=docker,nginx,github&theme=dark" height="48" alt="Docker, Nginx y GitHub" />
-</p>
-
-<p align="left">
-  <img src="https://img.shields.io/badge/SQL_Server-2022-CC2927?style=flat-square&logo=microsoftsqlserver&logoColor=white" alt="SQL Server 2022" />
-  <img src="https://img.shields.io/badge/Docker_Compose-Orchestration-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker Compose" />
-  <img src="https://img.shields.io/badge/Nginx-Frontend-009639?style=flat-square&logo=nginx&logoColor=white" alt="Nginx" />
-  <img src="https://img.shields.io/badge/GitHub_Actions-CI-2088FF?style=flat-square&logo=githubactions&logoColor=white" alt="GitHub Actions" />
-  <img src="https://img.shields.io/badge/CodeQL-Security-181717?style=flat-square&logo=github&logoColor=white" alt="CodeQL" />
-</p>
-
+- SQL Server 2022;
 - Docker + Docker Compose;
 - Nginx;
+- Netlify para el frontend público de referencia;
 - GitHub Actions;
 - CodeQL;
 - Gitleaks;
@@ -183,7 +217,7 @@ Free es el piso permanente: cancelar o perder una suscripción no elimina datos 
 ## 🏗️ Arquitectura
 
 ```text
-BarberTurn
+BarberTrix
 ├── backend
 │   ├── src
 │   │   ├── BarberTurn.Domain
@@ -191,8 +225,6 @@ BarberTurn
 │   │   ├── BarberTurn.Infrastructure
 │   │   └── BarberTurn.Api
 │   └── tests
-│       ├── BarberTurn.Domain.Tests
-│       └── BarberTurn.Api.Tests
 ├── frontend
 │   ├── e2e
 │   └── src
@@ -202,7 +234,8 @@ BarberTurn
 │       ├── shared
 │       └── ...
 ├── mobile
-│   └── ...
+│   ├── app
+│   └── src
 ├── deploy
 │   └── sql
 ├── docs
@@ -220,9 +253,9 @@ BarberTurn
 - **Infrastructure:** persistencia, SQL Server, servicios externos y adaptadores.
 - **API:** transporte HTTP, autenticación/autorización, middleware y composición.
 - **Frontend:** portales y features desacoplados por responsabilidad.
-- **Mobile:** experiencia React Native/Expo con sesión segura, realtime y notificaciones push.
+- **Mobile:** experiencia React Native/Expo con sesión segura, realtime, solicitudes públicas y notificaciones push.
 
-La dirección buscada es:
+La dependencia conceptual buscada es:
 
 ```text
 API
@@ -234,11 +267,11 @@ Infrastructure
 SQL Server / proveedores externos
 ```
 
-Los endpoints no deben convertirse en una segunda capa de persistencia ni consultar el DbContext para lógica de negocio que corresponda a Application/Infrastructure.
+Los endpoints no deben convertirse en una segunda capa de persistencia ni consultar el `DbContext` para lógica de negocio que corresponda a Application/Infrastructure.
 
 ### Arquitectura web
 
-La navegación web utiliza un único `HashRouter` como fuente de verdad. `adminRoutes.ts` expone paths canónicos y parsing puro; el dashboard deriva la página activa desde la URL mediante `useLocation()`/`useNavigate()`.
+La navegación web utiliza un único `HashRouter` como fuente de verdad. `adminRoutes.ts` expone paths canónicos y parsing puro; el dashboard deriva la página activa desde la URL mediante `useLocation()` / `useNavigate()`.
 
 La arquitectura CSS sigue ownership explícito:
 
@@ -252,7 +285,23 @@ Shared
 Feature
 ```
 
-Los estilos específicos de una feature deben vivir con esa feature; las primitivas compartidas solo se promueven a `shared` cuando existen consumidores reales en más de un módulo.
+Los estilos específicos de una feature viven con esa feature; las primitivas compartidas solo se promueven a `shared` cuando existen consumidores reales en más de un módulo.
+
+## 🏷️ Identidad del proyecto y nombres técnicos heredados
+
+**BarberTrix es el nombre oficial y vigente del producto y del repositorio.**
+
+No debe utilizarse **BarberTurn** como nombre comercial en nueva documentación, UI, copy de producto, material de marketing o futuras funcionalidades.
+
+El código conserva temporalmente algunos identificadores internos heredados, entre ellos:
+
+- namespaces y assemblies `BarberTurn.*`;
+- `BarberTurn.sln`;
+- algunos package names internos;
+- variables de entorno `BARBERTURN_*`;
+- ciertos nombres de infraestructura y archivos históricos.
+
+Estos identificadores permanecen por compatibilidad técnica y **no representan la marca actual**. Su eventual migración debe realizarse como una fase técnica independiente, con revisión de namespaces, assemblies, migraciones EF Core, configuración, Docker, CI/CD y compatibilidad de despliegues.
 
 ## 🔐 Seguridad
 
@@ -271,7 +320,7 @@ Controles relevantes:
 - separación SignalR por audiencias `internal`, `public` y `tv`;
 - encabezados HTTP de seguridad;
 - validación de firma de webhooks PayPal;
-- secretos exclusivamente por configuración externa;
+- secretos exclusivamente mediante configuración externa;
 - CodeQL y Gitleaks en CI.
 
 Los errores API utilizan un contrato estable:
@@ -284,19 +333,38 @@ Los errores API utilizan un contrato estable:
 }
 ```
 
-El frontend puede localizar el mensaje por `code` y el `correlationId` permite rastrear el incidente sin revelar detalles internos.
+El frontend localiza el mensaje mediante `code`; `correlationId` permite rastrear incidentes sin revelar detalles internos.
 
 Consulta [`SECURITY.md`](SECURITY.md) para el proceso de reporte y los controles vigentes.
 
+### Seguridad de dependencias móviles
+
+El cliente móvil mantiene sus paquetes administrados por Expo alineados con:
+
+```bash
+npx expo install --check
+```
+
+Este comando es un **gate bloqueante de CI**. Además, el typecheck regenera primero los typed routes de Expo Router para evitar validar contra `.expo/types` obsoletos.
+
+`npm audit` reporta actualmente hallazgos moderados transitivos provenientes principalmente de dos cadenas upstream de Expo:
+
+- `decode-uri-component` → `query-string` → `expo-router`;
+- `uuid@7` → `xcode` → configuración/CLI de Expo.
+
+No se utiliza `npm audit fix --force`, porque la remediación automática propuesta implica downgrades incompatibles con Expo SDK 57. Los hallazgos altos y críticos de dependencias de producción continúan siendo bloqueantes.
+
+Consulta [`docs/mobile-dependency-security.md`](docs/mobile-dependency-security.md).
+
 ## 🔭 Observabilidad
 
-BarberTurn incorpora:
+BarberTrix incorpora:
 
 - `X-Correlation-ID` por request;
 - logs JSON en Production;
 - contexto estructurado de tenant/usuario cuando existe;
 - método, path, status code y duración de requests;
-- logging específico de eventos de billing/webhooks sin registrar tokens, firmas ni secretos;
+- logging específico de billing/webhooks sin registrar tokens, firmas ni secretos;
 - health check de base de datos.
 
 La arquitectura queda preparada para incorporar OpenTelemetry, métricas y tracing cuando exista infraestructura real de observabilidad.
@@ -318,9 +386,9 @@ barberturn_app
 └─ runtime de la API
 ```
 
-La API **no se conecta como `sa`**. `barberturn_app` recibe únicamente permisos de lectura/escritura requeridos por la aplicación, mientras `barberturn_migrator` ejecuta el job de migraciones antes del arranque de la API.
+Los nombres `barberturn_*` son identificadores técnicos heredados. La API **no se conecta como `sa`**: el usuario de runtime recibe únicamente permisos de lectura/escritura requeridos por la aplicación y el usuario migrador ejecuta las migraciones antes del arranque de la API.
 
-Variables adicionales de producción:
+Variables heredadas de producción actualmente soportadas:
 
 ```text
 BARBERTURN_DB_PASSWORD
@@ -330,7 +398,7 @@ BARBERTURN_DB_APP_PASSWORD
 
 Consulta [`docs/production-operations.md`](docs/production-operations.md) para backups, alertas, secretos, TLS y checklist de lanzamiento.
 
-## 🧪 Testing
+## 🧪 Testing y calidad
 
 ### Backend
 
@@ -355,28 +423,28 @@ Vitest + React Testing Library cubren, entre otros:
 - Barber Portal;
 - paywalls/capabilities;
 - política de contraseñas;
-- errores localizados.
+- errores localizados;
+- paridad de diccionarios y política de locales oficiales.
 
 ### E2E
 
-BarberTurn mantiene dos niveles de Playwright deliberadamente separados:
+BarberTrix mantiene dos niveles de Playwright deliberadamente separados:
 
-1. **E2E de navegador con backend simulado**, para validar de forma determinista registro, login, dashboard, ciclo de turnos, Citas 2.0, CRM 2.0, Caja 2.0, demo comercial, Barber Portal, Customer Portal, restricciones por rol, Starter vs. funciones premium, billing y routing/deep links.
-2. **E2E full-stack real**, que levanta React + ASP.NET Core + SQL Server 2022 y valida flujos reales contra datos persistidos en SQL Server.
+1. **E2E de navegador con backend simulado**, para validar de forma determinista los principales flujos de interfaz y permisos.
+2. **E2E full-stack real**, que levanta React + ASP.NET Core + SQL Server 2022 y valida flujos reales contra datos persistidos.
 
-El job `Full-stack E2E (React + API + SQL Server)` forma parte del CI y es requisito previo para construir las imágenes de producción. Las suites publican artifacts de Playwright para diagnóstico cuando una ejecución falla.
+El job `Full-stack E2E (React + API + SQL Server)` forma parte del CI y es requisito previo para construir las imágenes de producción.
 
-## 🌐 Internacionalización
+### Mobile
 
-Locales soportados:
+CI valida:
 
-| Locale | Idioma |
-|---|---|
-| `es-419` | Español Latino |
-| `en` | English |
-| `es-ES` | Español de España |
-
-Las traducciones están modularizadas por locale y dominio (`common`, `auth`, `dashboard`, `billing`, `customer`, etc.). No se fuerzan diferencias artificiales entre `es-419` y `es-ES` cuando una traducción es natural en ambos mercados.
+- `npm ci` reproducible;
+- auditoría de dependencias de producción;
+- `npx expo install --check`;
+- regeneración de Expo Router typed routes;
+- `tsc --noEmit`;
+- export/bundle Android.
 
 ## ♿ Accesibilidad
 
@@ -395,6 +463,8 @@ Esto **no constituye certificación formal** sin una auditoría completa.
 
 ## 🐳 Desarrollo local
 
+Desde la raíz:
+
 ```bash
 cp .env.example .env
 docker compose up --build
@@ -408,9 +478,27 @@ Servicios por defecto:
 - OpenAPI Development: `http://localhost:8080/openapi/v1.json`
 - SQL Server: `localhost:1433`
 
-El entorno local puede aplicar migraciones al arrancar. Producción utiliza un job separado.
+### Frontend
 
-## 🚀 Producción
+```bash
+cd frontend
+npm ci
+npm run build
+```
+
+### Mobile
+
+```bash
+cd mobile
+npm ci
+npx expo install --check
+npm run typecheck
+npm start
+```
+
+El typecheck móvil ejecuta primero la regeneración de tipos de ruta de Expo Router.
+
+## 🚀 Producción con Docker
 
 ```bash
 cp .env.production.example .env.production
@@ -452,6 +540,15 @@ Requisitos externos antes de un lanzamiento comercial:
 - ✅ **Fase 6:** CSS / UI Architecture Cleanup;
 - ✅ **Fase 7:** migración formal a React Router preservando deep links e historial.
 
+### ✅ Internacionalización comercial
+
+- ✅ 10 locales oficiales;
+- ✅ detección automática BCP 47 web/móvil;
+- ✅ modo estricto sin fallback silencioso a inglés;
+- ✅ administración comercial localizada;
+- ✅ estados, roles, fechas, monedas y CSV localizados;
+- ✅ flujos públicos y móviles localizados.
+
 ### 🟢 Hardening web v1
 
 - ✅ refresh token HttpOnly y rotación segura;
@@ -460,12 +557,11 @@ Requisitos externos antes de un lanzamiento comercial:
 - ✅ demo comercial limitada y portales por rol;
 - ✅ error codes y correlation IDs;
 - ✅ frontend modular por features;
-- ✅ CSS con ownership global / portal / shared / feature;
+- ✅ CSS con ownership explícito;
 - ✅ React Router con URLs hash compatibles;
 - ✅ Vitest + Testing Library;
-- ✅ Playwright E2E de navegador con backend simulado;
+- ✅ Playwright E2E;
 - ✅ E2E full-stack React + ASP.NET Core + SQL Server;
-- ✅ i18n modular;
 - ✅ cobertura y gates progresivos en CI;
 - ✅ migraciones desacopladas;
 - ✅ logging estructurado;
@@ -474,38 +570,52 @@ Requisitos externos antes de un lanzamiento comercial:
 - ✅ replay/idempotencia y orden de eventos PayPal;
 - ⏳ regresión visual/responsive y cierre de configuración operativa externa.
 
+### 📱 Línea móvil activa
+
+- ✅ React Native + Expo SDK 57 + Expo Router;
+- ✅ sesiones móviles seguras con refresh token rotatorio en SecureStore;
+- ✅ solicitudes cliente → barbero con aceptación, rechazo y contraoferta;
+- ✅ realtime con SignalR mientras la aplicación está abierta;
+- ✅ notificaciones push transaccionales;
+- ✅ flujos públicos de solicitud y seguimiento;
+- ✅ i18n alineado con los 10 locales oficiales;
+- ✅ typed routes regenerados antes del typecheck;
+- ✅ dependencias Expo alineadas y validadas en CI;
+- ⏳ preparación de distribución Android/iOS.
+
 ### ⏳ Puesta en infraestructura real
 
-- DNS/TLS;
+- DNS/TLS definitivo;
 - proveedores reales de correo, Turnstile y PayPal;
 - observabilidad centralizada y alertas;
 - backups/restauración;
 - auditoría de accesibilidad;
 - revisión legal y operativa previa al lanzamiento.
 
-### 📱 Línea móvil activa
+### 🔄 Migración técnica de naming
 
-- ✅ React Native + Expo SDK 57 y Expo Router;
-- ✅ sesiones móviles seguras con refresh token rotatorio en SecureStore;
-- ✅ solicitudes cliente → barbero con aceptación, rechazo y contraoferta;
-- ✅ realtime con SignalR mientras la aplicación está abierta;
-- ✅ notificaciones push transaccionales de sistema en M3;
-- ⏳ preparación de distribución Android/iOS.
+- ⏳ migrar namespaces/assemblies `BarberTurn.*` a la nueva convención técnica de BarberTrix;
+- ⏳ renombrar solution/package identifiers heredados;
+- ⏳ migrar variables `BARBERTURN_*` con compatibilidad de transición;
+- ⏳ revisar Docker, CI/CD, scripts y documentación técnica asociada.
+
+Esta migración no debe realizarse como un reemplazo masivo de texto: requiere una fase controlada para evitar romper builds, migraciones EF Core, secretos o despliegues existentes.
 
 ## 📚 Documentación
 
 - 🏗️ [`docs/architecture.md`](docs/architecture.md) — arquitectura y decisiones técnicas.
-- 🧭 [`docs/admin-routing.md`](docs/admin-routing.md) — rutas web, React Router, compatibilidad y navegación administrativa.
-- 🎨 [`docs/frontend-styling.md`](docs/frontend-styling.md) — ownership y arquitectura CSS del frontend.
+- 🧭 [`docs/admin-routing.md`](docs/admin-routing.md) — rutas web, React Router y navegación administrativa.
+- 🎨 [`docs/frontend-styling.md`](docs/frontend-styling.md) — ownership y arquitectura CSS.
 - 🎯 [`docs/mvp.md`](docs/mvp.md) — alcance funcional.
 - ✅ [`docs/web-v1-finalization.md`](docs/web-v1-finalization.md) — checklist de cierre web v1.
-- 📱 [`mobile/README.md`](mobile/README.md) — arquitectura, seguridad y ejecución de BarberTurn Mobile.
+- 📱 [`mobile/README.md`](mobile/README.md) — arquitectura, seguridad y ejecución del cliente móvil.
+- 🛡️ [`docs/mobile-dependency-security.md`](docs/mobile-dependency-security.md) — postura de dependencias móviles y advisories upstream.
 - 🚀 [`docs/production-operations.md`](docs/production-operations.md) — operación, mínimo privilegio, observabilidad, backups y checklist.
-- 🛡️ [`SECURITY.md`](SECURITY.md) — política y controles de seguridad.
+- 🔐 [`SECURITY.md`](SECURITY.md) — política y controles de seguridad.
 - 🤝 [`CONTRIBUTING.md`](CONTRIBUTING.md) — guía de contribución.
 - 📝 [`CHANGELOG.md`](CHANGELOG.md) — historial relevante.
 - ⚖️ [`docs/privacy.md`](docs/privacy.md) / [`docs/terms.md`](docs/terms.md) — borradores legales para revisión.
 
 ---
 
-<p align="center"><strong>BarberTurn 💈 — Tu turno. Tu estilo. Tu tiempo.</strong></p>
+<p align="center"><strong>BarberTrix 💈 — Tu turno. Tu estilo. Tu tiempo.</strong></p>

@@ -84,7 +84,7 @@ El checklist de cierre web está documentado en [`docs/web-v1-finalization.md`](
 - 🧑‍🤝‍🧑 equipo, invitaciones y roles;
 - 🏪 sucursales y configuración por barbería;
 - 🧾 auditoría de operaciones;
-- 💳 planes Free / Starter / Pro / Business;
+- 💳 planes Free / Pro / Business;
 - 💰 suscripciones SaaS mediante PayPal;
 - 🔒 capacidades y límites aplicados también en backend.
 
@@ -118,20 +118,20 @@ Los clientes pueden tomar turnos, reservar citas y utilizar flujos públicos de 
 
 Las capacidades se validan en servidor; ocultar o bloquear una opción en React nunca es el único control.
 
-| Capacidad | Free | Starter | Pro | Business |
-|---|:---:|:---:|:---:|:---:|
-| Cola por llegada | ✅ 100/mes (+10 tolerancia) | ✅ 1,000/mes | ✅ alto volumen | ✅ alto volumen |
-| Barberos activos | **3** | 5 | 10 | Ilimitados |
-| Servicios activos | 5 | Ilimitados | Ilimitados | Ilimitados |
-| Historial de turnos | 7 días | 90 días | Completo | Completo |
-| Notificaciones esenciales | ✅ | ✅ | ✅ | ✅ |
-| Citas | ❌ | ❌ | ✅ | ✅ |
-| BarberTrix TV | ❌ | ❌ | ✅ | ✅ |
-| Automatizaciones avanzadas | ❌ | ❌ | ✅ | ✅ |
-| Reportes avanzados | ❌ | ❌ | ❌ | ✅ |
-| Multi-location | 1 | 1 | 1 | Hasta 3 |
+| Capacidad | Free | Pro | Business |
+|---|:---:|:---:|:---:|
+| Cola por llegada | ✅ 1,000/mes (+50 tolerancia) | ✅ alto volumen | ✅ alto volumen |
+| Barberos activos | **3** | 10 | Ilimitados |
+| Servicios activos | Ilimitados | Ilimitados | Ilimitados |
+| Historial de turnos | 1 mes calendario (28/29/30/31 días) | Completo | Completo |
+| Notificaciones esenciales | ✅ | ✅ | ✅ |
+| Citas | ✅ | ✅ | ✅ |
+| BarberTrix TV | ❌ | ✅ | ✅ |
+| Automatizaciones avanzadas | ❌ | ✅ | ✅ |
+| Reportes avanzados | ❌ | ❌ | ✅ |
+| Multi-location | 1 | 1 | Hasta 3 |
 
-Free es el piso permanente: cancelar o perder una suscripción no elimina datos ni bloquea seguridad, identidad, notificaciones esenciales o turnos existentes. El backend es la fuente de verdad para entitlements. Consulta [`docs/plans-and-entitlements.md`](docs/plans-and-entitlements.md).
+Free es el piso permanente y absorbe la operación esencial que antes separaba Starter: citas, notificaciones esenciales, servicios ilimitados, 1,000 turnos mensuales con 50 de tolerancia y un historial cuya ventana usa la duración del mes calendario local de la barbería. Cancelar o perder una suscripción no elimina datos ni bloquea seguridad, identidad, notificaciones esenciales, citas o turnos existentes. El backend es la fuente de verdad para entitlements. Consulta [`docs/plans-and-entitlements.md`](docs/plans-and-entitlements.md).
 
 ## 🌍 Internacionalización
 

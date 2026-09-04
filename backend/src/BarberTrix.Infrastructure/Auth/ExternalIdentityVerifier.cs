@@ -25,7 +25,7 @@ internal sealed class ExternalIdentityVerifier(HttpClient httpClient, IConfigura
     private async Task<ExternalIdentity?> VerifyGoogleAsync(string identityToken, CancellationToken cancellationToken)
     {
         var configuredAudiences = GetConfiguredAudiences("ExternalAuth:Google");
-        if (configuredAudiences.Count == 0)
+        if (configuredAudiences.Length == 0)
             throw new InvalidOperationException("Google external authentication is not configured.");
 
         using var response = await httpClient.GetAsync(
@@ -54,7 +54,7 @@ internal sealed class ExternalIdentityVerifier(HttpClient httpClient, IConfigura
     private async Task<ExternalIdentity?> VerifyAppleAsync(string identityToken, CancellationToken cancellationToken)
     {
         var configuredAudiences = GetConfiguredAudiences("ExternalAuth:Apple");
-        if (configuredAudiences.Count == 0)
+        if (configuredAudiences.Length == 0)
             throw new InvalidOperationException("Apple external authentication is not configured.");
 
         try
@@ -94,7 +94,7 @@ internal sealed class ExternalIdentityVerifier(HttpClient httpClient, IConfigura
         }
     }
 
-    private IReadOnlyList<string> GetConfiguredAudiences(string section)
+    private string[] GetConfiguredAudiences(string section)
     {
         var values = new List<string>();
         var primary = configuration[$"{section}:ClientId"];

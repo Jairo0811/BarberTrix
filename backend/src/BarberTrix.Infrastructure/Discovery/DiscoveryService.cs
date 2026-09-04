@@ -1,4 +1,5 @@
 using BarberTrix.Application.Discovery;
+using BarberTrix.Domain.Entities;
 using BarberTrix.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -40,7 +41,7 @@ public sealed class DiscoveryService(ApplicationDbContext db) : IDiscoveryServic
         var barberStats = await db.Barbers.AsNoTracking()
             .Where(x => shopIds.Contains(x.BarberShopId) && x.IsActive)
             .GroupBy(x => x.BarberShopId)
-            .Select(g => new { ShopId = g.Key, Active = g.Count(), Available = g.Count(x => x.Status == Domain.Entities.BarberStatus.Available) })
+            .Select(g => new { ShopId = g.Key, Active = g.Count(), Available = g.Count(x => x.Status == BarberStatus.Available) })
             .ToDictionaryAsync(x => x.ShopId, cancellationToken);
         var serviceStats = await db.BarberServices.AsNoTracking()
             .Where(x => shopIds.Contains(x.BarberShopId) && x.IsActive)
@@ -52,7 +53,7 @@ public sealed class DiscoveryService(ApplicationDbContext db) : IDiscoveryServic
         var queueWindowEnd = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1));
         var turns = await db.Turns.AsNoTracking()
             .Where(x => shopIds.Contains(x.BarberShopId) && x.QueueDate >= queueWindowStart && x.QueueDate <= queueWindowEnd &&
-                        (x.Status == Domain.Entities.TurnStatus.Waiting || x.Status == Domain.Entities.TurnStatus.InService))
+                        (x.Status == TurnStatus.Waiting || x.Status == TurnStatus.InService))
             .Select(x => new { x.BarberShopId, x.QueueDate, x.Status })
             .ToListAsync(cancellationToken);
 
@@ -60,8 +61,8 @@ public sealed class DiscoveryService(ApplicationDbContext db) : IDiscoveryServic
         foreach (var shop in shops)
         {
             var localDate = GetLocalDate(shop.TimeZoneId);
-            var waiting = turns.Count(x => x.BarberShopId == shop.Id && x.QueueDate == localDate && x.Status == Domain.Entities.TurnStatus.Waiting);
-            var inService = turns.Count(x => x.BarberShopId == shop.Id && x.QueueDate == localDate && x.Status == Domain.Entities.TurnStatus.InService);
+            var waiting = turns.Count(x => x.BarberShopId == shop.Id && x.QueueDate == localDate && x.Status == TurnStatus.Waiting);
+            var inService = turns.Count(x => x.BarberShopId == shop.Id && x.QueueDate == localDate && x.Status == TurnStatus.InService);
             barberStats.TryGetValue(shop.Id, out var barbers);
             serviceStats.TryGetValue(shop.Id, out var services);
             var location = locations.FirstOrDefault(x => x.BarberShopId == shop.Id);

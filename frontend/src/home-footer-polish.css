@@ -152,6 +152,25 @@
   font-size: 10px;
 }
 
+/* Pricing layout polish: exactly three plans centered on desktop. */
+.pricing-section .pricing-grid {
+  width: min(1060px, 100%);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  justify-content: center;
+  margin-inline: auto;
+}
+
+.pricing-section .pricing-card {
+  width: 100%;
+}
+
+@media (max-width: 1050px) {
+  .pricing-section .pricing-grid {
+    max-width: 620px;
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 760px) {
   .home-footer-inner {
     width: min(100% - 40px, 1180px);

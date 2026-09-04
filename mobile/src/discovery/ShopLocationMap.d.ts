@@ -6,9 +6,9 @@ export type GeoCoordinate = {
 };
 
 export type ShopLocationMapProps = {
-  coordinate: GeoCoordinate | null;
-  fallbackCoordinate: GeoCoordinate;
-  onCoordinateChange(coordinate: GeoCoordinate): void;
+  latitude: number | null;
+  longitude: number | null;
+  onChange(coordinate: GeoCoordinate): void;
 };
 
 export const ShopLocationMap: ComponentType<ShopLocationMapProps>;

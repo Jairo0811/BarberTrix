@@ -102,5 +102,6 @@ const copies: Record<string, LoginExtrasCopy> = {
 };
 
 export function getLoginExtrasCopy(locale: string): LoginExtrasCopy {
-  return copies[locale] ?? copies[locale.split('-')[0]] ?? copies.en;
+  const language = locale.split('-')[0] ?? 'en';
+  return copies[locale] ?? copies[language] ?? copies.en!;
 }

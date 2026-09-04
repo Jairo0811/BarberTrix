@@ -1,10 +1,19 @@
 import { apiRequest } from '@/api/httpClient';
 import type { MobileAuthResponse } from './types';
 
+export type ExternalAuthProvider = 'google' | 'apple';
+
 export function login(email: string, password: string) {
   return apiRequest<MobileAuthResponse>('/api/auth/mobile/login', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
+  });
+}
+
+export function loginExternal(provider: ExternalAuthProvider, identityToken: string) {
+  return apiRequest<MobileAuthResponse>('/api/auth/mobile/external', {
+    method: 'POST',
+    body: JSON.stringify({ provider, identityToken }),
   });
 }
 

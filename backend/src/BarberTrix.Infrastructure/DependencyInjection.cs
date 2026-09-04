@@ -60,6 +60,7 @@ public static class DependencyInjection
         services.AddScoped<IShopLookupService, ShopLookupService>();
         services.AddScoped<IDiscoveryService, DiscoveryService>();
         services.AddScoped<IPublicShopProfileService, PublicShopProfileService>();
+        services.AddSingleton<IShopMediaStorage, ShopMediaStorage>();
         services.AddScoped<ITvDisplayService, TvDisplayService>();
         services.AddScoped<IEmailSender, ConfigurableEmailSender>();
         services.AddHttpClient<IHumanVerificationService, HumanVerificationService>();

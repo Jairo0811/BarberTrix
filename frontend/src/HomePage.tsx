@@ -17,6 +17,7 @@ import {
   faXmark,
 } from '@fortawesome/free-solid-svg-icons'
 import './home.css'
+import './home-footer-polish.css'
 import { buildSupportEmailHref, buildWhatsAppHref, supportConfig } from './support'
 import { useI18n } from './i18n'
 import { getProductHomeAuxCopy } from './i18n/eastAsiaHomeAuxCopy'
@@ -238,13 +239,38 @@ export default function HomePage() {
         </div>
       </section>
 
-      <footer className="home-footer">
-        <img src="/branding/barbertrix-logo.png" alt="BarberTrix" />
-        <p>{homeAux.slogan}</p>
-        <a className="footer-support-link" href={buildSupportEmailHref()}>{t('common.support')}</a>
-        <a className="footer-support-link" href="#/terms">{homeAux.terms}</a>
-        <a className="footer-support-link" href="#/privacy">{homeAux.privacy}</a>
-        <span>© {currentYear} BarberTrix. {t('home.footer.rights')}</span>
+      <footer className="home-footer home-footer-pro">
+        <div className="home-footer-inner">
+          <div className="home-footer-brand-block">
+            <img className="home-footer-logo" src="/branding/barbertrix-logo.png" alt="BarberTrix" />
+            <p>{homeAux.slogan}</p>
+            <span className="home-footer-platform-copy">BarberTrix Mobile</span>
+            <div className="store-badges" aria-label="BarberTrix Mobile">
+              <span className="store-badge" aria-label="Disponible en App Store">
+                <span className="store-badge-icon" aria-hidden="true"></span>
+                <span><small>Disponible en</small><strong>App Store</strong></span>
+              </span>
+              <span className="store-badge" aria-label="Disponible en Google Play">
+                <span className="store-badge-icon play" aria-hidden="true">▶</span>
+                <span><small>Disponible en</small><strong>Google Play</strong></span>
+              </span>
+            </div>
+          </div>
+
+          <div className="home-footer-links-block">
+            <strong>BarberTrix</strong>
+            <nav className="home-footer-links" aria-label="BarberTrix footer">
+              <a className="footer-support-link" href={buildSupportEmailHref()}>{t('common.support')}</a>
+              <a className="footer-support-link" href="#/terms">{homeAux.terms}</a>
+              <a className="footer-support-link" href="#/privacy">{homeAux.privacy}</a>
+            </nav>
+          </div>
+        </div>
+
+        <div className="home-footer-bottom">
+          <span>© {currentYear} BarberTrix. {t('home.footer.rights')}</span>
+          <span>Web · Mobile · TV</span>
+        </div>
       </footer>
     </main>
   )

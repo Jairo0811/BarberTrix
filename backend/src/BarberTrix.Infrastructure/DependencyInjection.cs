@@ -45,6 +45,7 @@ public static class DependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IExternalAuthService, ExternalAuthService>();
         services.AddHttpClient<IExternalIdentityVerifier, ExternalIdentityVerifier>();
+        services.AddHttpClient<IExternalOAuthBroker, ExternalOAuthBroker>();
         services.AddScoped<IQueueService, QueueService>();
         services.AddScoped<IBarberOnboardingService, BarberOnboardingService>();
         services.AddScoped<IAppointmentService, AppointmentService>();

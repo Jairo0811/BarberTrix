@@ -9,9 +9,13 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MobileApiError } from '@/api/httpClient';
 import { useAuth } from '@/auth/AuthProvider';
+import { getLoginExtrasCopy } from '@/auth/loginExtras';
+import { startExternalOAuth } from '@/auth/socialOAuth';
+import type { ExternalAuthProvider } from '@/auth/authApi';
 import { useI18n } from '@/i18n/I18nProvider';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { BrandLogo } from '@/ui/BrandLogo';
@@ -19,15 +23,17 @@ import { BrandedBackground } from '@/ui/BrandedBackground';
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const copy = getLoginExtrasCopy(locale);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
+  const [socialProvider, setSocialProvider] = useState<ExternalAuthProvider>();
 
   async function submit() {
-    if (!email.trim() || !password || submitting) return;
+    if (!email.trim() || !password || submitting || socialProvider) return;
 
     setSubmitting(true);
     setError(undefined);
@@ -45,7 +51,19 @@ export default function LoginScreen() {
     }
   }
 
-  const disabled = submitting || !email.trim() || !password;
+  async function submitExternal(provider: ExternalAuthProvider) {
+    if (submitting || socialProvider) return;
+    setSocialProvider(provider);
+    setError(undefined);
+    try {
+      await startExternalOAuth(provider);
+    } catch (exception) {
+      setError(exception instanceof MobileApiError ? exception.message : t('login.failed'));
+      setSocialProvider(undefined);
+    }
+  }
+
+  const disabled = submitting || !!socialProvider || !email.trim() || !password;
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -58,6 +76,15 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.panel}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={copy.backHome}
+              onPress={() => router.replace('/')}
+              style={({ pressed }) => [styles.homeButton, pressed && styles.secondaryPressed]}
+            >
+              <Text style={styles.homeButtonText}>← {copy.backHome}</Text>
+            </Pressable>
+
             <View style={styles.card}>
               <View style={styles.cardTopAccent} />
 
@@ -66,6 +93,34 @@ export default function LoginScreen() {
               <View style={styles.heading}>
                 <Text style={styles.title}>{t('login.title')}</Text>
                 <Text style={styles.subtitle}>{t('login.subtitle')}</Text>
+              </View>
+
+              <View style={styles.socialGroup}>
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={!!socialProvider || submitting}
+                  onPress={() => submitExternal('google')}
+                  style={({ pressed }) => [styles.socialButton, pressed && styles.secondaryPressed]}
+                >
+                  <Text style={styles.googleMark}>G</Text>
+                  <Text style={styles.socialButtonText}>{socialProvider === 'google' ? '…' : copy.continueGoogle}</Text>
+                </Pressable>
+
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={!!socialProvider || submitting}
+                  onPress={() => submitExternal('apple')}
+                  style={({ pressed }) => [styles.appleButton, pressed && styles.secondaryPressed]}
+                >
+                  <Text style={styles.appleMark}></Text>
+                  <Text style={styles.appleButtonText}>{socialProvider === 'apple' ? '…' : copy.continueApple}</Text>
+                </Pressable>
+
+                <View style={styles.dividerRow}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>{copy.divider}</Text>
+                  <View style={styles.dividerLine} />
+                </View>
               </View>
 
               <View style={styles.form}>
@@ -142,7 +197,7 @@ export default function LoginScreen() {
 
               <View style={styles.customerInfo}>
                 <View style={styles.customerDot} />
-                <Text style={styles.customerHint}>{t('login.customerHint')}</Text>
+                <Text style={styles.customerHint}>{copy.customerMessage}</Text>
               </View>
             </View>
           </View>
@@ -165,6 +220,18 @@ const styles = StyleSheet.create({
     maxWidth: 650,
     alignSelf: 'center',
     paddingHorizontal: spacing.xl,
+  },
+  homeButton: {
+    alignSelf: 'flex-start',
+    minHeight: 44,
+    justifyContent: 'center',
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.sm,
+  },
+  homeButtonText: {
+    color: colors.primaryGlow,
+    fontSize: 14,
+    fontWeight: '900',
   },
   card: {
     position: 'relative',
@@ -207,9 +274,42 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     textAlign: 'center',
   },
+  socialGroup: {
+    gap: spacing.sm,
+    marginTop: spacing.xxl,
+  },
+  socialButton: {
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(140, 170, 214, 0.32)',
+    backgroundColor: colors.white,
+  },
+  socialButtonText: { color: '#111827', fontSize: 15, fontWeight: '900' },
+  googleMark: { color: '#4285F4', fontSize: 18, fontWeight: '900' },
+  appleButton: {
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.28)',
+    backgroundColor: '#000000',
+  },
+  appleButtonText: { color: colors.white, fontSize: 15, fontWeight: '900' },
+  appleMark: { color: colors.white, fontSize: 20, fontWeight: '900' },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm },
+  dividerLine: { flex: 1, height: 1, backgroundColor: 'rgba(140, 170, 214, 0.18)' },
+  dividerText: { color: colors.textSubtle, fontSize: 12, fontWeight: '700' },
   form: {
     gap: spacing.lg,
-    marginTop: spacing.xxl,
+    marginTop: spacing.lg,
   },
   fieldGroup: { gap: 8 },
   fieldLabel: {
@@ -289,6 +389,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '900',
   },
+  secondaryPressed: { opacity: 0.72 },
   customerInfo: {
     flexDirection: 'row',
     alignItems: 'flex-start',

@@ -69,6 +69,22 @@ public static class AuthEndpoints
                 : Results.Ok(ToMobileClientResponse(response));
         }).RequireRateLimiting("auth");
 
+        group.MapPost("/mobile/external", async (ExternalLoginRequest request, HttpContext context, IExternalAuthService externalAuthService, CancellationToken cancellationToken) =>
+        {
+            DisableAuthResponseCaching(context);
+            try
+            {
+                var response = await externalAuthService.LoginAsync(request, UserAgent(context), Ip(context), cancellationToken);
+                return response is null
+                    ? Results.Json(ApiError.From(context, ApiErrorCodes.AuthInvalidCredentials, "No se pudo validar la identidad externa."), statusCode: StatusCodes.Status401Unauthorized)
+                    : Results.Ok(ToMobileClientResponse(response));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Results.Json(ApiError.From(context, ApiErrorCodes.AuthRegistrationInvalid, ex.Message), statusCode: StatusCodes.Status503ServiceUnavailable);
+            }
+        }).RequireRateLimiting("auth");
+
         group.MapPost("/mobile/refresh", async (RefreshTokenRequest request, HttpContext context, IAuthService authService, CancellationToken cancellationToken) =>
         {
             DisableAuthResponseCaching(context);

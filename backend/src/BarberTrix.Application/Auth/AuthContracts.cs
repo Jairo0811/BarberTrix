@@ -48,12 +48,16 @@ public interface IExternalIdentityVerifier
     Task<ExternalIdentity?> VerifyAsync(string provider, string identityToken, CancellationToken cancellationToken = default);
 }
 
+public interface IExternalAuthService
+{
+    Task<AuthResponse?> LoginAsync(ExternalLoginRequest request, string? userAgent, string? ipAddress, CancellationToken cancellationToken = default);
+}
+
 public interface IAuthService
 {
     Task<AuthResponse> RegisterOwnerAsync(RegisterOwnerRequest request, string? userAgent, string? ipAddress, CancellationToken cancellationToken = default);
     Task<AuthResponse> RegisterBarberAsync(RegisterBarberRequest request, string? userAgent, string? ipAddress, CancellationToken cancellationToken = default);
     Task<AuthResponse?> LoginAsync(LoginRequest request, string? userAgent, string? ipAddress, CancellationToken cancellationToken = default);
-    Task<AuthResponse?> LoginExternalAsync(ExternalLoginRequest request, string? userAgent, string? ipAddress, CancellationToken cancellationToken = default);
     Task<AuthResponse> CreateDemoSessionAsync(string? userAgent, string? ipAddress, CancellationToken cancellationToken = default);
     Task<AuthResponse?> RefreshAsync(RefreshTokenRequest request, string? userAgent, string? ipAddress, CancellationToken cancellationToken = default);
     Task LogoutAsync(LogoutRequest request, CancellationToken cancellationToken = default);

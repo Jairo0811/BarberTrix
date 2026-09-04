@@ -43,6 +43,8 @@ public static class DependencyInjection
 
         services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IExternalAuthService, ExternalAuthService>();
+        services.AddHttpClient<IExternalIdentityVerifier, ExternalIdentityVerifier>();
         services.AddScoped<IQueueService, QueueService>();
         services.AddScoped<IBarberOnboardingService, BarberOnboardingService>();
         services.AddScoped<IAppointmentService, AppointmentService>();

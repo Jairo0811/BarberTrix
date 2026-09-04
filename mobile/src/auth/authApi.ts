@@ -17,6 +17,13 @@ export function loginExternal(provider: ExternalAuthProvider, identityToken: str
   });
 }
 
+export function exchangeExternalOAuth(code: string, codeVerifier: string) {
+  return apiRequest<MobileAuthResponse>('/api/auth/mobile/oauth/exchange', {
+    method: 'POST',
+    body: JSON.stringify({ code, codeVerifier }),
+  });
+}
+
 export function refreshSession(refreshToken: string) {
   return apiRequest<MobileAuthResponse>('/api/auth/mobile/refresh', {
     method: 'POST',

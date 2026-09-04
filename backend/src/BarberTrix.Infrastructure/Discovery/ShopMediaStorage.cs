@@ -5,7 +5,7 @@ namespace BarberTrix.Infrastructure.Discovery;
 
 public sealed class ShopMediaStorage(IConfiguration configuration) : IShopMediaStorage
 {
-    private static readonly IReadOnlyDictionary<string, string> AllowedContentTypes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    private static readonly Dictionary<string, string> AllowedContentTypes = new(StringComparer.OrdinalIgnoreCase)
     {
         ["image/jpeg"] = ".jpg",
         ["image/png"] = ".png",

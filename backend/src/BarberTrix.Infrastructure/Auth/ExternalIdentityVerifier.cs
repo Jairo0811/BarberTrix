@@ -24,7 +24,7 @@ internal sealed class ExternalIdentityVerifier(HttpClient httpClient, IConfigura
 
     private async Task<ExternalIdentity?> VerifyGoogleAsync(string identityToken, CancellationToken cancellationToken)
     {
-        var configuredAudiences = GetConfiguredAudiences("ExternalAuth:Google:ClientIds");
+        var configuredAudiences = GetConfiguredAudiences("ExternalAuth:Google");
         if (configuredAudiences.Count == 0)
             throw new InvalidOperationException("Google external authentication is not configured.");
 
@@ -53,7 +53,7 @@ internal sealed class ExternalIdentityVerifier(HttpClient httpClient, IConfigura
 
     private async Task<ExternalIdentity?> VerifyAppleAsync(string identityToken, CancellationToken cancellationToken)
     {
-        var configuredAudiences = GetConfiguredAudiences("ExternalAuth:Apple:ClientIds");
+        var configuredAudiences = GetConfiguredAudiences("ExternalAuth:Apple");
         if (configuredAudiences.Count == 0)
             throw new InvalidOperationException("Apple external authentication is not configured.");
 
@@ -94,15 +94,18 @@ internal sealed class ExternalIdentityVerifier(HttpClient httpClient, IConfigura
         }
     }
 
-    private IReadOnlyList<string> GetConfiguredAudiences(string key)
+    private IReadOnlyList<string> GetConfiguredAudiences(string section)
     {
-        var value = configuration[key];
-        if (string.IsNullOrWhiteSpace(value))
-            return Array.Empty<string>();
+        var values = new List<string>();
+        var primary = configuration[$"{section}:ClientId"];
+        if (!string.IsNullOrWhiteSpace(primary))
+            values.Add(primary.Trim());
 
-        return value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Distinct(StringComparer.Ordinal)
-            .ToArray();
+        var additional = configuration[$"{section}:ClientIds"];
+        if (!string.IsNullOrWhiteSpace(additional))
+            values.AddRange(additional.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+
+        return values.Distinct(StringComparer.Ordinal).ToArray();
     }
 
     private static string? GetString(JsonElement root, string property) =>

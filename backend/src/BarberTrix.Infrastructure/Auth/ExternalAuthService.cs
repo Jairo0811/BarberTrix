@@ -24,7 +24,18 @@ internal sealed class ExternalAuthService(
         CancellationToken cancellationToken = default)
     {
         var identity = await identityVerifier.VerifyAsync(request.Provider, request.IdentityToken, cancellationToken);
-        if (identity is null || !identity.EmailVerified)
+        return identity is null
+            ? null
+            : await LoginVerifiedAsync(identity, userAgent, ipAddress, cancellationToken);
+    }
+
+    public async Task<AuthResponse?> LoginVerifiedAsync(
+        ExternalIdentity identity,
+        string? userAgent,
+        string? ipAddress,
+        CancellationToken cancellationToken = default)
+    {
+        if (!identity.EmailVerified || string.IsNullOrWhiteSpace(identity.Email) || string.IsNullOrWhiteSpace(identity.Subject))
             return null;
 
         var normalizedEmail = identity.Email.Trim().ToLowerInvariant();

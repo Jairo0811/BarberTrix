@@ -14,6 +14,19 @@
         {
           "configureAndroidBackup": true
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "BarberTrix necesita acceso a tus fotos para seleccionar el logo y la portada de tu barbería.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "BarberTrix usa tu ubicación solo cuando eliges ubicar tu barbería en el mapa."
+        }
       ]
     ],
     "experiments": {

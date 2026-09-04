@@ -18,6 +18,8 @@ public sealed record RegisterBarberRequest(
     bool AcceptedTerms = false,
     string? CaptchaToken = null);
 public sealed record LoginRequest(string Email, string Password);
+public sealed record ExternalLoginRequest(string Provider, string IdentityToken);
+public sealed record ExternalIdentity(string Provider, string Subject, string Email, string Name, bool EmailVerified);
 public sealed record ForgotPasswordRequest(string Email);
 public sealed record ForgotPasswordResponse(string Message, string? DevelopmentResetUrl = null);
 public sealed record ResetPasswordRequest(string Token, string NewPassword);
@@ -41,11 +43,17 @@ public sealed record AuthResponse(
     bool IsEmailVerified,
     string SessionScope);
 
+public interface IExternalIdentityVerifier
+{
+    Task<ExternalIdentity?> VerifyAsync(string provider, string identityToken, CancellationToken cancellationToken = default);
+}
+
 public interface IAuthService
 {
     Task<AuthResponse> RegisterOwnerAsync(RegisterOwnerRequest request, string? userAgent, string? ipAddress, CancellationToken cancellationToken = default);
     Task<AuthResponse> RegisterBarberAsync(RegisterBarberRequest request, string? userAgent, string? ipAddress, CancellationToken cancellationToken = default);
     Task<AuthResponse?> LoginAsync(LoginRequest request, string? userAgent, string? ipAddress, CancellationToken cancellationToken = default);
+    Task<AuthResponse?> LoginExternalAsync(ExternalLoginRequest request, string? userAgent, string? ipAddress, CancellationToken cancellationToken = default);
     Task<AuthResponse> CreateDemoSessionAsync(string? userAgent, string? ipAddress, CancellationToken cancellationToken = default);
     Task<AuthResponse?> RefreshAsync(RefreshTokenRequest request, string? userAgent, string? ipAddress, CancellationToken cancellationToken = default);
     Task LogoutAsync(LogoutRequest request, CancellationToken cancellationToken = default);

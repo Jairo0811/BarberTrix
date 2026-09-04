@@ -85,6 +85,69 @@ public static class AuthEndpoints
             }
         }).RequireRateLimiting("auth");
 
+        group.MapGet("/mobile/oauth/{provider}/start", (string provider, string returnUri, string codeChallenge, HttpContext context, IExternalOAuthBroker broker) =>
+        {
+            DisableAuthResponseCaching(context);
+            try
+            {
+                return Results.Redirect(broker.CreateAuthorizationUrl(provider, returnUri, codeChallenge));
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(ApiError.From(context, ApiErrorCodes.AuthRegistrationInvalid, ex.Message));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Results.Json(ApiError.From(context, ApiErrorCodes.AuthRegistrationInvalid, ex.Message), statusCode: StatusCodes.Status503ServiceUnavailable);
+            }
+        }).RequireRateLimiting("auth");
+
+        group.MapMethods("/mobile/oauth/{provider}/callback", ["GET", "POST"], async (string provider, HttpContext context, IExternalOAuthBroker broker, CancellationToken cancellationToken) =>
+        {
+            DisableAuthResponseCaching(context);
+            try
+            {
+                string? code;
+                string? state;
+                string? providerError;
+                if (context.Request.HasFormContentType)
+                {
+                    var form = await context.Request.ReadFormAsync(cancellationToken);
+                    code = form["code"].ToString();
+                    state = form["state"].ToString();
+                    providerError = form["error"].ToString();
+                }
+                else
+                {
+                    code = context.Request.Query["code"].ToString();
+                    state = context.Request.Query["state"].ToString();
+                    providerError = context.Request.Query["error"].ToString();
+                }
+
+                if (!string.IsNullOrWhiteSpace(providerError))
+                    return Results.BadRequest(ApiError.From(context, ApiErrorCodes.AuthInvalidCredentials, "La autenticación externa fue cancelada o rechazada."));
+
+                return Results.Redirect(await broker.CompleteAuthorizationAsync(provider, code ?? string.Empty, state ?? string.Empty, cancellationToken));
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(ApiError.From(context, ApiErrorCodes.AuthRegistrationInvalid, ex.Message));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Results.BadRequest(ApiError.From(context, ApiErrorCodes.AuthInvalidCredentials, ex.Message));
+            }
+        }).RequireRateLimiting("auth");
+
+        group.MapPost("/mobile/oauth/exchange", async (ExternalOAuthExchangeRequest request, HttpContext context, IExternalOAuthBroker broker, CancellationToken cancellationToken) =>
+        {
+            DisableAuthResponseCaching(context);
+            var response = await broker.ExchangeAsync(request, UserAgent(context), Ip(context), cancellationToken);
+            return response is null
+                ? Results.Json(ApiError.From(context, ApiErrorCodes.AuthInvalidCredentials, "La autorización externa ya no es válida."), statusCode: StatusCodes.Status401Unauthorized)
+                : Results.Ok(ToMobileClientResponse(response));
+        }).RequireRateLimiting("auth");
+
         group.MapPost("/mobile/refresh", async (RefreshTokenRequest request, HttpContext context, IAuthService authService, CancellationToken cancellationToken) =>
         {
             DisableAuthResponseCaching(context);

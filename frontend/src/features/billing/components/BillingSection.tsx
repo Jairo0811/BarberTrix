@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { api } from '../../../api'
+import { api, ApiClientError } from '../../../api'
 import { apiErrorMessage } from '../../../apiErrorMessages'
 import { showError, showSuccessToast } from '../../../alerts'
 import { useI18n } from '../../../i18n'
@@ -30,14 +30,34 @@ export default function BillingSection({ isDemo, shop, capabilities }: Props) {
   }, [isDemo, isSystemAdmin])
   useEffect(() => { void load().catch(() => undefined) }, [load])
 
+  function billingFailureMessage(error: unknown) {
+    const localized = apiErrorMessage(error, locale, t('billing.paypalError'))
+    if (!(error instanceof ApiClientError)) return localized
+
+    const details: string[] = []
+    if (error.code === 'BILLING_INVALID' && error.message && error.message !== localized) details.push(error.message)
+    if (error.correlationId) details.push(`ID de diagnóstico: ${error.correlationId}`)
+    return details.length > 0 ? `${localized}\n\n${details.join('\n')}` : localized
+  }
+
   async function checkout(plan: PaidPlan) {
     setBusy(true)
     try {
       rememberPendingPaidPlan(plan)
-      const response = await api<{ approvalUrl: string }>('/api/billing/checkout', { method: 'POST', body: JSON.stringify({ plan, returnUrl: `${window.location.origin}/#/billing-success`, cancelUrl: `${window.location.origin}/${adminPageHref('billing')}` }) })
+      const response = await api<{ approvalUrl: string }>('/api/billing/checkout', {
+        method: 'POST',
+        body: JSON.stringify({
+          plan,
+          returnUrl: `${window.location.origin}/#/billing-success`,
+          cancelUrl: `${window.location.origin}/${adminPageHref('billing')}`,
+        }),
+      })
       window.location.href = response.approvalUrl
-    } catch (error) { await showError(t('billing.paypalError'), apiErrorMessage(error, locale, t('billing.paypalError'))) }
-    finally { setBusy(false) }
+    } catch (error) {
+      await showError(t('billing.paypalError'), billingFailureMessage(error))
+    } finally {
+      setBusy(false)
+    }
   }
 
   async function cancelSubscription() {

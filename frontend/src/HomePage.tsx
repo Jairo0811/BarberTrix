@@ -21,17 +21,43 @@ import './home-footer-polish.css'
 import { buildSupportEmailHref, buildWhatsAppHref, supportConfig } from './support'
 import { useI18n } from './i18n'
 import { getProductHomeAuxCopy } from './i18n/eastAsiaHomeAuxCopy'
-import { loginHash, normalizePaidPlan, registerHash, rememberPendingPaidPlan } from './billingSelection'
+import { billingHash, loginHash, normalizePaidPlan, registerHash, rememberPendingPaidPlan } from './billingSelection'
+import { readAuth } from './api'
+import { showError } from './alerts'
 
 function navigateToLogin() {
   rememberPendingPaidPlan(null)
-  window.location.hash = loginHash()
+  const auth = readAuth()
+  window.location.hash = auth ? '#/app/overview' : loginHash()
 }
 
 function navigateToRegister(planName?: string) {
   const paidPlan = normalizePaidPlan(planName)
-  rememberPendingPaidPlan(paidPlan)
-  window.location.hash = registerHash(paidPlan)
+  const auth = readAuth()
+
+  if (!paidPlan) {
+    rememberPendingPaidPlan(null)
+    window.location.hash = auth ? '#/app/overview' : registerHash()
+    return
+  }
+
+  if (!auth) {
+    rememberPendingPaidPlan(paidPlan)
+    window.location.hash = registerHash(paidPlan)
+    return
+  }
+
+  if (auth.role === 'Owner' && auth.isEmailVerified) {
+    rememberPendingPaidPlan(paidPlan)
+    window.location.hash = billingHash(paidPlan)
+    return
+  }
+
+  rememberPendingPaidPlan(null)
+  void showError(
+    'El propietario administra la suscripción',
+    `Tu sesión actual es ${auth.role}. Para contratar ${paidPlan}, inicia sesión con la cuenta Owner de la barbería.`,
+  )
 }
 
 export default function HomePage() {

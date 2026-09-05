@@ -93,7 +93,7 @@ export default function RegisterPage() {
 
         <div className="register-copy-block">
           <p>{t('register.showcase')}</p>
-          {selectedPlan && <p><strong>{selectedPlan}</strong> · {selectedPlan === 'Pro' ? 'US$40' : 'US$70'} {t('home.pricing.month')}</p>}
+          {selectedPlan && <p><strong>{selectedPlan}</strong> · {selectedPlan === 'Pro' ? 'US$40' : 'US$70'} · PayPal</p>}
           <div className="register-benefits">
             {benefits.map((benefit, index) => (
               <article key={benefit}>

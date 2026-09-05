@@ -49,8 +49,8 @@ export default function BillingSuccessPage() {
 
   const failed = state === 'error' || state === 'missing-id'
 
-  return <main className="login-shell"><section className="login-card">
-    <img className="recovery-logo" src="/branding/barbertrix-logo.png" alt="BarberTrix" />
+  return <main className="login-shell"><section className="login-card billing-success-card">
+    <img className="billing-success-logo" src="/branding/barbertrix-logo.png" alt="BarberTrix" />
     <h1>{title}</h1>
     <p className={failed ? 'login-error' : 'login-subtitle'} role="status">{message}</p>
     <a className="login-submit recovery-link-button" href={adminPageHref('billing')}>{t('billingSuccess.back')}</a>

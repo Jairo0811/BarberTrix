@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react'
+import { FormEvent, useEffect, useState } from 'react'
 import { useI18n } from './i18n'
 import { registerCopy } from './i18n/register'
 import './register.css'
@@ -6,6 +6,7 @@ import type { Auth } from './types'
 import { publicApi, writeAuth } from './api'
 import { apiErrorMessage } from './apiErrorMessages'
 import { isStrongPassword, passwordPolicyHint, passwordPolicyMessage } from './passwordPolicy'
+import { loginHash, paidPlanFromHash, rememberPendingPaidPlan } from './billingSelection'
 
 function buildShopSlug(name: string) {
   const normalized = name
@@ -26,7 +27,12 @@ export default function RegisterPage() {
   const [error, setError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmation, setShowConfirmation] = useState(false)
+  const selectedPlan = paidPlanFromHash(window.location.hash)
   const benefits = [t('register.benefit1'), t('register.benefit2'), t('register.benefit3'), t('register.benefit4')]
+
+  useEffect(() => {
+    if (selectedPlan) rememberPendingPaidPlan(selectedPlan)
+  }, [selectedPlan])
 
   async function register(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -66,8 +72,9 @@ export default function RegisterPage() {
         }),
       })
 
+      if (selectedPlan) rememberPendingPaidPlan(selectedPlan)
       writeAuth(auth, true)
-      window.location.hash = '#/login'
+      window.location.hash = loginHash(selectedPlan)
       window.location.reload()
     } catch (exception) {
       setError(apiErrorMessage(exception, locale, t('register.genericError')))
@@ -86,6 +93,7 @@ export default function RegisterPage() {
 
         <div className="register-copy-block">
           <p>{t('register.showcase')}</p>
+          {selectedPlan && <p><strong>{selectedPlan}</strong> · {selectedPlan === 'Pro' ? 'US$40/month' : 'US$70/month'}</p>}
           <div className="register-benefits">
             {benefits.map((benefit, index) => (
               <article key={benefit}>
@@ -162,7 +170,7 @@ export default function RegisterPage() {
           </form>
 
           {error && <p id="register-error" className="register-error" role="alert" aria-live="assertive">{error}</p>}
-          <p className="register-login-copy">{t('register.haveAccount')} <a href="#/login">{t('register.signIn')}</a></p>
+          <p className="register-login-copy">{t('register.haveAccount')} <a href={loginHash(selectedPlan)}>{t('register.signIn')}</a></p>
         </div>
       </section>
     </main>

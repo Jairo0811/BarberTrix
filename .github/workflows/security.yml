@@ -14,59 +14,9 @@ permissions:
   security-events: write
 
 jobs:
-  repair-pr93:
-    name: Repair PR #93
-    if: github.event_name == 'pull_request' && github.head_ref == 'feature/mobile-customer-auth-social'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: feature/mobile-customer-auth-social
-          fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22.22.2
-      - name: Refresh and verify mobile lockfile
-        working-directory: mobile
-        run: |
-          npm install --package-lock-only --ignore-scripts
-          npm ci
-      - name: Align ShopLocation mapping
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          path = Path('backend/src/BarberTrix.Infrastructure/Persistence/ApplicationDbContext.cs')
-          text = path.read_text(encoding='utf-8')
-          old = '''            entity.Property(x => x.Address).HasMaxLength(300);\n            entity.Property(x => x.TimeZoneId).HasMaxLength(100).IsRequired();\n            entity.HasIndex(x => new { x.BarberShopId, x.Slug }).IsUnique();\n            entity.HasIndex(x => new { x.BarberShopId, x.IsActive });'''
-          new = '''            entity.Property(x => x.Address).HasMaxLength(300);\n            entity.Property(x => x.City).HasMaxLength(120);\n            entity.Property(x => x.Neighborhood).HasMaxLength(120);\n            entity.Property(x => x.Reference).HasMaxLength(300);\n            entity.Property(x => x.Latitude).HasPrecision(9, 6);\n            entity.Property(x => x.Longitude).HasPrecision(9, 6);\n            entity.Property(x => x.TimeZoneId).HasMaxLength(100).IsRequired();\n            entity.HasIndex(x => new { x.BarberShopId, x.Slug }).IsUnique();\n            entity.HasIndex(x => new { x.BarberShopId, x.IsActive });\n            entity.HasIndex(x => new { x.Latitude, x.Longitude });'''
-          if old not in text:
-              raise SystemExit('Expected ShopLocation mapping block not found')
-          path.write_text(text.replace(old, new, 1), encoding='utf-8')
-          PY
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 10.0.x
-      - name: Regenerate EF migration
-        run: |
-          rm -f backend/src/BarberTrix.Infrastructure/Persistence/Migrations/20260904014500_ShopLocationGeoProfile.cs
-          dotnet restore BarberTrix.sln
-          dotnet tool install --global dotnet-ef --version "10.0.*"
-          dotnet ef migrations add ShopLocationGeoProfile --project backend/src/BarberTrix.Infrastructure --startup-project backend/src/BarberTrix.Api
-          dotnet ef migrations has-pending-model-changes --project backend/src/BarberTrix.Infrastructure --startup-project backend/src/BarberTrix.Api
-      - name: Commit generated repairs
-        run: |
-          git checkout origin/main -- .github/workflows/security.yml
-          rm -f .github/workflows/pr93-repair.yml
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "fix: synchronize mobile dependencies and EF migration"
-          git push origin HEAD:feature/mobile-customer-auth-social
-
   codeql:
     name: CodeQL (${{ matrix.language }})
+    if: vars.CODEQL_ENABLED == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -74,11 +24,11 @@ jobs:
         language: [csharp, javascript-typescript]
     steps:
       - uses: actions/checkout@v4
-      - uses: github/codeql-action/init@v3
+      - uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
-      - uses: github/codeql-action/autobuild@v3
-      - uses: github/codeql-action/analyze@v3
+      - uses: github/codeql-action/autobuild@v4
+      - uses: github/codeql-action/analyze@v4
 
   secrets:
     name: Secret scan

@@ -65,6 +65,7 @@ export default function HomePage() {
   const homeAux = getProductHomeAuxCopy(locale)
   const currentYear = new Date().getFullYear()
   const whatsappHref = buildWhatsAppHref()
+  const auth = readAuth()
   const [activeSection, setActiveSection] = useState('inicio')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -144,8 +145,14 @@ export default function HomePage() {
         </nav>
 
         <div className="home-nav-actions">
-          <button className="home-login-button" type="button" onClick={navigateToLogin}>{t('common.login')}</button>
-          <button className="home-primary-button" type="button" onClick={() => navigateToRegister()}>{t('home.startFree')}</button>
+          {auth ? (
+            <button className="home-primary-button" type="button" onClick={navigateToLogin}>Ir al panel</button>
+          ) : (
+            <>
+              <button className="home-login-button" type="button" onClick={navigateToLogin}>{t('common.login')}</button>
+              <button className="home-primary-button" type="button" onClick={() => navigateToRegister()}>{t('home.startFree')}</button>
+            </>
+          )}
           <button className="home-mobile-menu" type="button" aria-label={mobileMenuOpen ? t('closeMenu') : t('openMenu')} aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(open => !open)}>
             <FontAwesomeIcon icon={mobileMenuOpen ? faXmark : faBars} />
           </button>
@@ -159,7 +166,7 @@ export default function HomePage() {
           <p>{t('home.hero.text')}</p>
 
           <div className="home-hero-actions">
-            <button className="home-primary-button large" type="button" onClick={() => navigateToRegister()}>{t('home.startFree')} <span>→</span></button>
+            <button className="home-primary-button large" type="button" onClick={auth ? navigateToLogin : () => navigateToRegister()}>{auth ? 'Ir al panel' : t('home.startFree')} <span>→</span></button>
             <a className="home-secondary-button" href="#caracteristicas" onClick={() => selectSection('caracteristicas')}>{t('home.viewFeatures')}</a>
           </div>
 
@@ -222,7 +229,7 @@ export default function HomePage() {
                 <div className="pricing-price"><strong>{plan.price}</strong><span>{t('home.pricing.month')}</span></div>
                 <ul>{plan.features.map(feature => <li key={feature}><FontAwesomeIcon icon={faCheck} /> {feature}</li>)}</ul>
                 <button className={plan.featured ? 'home-primary-button pricing-button' : 'home-login-button pricing-button'} type="button" onClick={() => navigateToRegister(plan.name)}>
-                  {paidPlan ? `${paidPlan} · ${plan.price}` : t('home.startFree')}
+                  {paidPlan ? `${paidPlan} · ${plan.price}` : auth ? 'Ir al panel' : t('home.startFree')}
                 </button>
               </article>
             )
@@ -245,7 +252,7 @@ export default function HomePage() {
         <div className="contact-card">
           <h3>{t('home.contact.cardTitle')}</h3>
           <p>{t('home.contact.cardText')}</p>
-          <button className="home-primary-button contact-button" type="button" onClick={() => navigateToRegister()}>{t('home.startFree')} <span>→</span></button>
+          <button className="home-primary-button contact-button" type="button" onClick={auth ? navigateToLogin : () => navigateToRegister()}>{auth ? 'Ir al panel' : t('home.startFree')} <span>→</span></button>
           <small>{t('home.contact.cardNote')}</small>
         </div>
       </section>

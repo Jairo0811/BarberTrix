@@ -5,9 +5,16 @@ import { apiErrorMessage } from '../../../apiErrorMessages'
 import { showError, showSuccessToast } from '../../../alerts'
 import { useI18n } from '../../../i18n'
 import LockedFeature from '../../../shared/components/LockedFeature'
-import { adminPageHref } from '../../../portals/admin/adminRoutes'
 import type { Capabilities, Shop, Subscription } from '../../../portals/admin/commercialTypes'
-import { paidPlanFromSearch, readPendingPaidPlan, rememberPendingPaidPlan, type PaidPlan } from '../../../billingSelection'
+import {
+  paidPlanFromSearch,
+  paypalCancelUrl,
+  paypalReturnUrl,
+  readPendingPaidPlan,
+  rememberPendingPaidPlan,
+  rememberPendingPayPalSubscriptionId,
+  type PaidPlan,
+} from '../../../billingSelection'
 
 type Props = {
   isDemo: boolean
@@ -59,16 +66,19 @@ export default function BillingSection({
     setBusy(true)
     try {
       rememberPendingPaidPlan(plan)
-      const response = await api<{ approvalUrl: string }>('/api/billing/checkout', {
+      rememberPendingPayPalSubscriptionId(null)
+      const response = await api<{ providerOrderId: string; approvalUrl: string }>('/api/billing/checkout', {
         method: 'POST',
         body: JSON.stringify({
           plan,
-          returnUrl: `${window.location.origin}/#/billing-success`,
-          cancelUrl: `${window.location.origin}/${adminPageHref('billing')}`,
+          returnUrl: paypalReturnUrl(window.location.origin),
+          cancelUrl: paypalCancelUrl(window.location.origin),
         }),
       })
+      rememberPendingPayPalSubscriptionId(response.providerOrderId)
       window.location.href = response.approvalUrl
     } catch (error) {
+      rememberPendingPayPalSubscriptionId(null)
       await showError(t('billing.paypalError'), billingFailureMessage(error))
     } finally {
       setBusy(false)

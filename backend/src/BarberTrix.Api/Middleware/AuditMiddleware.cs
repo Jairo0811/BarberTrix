@@ -39,7 +39,7 @@ public sealed class AuditMiddleware(RequestDelegate next, ILogger<AuditMiddlewar
                 context.Connection.RemoteIpAddress?.ToString(),
                 auditTimeout.Token);
         }
-        catch (Exception exception) when (exception is OperationCanceledException or InvalidOperationException)
+        catch (Exception exception)
         {
             LogAuditWriteFailed(logger, context.Request.Method, context.Request.Path.Value, exception);
         }

@@ -9,13 +9,28 @@ import { adminPageHref } from '../../../portals/admin/adminRoutes'
 import type { Capabilities, Shop, Subscription } from '../../../portals/admin/commercialTypes'
 import { paidPlanFromSearch, readPendingPaidPlan, rememberPendingPaidPlan, type PaidPlan } from '../../../billingSelection'
 
-type Props = { isDemo: boolean; shop: Shop | null; capabilities: Capabilities | null }
+type Props = {
+  isDemo: boolean
+  shop: Shop | null
+  capabilities: Capabilities | null
+  commercialLoading?: boolean
+  commercialError?: string | null
+  onCommercialRefresh?: () => Promise<void>
+}
 
-export default function BillingSection({ isDemo, shop, capabilities }: Props) {
+export default function BillingSection({
+  isDemo,
+  shop,
+  capabilities,
+  commercialLoading = false,
+  commercialError = null,
+  onCommercialRefresh,
+}: Props) {
   const { locale, t } = useI18n()
   const routerLocation = useLocation()
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [busy, setBusy] = useState(false)
+  const [refreshingUsage, setRefreshingUsage] = useState(false)
   const isSystemAdmin = capabilities?.isSystemAdmin === true
   const routeSelectedPlan = paidPlanFromSearch(routerLocation.search)
   const selectedPlan = routeSelectedPlan ?? readPendingPaidPlan()
@@ -62,9 +77,25 @@ export default function BillingSection({ isDemo, shop, capabilities }: Props) {
 
   async function cancelSubscription() {
     setBusy(true)
-    try { await api('/api/billing/cancel?atPeriodEnd=false', { method: 'POST' }); await load(); void showSuccessToast(t('billing.cancelled')) }
-    catch (error) { await showError(t('billing.cancelError'), apiErrorMessage(error, locale, t('billing.cancelError'))) }
-    finally { setBusy(false) }
+    try {
+      await api('/api/billing/cancel?atPeriodEnd=false', { method: 'POST' })
+      await load()
+      void showSuccessToast(t('billing.cancelled'))
+    } catch (error) {
+      await showError(t('billing.cancelError'), apiErrorMessage(error, locale, t('billing.cancelError')))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function refreshUsage() {
+    if (!onCommercialRefresh) return
+    setRefreshingUsage(true)
+    try {
+      await onCommercialRefresh()
+    } finally {
+      setRefreshingUsage(false)
+    }
   }
 
   const status = subscription?.status ?? capabilities?.status ?? 'Active'
@@ -76,7 +107,50 @@ export default function BillingSection({ isDemo, shop, capabilities }: Props) {
   return (
     <section className="panel dashboard-section" id="billing-section">
       <p className="eyebrow">{t('billing.eyebrow')}</p>
-      {isDemo ? <LockedFeature title={t('billing.lockedTitle')} text={t('billing.lockedText')} /> : isSystemAdmin ? <><h2>{t('billing.systemAdminTitle')}</h2><p>{t('billing.systemAdminText')}</p>{shop && capabilities?.canUseTv && <div className="billing-actions"><a href={`#/tv?shop=${shop.slug}`}>{t('billing.openTv')}</a></div>}</> : <><h2>{subscription?.plan ?? capabilities?.plan ?? 'Free'} · {statusText}</h2><p>{capabilities ? t('billing.activeBarbers', { active: capabilities.activeBarbers, limit: barberLimit }) : t('billing.loadingUsage')}</p>{capabilities && <p>{t('billing.activeServices', { active: capabilities.activeServices, limit: serviceLimit })}</p>}{capabilities && <p>{capabilities.monthlyTurnLimit > 1000 ? t('billing.turnsExpanded', { used: capabilities.turnsThisMonth }) : `${t('billing.turnsIncluded', { used: capabilities.turnsThisMonth, limit: capabilities.monthlyTurnLimit })}${capabilities.turnsThisMonth >= capabilities.monthlyTurnLimit ? t('billing.graceUntil', { grace: capabilities.monthlyTurnGraceLimit }) : ''}`}</p>}{capabilities && <p>{t('billing.activeLocations', { active: capabilities.activeLocations, limit: locationLimit })}</p>}{selectedPlan && <p><strong>✓ {selectedPlan}</strong> · {selectedPlan === 'Pro' ? 'US$40' : 'US$70'} · PayPal</p>}<div className="billing-actions"><button disabled={busy} aria-pressed={selectedPlan === 'Pro'} onClick={() => void checkout('Pro')}>{selectedPlan === 'Pro' ? '✓ ' : ''}Pro · US$40</button><button disabled={busy} aria-pressed={selectedPlan === 'Business'} onClick={() => void checkout('Business')}>{selectedPlan === 'Business' ? '✓ ' : ''}Business · US$70</button>{subscription?.provider !== 'Free' && subscription?.status === 'Active' && <button disabled={busy} onClick={() => void cancelSubscription()}>{t('billing.cancel')}</button>}{shop && capabilities?.canUseTv && <a href={`#/tv?shop=${shop.slug}`}>{t('billing.openTv')}</a>}</div></>}
+      {isDemo ? (
+        <LockedFeature title={t('billing.lockedTitle')} text={t('billing.lockedText')} />
+      ) : isSystemAdmin ? (
+        <>
+          <h2>{t('billing.systemAdminTitle')}</h2>
+          <p>{t('billing.systemAdminText')}</p>
+          {shop && capabilities?.canUseTv && <div className="billing-actions"><a href={`#/tv?shop=${shop.slug}`}>{t('billing.openTv')}</a></div>}
+        </>
+      ) : (
+        <>
+          <h2>{subscription?.plan ?? capabilities?.plan ?? 'Free'} · {statusText}</h2>
+
+          {capabilities ? (
+            <>
+              <p>{t('billing.activeBarbers', { active: capabilities.activeBarbers, limit: barberLimit })}</p>
+              <p>{t('billing.activeServices', { active: capabilities.activeServices, limit: serviceLimit })}</p>
+              <p>{capabilities.monthlyTurnLimit > 1000
+                ? t('billing.turnsExpanded', { used: capabilities.turnsThisMonth })
+                : `${t('billing.turnsIncluded', { used: capabilities.turnsThisMonth, limit: capabilities.monthlyTurnLimit })}${capabilities.turnsThisMonth >= capabilities.monthlyTurnLimit ? t('billing.graceUntil', { grace: capabilities.monthlyTurnGraceLimit }) : ''}`}</p>
+              <p>{t('billing.activeLocations', { active: capabilities.activeLocations, limit: locationLimit })}</p>
+            </>
+          ) : commercialError ? (
+            <div role="alert">
+              <p>{commercialError} Puedes continuar con la suscripción o reintentar la carga.</p>
+              <div className="billing-actions">
+                <button disabled={refreshingUsage} onClick={() => void refreshUsage()}>{refreshingUsage ? 'Reintentando…' : 'Reintentar uso del plan'}</button>
+              </div>
+            </div>
+          ) : commercialLoading ? (
+            <p>{t('billing.loadingUsage')}</p>
+          ) : (
+            <p role="status">No fue posible cargar el uso del plan. Puedes continuar con la suscripción.</p>
+          )}
+
+          {selectedPlan && <p><strong>✓ {selectedPlan}</strong> · {selectedPlan === 'Pro' ? 'US$40' : 'US$70'} · PayPal</p>}
+
+          <div className="billing-actions">
+            <button disabled={busy} aria-pressed={selectedPlan === 'Pro'} onClick={() => void checkout('Pro')}>{selectedPlan === 'Pro' ? '✓ ' : ''}Pro · US$40</button>
+            <button disabled={busy} aria-pressed={selectedPlan === 'Business'} onClick={() => void checkout('Business')}>{selectedPlan === 'Business' ? '✓ ' : ''}Business · US$70</button>
+            {subscription?.provider !== 'Free' && subscription?.status === 'Active' && <button disabled={busy} onClick={() => void cancelSubscription()}>{t('billing.cancel')}</button>}
+            {shop && capabilities?.canUseTv && <a href={`#/tv?shop=${shop.slug}`}>{t('billing.openTv')}</a>}
+          </div>
+        </>
+      )}
     </section>
   )
 }

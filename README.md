@@ -35,7 +35,7 @@
 La web v1 está cerrada técnicamente. El backend .NET + SQL Server es la fuente de verdad compartida por Web/Desktop, Mobile y TV.
 
 - **Web/Desktop:** operación administrativa, cola, citas, CRM 2.0, Caja 2.0, Business Reports 2.0, equipo, sucursales y billing.
-- **Mobile:** React Native + Expo, autenticación segura, roles diferenciados, Discovery, realtime, push, Team Management y perfil público de Marketplace.
+- **Mobile:** React Native + Expo, autenticación segura, roles diferenciados, Discovery, realtime, push, Team Management, login social, carga de medios y perfil público de Marketplace con ubicación.
 - **TV:** pairing seguro de displays, tokens revocables, cola en tiempo real y anuncios audiovisuales; disponible según entitlement.
 
 ## 🧭 Marketplace / Discovery
@@ -47,7 +47,9 @@ Owner
   ↓
 Completar perfil público
   ↓
-Ubicación + servicios + barberos activos
+Logo + portada + contacto + ubicación
+  ↓
+Servicios + barberos activos
   ↓
 Activar Turno ahora y/o Reservar cita
   ↓
@@ -56,7 +58,25 @@ Publicar en Discovery
 Cliente encuentra la barbería
 ```
 
-Discovery aprovecha información operativa real de BarberTrix: personas esperando, barberos disponibles, precio inicial y espera estimada. La dirección del producto es ayudar al cliente a encontrar la opción que puede atenderle mejor, no limitarse a listar negocios por proximidad.
+El perfil público permite seleccionar **logo y portada desde la galería del dispositivo**, sin pedir URLs técnicas al usuario. BarberTrix persiste los medios en el backend y los expone mediante endpoints públicos controlados.
+
+La ubicación pública incluye dirección, ciudad, sector, referencia y coordenadas geográficas. En Mobile, el propietario puede pulsar **Usar mi ubicación actual** y luego ajustar el marcador en el mapa. El permiso de ubicación se solicita únicamente cuando el usuario ejecuta esa acción.
+
+Discovery aprovecha información operativa real de BarberTrix: personas esperando, barberos disponibles, precio inicial, espera estimada y ubicación. La dirección del producto es ayudar al cliente a encontrar la opción que puede atenderle mejor, no limitarse a listar negocios por proximidad.
+
+## 🔐 Experiencia cliente y autenticación
+
+Discovery puede explorarse sin autenticación, pero **reservar una cita requiere una cuenta de cliente autenticada**. Esto permite mantener historial, reprogramaciones, cancelaciones, preferencias, reseñas y futuras funciones de fidelización.
+
+Mobile ofrece:
+
+- correo + contraseña;
+- Continuar con Google;
+- Continuar con Apple;
+- retorno al Home desde Login;
+- JWT y refresh token propios de BarberTrix después de autenticar con proveedores externos;
+- PKCE y state firmado en el flujo OAuth;
+- vinculación segura de identidades externas sin convertir cuentas staff en acceso passwordless por coincidencia de correo.
 
 ## 👥 Equipo y vinculación de barberos
 
@@ -89,7 +109,7 @@ El modelo utiliza memberships, solicitudes e invitaciones en lugar de duplicar i
 | Dueño + barbero | `dueno.barbero@barbertrix.com.do` | Gestión del negocio + operación como barbero |
 | Cliente | `cliente@barbertrix.com.do` | Discovery y experiencia cliente |
 
-> Las contraseñas de prueba **no se almacenan en el repositorio**. Se obtienen de la configuración segura de desarrollo (`SystemAdmin:Password` / `DemoAdmin:Password`). El seeder migra el correo administrativo histórico `admin@barbertrix.com.do` a `admin@barbertrix.com.do` cuando corresponde.
+> Las contraseñas de prueba **no se almacenan en el repositorio**. Se obtienen de la configuración segura de desarrollo (`SystemAdmin:Password` / `DemoAdmin:Password`).
 
 ## 💳 Planes
 
@@ -140,6 +160,7 @@ BarberTrix mantiene 10 locales oficiales en Web y Mobile: `es-419`, `en`, `pt-BR
 - SignalR;
 - OpenAPI en Development;
 - PayPal REST API;
+- almacenamiento de medios para perfiles públicos;
 - arquitectura por capas Domain / Application / Infrastructure / API.
 
 ### 🔵 Frontend web
@@ -191,6 +212,12 @@ BarberTrix mantiene 10 locales oficiales en Web y Mobile: `es-419`, `en`, `pt-BR
 - SignalR;
 - Expo SecureStore;
 - Expo Notifications;
+- Expo Image Picker;
+- Expo Location;
+- React Native Maps en iOS/Android;
+- fallback de mapa compatible con Web;
+- React Native Web;
+- login social Google / Apple mediante OAuth + PKCE;
 - typed routes regenerados antes de `tsc --noEmit`;
 - export/bundle Android validado en CI.
 
@@ -202,6 +229,7 @@ BarberTrix mantiene 10 locales oficiales en Web y Mobile: `es-419`, `en`, `pt-BR
 
 - SQL Server 2022;
 - Docker + Docker Compose;
+- volumen persistente para medios públicos de barberías;
 - Nginx;
 - Netlify para el frontend público de referencia;
 - GitHub Actions;
@@ -231,8 +259,29 @@ BarberTrix mantiene 10 locales oficiales en Web y Mobile: `es-419`, `en`, `pt-BR
 - refresh token rotatorio mediante SecureStore;
 - autorización multi-tenant en backend;
 - rate limiting en endpoints públicos;
+- OAuth social con PKCE y state firmado;
+- uploads de imágenes con validación de tipo y tamaño;
+- permisos de ubicación solicitados bajo demanda;
 - entitlements aplicados en servidor;
 - CI con auditorías, CodeQL y Gitleaks.
+
+## 🧪 Desarrollo local Mobile
+
+Ejemplo de configuración para probar desde un dispositivo físico en la misma red:
+
+```env
+EXPO_PUBLIC_API_BASE_URL=http://10.0.0.6:8080
+```
+
+Después:
+
+```bash
+cd mobile
+npm run typecheck
+npx expo start --lan --clear
+```
+
+Si `8081` está ocupado por la Web, Expo puede seleccionar otro puerto de Metro automáticamente, por ejemplo `8082` o `8083`.
 
 ## 🌐 Producción
 
@@ -244,6 +293,7 @@ Frontend público de referencia: `https://barbertrixrd.netlify.app`
 - `docs/plans-and-entitlements.md`
 - `docs/mobile.md`
 - `docs/architecture.md`
+- `docs/MARKETPLACE-DISCOVERY.md`
 
 ---
 

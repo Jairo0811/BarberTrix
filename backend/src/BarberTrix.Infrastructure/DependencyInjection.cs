@@ -43,6 +43,9 @@ public static class DependencyInjection
 
         services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IExternalAuthService, ExternalAuthService>();
+        services.AddHttpClient<IExternalIdentityVerifier, ExternalIdentityVerifier>();
+        services.AddHttpClient<IExternalOAuthBroker, ExternalOAuthBroker>();
         services.AddScoped<IQueueService, QueueService>();
         services.AddScoped<IBarberOnboardingService, BarberOnboardingService>();
         services.AddScoped<IAppointmentService, AppointmentService>();
@@ -57,6 +60,7 @@ public static class DependencyInjection
         services.AddScoped<IShopLookupService, ShopLookupService>();
         services.AddScoped<IDiscoveryService, DiscoveryService>();
         services.AddScoped<IPublicShopProfileService, PublicShopProfileService>();
+        services.AddSingleton<IShopMediaStorage, ShopMediaStorage>();
         services.AddScoped<ITvDisplayService, TvDisplayService>();
         services.AddScoped<IEmailSender, ConfigurableEmailSender>();
         services.AddHttpClient<IHumanVerificationService, HumanVerificationService>();

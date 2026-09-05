@@ -11,6 +11,19 @@ public static class DiscoveryEndpoints
             .WithTags("Public discovery")
             .RequireRateLimiting("publicQueue");
 
+        endpoints.MapGet("/api/public/shop-media/{shopId:guid}/{kind}", async (Guid shopId, string kind, IShopMediaStorage storage, CancellationToken ct) =>
+        {
+            try
+            {
+                var media = await storage.OpenAsync(shopId, kind, ct);
+                return media is null ? Results.NotFound() : Results.Stream(media.Stream, media.ContentType, enableRangeProcessing: true);
+            }
+            catch (ArgumentException)
+            {
+                return Results.NotFound();
+            }
+        }).WithTags("Public discovery").RequireRateLimiting("publicQueue");
+
         var profile = endpoints.MapGroup("/api/shop/public-profile")
             .WithTags("Marketplace profile")
             .RequireAuthorization("TenantUser")
@@ -22,8 +35,29 @@ public static class DiscoveryEndpoints
         profile.MapPut("/", async (UpdatePublicShopProfileRequest request, HttpContext context, IPublicShopProfileService service, CancellationToken ct) =>
         {
             try { return Results.Ok(await service.UpdateAsync(ShopId(context), request, ct)); }
-            catch (ArgumentException ex) { return Results.BadRequest(new { code = "public_profile_invalid", message = ex.Message }); }
+            catch (Exception ex) when (ex is ArgumentException or ArgumentOutOfRangeException)
+            {
+                return Results.BadRequest(new { code = "public_profile_invalid", message = ex.Message });
+            }
         });
+
+        profile.MapPost("/media/{kind}", async (string kind, UploadShopMediaRequest request, HttpContext context, IShopMediaStorage storage, CancellationToken ct) =>
+        {
+            try
+            {
+                var bytes = Convert.FromBase64String(request.Base64);
+                var url = await storage.SaveAsync(ShopId(context), kind, request.FileName, request.ContentType, bytes, ct);
+                return Results.Ok(new ShopMediaUploadResponse(url));
+            }
+            catch (FormatException)
+            {
+                return Results.BadRequest(new { code = "public_profile_media_invalid", message = "The selected image could not be read." });
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { code = "public_profile_media_invalid", message = ex.Message });
+            }
+        }).RequireRateLimiting("registration");
 
         profile.MapPut("/publication", async (SetPublicationRequest request, HttpContext context, IPublicShopProfileService service, CancellationToken ct) =>
         {

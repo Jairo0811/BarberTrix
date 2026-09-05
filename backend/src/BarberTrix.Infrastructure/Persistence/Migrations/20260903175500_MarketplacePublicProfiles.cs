@@ -1,9 +1,13 @@
+using BarberTrix.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace BarberTrix.Infrastructure.Persistence.Migrations;
 
+[DbContext(typeof(ApplicationDbContext))]
+[Migration("20260903175500_MarketplacePublicProfiles")]
 public partial class MarketplacePublicProfiles : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)

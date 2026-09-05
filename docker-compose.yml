@@ -28,9 +28,24 @@ services:
       Jwt__Key: ${BARBERTRIX_JWT_KEY:?Set BARBERTRIX_JWT_KEY in .env}
       Database__ApplyMigrations: "true"
       Demo__Enabled: "true"
+      SystemAdmin__Enabled: "true"
+      SystemAdmin__Email: admin@barbertrix.com.do
+      SystemAdmin__Password: ${BARBERTRIX_DEMO_PASSWORD:?Set BARBERTRIX_DEMO_PASSWORD in .env}
+      ShopMedia__RootPath: /app/data/shop-media
+      ExternalAuth__PublicBaseUrl: ${BARBERTRIX_EXTERNAL_AUTH_PUBLIC_BASE_URL:-}
+      ExternalAuth__Google__ClientId: ${BARBERTRIX_GOOGLE_CLIENT_ID:-}
+      ExternalAuth__Google__ClientIds: ${BARBERTRIX_GOOGLE_CLIENT_ID:-}
+      ExternalAuth__Google__ClientSecret: ${BARBERTRIX_GOOGLE_CLIENT_SECRET:-}
+      ExternalAuth__Apple__ClientId: ${BARBERTRIX_APPLE_CLIENT_ID:-}
+      ExternalAuth__Apple__ClientIds: ${BARBERTRIX_APPLE_CLIENT_ID:-}
+      ExternalAuth__Apple__TeamId: ${BARBERTRIX_APPLE_TEAM_ID:-}
+      ExternalAuth__Apple__KeyId: ${BARBERTRIX_APPLE_KEY_ID:-}
+      ExternalAuth__Apple__PrivateKey: ${BARBERTRIX_APPLE_PRIVATE_KEY:-}
       PasswordReset__FrontendBaseUrl: http://localhost:8081
       Cors__AllowedOrigins__0: http://localhost:5173
       Cors__AllowedOrigins__1: http://localhost:8081
+    volumes:
+      - barbertrix-shop-media:/app/data/shop-media
     ports:
       - "8080:8080"
     depends_on:
@@ -48,3 +63,4 @@ services:
 
 volumes:
   barbertrix-sqlserver:
+  barbertrix-shop-media:

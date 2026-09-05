@@ -18,6 +18,9 @@ public sealed record RegisterBarberRequest(
     bool AcceptedTerms = false,
     string? CaptchaToken = null);
 public sealed record LoginRequest(string Email, string Password);
+public sealed record ExternalLoginRequest(string Provider, string IdentityToken);
+public sealed record ExternalOAuthExchangeRequest(string Code, string CodeVerifier);
+public sealed record ExternalIdentity(string Provider, string Subject, string Email, string Name, bool EmailVerified);
 public sealed record ForgotPasswordRequest(string Email);
 public sealed record ForgotPasswordResponse(string Message, string? DevelopmentResetUrl = null);
 public sealed record ResetPasswordRequest(string Token, string NewPassword);
@@ -40,6 +43,24 @@ public sealed record AuthResponse(
     string Role,
     bool IsEmailVerified,
     string SessionScope);
+
+public interface IExternalIdentityVerifier
+{
+    Task<ExternalIdentity?> VerifyAsync(string provider, string identityToken, CancellationToken cancellationToken = default);
+}
+
+public interface IExternalAuthService
+{
+    Task<AuthResponse?> LoginAsync(ExternalLoginRequest request, string? userAgent, string? ipAddress, CancellationToken cancellationToken = default);
+    Task<AuthResponse?> LoginVerifiedAsync(ExternalIdentity identity, string? userAgent, string? ipAddress, CancellationToken cancellationToken = default);
+}
+
+public interface IExternalOAuthBroker
+{
+    string CreateAuthorizationUrl(string provider, string returnUri, string codeChallenge);
+    Task<string> CompleteAuthorizationAsync(string provider, string code, string state, CancellationToken cancellationToken = default);
+    Task<AuthResponse?> ExchangeAsync(ExternalOAuthExchangeRequest request, string? userAgent, string? ipAddress, CancellationToken cancellationToken = default);
+}
 
 public interface IAuthService
 {

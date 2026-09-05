@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { MobileApiError } from '@/api/httpClient';
-import { login, logout, refreshSession } from './authApi';
+import { exchangeExternalOAuth, login, loginExternal, logout, refreshSession, type ExternalAuthProvider } from './authApi';
 import { secureSessionStore } from './secureSessionStore';
 import { disableStaffPush } from '@/notifications/pushLifecycle';
 import type { AuthStatus, MobileAuthResponse, MobileSession } from './types';
@@ -10,6 +10,8 @@ type AuthContextValue = {
   status: AuthStatus;
   session: MobileSession | null;
   signIn(email: string, password: string): Promise<void>;
+  signInExternal(provider: ExternalAuthProvider, identityToken: string): Promise<void>;
+  completeExternalOAuth(code: string, codeVerifier: string): Promise<void>;
   signOut(): Promise<void>;
   refresh(): Promise<string | null>;
 };
@@ -99,15 +101,31 @@ export function AuthProvider({ children }: PropsWithChildren) {
     return () => { active = false; };
   }, [applyAuthResponse, clearSession]);
 
-  const signIn = useCallback(async (email: string, password: string) => {
-    const response = await login(email, password);
-    await applyAuthResponse(response);
+  const routeAfterSignIn = useCallback((response: MobileAuthResponse) => {
     if (isClient(response)) {
       router.replace('/discover');
       return;
     }
     router.replace(response.sessionScope === 'Onboarding' ? '/onboarding' : '/(app)');
-  }, [applyAuthResponse]);
+  }, []);
+
+  const signIn = useCallback(async (email: string, password: string) => {
+    const response = await login(email, password);
+    await applyAuthResponse(response);
+    routeAfterSignIn(response);
+  }, [applyAuthResponse, routeAfterSignIn]);
+
+  const signInExternal = useCallback(async (provider: ExternalAuthProvider, identityToken: string) => {
+    const response = await loginExternal(provider, identityToken);
+    await applyAuthResponse(response);
+    routeAfterSignIn(response);
+  }, [applyAuthResponse, routeAfterSignIn]);
+
+  const completeExternalOAuth = useCallback(async (code: string, codeVerifier: string) => {
+    const response = await exchangeExternalOAuth(code, codeVerifier);
+    await applyAuthResponse(response);
+    routeAfterSignIn(response);
+  }, [applyAuthResponse, routeAfterSignIn]);
 
   const signOut = useCallback(async () => {
     const stored = await secureSessionStore.read();
@@ -121,7 +139,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     router.replace('/discover');
   }, [clearSession, session]);
 
-  const value = useMemo<AuthContextValue>(() => ({ status, session, signIn, signOut, refresh }), [refresh, session, signIn, signOut, status]);
+  const value = useMemo<AuthContextValue>(() => ({ status, session, signIn, signInExternal, completeExternalOAuth, signOut, refresh }), [completeExternalOAuth, refresh, session, signIn, signInExternal, signOut, status]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

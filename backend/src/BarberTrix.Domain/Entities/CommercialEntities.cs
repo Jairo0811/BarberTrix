@@ -15,6 +15,11 @@ public sealed class ShopLocation : BaseEntity
     public string Name { get; private set; } = string.Empty;
     public string Slug { get; private set; } = string.Empty;
     public string? Address { get; private set; }
+    public string? City { get; private set; }
+    public string? Neighborhood { get; private set; }
+    public string? Reference { get; private set; }
+    public decimal? Latitude { get; private set; }
+    public decimal? Longitude { get; private set; }
     public string TimeZoneId { get; private set; } = "America/Santo_Domingo";
     public bool IsActive { get; private set; } = true;
 
@@ -25,12 +30,35 @@ public sealed class ShopLocation : BaseEntity
         _ = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
         Name = name.Trim();
         Slug = slug.Trim().ToLowerInvariant();
-        Address = string.IsNullOrWhiteSpace(address) ? null : address.Trim();
+        Address = Normalize(address, 300, nameof(address));
         TimeZoneId = timeZoneId.Trim();
         Touch();
     }
 
+    public void UpdatePublicLocation(string? address, string? city, string? neighborhood, string? reference, decimal? latitude, decimal? longitude)
+    {
+        if (latitude is < -90 or > 90) throw new ArgumentOutOfRangeException(nameof(latitude), "Latitude must be between -90 and 90.");
+        if (longitude is < -180 or > 180) throw new ArgumentOutOfRangeException(nameof(longitude), "Longitude must be between -180 and 180.");
+        if (latitude.HasValue != longitude.HasValue) throw new ArgumentException("Latitude and longitude must be provided together.");
+
+        Address = Normalize(address, 300, nameof(address));
+        City = Normalize(city, 120, nameof(city));
+        Neighborhood = Normalize(neighborhood, 120, nameof(neighborhood));
+        Reference = Normalize(reference, 300, nameof(reference));
+        Latitude = latitude;
+        Longitude = longitude;
+        Touch();
+    }
+
     public void SetActive(bool active) { IsActive = active; Touch(); }
+
+    private static string? Normalize(string? value, int maxLength, string parameterName)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        var normalized = value.Trim();
+        if (normalized.Length > maxLength) throw new ArgumentException($"Maximum length is {maxLength} characters.", parameterName);
+        return normalized;
+    }
 }
 
 public sealed class Customer : BaseEntity

@@ -21,10 +21,12 @@ type Props = {
   isSystemAdmin: boolean
   shop: Shop | null
   capabilities: Capabilities | null
+  commercialLoading?: boolean
+  commercialError?: string | null
   onShopUpdated: () => Promise<void>
 }
 
-export default function BusinessModules({ page, auth, barbers, isDemo, isSystemAdmin, shop, capabilities, onShopUpdated }: Props) {
+export default function BusinessModules({ page, auth, barbers, isDemo, isSystemAdmin, shop, capabilities, commercialLoading = false, commercialError = null, onShopUpdated }: Props) {
   const elevated = auth.role === 'Owner' || auth.role === 'Administrator'
   const hasOwnerAccess = auth.role === 'Owner' || isSystemAdmin
 
@@ -35,7 +37,7 @@ export default function BusinessModules({ page, auth, barbers, isDemo, isSystemA
   if (page === 'tv') return elevated ? <TvAdminSection capabilities={capabilities} /> : null
   if (page === 'team') return elevated ? <TeamSection auth={auth} barbers={barbers} isDemo={isDemo} isSystemAdmin={isSystemAdmin} /> : null
   if (page === 'locations') return hasOwnerAccess ? <LocationsSection isDemo={isDemo} shop={shop} onShopUpdated={onShopUpdated} /> : null
-  if (page === 'billing') return hasOwnerAccess ? <BillingSection isDemo={isDemo} shop={shop} capabilities={capabilities} /> : null
+  if (page === 'billing') return hasOwnerAccess ? <BillingSection isDemo={isDemo} shop={shop} capabilities={capabilities} commercialLoading={commercialLoading} commercialError={commercialError} onCommercialRefresh={onShopUpdated} /> : null
 
   return null
 }

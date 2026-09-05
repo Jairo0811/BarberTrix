@@ -16,7 +16,11 @@ var isTesting = builder.Environment.IsEnvironment("Testing");
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(options =>
+{
+    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
+});
 builder.Services.AddScoped<IQueueNotifier, SignalRQueueNotifier>();
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {

@@ -6,6 +6,14 @@ import { useI18n } from './i18n'
 import { api, clearAuth, publicApi, readAuth, writeAuth } from './api'
 import { apiErrorMessage } from './apiErrorMessages'
 import SubscriptionBanner from './SubscriptionBanner'
+import {
+  billingHash,
+  clearPendingPaidPlan,
+  paidPlanFromHash,
+  readPendingPaidPlan,
+  registerHash,
+  rememberPendingPaidPlan,
+} from './billingSelection'
 
 const demoStorageKey = 'barbertrix.demo'
 const DashboardView = lazy(() => import('./DashboardView'))
@@ -86,6 +94,18 @@ export default function App() {
   const [showPassword, setShowPassword] = useState(false)
 
   const isDemo = sessionStorage.getItem(demoStorageKey) === 'true'
+  const routePlan = paidPlanFromHash(window.location.hash)
+  const selectedPlan = routePlan ?? readPendingPaidPlan()
+  const currentHashPath = window.location.hash.split('?')[0]
+  const shouldResumePaidPlan = auth?.isEmailVerified === true && auth.role === 'Owner' && selectedPlan !== null && currentHashPath === '#/login'
+
+  useEffect(() => {
+    if (routePlan) rememberPendingPaidPlan(routePlan)
+  }, [routePlan])
+
+  useEffect(() => {
+    if (shouldResumePaidPlan && selectedPlan) window.location.hash = billingHash(selectedPlan)
+  }, [selectedPlan, shouldResumePaidPlan])
 
   useEffect(() => {
     if (!auth) return
@@ -102,6 +122,7 @@ export default function App() {
     setError('')
 
     const data = new FormData(event.currentTarget)
+    const checkoutPlan = paidPlanFromHash(window.location.hash) ?? readPendingPaidPlan()
 
     try {
       const nextAuth = await publicApi<Auth>('/api/auth/login', {
@@ -113,6 +134,10 @@ export default function App() {
       sessionStorage.removeItem(demoStorageKey)
       writeAuth(nextAuth, remember)
       setAuth(nextAuth)
+      if (checkoutPlan && nextAuth.role === 'Owner') {
+        rememberPendingPaidPlan(checkoutPlan)
+        if (nextAuth.isEmailVerified) window.location.hash = billingHash(checkoutPlan)
+      }
     } catch (exception) {
       setError(apiErrorMessage(exception, locale, t('login.genericError')))
     } finally {
@@ -123,6 +148,7 @@ export default function App() {
   function logout() {
     void publicApi<void>('/api/auth/logout', { method: 'POST' }).catch(() => undefined)
     clearAuth()
+    clearPendingPaidPlan()
     sessionStorage.removeItem(demoStorageKey)
     setAuth(null)
     window.location.hash = '#/login'
@@ -134,6 +160,8 @@ export default function App() {
     catch { setError(t('verification.resendError')) }
     finally { setBusy(false) }
   }
+
+  if (shouldResumePaidPlan) return <main className="login-shell"><p>{t('app.loading')}</p></main>
 
   if (auth && !auth.isEmailVerified) return <main className="login-shell"><section className="login-card">
     <BarberTrixLogo /><h1>{t('verification.title')}</h1><p className="login-subtitle">{t('verification.text')}</p>
@@ -163,6 +191,7 @@ export default function App() {
           <BarberTrixLogo />
           <h1 id="login-title">{t('login.welcome')}</h1>
           <p className="login-subtitle">{t('login.subtitle')}</p>
+          {selectedPlan && <p className="login-subtitle"><strong>{selectedPlan}</strong> · {selectedPlan === 'Pro' ? 'US$40' : 'US$70'} · PayPal</p>}
 
           <form
             className="login-form"
@@ -217,7 +246,7 @@ export default function App() {
           </button>
 
           <p className="register-copy">
-            {t('login.noAccount')} <a className="register-link" href="#/register">{t('login.registerHere')}</a>
+            {t('login.noAccount')} <a className="register-link" href={registerHash(selectedPlan)}>{t('login.registerHere')}</a>
           </p>
           {error && <p id="login-error" className="login-error" role="alert" aria-live="assertive">{error}</p>}
         </div>

@@ -7,6 +7,8 @@ import { useI18n } from '../../../i18n'
 import LockedFeature from '../../../shared/components/LockedFeature'
 import type { Capabilities, Shop, Subscription } from '../../../portals/admin/commercialTypes'
 import {
+  clearPendingPaidPlan,
+  clearPendingPayPalSubscriptionId,
   paidPlanFromSearch,
   paypalCancelUrl,
   paypalReturnUrl,
@@ -89,7 +91,12 @@ export default function BillingSection({
     setBusy(true)
     try {
       await api('/api/billing/cancel?atPeriodEnd=false', { method: 'POST' })
-      await load()
+      clearPendingPaidPlan()
+      clearPendingPayPalSubscriptionId()
+      await Promise.all([
+        load(),
+        onCommercialRefresh ? onCommercialRefresh() : Promise.resolve(),
+      ])
       void showSuccessToast(t('billing.cancelled'))
     } catch (error) {
       await showError(t('billing.cancelError'), apiErrorMessage(error, locale, t('billing.cancelError')))

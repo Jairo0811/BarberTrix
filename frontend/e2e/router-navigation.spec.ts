@@ -48,3 +48,19 @@ test('landing section anchors do not escape the HashRouter route', async ({ page
   await expect(page).toHaveURL(/#\/$/)
   await expect(page.locator('#precios')).toBeInViewport()
 })
+
+test('paid pricing selection is preserved when signup or login is required', async ({ page }) => {
+  await page.goto('/#/')
+
+  const proCard = page.locator('.pricing-card').filter({ hasText: 'Pro' })
+  await proCard.getByRole('button', { name: /Pro/ }).click()
+
+  await expect(page).toHaveURL(/#\/register\?plan=Pro$/)
+  await expect(page.locator('.register-showcase')).toContainText('Pro')
+  await expect(page.locator('.register-login-copy a')).toHaveAttribute('href', '#/login?plan=Pro')
+
+  await page.goto('/#/')
+  const freeCard = page.locator('.pricing-card').filter({ hasText: 'Free' })
+  await freeCard.getByRole('button').click()
+  await expect(page).toHaveURL(/#\/register$/)
+})

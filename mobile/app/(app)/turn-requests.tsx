@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { HubConnectionState } from '@microsoft/signalr';
+import { HubConnectionState } from '@microsoft/signalr';
 import { MobileApiError } from '@/api/httpClient';
 import { useAuth } from '@/auth/AuthProvider';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -19,7 +19,7 @@ export default function StaffTurnRequestsScreen() {
   const { locale, t } = useI18n();
   const queryClient = useQueryClient();
   const queryKey = ['staff-turn-requests', session?.user.barberShopId];
-  const [realtimeState, setRealtimeState] = useState<HubConnectionState | 'Reconnecting'>('Disconnected');
+  const [realtimeState, setRealtimeState] = useState<HubConnectionState>(HubConnectionState.Disconnected);
 
   const formatDate = (value: string) => new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
   const statusLabel = (request: TurnRequest) => t(`staffRequests.status.${request.status}`);
@@ -42,10 +42,10 @@ export default function StaffTurnRequestsScreen() {
   useEffect(() => {
     if (!session?.accessToken) return;
     const connection = createTurnRequestRealtimeConnection(() => session.accessToken, () => { void queryClient.invalidateQueries({ queryKey }); });
-    connection.onreconnecting(() => setRealtimeState('Reconnecting'));
-    connection.onreconnected(() => setRealtimeState('Connected'));
-    connection.onclose(() => setRealtimeState('Disconnected'));
-    void connection.start().then(() => setRealtimeState('Connected')).catch(() => setRealtimeState('Disconnected'));
+    connection.onreconnecting(() => setRealtimeState(HubConnectionState.Reconnecting));
+    connection.onreconnected(() => setRealtimeState(HubConnectionState.Connected));
+    connection.onclose(() => setRealtimeState(HubConnectionState.Disconnected));
+    void connection.start().then(() => setRealtimeState(HubConnectionState.Connected)).catch(() => setRealtimeState(HubConnectionState.Disconnected));
     return () => { void connection.stop(); };
   }, [queryClient, session?.accessToken, session?.user.barberShopId]);
 
@@ -61,8 +61,8 @@ export default function StaffTurnRequestsScreen() {
   const items = useMemo(() => requestQuery.data ?? [], [requestQuery.data]);
   const actionable = items.filter(x => x.status === 'Pending' || x.status === 'CounterProposed');
   const history = items.filter(x => x.status !== 'Pending' && x.status !== 'CounterProposed').slice(0, 20);
-  const isLive = realtimeState === 'Connected';
-  const realtimeLabel = isLive ? 'EN VIVO' : realtimeState === 'Reconnecting' ? 'RECONECTANDO' : 'SIN CONEXIÓN';
+  const isLive = realtimeState === HubConnectionState.Connected;
+  const realtimeLabel = isLive ? 'EN VIVO' : realtimeState === HubConnectionState.Reconnecting ? 'RECONECTANDO' : 'SIN CONEXIÓN';
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -72,7 +72,7 @@ export default function StaffTurnRequestsScreen() {
           <View style={styles.topbar}><BrandLogo compact /><View style={[styles.liveBadge, !isLive && styles.liveBadgeOffline]}><View style={[styles.liveDot, !isLive && styles.liveDotOffline]} /><Text style={[styles.liveText, !isLive && styles.liveTextOffline]}>{realtimeLabel}</Text></View></View>
           <View style={styles.headerCopy}><Text style={styles.eyebrow}>{t('staffRequests.eyebrow')}</Text><Text style={styles.title}>{t('staffRequests.title')}</Text><Text style={styles.subtitle}>{t('staffRequests.subtitle')}</Text></View>
           <View style={styles.summaryRow}><View style={styles.summaryCard}><Text style={styles.summaryValue}>{actionable.length}</Text><Text style={styles.summaryLabel}>{t('staffRequests.status.Pending')}</Text></View><View style={styles.summaryCard}><Text style={styles.summaryValue}>{history.length}</Text><Text style={styles.summaryLabel}>{t('staffRequests.recent')}</Text></View></View>
-          {!isLive ? <View style={styles.realtimeNotice}><Text style={styles.realtimeNoticeTitle}>{realtimeState === 'Reconnecting' ? 'Recuperando tiempo real…' : 'Actualización automática temporalmente desconectada'}</Text><Text style={styles.realtimeNoticeText}>Puedes seguir usando la pantalla. BarberTrix mantiene el refresco periódico mientras vuelve la conexión.</Text></View> : null}
+          {!isLive ? <View style={styles.realtimeNotice}><Text style={styles.realtimeNoticeTitle}>{realtimeState === HubConnectionState.Reconnecting ? 'Recuperando tiempo real…' : 'Actualización automática temporalmente desconectada'}</Text><Text style={styles.realtimeNoticeText}>Puedes seguir usando la pantalla. BarberTrix mantiene el refresco periódico mientras vuelve la conexión.</Text></View> : null}
           {requestQuery.isLoading ? <ActivityIndicator color={colors.primaryGlow} size="large" /> : null}
           {requestQuery.error ? <View style={styles.errorBox}><Text accessibilityRole="alert" style={styles.error}>{t('staffRequests.loadError')}</Text></View> : null}
           {!requestQuery.isLoading && actionable.length === 0 ? <View style={styles.empty}><View style={styles.emptyIcon}><Text style={styles.emptyIconText}>✓</Text></View><View style={styles.emptyCopy}><Text style={styles.emptyTitle}>{t('staffRequests.emptyTitle')}</Text><Text style={styles.subtitle}>{t('staffRequests.emptyText')}</Text></View></View> : null}

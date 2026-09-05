@@ -4,6 +4,12 @@
 
 The mobile client targets Expo SDK 57 and keeps Expo-managed packages aligned with `npx expo install --check`.
 
+As of 2026-09-05, the SDK baseline is aligned with the compatibility versions reported by Expo, including:
+
+- `expo ~57.0.20`;
+- `expo-notifications ~57.0.17`;
+- `expo-router ~57.0.19`.
+
 CI treats Expo dependency alignment as a blocking gate and validates the mobile client with:
 
 - `npm ci`
@@ -14,7 +20,7 @@ CI treats Expo dependency alignment as a blocking gate and validates the mobile 
 
 ## Known moderate advisories
 
-As of 2026-09-02, `npm audit` reports 13 moderate findings originating from two transitive Expo dependency chains:
+As of 2026-09-05, `npm audit` reports 13 moderate findings originating from two transitive Expo dependency chains:
 
 1. `decode-uri-component` through `query-string` and `expo-router` (`GHSA-vcc3-ghjq-m6fr`).
 2. `uuid@7` through `xcode` and Expo configuration/CLI packages (`GHSA-w5hq-g745-h8pq`).

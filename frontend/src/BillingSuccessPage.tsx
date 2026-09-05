@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { api } from './api'
 import { useI18n } from './i18n'
 import { adminPageHref } from './portals/admin/adminRoutes'
+import { clearPendingPaidPlan } from './billingSelection'
 
 function subscriptionId() {
   const values = new URLSearchParams(location.hash.split('?')[1] ?? '')
@@ -18,7 +19,10 @@ export default function BillingSuccessPage() {
   useEffect(() => {
     if (!id) return
     void api('/api/billing/capture', { method: 'POST', body: JSON.stringify({ providerOrderId: id }) })
-      .then(() => setState('success'))
+      .then(() => {
+        clearPendingPaidPlan()
+        setState('success')
+      })
       .catch(() => setState('error'))
   }, [id])
 

@@ -13,11 +13,11 @@ type Props = { isDemo: boolean; shop: Shop | null; capabilities: Capabilities | 
 
 export default function BillingSection({ isDemo, shop, capabilities }: Props) {
   const { locale, t } = useI18n()
-  const location = useLocation()
+  const routerLocation = useLocation()
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [busy, setBusy] = useState(false)
   const isSystemAdmin = capabilities?.isSystemAdmin === true
-  const routeSelectedPlan = paidPlanFromSearch(location.search)
+  const routeSelectedPlan = paidPlanFromSearch(routerLocation.search)
   const selectedPlan = routeSelectedPlan ?? readPendingPaidPlan()
 
   useEffect(() => {
@@ -34,8 +34,8 @@ export default function BillingSection({ isDemo, shop, capabilities }: Props) {
     setBusy(true)
     try {
       rememberPendingPaidPlan(plan)
-      const response = await api<{ approvalUrl: string }>('/api/billing/checkout', { method: 'POST', body: JSON.stringify({ plan, returnUrl: `${location.origin}/#/billing-success`, cancelUrl: `${location.origin}/${adminPageHref('billing')}` }) })
-      location.href = response.approvalUrl
+      const response = await api<{ approvalUrl: string }>('/api/billing/checkout', { method: 'POST', body: JSON.stringify({ plan, returnUrl: `${window.location.origin}/#/billing-success`, cancelUrl: `${window.location.origin}/${adminPageHref('billing')}` }) })
+      window.location.href = response.approvalUrl
     } catch (error) { await showError(t('billing.paypalError'), apiErrorMessage(error, locale, t('billing.paypalError'))) }
     finally { setBusy(false) }
   }

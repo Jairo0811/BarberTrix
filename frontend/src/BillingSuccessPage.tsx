@@ -2,11 +2,17 @@ import { useEffect, useMemo, useState } from 'react'
 import { api } from './api'
 import { useI18n } from './i18n'
 import { adminPageHref } from './portals/admin/adminRoutes'
-import { clearPendingPaidPlan } from './billingSelection'
+import {
+  clearPendingPaidPlan,
+  clearPendingPayPalSubscriptionId,
+  providerOrderIdFromLocation,
+  readPendingPayPalSubscriptionId,
+} from './billingSelection'
 
 function subscriptionId() {
-  const values = new URLSearchParams(location.hash.split('?')[1] ?? '')
-  return values.get('subscription_id') ?? values.get('ba_token') ?? ''
+  return providerOrderIdFromLocation(window.location.search, window.location.hash)
+    ?? readPendingPayPalSubscriptionId()
+    ?? ''
 }
 
 type BillingState = 'loading' | 'success' | 'error' | 'missing-id'
@@ -21,6 +27,7 @@ export default function BillingSuccessPage() {
     void api('/api/billing/capture', { method: 'POST', body: JSON.stringify({ providerOrderId: id }) })
       .then(() => {
         clearPendingPaidPlan()
+        clearPendingPayPalSubscriptionId()
         setState('success')
       })
       .catch(() => setState('error'))

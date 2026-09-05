@@ -71,6 +71,7 @@ The script reuses the webhook if the exact URL is already registered.
 Copy the generated IDs into the local `.env` file together with the Sandbox credentials that PayPal gave you:
 
 ```dotenv
+BARBERTRIX_FRONTEND_ORIGIN=http://localhost:5173
 BARBERTRIX_PAYPAL_CLIENT_ID=your-sandbox-client-id
 BARBERTRIX_PAYPAL_SECRET=your-sandbox-client-secret
 BARBERTRIX_PAYPAL_WEBHOOK_ID=your-sandbox-webhook-id
@@ -79,6 +80,8 @@ BARBERTRIX_PAYPAL_BUSINESS_PLAN_ID=P-...
 ```
 
 Do not commit `.env`.
+
+`BARBERTRIX_FRONTEND_ORIGIN` must match the origin that starts the checkout because BarberTrix validates PayPal return and cancel URLs before creating a subscription. The default local Vite origin is `http://localhost:5173`. If you intentionally test the containerized web app at `http://localhost:8081`, set `BARBERTRIX_FRONTEND_ORIGIN=http://localhost:8081` and recreate the API container.
 
 The development Docker Compose configuration runs PayPal in Sandbox mode. Production explicitly runs PayPal in Live mode.
 
@@ -91,5 +94,27 @@ Run the bootstrap script to test the API credentials directly:
 - If OAuth token acquisition succeeds, the Sandbox API credentials are valid even if the dashboard UI is inaccessible.
 - If OAuth fails, verify that the Client ID and Client Secret are from the same Sandbox credential set.
 - If OAuth succeeds but product/plan creation returns `403`, the PayPal account or application lacks the required subscription permissions and PayPal support should review the account.
+
+## Diagnosing checkout errors
+
+If the web app reports that PayPal could not be started, verify the backend origin first:
+
+```powershell
+docker compose exec api printenv PasswordReset__FrontendBaseUrl
+```
+
+When using Vite, it should print:
+
+```text
+http://localhost:5173
+```
+
+After changing `.env` or `docker-compose.yml`, recreate the API container so environment variables are reloaded:
+
+```powershell
+docker compose up -d --force-recreate api
+```
+
+The web billing dialog surfaces the backend billing detail and correlation ID when available, making configuration failures distinguishable from PayPal API failures.
 
 Do not switch BarberTrix to Live until Sandbox checkout, approval, capture and signed webhook processing have all been validated end to end.

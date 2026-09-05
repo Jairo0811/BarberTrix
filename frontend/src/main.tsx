@@ -4,6 +4,7 @@ import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-d
 import HomePage from './HomePage'
 import LanguageSwitcher from './LanguageSwitcher'
 import { I18nProvider, useI18n } from './i18n'
+import { clearPendingPayPalSubscriptionId, paypalCallbackHashFromSearch } from './billingSelection'
 import { isAdminAppPath } from './portals/admin/adminRoutes'
 import './styles.css'
 import './login.css'
@@ -61,6 +62,13 @@ const publicRouteByPath: Record<string, PublicRoute> = {
   '/billing-success': 'billing-success',
   '/terms': 'terms',
   '/privacy': 'privacy',
+}
+
+const paypalCallbackHash = paypalCallbackHashFromSearch(window.location.search)
+if (paypalCallbackHash) {
+  const callback = new URLSearchParams(window.location.search).get('billing')
+  if (callback === 'paypal-cancel') clearPendingPayPalSubscriptionId()
+  window.history.replaceState(null, '', `${window.location.pathname}${paypalCallbackHash}`)
 }
 
 const landingSectionIds = new Set(['inicio', 'caracteristicas', 'precios', 'contacto'])

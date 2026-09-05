@@ -28,10 +28,10 @@ export default function SubscriptionBanner({ auth, isDemo }: { auth: Auth; isDem
 
   if (auth.role !== 'Owner' || isDemo || !subscription || !capabilities) return null
 
-  const paid = subscription.status === 'Active' && subscription.provider !== 'Trial'
-  const premiumUnlocked = capabilities.canUseAppointments || capabilities.canUseTv || capabilities.canUseAdvancedReports
+  const paid = subscription.status === 'Active' && subscription.provider !== 'Trial' && subscription.provider !== 'Free'
+  const premiumUnlocked = capabilities.canUseTv || capabilities.canUseAdvancedReports
 
-  async function checkout(plan: 'Starter' | 'Pro' | 'Business') {
+  async function checkout(plan: 'Pro' | 'Business') {
     setBusy(true)
     try {
       const response = await api<{ approvalUrl: string }>('/api/billing/checkout', {
@@ -61,7 +61,6 @@ export default function SubscriptionBanner({ auth, isDemo }: { auth: Auth; isDem
         </span>
       </div>
       {!paid && <div className="subscription-banner-actions">
-        <button disabled={busy} onClick={() => void checkout('Starter')}>Starter · US$20</button>
         <button disabled={busy} onClick={() => void checkout('Pro')}>{t('subscription.unlockPro')}</button>
         <button disabled={busy} onClick={() => void checkout('Business')}>Business · US$70</button>
       </div>}

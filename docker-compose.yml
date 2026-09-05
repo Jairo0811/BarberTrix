@@ -41,9 +41,15 @@ services:
       ExternalAuth__Apple__TeamId: ${BARBERTRIX_APPLE_TEAM_ID:-}
       ExternalAuth__Apple__KeyId: ${BARBERTRIX_APPLE_KEY_ID:-}
       ExternalAuth__Apple__PrivateKey: ${BARBERTRIX_APPLE_PRIVATE_KEY:-}
-      PasswordReset__FrontendBaseUrl: http://localhost:8081
+      PasswordReset__FrontendBaseUrl: ${BARBERTRIX_FRONTEND_ORIGIN:-http://localhost:5173}
       Cors__AllowedOrigins__0: http://localhost:5173
       Cors__AllowedOrigins__1: http://localhost:8081
+      PayPal__Sandbox: "true"
+      PayPal__ClientId: ${BARBERTRIX_PAYPAL_CLIENT_ID:-}
+      PayPal__Secret: ${BARBERTRIX_PAYPAL_SECRET:-}
+      PayPal__WebhookId: ${BARBERTRIX_PAYPAL_WEBHOOK_ID:-}
+      PayPal__PlanIds__Pro: ${BARBERTRIX_PAYPAL_PRO_PLAN_ID:-}
+      PayPal__PlanIds__Business: ${BARBERTRIX_PAYPAL_BUSINESS_PLAN_ID:-}
     volumes:
       - barbertrix-shop-media:/app/data/shop-media
     ports:

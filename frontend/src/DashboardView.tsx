@@ -160,6 +160,8 @@ export default function DashboardView({ auth, isDemo, onLogout }: DashboardViewP
       isSystemAdmin={isSystemAdmin}
       shop={commercial.shop}
       capabilities={commercial.capabilities}
+      commercialLoading={commercial.loading}
+      commercialError={commercial.error}
       onShopUpdated={commercial.refresh}
     />
 

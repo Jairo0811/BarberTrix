@@ -6,6 +6,11 @@ const owner = {
   userId: 'owner-1', barberShopId: 'shop-1', name: 'Jairo', role: 'Owner', isEmailVerified: true,
 }
 
+const barber = {
+  accessToken: 'e2e-barber-token', expiresAtUtc: '2099-01-01T00:00:00Z',
+  userId: 'barber-1', barberShopId: 'shop-1', name: 'Barbero de Prueba', role: 'Barber', isEmailVerified: true,
+}
+
 test('admin deep links and browser history stay synchronized', async ({ page }) => {
   await seedAuth(page, owner)
   await installMockBackend(page, { plan: 'Business' })
@@ -47,4 +52,50 @@ test('landing section anchors do not escape the HashRouter route', async ({ page
 
   await expect(page).toHaveURL(/#\/$/)
   await expect(page.locator('#precios')).toBeInViewport()
+})
+
+test('paid pricing selection is preserved when signup or login is required', async ({ page }) => {
+  await page.goto('/#/')
+
+  const proCard = page.locator('.pricing-card').filter({ hasText: 'Pro' })
+  await proCard.getByRole('button', { name: /Pro/ }).click()
+
+  await expect(page).toHaveURL(/#\/register\?plan=Pro$/)
+  await expect(page.locator('.register-showcase')).toContainText('Pro')
+  await expect(page.locator('.register-login-copy a')).toHaveAttribute('href', '#/login?plan=Pro')
+
+  await page.goto('/#/')
+  const freeCard = page.locator('.pricing-card').filter({ hasText: 'Free' })
+  await freeCard.getByRole('button').click()
+  await expect(page).toHaveURL(/#\/register$/)
+})
+
+test('authenticated owner sees panel actions and goes directly from pricing to billing', async ({ page }) => {
+  await seedAuth(page, owner)
+  await installMockBackend(page, { plan: 'Free' })
+  await page.goto('/#/')
+
+  await expect(page.locator('.home-nav-actions').getByRole('button', { name: 'Ir al panel' })).toBeVisible()
+  await expect(page.locator('.home-nav-actions').getByRole('button', { name: 'Iniciar sesión' })).toHaveCount(0)
+  await expect(page.locator('.home-nav-actions').getByRole('button', { name: 'Comenzar gratis' })).toHaveCount(0)
+
+  const proCard = page.locator('.pricing-card').filter({ hasText: 'Pro' })
+  await proCard.getByRole('button', { name: /Pro/ }).click()
+
+  await expect(page).toHaveURL(/#\/app\/billing\?plan=Pro$/)
+})
+
+test('authenticated barber is never sent to registration for a paid plan', async ({ page }) => {
+  await seedAuth(page, barber)
+  await page.goto('/#/')
+
+  await expect(page.locator('.home-nav-actions').getByRole('button', { name: 'Ir al panel' })).toBeVisible()
+  await expect(page.locator('.home-nav-actions').getByRole('button', { name: 'Iniciar sesión' })).toHaveCount(0)
+
+  const businessCard = page.locator('.pricing-card').filter({ hasText: 'Business' })
+  await businessCard.getByRole('button', { name: /Business/ }).click()
+
+  await expect(page).toHaveURL(/#\/$/)
+  await expect(page.getByText('El propietario administra la suscripción')).toBeVisible()
+  await expect(page.getByText(/Tu sesión actual es Barber/)).toBeVisible()
 })

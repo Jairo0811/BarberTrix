@@ -70,10 +70,14 @@ test('paid pricing selection is preserved when signup or login is required', asy
   await expect(page).toHaveURL(/#\/register$/)
 })
 
-test('authenticated owner goes directly from landing pricing to billing', async ({ page }) => {
+test('authenticated owner sees panel actions and goes directly from pricing to billing', async ({ page }) => {
   await seedAuth(page, owner)
   await installMockBackend(page, { plan: 'Free' })
   await page.goto('/#/')
+
+  await expect(page.locator('.home-nav-actions').getByRole('button', { name: 'Ir al panel' })).toBeVisible()
+  await expect(page.locator('.home-nav-actions').getByRole('button', { name: 'Iniciar sesión' })).toHaveCount(0)
+  await expect(page.locator('.home-nav-actions').getByRole('button', { name: 'Comenzar gratis' })).toHaveCount(0)
 
   const proCard = page.locator('.pricing-card').filter({ hasText: 'Pro' })
   await proCard.getByRole('button', { name: /Pro/ }).click()
@@ -84,6 +88,9 @@ test('authenticated owner goes directly from landing pricing to billing', async 
 test('authenticated barber is never sent to registration for a paid plan', async ({ page }) => {
   await seedAuth(page, barber)
   await page.goto('/#/')
+
+  await expect(page.locator('.home-nav-actions').getByRole('button', { name: 'Ir al panel' })).toBeVisible()
+  await expect(page.locator('.home-nav-actions').getByRole('button', { name: 'Iniciar sesión' })).toHaveCount(0)
 
   const businessCard = page.locator('.pricing-card').filter({ hasText: 'Business' })
   await businessCard.getByRole('button', { name: /Business/ }).click()

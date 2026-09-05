@@ -21,13 +21,17 @@ import './home-footer-polish.css'
 import { buildSupportEmailHref, buildWhatsAppHref, supportConfig } from './support'
 import { useI18n } from './i18n'
 import { getProductHomeAuxCopy } from './i18n/eastAsiaHomeAuxCopy'
+import { loginHash, normalizePaidPlan, registerHash, rememberPendingPaidPlan } from './billingSelection'
 
 function navigateToLogin() {
-  window.location.hash = '#/login'
+  rememberPendingPaidPlan(null)
+  window.location.hash = loginHash()
 }
 
-function navigateToRegister() {
-  window.location.hash = '#/register'
+function navigateToRegister(planName?: string) {
+  const paidPlan = normalizePaidPlan(planName)
+  rememberPendingPaidPlan(paidPlan)
+  window.location.hash = registerHash(paidPlan)
 }
 
 export default function HomePage() {
@@ -115,7 +119,7 @@ export default function HomePage() {
 
         <div className="home-nav-actions">
           <button className="home-login-button" type="button" onClick={navigateToLogin}>{t('common.login')}</button>
-          <button className="home-primary-button" type="button" onClick={navigateToRegister}>{t('home.startFree')}</button>
+          <button className="home-primary-button" type="button" onClick={() => navigateToRegister()}>{t('home.startFree')}</button>
           <button className="home-mobile-menu" type="button" aria-label={mobileMenuOpen ? t('closeMenu') : t('openMenu')} aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(open => !open)}>
             <FontAwesomeIcon icon={mobileMenuOpen ? faXmark : faBars} />
           </button>
@@ -129,7 +133,7 @@ export default function HomePage() {
           <p>{t('home.hero.text')}</p>
 
           <div className="home-hero-actions">
-            <button className="home-primary-button large" type="button" onClick={navigateToRegister}>{t('home.startFree')} <span>→</span></button>
+            <button className="home-primary-button large" type="button" onClick={() => navigateToRegister()}>{t('home.startFree')} <span>→</span></button>
             <a className="home-secondary-button" href="#caracteristicas" onClick={() => selectSection('caracteristicas')}>{t('home.viewFeatures')}</a>
           </div>
 
@@ -182,16 +186,21 @@ export default function HomePage() {
           <p>{t('home.pricing.text')}</p>
         </div>
         <div className="pricing-grid">
-          {plans.map(plan => (
-            <article key={plan.name} className={`pricing-card${plan.featured ? ' featured' : ''}`}>
-              {plan.featured && <span className="pricing-badge">{t('home.pricing.popular')}</span>}
-              <h3>{plan.name}</h3>
-              <p className="pricing-description">{plan.description}</p>
-              <div className="pricing-price"><strong>{plan.price}</strong><span>{t('home.pricing.month')}</span></div>
-              <ul>{plan.features.map(feature => <li key={feature}><FontAwesomeIcon icon={faCheck} /> {feature}</li>)}</ul>
-              <button className={plan.featured ? 'home-primary-button pricing-button' : 'home-login-button pricing-button'} type="button" onClick={navigateToRegister}>{t('home.startFree')}</button>
-            </article>
-          ))}
+          {plans.map(plan => {
+            const paidPlan = normalizePaidPlan(plan.name)
+            return (
+              <article key={plan.name} className={`pricing-card${plan.featured ? ' featured' : ''}`}>
+                {plan.featured && <span className="pricing-badge">{t('home.pricing.popular')}</span>}
+                <h3>{plan.name}</h3>
+                <p className="pricing-description">{plan.description}</p>
+                <div className="pricing-price"><strong>{plan.price}</strong><span>{t('home.pricing.month')}</span></div>
+                <ul>{plan.features.map(feature => <li key={feature}><FontAwesomeIcon icon={faCheck} /> {feature}</li>)}</ul>
+                <button className={plan.featured ? 'home-primary-button pricing-button' : 'home-login-button pricing-button'} type="button" onClick={() => navigateToRegister(plan.name)}>
+                  {paidPlan ? `${paidPlan} · ${plan.price}` : t('home.startFree')}
+                </button>
+              </article>
+            )
+          })}
         </div>
         <p className="pricing-note">{t('home.pricing.note')}</p>
       </section>
@@ -210,7 +219,7 @@ export default function HomePage() {
         <div className="contact-card">
           <h3>{t('home.contact.cardTitle')}</h3>
           <p>{t('home.contact.cardText')}</p>
-          <button className="home-primary-button contact-button" type="button" onClick={navigateToRegister}>{t('home.startFree')} <span>→</span></button>
+          <button className="home-primary-button contact-button" type="button" onClick={() => navigateToRegister()}>{t('home.startFree')} <span>→</span></button>
           <small>{t('home.contact.cardNote')}</small>
         </div>
       </section>

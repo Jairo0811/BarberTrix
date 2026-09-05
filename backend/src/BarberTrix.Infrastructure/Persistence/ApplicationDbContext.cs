@@ -210,9 +210,15 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
             entity.Property(x => x.Name).HasMaxLength(120).IsRequired();
             entity.Property(x => x.Slug).HasMaxLength(80).IsRequired();
             entity.Property(x => x.Address).HasMaxLength(300);
+            entity.Property(x => x.City).HasMaxLength(120);
+            entity.Property(x => x.Neighborhood).HasMaxLength(120);
+            entity.Property(x => x.Reference).HasMaxLength(300);
+            entity.Property(x => x.Latitude).HasPrecision(9, 6);
+            entity.Property(x => x.Longitude).HasPrecision(9, 6);
             entity.Property(x => x.TimeZoneId).HasMaxLength(100).IsRequired();
             entity.HasIndex(x => new { x.BarberShopId, x.Slug }).IsUnique();
             entity.HasIndex(x => new { x.BarberShopId, x.IsActive });
+            entity.HasIndex(x => new { x.Latitude, x.Longitude });
             entity.HasOne<BarberShop>().WithMany().HasForeignKey(x => x.BarberShopId).OnDelete(DeleteBehavior.Cascade);
         });
 

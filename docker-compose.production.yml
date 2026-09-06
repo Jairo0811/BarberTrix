@@ -80,11 +80,14 @@ services:
       PayPal__WebhookId: ${BARBERTRIX_PAYPAL_WEBHOOK_ID}
       PayPal__PlanIds__Pro: ${BARBERTRIX_PAYPAL_PRO_PLAN_ID}
       PayPal__PlanIds__Business: ${BARBERTRIX_PAYPAL_BUSINESS_PLAN_ID}
+      ShopMedia__RootPath: /app/data/shop-media
       Push__Enabled: "true"
       Push__AccessToken: ${BARBERTRIX_EXPO_ACCESS_TOKEN:-}
     depends_on:
       migrate:
         condition: service_completed_successfully
+    volumes:
+      - barbertrix-shop-media:/app/data/shop-media
     read_only: true
     tmpfs:
       - /tmp
@@ -103,3 +106,4 @@ services:
 
 volumes:
   barbertrix-sqlserver:
+  barbertrix-shop-media:

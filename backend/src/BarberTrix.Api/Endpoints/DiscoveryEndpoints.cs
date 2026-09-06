@@ -1,4 +1,5 @@
 using BarberTrix.Application.Discovery;
+using BarberTrix.Api.Contracts;
 
 namespace BarberTrix.Api.Endpoints;
 
@@ -45,17 +46,21 @@ public static class DiscoveryEndpoints
         {
             try
             {
+                var maxBytes = kind.Trim().Equals("logo", StringComparison.OrdinalIgnoreCase) ? 2 * 1024 * 1024 : 5 * 1024 * 1024;
+                if (string.IsNullOrEmpty(request.Base64)) return ApiErrorResults.BadRequest(context, "MEDIA_EMPTY", "Select an image.");
+                if (request.Base64.Length > 4 * ((maxBytes + 2) / 3)) return ApiErrorResults.BadRequest(context, "MEDIA_TOO_LARGE", "The image exceeds the size limit.");
                 var bytes = Convert.FromBase64String(request.Base64);
                 var url = await storage.SaveAsync(ShopId(context), kind, request.FileName, request.ContentType, bytes, ct);
                 return Results.Ok(new ShopMediaUploadResponse(url));
             }
             catch (FormatException)
             {
-                return Results.BadRequest(new { code = "public_profile_media_invalid", message = "The selected image could not be read." });
+                return ApiErrorResults.BadRequest(context, "MEDIA_TYPE_INVALID", "The selected image could not be read.");
             }
             catch (ArgumentException ex)
             {
-                return Results.BadRequest(new { code = "public_profile_media_invalid", message = ex.Message });
+                var code = ex.Message is "MEDIA_EMPTY" or "MEDIA_TOO_LARGE" or "MEDIA_TYPE_INVALID" or "MEDIA_KIND_INVALID" ? ex.Message : "MEDIA_TYPE_INVALID";
+                return ApiErrorResults.BadRequest(context, code, "The image is invalid or exceeds the size limit.");
             }
         }).RequireRateLimiting("registration");
 

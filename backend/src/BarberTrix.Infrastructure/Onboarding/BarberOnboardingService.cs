@@ -1,11 +1,12 @@
 using BarberTrix.Application.Onboarding;
+using BarberTrix.Application.Common;
 using BarberTrix.Domain.Entities;
 using BarberTrix.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace BarberTrix.Infrastructure.Onboarding;
 
-internal sealed class BarberOnboardingService(ApplicationDbContext dbContext) : IBarberOnboardingService
+internal sealed class BarberOnboardingService(ApplicationDbContext dbContext, IPlanLimitService planLimits) : IBarberOnboardingService
 {
     public async Task<IReadOnlyList<BarberShopDirectoryItem>> SearchShopsAsync(string? query, CancellationToken cancellationToken = default)
     {
@@ -90,7 +91,7 @@ internal sealed class BarberOnboardingService(ApplicationDbContext dbContext) : 
     public async Task<bool> ApproveJoinRequestAsync(Guid barberShopId, Guid reviewerUserId, Guid requestId, int chairNumber, CancellationToken cancellationToken = default)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(chairNumber);
-        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, cancellationToken);
         var request = await dbContext.BarberJoinRequests.SingleOrDefaultAsync(
             x => x.Id == requestId && x.BarberShopId == barberShopId && x.Status == BarberJoinRequestStatus.Pending,
             cancellationToken);
@@ -103,10 +104,12 @@ internal sealed class BarberOnboardingService(ApplicationDbContext dbContext) : 
         if (profile is null)
             return false;
         if (await dbContext.Barbers.AnyAsync(x => x.BarberShopId == barberShopId && x.ChairNumber == chairNumber, cancellationToken))
-            throw new InvalidOperationException("That chair number is already assigned.");
+            throw new BusinessRuleException("TEAM_CHAIR_CONFLICT", "That chair number is already assigned.");
         if (await dbContext.ShopMemberships.AnyAsync(x => x.UserId == user.Id && x.BarberShopId != barberShopId && x.Status == ShopMembershipStatus.Active, cancellationToken))
             throw new InvalidOperationException("The barber already has an active membership in another barbershop.");
 
+        try { await planLimits.EnsureCanAddBarberAsync(barberShopId, cancellationToken); }
+        catch (InvalidOperationException) { throw new BusinessRuleException("PLAN_RESOURCE_LIMIT", "The plan has no capacity for another barber."); }
         var barber = new Barber(barberShopId, profile.DisplayName, chairNumber);
         dbContext.Barbers.Add(barber);
         var membership = await dbContext.ShopMemberships.SingleOrDefaultAsync(

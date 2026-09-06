@@ -27,7 +27,7 @@ public sealed record ResetPasswordRequest(string Token, string NewPassword);
 public sealed record RefreshTokenRequest(string RefreshToken);
 public sealed record LogoutRequest(string RefreshToken);
 public sealed record VerifyEmailRequest(string Token);
-public sealed record CreateInvitationRequest(string Name, string Email, UserRole Role, Guid? BarberId);
+public sealed record CreateInvitationRequest(string Name, string Email, UserRole Role, Guid? BarberId, int? ChairNumber = null);
 public sealed record AcceptInvitationRequest(string Token, string Password, bool AcceptedTerms);
 public sealed record TeamMemberResponse(Guid Id, string Name, string Email, UserRole Role, Guid? BarberId, bool IsActive, bool IsEmailVerified);
 public sealed record InvitationResponse(Guid Id, string Email, UserRole Role, DateTimeOffset ExpiresAtUtc, string? DevelopmentAcceptanceUrl);

@@ -1,3 +1,4 @@
+using BarberTrix.Application.Common;
 using System.Security.Claims;
 using BarberTrix.Api.Contracts;
 using BarberTrix.Api.Filters;
@@ -259,7 +260,12 @@ public static class AuthEndpoints
                 var frontend = config["PasswordReset:FrontendBaseUrl"] ?? "http://localhost:5173";
                 return Results.Created("/api/team/invitations", await service.CreateInvitationAsync(GetShopId(context), request, frontend, environment.IsDevelopment(), ct));
             }
-            catch (Exception ex) when (ex is ArgumentException or InvalidOperationException) { return ApiErrorResults.BadRequest(context, ApiErrorCodes.TeamInvalid, ex.Message); }
+            catch (BusinessRuleException ex) { return ApiErrorResults.Conflict(context, ex.Code, ex.Message); }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException ex) when (ex.InnerException is Microsoft.Data.SqlClient.SqlException sql && sql.Number is 2601 or 2627)
+            { return ApiErrorResults.Conflict(context, "TEAM_CHAIR_CONFLICT", "The resource was assigned concurrently. Refresh and try again."); }
+            catch (Microsoft.Data.SqlClient.SqlException ex) when (ex.Number == 1205)
+            { return ApiErrorResults.Conflict(context, "TEAM_INVITATION_EXISTS", "The team changed concurrently. Refresh before retrying."); }
+            catch (Exception ex) when (ex is ArgumentException or InvalidOperationException) { return ApiErrorResults.BadRequest(context, ApiErrorCodes.TeamInvalid, "Check the invitation details."); }
         }).RequireAuthorization(policy => policy.RequireRole("Owner", "Administrator"));
         team.MapDelete("/{userId:guid}", async (Guid userId, HttpContext context, IAuthService service, CancellationToken ct) =>
             await service.DeactivateTeamMemberAsync(GetShopId(context), userId, ct)

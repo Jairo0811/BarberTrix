@@ -18,7 +18,8 @@ internal sealed class AuthService(
     IPasswordHasher<User> passwordHasher,
     IConfiguration configuration,
     IHumanVerificationService humanVerification,
-    IEmailSender emailSender) : IAuthService
+    IEmailSender emailSender,
+    IPlanLimitService planLimits) : IAuthService
 {
     private const string PasswordResetAudience = "BarberTrix.PasswordReset";
     private const string PasswordResetPurpose = "password-reset";
@@ -261,27 +262,50 @@ internal sealed class AuthService(
 
     public async Task<InvitationResponse> CreateInvitationAsync(Guid barberShopId, CreateInvitationRequest request, string frontendBaseUrl, bool exposeDevelopmentUrl, CancellationToken cancellationToken = default)
     {
-        if (request.Role == UserRole.Owner || string.IsNullOrWhiteSpace(request.Name) || string.IsNullOrWhiteSpace(request.Email))
-            throw new ArgumentException("A valid name, email and non-owner role are required.");
-        if (request.Role == UserRole.Barber && request.BarberId is null)
-            throw new ArgumentException("A barber account must be linked to an operational barber.");
+        if (request.Role is not (UserRole.Barber or UserRole.Administrator or UserRole.Receptionist) ||
+            string.IsNullOrWhiteSpace(request.Name) || request.Name.Trim().Length > 120 ||
+            !System.Net.Mail.MailAddress.TryCreate(request.Email, out var address) || address.Address != request.Email.Trim() || request.Email.Length > 180)
+            throw new ArgumentException("A valid name, email and staff role are required.");
+        if (request.Role == UserRole.Barber && request.BarberId is null && request.ChairNumber is null)
+            throw new ArgumentException("A barber or chair is required.");
+        if (request.BarberId.HasValue && request.ChairNumber.HasValue)
+            throw new ArgumentException("Choose an existing barber or a new chair, not both.");
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, cancellationToken);
         var email = request.Email.Trim().ToLowerInvariant();
         var existingUser = await dbContext.Users.SingleOrDefaultAsync(x => x.Email == email && x.IsActive, cancellationToken);
-        if (existingUser is not null)
+        if (existingUser is not null && (request.Role != UserRole.Barber || existingUser.Role != UserRole.Barber || existingUser.BarberShopId.HasValue ||
+            !await dbContext.BarberProfiles.AnyAsync(x => x.UserId == existingUser.Id, cancellationToken)))
+            throw new BusinessRuleException("TEAM_MEMBER_EXISTS", "This email already belongs to a member.");
+        var now = DateTimeOffset.UtcNow;
+        if (await dbContext.TeamInvitations.AnyAsync(x => x.BarberShopId == barberShopId && x.Email == email && x.AcceptedAtUtc == null && x.RevokedAtUtc == null && x.ExpiresAtUtc > now, cancellationToken))
+            throw new BusinessRuleException("TEAM_INVITATION_EXISTS", "An active invitation already exists.");
+        Guid? linkedBarberId = request.Role == UserRole.Barber ? request.BarberId : null;
+        if (request.Role == UserRole.Barber && request.ChairNumber is int chair)
         {
-            if (request.Role != UserRole.Barber || existingUser.Role != UserRole.Barber || existingUser.BarberShopId.HasValue ||
-                !await dbContext.BarberProfiles.AnyAsync(x => x.UserId == existingUser.Id, cancellationToken))
-                throw new InvalidOperationException("Only an independent barber account can accept an invitation for an existing user.");
+            if (chair <= 0) throw new ArgumentException("A positive chair number is required.");
+            if (await dbContext.Barbers.AnyAsync(x => x.BarberShopId == barberShopId && x.ChairNumber == chair, cancellationToken))
+                throw new BusinessRuleException("TEAM_CHAIR_CONFLICT", "This chair is already assigned.");
+            try { await planLimits.EnsureCanAddBarberAsync(barberShopId, cancellationToken); }
+            catch (InvalidOperationException) { throw new BusinessRuleException("PLAN_RESOURCE_LIMIT", "The plan has no capacity for another barber."); }
+            var barber = new Barber(barberShopId, request.Name, chair);
+            dbContext.Barbers.Add(barber);
+            linkedBarberId = barber.Id;
         }
-        if (request.BarberId is Guid barberId && !await dbContext.Barbers.AnyAsync(x => x.Id == barberId && x.BarberShopId == barberShopId, cancellationToken))
-            throw new InvalidOperationException("The selected barber does not belong to this barbershop.");
+        else if (linkedBarberId is Guid barberId)
+        {
+            if (!await dbContext.Barbers.AnyAsync(x => x.Id == barberId && x.BarberShopId == barberShopId && x.IsActive, cancellationToken))
+                throw new ArgumentException("The selected barber is not available in this barbershop.");
+            if (await dbContext.Users.AnyAsync(x => x.BarberId == barberId && x.IsActive, cancellationToken) ||
+                await dbContext.TeamInvitations.AnyAsync(x => x.BarberId == barberId && x.AcceptedAtUtc == null && x.RevokedAtUtc == null && x.ExpiresAtUtc > now, cancellationToken))
+                throw new BusinessRuleException("TEAM_BARBER_LINKED", "The barber is already linked.");
+        }
         var raw = SecureToken.Create();
-        var linkedBarberId = request.Role == UserRole.Barber ? request.BarberId : null;
         var invitation = new TeamInvitation(barberShopId, email, request.Name, request.Role, linkedBarberId, SecureToken.Hash(raw), DateTimeOffset.UtcNow.AddDays(3));
         dbContext.TeamInvitations.Add(invitation);
         await dbContext.SaveChangesAsync(cancellationToken);
         var url = $"{frontendBaseUrl.TrimEnd('/')}/#/accept-invitation?token={Uri.EscapeDataString(raw)}";
         await emailSender.SendAsync(email, "Invitación a BarberTrix", $"<p>Has sido invitado a BarberTrix.</p><p><a href=\"{url}\">Aceptar invitación</a></p>", cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
         return new InvitationResponse(invitation.Id, invitation.Email, invitation.Role, invitation.ExpiresAtUtc, exposeDevelopmentUrl ? url : null);
     }
 

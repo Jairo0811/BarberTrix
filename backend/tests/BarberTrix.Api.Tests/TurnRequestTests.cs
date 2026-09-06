@@ -171,6 +171,24 @@ public sealed class TurnRequestTests
 
         var forbidden = await barberClient.PostAsync($"/api/turn-requests/{publicRequest.Request.Id}/accept", null);
         Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
+
+        // Positive counterpart: the linked operational ID must be visible and actionable.
+        var ownSlot = await FirstAvailableSlotAsync(ownerClient, settings.Slug, service.Id, ownBarber.Id);
+        var ownCreated = await ownerClient.PostAsJsonAsync($"/api/public/shops/{settings.Slug}/turn-requests", new
+        {
+            serviceId = service.Id, barberId = ownBarber.Id,
+            requestedStartsAt = ownSlot.StartsAtUtc, customerName = "Selected barber customer"
+        });
+        ownCreated.EnsureSuccessStatusCode();
+        var ownRequest = (await ownCreated.Content.ReadFromJsonAsync<PublicTurnRequestPayload>())!;
+        var ownInbox = await barberClient.GetFromJsonAsync<List<TurnRequestPayload>>("/api/turn-requests");
+        Assert.Contains(ownInbox!, request => request.Id == ownRequest.Request.Id && request.BarberId == ownBarber.Id);
+        var ownAccepted = await barberClient.PostAsync($"/api/turn-requests/{ownRequest.Request.Id}/accept", null);
+        ownAccepted.EnsureSuccessStatusCode();
+        // No SignalR client is involved: HTTP resynchronization alone must work.
+        var refreshed = await ownerClient.GetFromJsonAsync<TurnRequestPayload>($"/api/public/shops/{settings.Slug}/turn-requests/{ownRequest.Request.Id}?token={Uri.EscapeDataString(ownRequest.LookupToken)}");
+        Assert.Equal("Accepted", refreshed!.Status);
+
     }
 
     private HttpClient CreateClient() => factory.CreateClient(new WebApplicationFactoryClientOptions

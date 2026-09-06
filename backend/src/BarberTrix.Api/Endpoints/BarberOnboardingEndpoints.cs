@@ -1,3 +1,4 @@
+using BarberTrix.Application.Common;
 using System.Security.Claims;
 using BarberTrix.Api.Contracts;
 using BarberTrix.Api.Filters;
@@ -25,6 +26,7 @@ public static class BarberOnboardingEndpoints
             {
                 return Results.Created($"/api/onboarding/join-requests/{barberShopId}", await service.RequestJoinAsync(GetUserId(context), barberShopId, ct));
             }
+            catch (BusinessRuleException ex) { return ApiErrorResults.Conflict(context, ex.Code, ex.Message); }
             catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
             {
                 return ApiErrorResults.BadRequest(context, "ONBOARDING_JOIN_INVALID", ex.Message);
@@ -53,6 +55,7 @@ public static class BarberOnboardingEndpoints
                     ? Results.NoContent()
                     : ApiErrorResults.BadRequest(context, "TEAM_JOIN_REQUEST_INVALID", "The join request could not be approved.");
             }
+            catch (BusinessRuleException ex) { return ApiErrorResults.Conflict(context, ex.Code, ex.Message); }
             catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
             {
                 return ApiErrorResults.BadRequest(context, "TEAM_JOIN_REQUEST_INVALID", ex.Message);

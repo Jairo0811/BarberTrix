@@ -1,5 +1,7 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBolt, faClock, faFlask, faListOl, faPlus, faRotate, faScissors, faShieldHalved, faUserTie } from '@fortawesome/free-solid-svg-icons'
+import { useI18n } from '../../../i18n'
+import { turnStatusLabel } from '../../../i18n/domainLabels'
 import type { Auth, Barber, Service, Turn } from '../../../types'
 import type { AdminPageId } from '../../../portals/admin/adminRoutes'
 
@@ -23,6 +25,7 @@ type Props = {
 }
 
 export default function DashboardOverviewSection({ auth, isDemo, canManageCatalog, copy: c, today, barbers, services, turns, overview, loading, error, onRefresh, onNavigate, formatRole }: Props) {
+  const { t } = useI18n()
   const queuePreview = turns.slice(0, 4)
   const activeServices = services.filter(service => service.isActive).length
   const activeBarbers = barbers.filter(barber => barber.isActive).length
@@ -53,9 +56,9 @@ export default function DashboardOverviewSection({ auth, isDemo, canManageCatalo
         <article className="dashboard-card">
           <div className="dashboard-card-header"><div><h2>{c.queueSummary}</h2><p>{c.recentTurns}</p></div><button className="secondary" type="button" disabled={loading} onClick={onRefresh}><FontAwesomeIcon icon={faRotate} /> {c.refresh}</button></div>
           <div className="queue-summary">
-            {queuePreview.length === 0 && !loading && <p className="empty">{c.noActiveTurns}</p>}
+            {queuePreview.length === 0 && !loading && !error && <p className="empty">{c.noActiveTurns}</p>}
             {loading && <p className="empty">{c.loadingTurns}</p>}
-            {queuePreview.map(turn => <div className="queue-summary-item" key={turn.id}><span className="queue-summary-ticket">{turn.ticketNumber}</span><div className="queue-summary-copy"><strong>{turn.customerName || c.unnamedCustomer}</strong><span>{turn.serviceName}{turn.barberName ? ` · ${turn.barberName}` : ''}</span></div><span className="queue-summary-status">{turn.status}</span></div>)}
+            {queuePreview.map(turn => <div className="queue-summary-item" key={turn.id}><span className="queue-summary-ticket">{turn.ticketNumber}</span><div className="queue-summary-copy"><strong>{turn.customerName || c.unnamedCustomer}</strong><span>{turn.serviceName}{turn.barberName ? ` · ${turn.barberName}` : ''}</span></div><span className="queue-summary-status">{turnStatusLabel(t, turn.status)}</span></div>)}
           </div>
         </article>
 

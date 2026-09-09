@@ -5,6 +5,7 @@ import { useI18n } from './i18n'
 import { turnStatusLabel } from './i18n/domainLabels'
 import { getHomeAuxCopy } from './i18n/homeAuxCopy'
 import { clampTvVolume, collectNewCalledTurns, TvNarrator } from './features/tv/tvNarration'
+import { createTvRecovery } from './features/tv/tvRecovery'
 import './tv.css'
 
 type TvTurn = { ticketNumber: string; status: string; barberName?: string; chairNumber?: number }
@@ -75,11 +76,14 @@ export default function TvPage() {
     if (!displayToken) return
 
     let disposed = false
-    let retryTimer: number | undefined
+    let snapshotPending: Promise<void> | undefined
+    let joined = false
     const connection = new HubConnectionBuilder()
       .withUrl(`${API_URL}/hubs/queue`)
-      .withAutomaticReconnect([0, 2_000, 5_000, 10_000, 30_000])
+      .withAutomaticReconnect({ nextRetryDelayInMilliseconds: context => Math.min(30_000, 2_000 * context.previousRetryCount) })
       .build()
+    connection.serverTimeoutInMilliseconds = 60_000
+    connection.keepAliveIntervalInMilliseconds = 15_000
 
     const invalidate = () => {
       localStorage.removeItem(displayTokenStorageKey)
@@ -90,10 +94,12 @@ export default function TvPage() {
       }
     }
 
-    const loadSnapshot = async () => {
+    const loadSnapshot = (): Promise<void> => {
+      if (snapshotPending) return snapshotPending
+      snapshotPending = (async () => {
       try {
         const next = await publicApi<TvSnapshot>('/api/tv/session', { headers: { [displayTokenHeader]: displayToken } })
-        if (!disposed) setSnapshot(next)
+        if (!disposed) { setSnapshot(next); if (joined && connection.state === 'Connected') setConnectionState('connected') }
       } catch (error) {
         if (error instanceof ApiClientError && (error.status === 401 || error.status === 403)) {
           invalidate()
@@ -101,10 +107,12 @@ export default function TvPage() {
         }
         if (!disposed) setConnectionState('offline')
       }
+      })().finally(() => { snapshotPending = undefined })
+      return snapshotPending
     }
 
     const joinDisplay = async () => {
-      const joined = await connection.invoke<boolean>('JoinTvDisplay', displayToken)
+      joined = await connection.invoke<boolean>('JoinTvDisplay', displayToken)
       if (!joined) {
         invalidate()
         return false
@@ -113,36 +121,29 @@ export default function TvPage() {
       return true
     }
 
-    const startConnection = async () => {
-      if (disposed) return
-      try {
-        await connection.start()
-        if (await joinDisplay()) await loadSnapshot()
-      } catch {
-        if (!disposed) {
-          setConnectionState('offline')
-          retryTimer = window.setTimeout(() => void startConnection(), 5_000)
-        }
-      }
-    }
+    const recovery = createTvRecovery(connection, joinDisplay, loadSnapshot, () => { if (!disposed) setConnectionState('offline') })
 
     connection.on('queueChanged', () => void loadSnapshot())
-    connection.onreconnecting(() => { if (!disposed) setConnectionState('reconnecting') })
-    connection.onreconnected(() => { void joinDisplay().then(joined => { if (joined) void loadSnapshot() }) })
+    connection.onreconnecting(() => { joined = false; if (!disposed) setConnectionState('reconnecting') })
+    connection.onreconnected(() => { void recovery.recover() })
     connection.onclose(() => {
       if (disposed) return
+      joined = false
       setConnectionState('offline')
-      retryTimer = window.setTimeout(() => void startConnection(), 5_000)
+      recovery.retry()
     })
 
     void loadSnapshot()
-    void startConnection()
+    void recovery.recover()
+    const foreground = () => { if (document.visibilityState === 'visible') { void loadSnapshot(); void recovery.recover() } }
+    document.addEventListener('visibilitychange', foreground)
     const pollTimer = window.setInterval(() => void loadSnapshot(), 30_000)
 
     return () => {
       disposed = true
       window.clearInterval(pollTimer)
-      if (retryTimer) window.clearTimeout(retryTimer)
+      recovery.dispose()
+      document.removeEventListener('visibilitychange', foreground)
       void connection.stop()
     }
   }, [displayToken])

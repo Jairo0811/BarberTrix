@@ -100,6 +100,18 @@ public sealed class QueueAuthorizationTests
         Assert.NotNull(queue);
         var protectedTurn = Assert.Single(queue, item => item.Id == turn.Id);
         Assert.Equal("Called", protectedTurn.Status);
+
+        // The companion read model must enforce the same resource boundary.
+        var ownerToday = await ownerClient.GetFromJsonAsync<TodayPayload>("/api/operations/today");
+        Assert.NotNull(ownerToday);
+        Assert.Contains(ownerToday.Turns, item => item.Id == turn.Id);
+        Assert.Equal(2, ownerToday.Barbers.Count);
+        var barberToday = await barberClient.GetFromJsonAsync<TodayPayload>("/api/operations/today");
+        Assert.NotNull(barberToday);
+        Assert.DoesNotContain(barberToday.Turns, item => item.Id == turn.Id);
+        Assert.Equal(firstBarber.Id, Assert.Single(barberToday.Barbers).Id);
+        using var anonymous = CreateClient();
+        Assert.Equal(HttpStatusCode.Unauthorized, (await anonymous.GetAsync("/api/operations/today")).StatusCode);
     }
 
     private HttpClient CreateClient() => factory.CreateClient(new WebApplicationFactoryClientOptions
@@ -121,4 +133,5 @@ public sealed class QueueAuthorizationTests
     private sealed record BarberPayload(Guid Id);
     private sealed record ServicePayload(Guid Id);
     private sealed record TurnPayload(Guid Id, string Status);
+    private sealed record TodayPayload(List<TurnPayload> Turns, List<BarberPayload> Barbers);
 }

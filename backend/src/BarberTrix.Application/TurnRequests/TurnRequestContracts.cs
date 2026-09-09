@@ -36,6 +36,7 @@ public sealed record PublicTurnRequestResponse(TurnRequestResponse Request, stri
 
 public interface ITurnRequestService
 {
+    Task<int> CountPendingForStaffAsync(Guid barberShopId, Guid? barberId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<TurnRequestResponse>> GetForStaffAsync(Guid barberShopId, Guid? barberId, CancellationToken cancellationToken = default);
     Task<TurnRequestResponse?> GetAsync(Guid barberShopId, Guid requestId, CancellationToken cancellationToken = default);
     Task<PublicTurnRequestResponse> CreatePublicAsync(string shopSlug, CreateTurnRequestRequest request, CancellationToken cancellationToken = default);

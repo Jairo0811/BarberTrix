@@ -28,7 +28,7 @@ public static class TodayEndpoints
             var turns = await queue.GetQueueAsync(shopId, ct);
             var staff = await queue.GetBarbersAsync(shopId, ct);
             var agenda = await appointments.GetAsync(shopId, from, to, ct);
-            var inbox = await requests.GetForStaffAsync(shopId, ownBarber, ct);
+            var pendingRequests = await requests.CountPendingForStaffAsync(shopId, ownBarber, ct);
             var metrics = await queue.GetMetricsAsync(shopId, ct);
             return Results.Ok(new {
                 shopName = shop.Name, shopSlug = shop.Slug, timeZoneId = shop.TimeZoneId,
@@ -36,7 +36,7 @@ public static class TodayEndpoints
                 turns = turns.Where(x => ownBarber == null || x.BarberId == ownBarber),
                 barbers = staff.Where(x => x.IsActive && (ownBarber == null || x.Id == ownBarber)),
                 appointments = agenda.Where(x => ownBarber == null || x.BarberId == ownBarber),
-                pendingRequests = inbox.Count(x => x.Status == BarberTrix.Domain.Entities.TurnRequestStatus.Pending || x.Status == BarberTrix.Domain.Entities.TurnRequestStatus.CounterProposed),
+                pendingRequests,
                 estimatedWaitMinutes = metrics.EstimatedWaitMinutes
             });
         }).RequireAuthorization("TenantUser")

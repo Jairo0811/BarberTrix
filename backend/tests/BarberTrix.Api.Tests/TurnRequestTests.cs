@@ -3,6 +3,8 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using BarberTrix.Application.Auth;
 using BarberTrix.Domain.Entities;
+using BarberTrix.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -173,8 +175,20 @@ public sealed class TurnRequestTests
         Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
 
         // Positive counterpart: the linked operational ID must be visible and actionable.
+        using var customerClient = CreateClient();
+        var customer = User.CreateClient("Selected barber customer", $"customer-{suffix}@example.test", "unused");
+        customer.ChangePasswordHash(scope.ServiceProvider.GetRequiredService<IPasswordHasher<User>>().HashPassword(customer, "TestOnly123!"));
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        db.Users.Add(customer);
+        await db.SaveChangesAsync();
+        var customerLogin = await customerClient.PostAsJsonAsync("/api/auth/mobile/login", new { email = customer.Email, password = "TestOnly123!" });
+        customerLogin.EnsureSuccessStatusCode();
+        var customerSession = (await customerLogin.Content.ReadFromJsonAsync<ClientSession>())!;
+        customerClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", customerSession.AccessToken);
+        Assert.Equal(HttpStatusCode.Forbidden, (await customerClient.GetAsync("/api/operations/today")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await customerClient.GetAsync("/api/turn-requests")).StatusCode);
         var ownSlot = await FirstAvailableSlotAsync(ownerClient, settings.Slug, service.Id, ownBarber.Id);
-        var ownCreated = await ownerClient.PostAsJsonAsync($"/api/public/shops/{settings.Slug}/turn-requests", new
+        var ownCreated = await customerClient.PostAsJsonAsync($"/api/public/shops/{settings.Slug}/turn-requests", new
         {
             serviceId = service.Id, barberId = ownBarber.Id,
             requestedStartsAt = ownSlot.StartsAtUtc, customerName = "Selected barber customer"
@@ -183,10 +197,13 @@ public sealed class TurnRequestTests
         var ownRequest = (await ownCreated.Content.ReadFromJsonAsync<PublicTurnRequestPayload>())!;
         var ownInbox = await barberClient.GetFromJsonAsync<List<TurnRequestPayload>>("/api/turn-requests");
         Assert.Contains(ownInbox!, request => request.Id == ownRequest.Request.Id && request.BarberId == ownBarber.Id);
+        ownerClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", owner.AccessToken);
+        var ownerInbox = await ownerClient.GetFromJsonAsync<List<TurnRequestPayload>>("/api/turn-requests");
+        Assert.Contains(ownerInbox!, request => request.Id == ownRequest.Request.Id);
         var ownAccepted = await barberClient.PostAsync($"/api/turn-requests/{ownRequest.Request.Id}/accept", null);
         ownAccepted.EnsureSuccessStatusCode();
         // No SignalR client is involved: HTTP resynchronization alone must work.
-        var refreshed = await ownerClient.GetFromJsonAsync<TurnRequestPayload>($"/api/public/shops/{settings.Slug}/turn-requests/{ownRequest.Request.Id}?token={Uri.EscapeDataString(ownRequest.LookupToken)}");
+        var refreshed = await customerClient.GetFromJsonAsync<TurnRequestPayload>($"/api/public/shops/{settings.Slug}/turn-requests/{ownRequest.Request.Id}?token={Uri.EscapeDataString(ownRequest.LookupToken)}");
         Assert.Equal("Accepted", refreshed!.Status);
 
     }
@@ -228,6 +245,7 @@ public sealed class TurnRequestTests
     }
 
     private sealed record AuthPayload(string AccessToken, Guid BarberShopId);
+    private sealed record ClientSession(string AccessToken);
     private sealed record ShopPayload(string Slug);
     private sealed record PublicShopPayload(List<ServicePayload> Services, List<BarberPayload> Barbers);
     private sealed record ServicePayload(Guid Id);

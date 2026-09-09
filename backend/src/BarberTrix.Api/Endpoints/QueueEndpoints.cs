@@ -118,6 +118,7 @@ public static class QueueEndpoints
     private static async Task<IResult> ExecuteTransitionAsync<T>(HttpContext context, Func<Task<T?>> operation) where T : class
     {
         try { return await operation() is { } response ? Results.Ok(response) : Results.NotFound(); }
+        catch (BusinessRuleException ex) { return ApiErrorResults.Conflict(context, ex.Code, ex.Message); }
         catch (InvalidOperationException ex) { return ApiErrorResults.Conflict(context, ApiErrorCodes.QueueConflict, ex.Message); }
     }
 }

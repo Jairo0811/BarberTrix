@@ -18,6 +18,15 @@ internal sealed class TurnRequestService(
 {
     private static readonly TimeSpan RequestLifetime = TimeSpan.FromHours(24);
 
+    public Task<int> CountPendingForStaffAsync(Guid barberShopId, Guid? barberId, CancellationToken cancellationToken = default)
+    {
+        var now = DateTimeOffset.UtcNow;
+        return dbContext.TurnRequests.AsNoTracking().CountAsync(x =>
+            x.BarberShopId == barberShopId && (barberId == null || x.BarberId == barberId) &&
+            (x.Status == TurnRequestStatus.Pending || x.Status == TurnRequestStatus.CounterProposed) &&
+            x.ExpiresAtUtc > now, cancellationToken);
+    }
+
     public async Task<IReadOnlyList<TurnRequestResponse>> GetForStaffAsync(Guid barberShopId, Guid? barberId, CancellationToken cancellationToken = default)
     {
         var query = dbContext.TurnRequests.AsNoTracking()

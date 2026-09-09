@@ -264,9 +264,9 @@ public static class AuthEndpoints
             catch (Microsoft.EntityFrameworkCore.DbUpdateException ex) when (ex.InnerException is Microsoft.Data.SqlClient.SqlException sql && sql.Number is 2601 or 2627)
             { return ApiErrorResults.Conflict(context, "TEAM_CHAIR_CONFLICT", "The resource was assigned concurrently. Refresh and try again."); }
             catch (Microsoft.Data.SqlClient.SqlException ex) when (ex.Number == 1205)
-            { return ApiErrorResults.Conflict(context, "TEAM_INVITATION_EXISTS", "The team changed concurrently. Refresh before retrying."); }
+            { return ApiErrorResults.Conflict(context, "TEAM_CONCURRENT_CHANGE", "The team changed concurrently. Refresh before retrying."); }
             catch (Exception ex) when (ex is ArgumentException or InvalidOperationException) { return ApiErrorResults.BadRequest(context, ApiErrorCodes.TeamInvalid, "Check the invitation details."); }
-        }).RequireAuthorization(policy => policy.RequireRole("Owner", "Administrator"));
+        }).RequireAuthorization(policy => policy.RequireRole("Owner", "Administrator")).RequireRateLimiting("invitations");
         team.MapDelete("/{userId:guid}", async (Guid userId, HttpContext context, IAuthService service, CancellationToken ct) =>
             await service.DeactivateTeamMemberAsync(GetShopId(context), userId, ct)
                 ? Results.NoContent()

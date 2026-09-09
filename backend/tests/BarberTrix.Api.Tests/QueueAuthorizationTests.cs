@@ -71,6 +71,10 @@ public sealed class QueueAuthorizationTests
         var called = await ownerClient.PostAsync($"/api/queue/turns/{turn.Id}/call/{secondBarber.Id}", null);
         called.EnsureSuccessStatusCode();
 
+        var pauseDuringCall = await ownerClient.PatchAsJsonAsync($"/api/queue/barbers/{secondBarber.Id}/status", new { status = "Break" });
+        Assert.Equal(HttpStatusCode.Conflict, pauseDuringCall.StatusCode);
+        Assert.Contains("BARBER_SERVICE_ACTIVE", await pauseDuringCall.Content.ReadAsStringAsync());
+
         await using var scope = factory.Services.CreateAsyncScope();
         var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
         var invitation = await authService.CreateInvitationAsync(

@@ -3,6 +3,7 @@ export type SafeError = { key: string; retryable: boolean; correlationId?: strin
 export function mapMobileError(error: unknown): SafeError {
   const value = error && typeof error === 'object' ? error as { status?: number; code?: string; correlationId?: string; name?: string } : {};
   const codes: Record<string, string> = {
+    BARBER_SERVICE_ACTIVE: 'errors.activeService', BARBER_STATUS_INVALID: 'errors.invalid',
     TEAM_CHAIR_CONFLICT: 'errors.chair', TEAM_MEMBER_EXISTS: 'errors.member',
     TEAM_INVITATION_EXISTS: 'errors.invitation', TEAM_BARBER_LINKED: 'errors.barberLinked',
     PLAN_RESOURCE_LIMIT: 'errors.plan', PLAN_FEATURE_UNAVAILABLE: 'errors.plan',

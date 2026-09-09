@@ -119,12 +119,18 @@ jobs:
         env:
           EXPO_PUBLIC_API_BASE_URL: https://api.example.test
         run: npm run typecheck
+      - name: Check Mobile translation keys
+        run: npm run i18n:check
       - name: Test mobile reliability
         run: npm test
       - name: Bundle Android
         env:
           EXPO_PUBLIC_API_BASE_URL: https://api.example.test
         run: npx expo export --platform android --output-dir dist-android
+      - name: Bundle iOS
+        env:
+          EXPO_PUBLIC_API_BASE_URL: https://api.example.test
+        run: npx expo export --platform ios --output-dir dist-ios
 
   frontend-e2e:
     name: Playwright E2E

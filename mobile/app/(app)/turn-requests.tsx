@@ -176,7 +176,7 @@ export default function StaffTurnRequestsScreen() {
                         onPress={() => mutate.mutate({ kind: 'counter', id: request.id, startsAt: proposed })}
                         style={({ pressed }) => [styles.counterButton, pressed && styles.counterButtonPressed, mutate.isPending && styles.disabled]}
                       >
-                        <Text style={styles.counterButtonText}>+{minutes} min</Text>
+                        <Text style={styles.counterButtonText}>+{t('common.minutes', { value: minutes })}</Text>
                       </Pressable>
                     );
                   })}

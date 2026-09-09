@@ -209,7 +209,7 @@ export default function MarketplaceProfileScreen() {
         <Pressable onPress={() => router.back()}><Text style={styles.back}>{t('marketplace.back')}</Text></Pressable>
 
         <View>
-          <Text style={styles.eyebrow}>MARKETPLACE</Text>
+          <Text style={styles.eyebrow}>{t('marketplace.title')}</Text>
           <Text style={styles.title}>{t('marketplace.title')}</Text>
           <Text style={styles.body}>{t('marketplace.body')}</Text>
         </View>
@@ -241,10 +241,10 @@ export default function MarketplaceProfileScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionEyebrow}>{t('marketplace.location')}</Text>
-          <Field label={t('marketplace.address')} value={profile.location.address ?? ''} onChangeText={value => patchLocation('address', value)} placeholder="Av. 27 de Febrero #123" />
+          <Field label={t('marketplace.address')} value={profile.location.address ?? ''} onChangeText={value => patchLocation('address', value)} placeholder={t('common.addressExample')} />
           <View style={styles.row}>
-            <View style={styles.flex}><Field label={t('marketplace.city')} value={profile.location.city ?? ''} onChangeText={value => patchLocation('city', value)} placeholder="Santo Domingo" /></View>
-            <View style={styles.flex}><Field label={t('marketplace.neighborhood')} value={profile.location.neighborhood ?? ''} onChangeText={value => patchLocation('neighborhood', value)} placeholder="Piantini" /></View>
+            <View style={styles.flex}><Field label={t('marketplace.city')} value={profile.location.city ?? ''} onChangeText={value => patchLocation('city', value)} placeholder={t('common.cityExample')} /></View>
+            <View style={styles.flex}><Field label={t('marketplace.neighborhood')} value={profile.location.neighborhood ?? ''} onChangeText={value => patchLocation('neighborhood', value)} placeholder={t('common.districtExample')} /></View>
           </View>
           <Field label={t('marketplace.reference')} value={profile.location.reference ?? ''} onChangeText={value => patchLocation('reference', value)} placeholder={t('marketplace.referenceHint')} />
           <Pressable onPress={useCurrentLocation} style={({ pressed }) => [styles.locationButton, pressed && styles.pressed]}><Text style={styles.locationButtonText}>{t('marketplace.locate')}</Text></Pressable>

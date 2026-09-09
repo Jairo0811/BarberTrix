@@ -108,14 +108,14 @@ export default function OnboardingScreen() {
         </View>
 
         <View style={styles.hero}>
-          <Text style={styles.eyebrow}>BARBERTRIX · BARBER</Text>
+          <Text style={styles.eyebrow}>{t('common.barberContext')}</Text>
           <Text style={styles.title}>{t('onboarding.title')}</Text>
           <Text style={styles.body}>{t('onboarding.body', { name: session?.user.name ?? '' })}</Text>
         </View>
 
         <View style={styles.searchPanel}>
           <View style={styles.searchCopy}>
-            <Text style={styles.panelEyebrow}>BARBERTRIX NETWORK</Text>
+            <Text style={styles.panelEyebrow}>{t('common.barberNetwork')}</Text>
             <Text style={styles.panelTitle}>{t('onboarding.availableShops')}</Text>
           </View>
 
@@ -149,7 +149,7 @@ export default function OnboardingScreen() {
         ) : null}
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionEyebrow}>DIRECTORY</Text>
+          <Text style={styles.sectionEyebrow}>{t('common.directory')}</Text>
           <Text style={styles.sectionTitle}>{t('onboarding.availableShops')}</Text>
         </View>
 
@@ -202,7 +202,7 @@ export default function OnboardingScreen() {
         })}
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionEyebrow}>ACCESS</Text>
+          <Text style={styles.sectionEyebrow}>{t('common.access')}</Text>
           <Text style={styles.sectionTitle}>{t('onboarding.myRequests')}</Text>
         </View>
 

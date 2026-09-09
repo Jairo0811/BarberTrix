@@ -1,4 +1,5 @@
 const en = {
+ 'operations.noShowConfirm': 'Mark this customer as a no-show and release the barber?',
  'operations.push.idle': 'Not registered', 'operations.push.enabling': 'Registering…', 'operations.push.enabled': 'Registered', 'operations.push.denied': 'Permission denied', 'operations.push.error': 'Registration failed',
  'operations.deviceHistory': 'Recent requests saved on this device', 'operations.details': 'View status',
  'operations.today': 'Today', 'operations.settings': 'Settings', 'operations.team': 'Team', 'operations.queue': 'Queue', 'operations.appointments': 'Today’s appointments',
@@ -10,6 +11,7 @@ const en = {
  'operations.discover': 'Discover', 'operations.myTurns': 'My turns', 'operations.profile': 'Profile', 'operations.share': 'Share booking link', 'operations.rebook': 'Book again',
 };
 const es: Record<keyof typeof en, string> = {
+ 'operations.noShowConfirm': '¿Marcar que el cliente no se presentó y liberar al barbero?',
  'operations.push.idle': 'Sin registrar', 'operations.push.enabling': 'Registrando…', 'operations.push.enabled': 'Registrado', 'operations.push.denied': 'Permiso denegado', 'operations.push.error': 'Error al registrar',
  'operations.deviceHistory': 'Solicitudes recientes guardadas en este dispositivo', 'operations.details': 'Ver estado',
  'operations.today': 'Hoy', 'operations.settings': 'Ajustes', 'operations.team': 'Equipo', 'operations.queue': 'Cola', 'operations.appointments': 'Citas de hoy',

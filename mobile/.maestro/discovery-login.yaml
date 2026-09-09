@@ -1,0 +1,14 @@
+# Install a preview build first. Run on a dedicated test device in es-419.
+# This is an executable smoke procedure; no successful native run is claimed.
+appId: com.jmsoftwaresolutions.barbertrix
+---
+- launchApp:
+    clearState: true
+- assertVisible: "Tu próximo corte, sin perder tiempo."
+- scrollUntilVisible:
+    element: "Acceso para profesionales"
+    direction: DOWN
+- tapOn: "Acceso para profesionales"
+- assertVisible: "Correo"
+- assertVisible: "Contraseña"
+- assertVisible: "Iniciar sesión"

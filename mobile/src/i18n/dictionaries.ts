@@ -1,3 +1,4 @@
+import { commonCopy } from './features/common';
 import { marketplaceCopy } from './features/marketplace';
 import { teamCopy } from './features/team';
 import { operationsCopy } from './features/operations';
@@ -36,6 +37,7 @@ const withRequestFlows = (locale: OfficialLocale, dictionary: Dictionary): Dicti
   ...dictionary,
   ...requestFlowsSupplement[locale],
   ...reliabilityCopy(locale),
+  ...commonCopy(locale),
   ...operationsCopy(locale),
   ...teamCopy(locale),
   ...marketplaceCopy(locale),

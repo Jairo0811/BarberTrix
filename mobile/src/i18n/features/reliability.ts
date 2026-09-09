@@ -1,4 +1,5 @@
 const en = {
+  'errors.activeService': 'Finish the active service before changing availability.',
   'pushState.denied': 'Enable BarberTrix notifications in your device settings.', 'pushState.misconfigured': 'Push is not configured in this build. Contact support.', 'pushState.unsupported': 'Push notifications require an Android or iOS build.', 'pushState.unavailable': 'We could not register this device. Try again.', 
   'realtime.Connecting': 'Connecting…', 'realtime.Connected': 'Live', 'realtime.Reconnecting': 'Reconnecting…', 'realtime.Offline': 'Offline',
   'errors.chair': 'This chair is already assigned. Choose the suggested chair.', 'errors.member': 'This email already belongs to a team member.',
@@ -12,6 +13,7 @@ const en = {
   'common.retry': 'Retry', 'common.support': 'Support details',
 };
 const es: Record<keyof typeof en, string> = {
+  'errors.activeService': 'Termina el servicio activo antes de cambiar tu disponibilidad.',
   'pushState.denied': 'Activa las notificaciones de BarberTrix en los ajustes del dispositivo.', 'pushState.misconfigured': 'Esta versión no tiene push configurado. Contacta a soporte.', 'pushState.unsupported': 'Las notificaciones push requieren una versión Android o iOS.', 'pushState.unavailable': 'No pudimos registrar este dispositivo. Intenta nuevamente.', 
   'realtime.Connecting': 'Conectando…', 'realtime.Connected': 'En vivo', 'realtime.Reconnecting': 'Reconectando…', 'realtime.Offline': 'Sin conexión',
   'errors.chair': 'Esta silla ya está asignada. Selecciona la silla sugerida.', 'errors.member': 'Este correo ya pertenece a un miembro del equipo.',

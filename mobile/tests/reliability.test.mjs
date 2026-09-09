@@ -61,6 +61,7 @@ test('chair suggestion tracks loaded data and does not reuse inactive assignment
 
 import { rebookParams } from '../src/turnRequests/rebook.ts';
 import { singleFlight } from '../src/auth/singleFlight.ts';
+import { commonCopy } from '../src/i18n/features/common.ts';
 import { reliabilityCopy } from '../src/i18n/features/reliability.ts';
 import { teamCopy } from '../src/i18n/features/team.ts';
 import { marketplaceCopy } from '../src/i18n/features/marketplace.ts';
@@ -78,7 +79,7 @@ test('concurrent refresh consumers share one rotation and failures permit retry'
  await assert.rejects(fail); await assert.rejects(fail); assert.equal(failures, 2);
 });
 test('new namespaces have complete Spanish/English parity and documented fallback', () => {
- for (const getCopy of [reliabilityCopy, teamCopy, marketplaceCopy, operationsCopy]) {
+ for (const getCopy of [commonCopy, reliabilityCopy, teamCopy, marketplaceCopy, operationsCopy]) {
    assert.deepEqual(Object.keys(getCopy('es-419')).sort(), Object.keys(getCopy('en')).sort());
    assert.ok(Object.values(getCopy('es-419')).every(value => value.trim().length));
    assert.deepEqual(getCopy('fr'), getCopy('en'));
@@ -107,4 +108,12 @@ test('role navigation exposes only permitted destinations and denies unknown rol
  for (const role of ['Barber', 'Receptionist', 'Client', undefined, 'Display']) assert.ok(navigationForRole(role).every(item => item.id !== 'team'));
  assert.deepEqual(navigationForRole('Client').map(item => item.id), ['discover', 'history', 'settings']);
  assert.deepEqual(navigationForRole().map(item => item.id), ['discover']);
+});
+
+import { sortShops } from '../src/discovery/sortShops.ts';
+test('Discovery sorts available results without changing the cached order', () => {
+ const shops = [{ name: 'A', availableBarbers: 0, estimatedWaitMinutes: null }, { name: 'B', availableBarbers: 2, estimatedWaitMinutes: 10 }, { name: 'C', availableBarbers: 1, estimatedWaitMinutes: 0 }];
+ assert.deepEqual(sortShops(shops, 'wait').map(s => s.name), ['C','B','A']);
+ assert.deepEqual(sortShops(shops, 'availability').map(s => s.name), ['B','C','A']);
+ assert.deepEqual(shops.map(s => s.name), ['A','B','C']);
 });

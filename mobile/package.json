@@ -12,7 +12,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "generate:route-types": "expo customize tsconfig.json",
-    "typecheck": "npm run generate:route-types && tsc --noEmit"
+    "typecheck": "npm run generate:route-types && tsc --noEmit",
+    "test": "node --experimental-strip-types --test tests/*.test.mjs"
   },
   "dependencies": {
     "@microsoft/signalr": "^9.0.6",
@@ -20,6 +21,8 @@
     "expo": "~57.0.20",
     "expo-constants": "~57.0.15",
     "expo-crypto": "~57.0.2",
+    "expo-dev-client": "~57.0.18",
+    "expo-image-manipulator": "~57.0.16",
     "expo-image-picker": "~57.0.15",
     "expo-linking": "~57.0.9",
     "expo-location": "~57.0.15",

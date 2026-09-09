@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { mapMobileError } from '@/api/errorPolicy';
 import { MobileApiError } from '@/api/httpClient';
 import { useAuth } from '@/auth/AuthProvider';
 import { getLoginExtrasCopy } from '@/auth/loginExtras';
@@ -58,7 +59,7 @@ export default function LoginScreen() {
     try {
       await startExternalOAuth(provider);
     } catch (exception) {
-      setError(exception instanceof MobileApiError ? exception.message : t('login.failed'));
+      setError(t(mapMobileError(exception).key));
       setSocialProvider(undefined);
     }
   }

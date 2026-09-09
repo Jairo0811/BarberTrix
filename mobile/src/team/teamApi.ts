@@ -46,10 +46,10 @@ export const createOperationalBarber = (token: string, name: string, chairNumber
     body: JSON.stringify({ name, chairNumber }),
   }, token);
 
-export const inviteTeamMember = (token: string, name: string, email: string, role: TeamRole, barberId: string | null) =>
+export const inviteTeamMember = (token: string, name: string, email: string, role: TeamRole, barberId: string | null, chairNumber?: number) =>
   apiRequest<Invitation>('/api/team/invitations', {
     method: 'POST',
-    body: JSON.stringify({ name, email, role, barberId }),
+    body: JSON.stringify({ name, email, role, barberId, chairNumber }),
   }, token);
 
 export const approveJoinRequest = (token: string, requestId: string, chairNumber: number) =>

@@ -12,6 +12,8 @@ import {
 } from 'react';
 import { Platform } from 'react-native';
 
+import { safeNotificationPath } from './pushPolicy';
+import { useI18n } from '@/i18n/I18nProvider';
 import { useAuth } from '@/auth/AuthProvider';
 import { publicRequestStore } from '@/turnRequests/publicRequestStore';
 
@@ -66,17 +68,8 @@ const PushContext = createContext<PushContextValue | null>(null);
 
 const staffRoute = '/(app)/turn-requests';
 
-const publicRoutePattern =
-  /^\/request-status\/[a-z0-9-]+\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
 function safeNotificationRoute(value: unknown): Href | null {
-  if (value === staffRoute) {
-    return staffRoute;
-  }
-
-  return typeof value === 'string' && publicRoutePattern.test(value)
-    ? (value as Href)
-    : null;
+  return safeNotificationPath(value) as Href | null;
 }
 
 function errorState(
@@ -85,13 +78,13 @@ function errorState(
   if (error instanceof PushRegistrationError) {
     return {
       status: error.reason === 'denied' ? 'denied' : 'error',
-      message: error.message,
+      message: `pushState.${error.reason}`,
     };
   }
 
   return {
     status: 'error',
-    message: 'No pudimos activar los avisos. Inténtalo de nuevo.',
+    message: 'errors.unexpected',
   };
 }
 
@@ -99,6 +92,7 @@ export function PushNotificationsProvider({
   children,
 }: PropsWithChildren) {
   const { session, status: authStatus } = useAuth();
+  const { t } = useI18n();
 
   const [status, setStatus] = useState<PushOptInStatus>('idle');
   const [message, setMessage] = useState<string | null>(null);
@@ -111,12 +105,12 @@ export function PushNotificationsProvider({
   const handleWebUnsupported = useCallback(() => {
     setStatus('error');
     setMessage(
-      'Las notificaciones push están disponibles en Android y iOS.',
+      'pushState.unsupported',
     );
   }, []);
 
   const enableForStaff = useCallback(async () => {
-    if (!session) {
+    if (!session || session.user.role === 'Client' || session.user.sessionScope === 'Onboarding') {
       return;
     }
 
@@ -262,11 +256,15 @@ export function PushNotificationsProvider({
       }
     }
 
-    await Promise.allSettled(operations);
+    const results = await Promise.allSettled(operations);
+    if (results.some(result => result.status === 'rejected')) throw new Error('Push registration failed');
+    if (results.length > 0) setStatus('enabled');
   }, [session]);
 
   useEffect(() => {
     if (isWeb || !session) {
+      setStatus('idle');
+      setMessage(null);
       return;
     }
 
@@ -277,11 +275,9 @@ export function PushNotificationsProvider({
           return;
         }
 
-        setStatus('enabled');
-
         return refreshEnabledSubscriptions();
       })
-      .catch(() => undefined);
+      .catch(error => { const next = errorState(error); setStatus(next.status); setMessage(next.message); });
   }, [refreshEnabledSubscriptions, session]);
 
   useEffect(() => {
@@ -368,7 +364,7 @@ export function PushNotificationsProvider({
   const value = useMemo<PushContextValue>(
     () => ({
       status,
-      message,
+      message: message ? t(message) : null,
       enableForStaff,
       enableForRequest,
       disableForRequest,
@@ -378,6 +374,7 @@ export function PushNotificationsProvider({
       enableForRequest,
       enableForStaff,
       message,
+      t,
       status,
     ],
   );

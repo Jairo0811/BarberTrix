@@ -1,11 +1,12 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { MobileApiError } from '@/api/httpClient';
 import { useAuth } from '@/auth/AuthProvider';
 import { useI18n } from '@/i18n/I18nProvider';
-import { createTurnRequestRealtimeConnection } from '@/realtime/turnRequestRealtime';
+import { useQueueRealtime } from '@/realtime/useQueueRealtime';
+import { ErrorState } from '@/ui/ErrorState';
 import { acceptTurnRequest, counterProposeTurnRequest, getStaffTurnRequests, rejectTurnRequest } from '@/turnRequests/turnRequestApi';
 import type { TurnRequest } from '@/turnRequests/types';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
@@ -17,7 +18,7 @@ export default function StaffTurnRequestsScreen() {
   const { session, refresh } = useAuth();
   const { locale, t } = useI18n();
   const queryClient = useQueryClient();
-  const queryKey = ['staff-turn-requests', session?.user.barberShopId];
+  const queryKey = ['staff-turn-requests', session?.user.barberShopId, session?.user.id, session?.user.barberId];
 
   const formatDate = (value: string) => new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
   const statusLabel = (request: TurnRequest) => t(`staffRequests.status.${request.status}`);
@@ -44,17 +45,7 @@ export default function StaffTurnRequestsScreen() {
     refetchInterval: 60_000,
   });
 
-  useEffect(() => {
-    if (!session?.accessToken) return;
-
-    const connection = createTurnRequestRealtimeConnection(
-      () => session.accessToken,
-      () => { void queryClient.invalidateQueries({ queryKey }); },
-    );
-
-    void connection.start().catch(() => undefined);
-    return () => { void connection.stop(); };
-  }, [queryClient, session?.accessToken, session?.user.barberShopId]);
+  const realtime = useQueueRealtime(session?.accessToken, `${session?.user.barberShopId}:${session?.user.id}`, () => { void queryClient.invalidateQueries({ queryKey }); });
 
   const mutate = useMutation({
     mutationFn: async (action: { kind: 'accept' | 'reject' | 'counter'; id: string; startsAt?: string }) => withToken(token => {
@@ -90,8 +81,8 @@ export default function StaffTurnRequestsScreen() {
           <View style={styles.topbar}>
             <BrandLogo compact />
             <View style={styles.liveBadge}>
-              <View style={styles.liveDot} />
-              <Text style={styles.liveText}>REALTIME</Text>
+              <View style={[styles.liveDot, realtime !== 'Connected' && { backgroundColor: colors.warning }]} />
+              <Text accessibilityLiveRegion="polite" style={[styles.liveText, realtime !== 'Connected' && { color: colors.warning }]}>{t(`realtime.${realtime}`)}</Text>
             </View>
           </View>
 
@@ -116,11 +107,11 @@ export default function StaffTurnRequestsScreen() {
 
           {requestQuery.error ? (
             <View style={styles.errorBox}>
-              <Text accessibilityRole="alert" style={styles.error}>{t('staffRequests.loadError')}</Text>
+              <ErrorState error={requestQuery.error} retry={() => { void requestQuery.refetch(); }} />
             </View>
           ) : null}
 
-          {!requestQuery.isLoading && actionable.length === 0 ? (
+          {!requestQuery.isLoading && !requestQuery.error && actionable.length === 0 ? (
             <View style={styles.empty}>
               <View style={styles.emptyIcon}><Text style={styles.emptyIconText}>✓</Text></View>
               <View style={styles.emptyCopy}>
@@ -196,7 +187,7 @@ export default function StaffTurnRequestsScreen() {
 
           {mutate.error ? (
             <View style={styles.errorBox}>
-              <Text accessibilityRole="alert" style={styles.error}>{t('staffRequests.actionError')}</Text>
+              <ErrorState error={mutate.error} />
             </View>
           ) : null}
 

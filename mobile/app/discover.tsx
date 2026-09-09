@@ -1,3 +1,5 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { MobileBottomNav } from '@/ui/MobileBottomNav';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
@@ -13,7 +15,7 @@ import { BrandedBackground } from '@/ui/BrandedBackground';
 
 export default function DiscoverScreen() {
   const { session, signOut } = useAuth();
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
   const copy = getDiscoveryCopy(locale);
   const authCopy = getLoginExtrasCopy(locale);
   const [query, setQuery] = useState('');
@@ -28,7 +30,7 @@ export default function DiscoverScreen() {
   });
 
   return (
-    <View style={styles.screen}>
+    <SafeAreaView style={styles.screen}>
       <BrandedBackground />
       <FlatList
         contentContainerStyle={styles.content}
@@ -42,7 +44,7 @@ export default function DiscoverScreen() {
             <View style={styles.brandRow}>
               <BrandLogo compact />
             </View>
-            {isClient && <View style={styles.clientBar}><View><Text style={styles.clientEyebrow}>CUENTA CLIENTE</Text><Text style={styles.clientName}>{session?.user.name}</Text></View><Pressable onPress={signOut} style={styles.clientAction}><Text style={styles.clientActionText}>Cerrar sesión</Text></Pressable></View>}
+            {isClient && <View style={styles.clientBar}><View><Text style={styles.clientEyebrow}>{t('operations.account')}</Text><Text style={styles.clientName}>{session?.user.name}</Text></View><Pressable onPress={signOut} style={styles.clientAction}><Text style={styles.clientActionText}>{t('home.signOut')}</Text></Pressable></View>}
             <Text style={styles.eyebrow}>{copy.eyebrow}</Text>
             <Text style={styles.title}>{copy.title}</Text>
             <Text style={styles.subtitle}>{copy.subtitle}</Text>
@@ -55,10 +57,11 @@ export default function DiscoverScreen() {
           ? <ActivityIndicator color={colors.primaryGlow} size="large" style={styles.state} />
           : <Text style={styles.stateText}>{shopsQuery.isError ? copy.error : copy.empty}</Text>}
         ListFooterComponent={session
-          ? (!isClient ? <Pressable accessibilityRole="button" onPress={() => router.push('/(app)')} style={({ pressed }) => [styles.staffButton, pressed && styles.pressed]}><Text style={styles.staffButtonText}>Volver al espacio profesional</Text></Pressable> : null)
+          ? (!isClient ? <Pressable accessibilityRole="button" onPress={() => router.push('/(app)')} style={({ pressed }) => [styles.staffButton, pressed && styles.pressed]}><Text style={styles.staffButtonText}>{t('operations.today')}</Text></Pressable> : null)
           : <Pressable accessibilityRole="button" onPress={() => router.push('/(auth)/login')} style={({ pressed }) => [styles.staffButton, pressed && styles.pressed]}><Text style={styles.staffButtonText}>{copy.staffLogin}</Text></Pressable>}
       />
-    </View>
+      {isClient && <View style={{ padding: 12 }}><MobileBottomNav active="discover" /></View>}
+    </SafeAreaView>
   );
 }
 
@@ -80,5 +83,5 @@ function ShopCard({ item, copy, canBook, signInToBook }: { item: DiscoveryShopCa
 }
 
 const styles = StyleSheet.create({
-  screen:{flex:1,backgroundColor:colors.background},content:{paddingHorizontal:spacing.lg,paddingTop:spacing.xxxl + spacing.md,paddingBottom:spacing.xxxl,gap:spacing.md},header:{gap:spacing.sm,marginBottom:spacing.lg},brandRow:{marginBottom:spacing.sm,alignItems:'flex-start'},clientBar:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',borderWidth:1,borderColor:colors.borderStrong,borderRadius:radius.md,backgroundColor:colors.surface,padding:spacing.md,marginBottom:spacing.md},clientEyebrow:{...typography.eyebrow,color:colors.primaryGlow},clientName:{color:colors.text,fontWeight:'900',fontSize:16,marginTop:2},clientAction:{paddingHorizontal:10,paddingVertical:8},clientActionText:{color:colors.textMuted,fontWeight:'800',fontSize:12},eyebrow:{...typography.eyebrow,color:colors.primaryGlow},title:{...typography.title,color:colors.text,maxWidth:620},subtitle:{...typography.body,color:colors.textMuted,maxWidth:660},authNotice:{marginTop:spacing.sm,padding:spacing.md,borderRadius:radius.md,borderWidth:1,borderColor:colors.borderStrong,backgroundColor:colors.surface},authNoticeText:{...typography.caption,color:colors.textMuted},search:{marginTop:spacing.md,minHeight:52,borderWidth:1,borderColor:colors.borderStrong,borderRadius:radius.md,backgroundColor:colors.surface,color:colors.text,paddingHorizontal:spacing.lg,fontSize:16},card:{borderWidth:1,borderColor:colors.border,borderRadius:radius.lg,backgroundColor:colors.surface,padding:spacing.lg,gap:spacing.lg},cardTop:{flexDirection:'row',gap:spacing.md,alignItems:'flex-start',justifyContent:'space-between'},cardIdentity:{flex:1,gap:spacing.xs},shopName:{...typography.sectionTitle,color:colors.text},address:{...typography.caption,color:colors.textMuted},waitBadge:{minWidth:116,borderRadius:radius.md,paddingHorizontal:spacing.md,paddingVertical:spacing.sm,backgroundColor:colors.successSoft,alignItems:'flex-end'},waitLabel:{...typography.caption,color:colors.textMuted},waitValue:{fontSize:18,fontWeight:'900',color:colors.success},metrics:{flexDirection:'row',gap:spacing.sm},metric:{flex:1,borderRadius:radius.md,backgroundColor:colors.surfaceStrong,padding:spacing.md},metricValue:{fontSize:22,fontWeight:'900',color:colors.text},metricLabel:{...typography.caption,color:colors.textMuted},primaryButton:{minHeight:50,alignItems:'center',justifyContent:'center',borderRadius:radius.md,backgroundColor:colors.primary,paddingHorizontal:spacing.lg},primaryButtonText:{fontWeight:'900',color:colors.white},staffButton:{minHeight:48,alignItems:'center',justifyContent:'center',marginTop:spacing.xl,borderRadius:radius.md,borderWidth:1,borderColor:colors.borderStrong},staffButtonText:{fontWeight:'800',color:colors.primaryGlow},pressed:{opacity:.82},state:{marginVertical:spacing.xxxl},stateText:{...typography.body,color:colors.textMuted,textAlign:'center',marginVertical:spacing.xxxl}
+  screen:{flex:1,backgroundColor:colors.background},content:{paddingHorizontal:spacing.lg,paddingTop:spacing.lg,paddingBottom:spacing.xxxl,gap:spacing.md},header:{gap:spacing.sm,marginBottom:spacing.lg},brandRow:{marginBottom:spacing.sm,alignItems:'flex-start'},clientBar:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',borderWidth:1,borderColor:colors.borderStrong,borderRadius:radius.md,backgroundColor:colors.surface,padding:spacing.md,marginBottom:spacing.md},clientEyebrow:{...typography.eyebrow,color:colors.primaryGlow},clientName:{color:colors.text,fontWeight:'900',fontSize:16,marginTop:2},clientAction:{paddingHorizontal:10,paddingVertical:8},clientActionText:{color:colors.textMuted,fontWeight:'800',fontSize:12},eyebrow:{...typography.eyebrow,color:colors.primaryGlow},title:{...typography.title,color:colors.text,maxWidth:620},subtitle:{...typography.body,color:colors.textMuted,maxWidth:660},authNotice:{marginTop:spacing.sm,padding:spacing.md,borderRadius:radius.md,borderWidth:1,borderColor:colors.borderStrong,backgroundColor:colors.surface},authNoticeText:{...typography.caption,color:colors.textMuted},search:{marginTop:spacing.md,minHeight:52,borderWidth:1,borderColor:colors.borderStrong,borderRadius:radius.md,backgroundColor:colors.surface,color:colors.text,paddingHorizontal:spacing.lg,fontSize:16},card:{borderWidth:1,borderColor:colors.border,borderRadius:radius.lg,backgroundColor:colors.surface,padding:spacing.lg,gap:spacing.lg},cardTop:{flexDirection:'row',gap:spacing.md,alignItems:'flex-start',justifyContent:'space-between'},cardIdentity:{flex:1,gap:spacing.xs},shopName:{...typography.sectionTitle,color:colors.text},address:{...typography.caption,color:colors.textMuted},waitBadge:{minWidth:116,borderRadius:radius.md,paddingHorizontal:spacing.md,paddingVertical:spacing.sm,backgroundColor:colors.successSoft,alignItems:'flex-end'},waitLabel:{...typography.caption,color:colors.textMuted},waitValue:{fontSize:18,fontWeight:'900',color:colors.success},metrics:{flexDirection:'row',gap:spacing.sm},metric:{flex:1,borderRadius:radius.md,backgroundColor:colors.surfaceStrong,padding:spacing.md},metricValue:{fontSize:22,fontWeight:'900',color:colors.text},metricLabel:{...typography.caption,color:colors.textMuted},primaryButton:{minHeight:50,alignItems:'center',justifyContent:'center',borderRadius:radius.md,backgroundColor:colors.primary,paddingHorizontal:spacing.lg},primaryButtonText:{fontWeight:'900',color:colors.white},staffButton:{minHeight:48,alignItems:'center',justifyContent:'center',marginTop:spacing.xl,borderRadius:radius.md,borderWidth:1,borderColor:colors.borderStrong},staffButtonText:{fontWeight:'800',color:colors.primaryGlow},pressed:{opacity:.82},state:{marginVertical:spacing.xxxl},stateText:{...typography.body,color:colors.textMuted,textAlign:'center',marginVertical:spacing.xxxl}
 });

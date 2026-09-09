@@ -1,9 +1,11 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { MobileApiError } from '@/api/httpClient';
 import { exchangeExternalOAuth, login, loginExternal, logout, refreshSession, type ExternalAuthProvider } from './authApi';
 import { secureSessionStore } from './secureSessionStore';
-import { disableStaffPush } from '@/notifications/pushLifecycle';
+import { singleFlight } from './singleFlight';
+import { disableDevicePush } from '@/notifications/pushLifecycle';
 import type { AuthStatus, MobileAuthResponse, MobileSession } from './types';
 
 type AuthContextValue = {
@@ -46,6 +48,8 @@ async function persistRefresh(response: MobileAuthResponse) {
 }
 
 export function AuthProvider({ children }: PropsWithChildren) {
+  const queryClient = useQueryClient();
+  const sessionEpoch = useRef(0);
   const [status, setStatus] = useState<AuthStatus>('loading');
   const [session, setSession] = useState<MobileSession | null>(null);
 
@@ -56,12 +60,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, []);
 
   const clearSession = useCallback(async () => {
+    queryClient.clear();
     await secureSessionStore.clear();
     setSession(null);
     setStatus('anonymous');
-  }, []);
+  }, [queryClient]);
 
-  const refresh = useCallback(async (): Promise<string | null> => {
+  const refresh = useMemo(() => singleFlight(async (): Promise<string | null> => {
+    const epoch = sessionEpoch.current;
     const stored = await secureSessionStore.read();
     if (!stored || Date.parse(stored.expiresAtUtc) <= Date.now()) {
       await clearSession();
@@ -70,6 +76,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     try {
       const response = await refreshSession(stored.refreshToken);
+      if (epoch !== sessionEpoch.current) return null;
       await applyAuthResponse(response);
       return response.accessToken;
     } catch (exception) {
@@ -79,27 +86,21 @@ export function AuthProvider({ children }: PropsWithChildren) {
       }
       throw exception;
     }
-  }, [applyAuthResponse, clearSession]);
+  }), [applyAuthResponse, clearSession]);
 
   useEffect(() => {
     let active = true;
     (async () => {
       try {
-        const stored = await secureSessionStore.read();
-        if (!active) return;
-        if (!stored || Date.parse(stored.expiresAtUtc) <= Date.now()) {
-          await clearSession();
-          return;
-        }
-        const response = await refreshSession(stored.refreshToken);
-        if (!active) return;
-        await applyAuthResponse(response);
+        await refresh();
       } catch {
-        if (active) await clearSession();
+        // A temporary network failure must not destroy the rotating credential.
+        // No authenticated data is displayed until the API restores the session.
+        if (active) setStatus('anonymous');
       }
     })();
     return () => { active = false; };
-  }, [applyAuthResponse, clearSession]);
+  }, [refresh]);
 
   const routeAfterSignIn = useCallback((response: MobileAuthResponse) => {
     if (isClient(response)) {
@@ -128,10 +129,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, [applyAuthResponse, routeAfterSignIn]);
 
   const signOut = useCallback(async () => {
+    sessionEpoch.current++;
     const stored = await secureSessionStore.read();
-    if (session?.user.role !== 'Client') {
-      try { if (session) await disableStaffPush(session.accessToken, session.user.id); } catch { /* Push cleanup is best effort. */ }
-    }
+    try { if (session) await disableDevicePush(session.accessToken, session.user.id); } catch { /* Remote cleanup can fail offline; local sign-out still succeeds. */ }
     if (stored) {
       try { await logout(stored.refreshToken); } catch { /* Local sign-out must still succeed. */ }
     }

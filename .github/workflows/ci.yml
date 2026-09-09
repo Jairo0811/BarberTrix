@@ -119,6 +119,8 @@ jobs:
         env:
           EXPO_PUBLIC_API_BASE_URL: https://api.example.test
         run: npm run typecheck
+      - name: Test mobile reliability
+        run: npm test
       - name: Bundle Android
         env:
           EXPO_PUBLIC_API_BASE_URL: https://api.example.test

@@ -1,32 +1,49 @@
 import { router } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/auth/AuthProvider';
 import { useI18n } from '@/i18n/I18nProvider';
-import { PushOptInCard } from '@/notifications/PushOptInCard';
-import { usePushNotifications } from '@/notifications/PushNotificationsProvider';
-import { colors, radius, spacing } from '@/theme/tokens';
-import { BrandLogo } from '@/ui/BrandLogo';
-import { BrandedBackground } from '@/ui/BrandedBackground';
+import { changeAvailability, getToday, operateTurn } from '@/operations/api';
+import { MobileApiError } from '@/api/httpClient';
+import { useQueueRealtime } from '@/realtime/useQueueRealtime';
+import { Card, Action, ScreenHeader } from '@/ui/OperationalUI';
+import { ErrorState } from '@/ui/ErrorState';
 import { MobileBottomNav } from '@/ui/MobileBottomNav';
+import { colors } from '@/theme/tokens';
 
-export default function HomeScreen() {
-  const { session, signOut } = useAuth(); const { t } = useI18n(); const push = usePushNotifications();
-  const role = session?.user.role; const roleLabel = role ? t(`mobile.role.${role}`) : '';
-  const canManageTeam = role === 'Owner' || role === 'Administrator';
-  return <SafeAreaView style={styles.safe}><BrandedBackground compact /><View style={styles.shell}><ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-    <View style={styles.topbar}><BrandLogo compact /><Pressable accessibilityRole="button" onPress={signOut} style={styles.logout}><Text style={styles.logoutText}>{t('home.signOut')}</Text></Pressable></View>
-    <View style={styles.hero}><Text style={styles.eyebrow}>BARBERTRIX MOBILE</Text><Text style={styles.title}>{t('home.hello', { name: session?.user.name ?? t('home.team') })}</Text><View style={styles.roleBadge}><View style={styles.roleDot}/><Text style={styles.roleText}>{roleLabel}</Text></View><Text style={styles.body}>{t('home.body')}</Text></View>
-    <View style={styles.metricsRow}><View style={styles.metricCard}><Text style={styles.metricValue}>LIVE</Text><Text style={styles.metricLabel}>{t('home.requests')}</Text></View><View style={styles.metricCard}><Text style={styles.metricValue}>{roleLabel || '—'}</Text><Text style={styles.metricLabel}>BarberTrix</Text></View></View>
-    <Pressable accessibilityRole="button" onPress={() => router.push('/(app)/turn-requests')} style={styles.primaryCard}><Text style={styles.cardKicker}>OPERACIÓN EN VIVO</Text><Text style={styles.cardTitle}>{t('home.requests')}</Text><Text style={styles.cardText}>{t('home.requestsText')}</Text><Text style={styles.cardActionText}>{t('home.requests')}  →</Text></Pressable>
-    {canManageTeam && <Pressable accessibilityRole="button" onPress={() => router.push('/(app)/team')} style={styles.teamCard}><Text style={styles.cardKicker}>EQUIPO</Text><Text style={styles.cardTitle}>Empleados y vinculaciones</Text><Text style={styles.cardText}>Invita personal, aprueba solicitudes de barberos independientes y administra miembros activos.</Text><Text style={styles.cardActionText}>Administrar equipo  →</Text></Pressable>}
-    {role === 'Owner' && <Pressable accessibilityRole="button" onPress={() => router.push('/(app)/marketplace-profile')} style={styles.marketplaceCard}><Text style={styles.cardKicker}>MARKETPLACE</Text><Text style={styles.cardTitle}>Perfil público de tu barbería</Text><Text style={styles.cardText}>Completa tu ficha comercial y decide cuándo aparecer en BarberTrix Discovery.</Text><Text style={styles.marketplaceAction}>Administrar publicación  →</Text></Pressable>}
-    <View style={styles.sectionHeader}><Text style={styles.sectionEyebrow}>BARBERTRIX</Text><Text style={styles.sectionTitle}>{t('home.pushTitle')}</Text></View>
-    <PushOptInCard status={push.status} message={push.message} title={t('home.pushTitle')} body={t('home.pushBody')} onEnable={() => push.enableForStaff()} />
-    <View style={styles.footerCard}><View style={styles.footerLine}/><Text style={styles.footerBrand}>BarberTrix</Text><Text style={styles.footerText}>Mobile workspace</Text></View>
-  </ScrollView><View style={styles.navWrap}><MobileBottomNav active="home" /></View></View></SafeAreaView>;
+export default function TodayScreen() {
+ const { session, refresh } = useAuth(); const { t, locale } = useI18n();
+ const withToken = async <T,>(fn: (token: string) => Promise<T>): Promise<T> => {
+   if (!session) throw new MobileApiError('', 401);
+   try { return await fn(session.accessToken); } catch (error) {
+     if (error instanceof MobileApiError && error.status === 401) { const token = await refresh(); if (token) return fn(token); }
+     throw error;
+   }
+ };
+ const query = useQuery({ queryKey: ['today', session?.user.id, session?.user.barberShopId], queryFn: () => withToken(getToday), enabled: !!session, refetchInterval: 30_000 });
+ const realtime = useQueueRealtime(session?.accessToken, `${session?.user.id}:${session?.user.barberShopId}`, () => { void query.refetch(); });
+ const mutation = useMutation({ mutationFn: (fn: (token: string) => Promise<unknown>) => withToken(fn), onSuccess: () => { void query.refetch(); } });
+ const data = query.data;
+ const canManage = session?.user.role === 'Owner' || session?.user.role === 'Administrator';
+ return <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}><ScrollView contentContainerStyle={{ padding: 20, gap: 18, width: '100%', maxWidth: 780, alignSelf: 'center' }} refreshControl={<RefreshControl refreshing={query.isRefetching} onRefresh={() => { void query.refetch(); }} />}>
+   <ScreenHeader title={t('operations.today')} context={data?.shopName} realtime={realtime} />
+   {query.isLoading && <ActivityIndicator color={colors.primaryGlow} />}
+   {query.error && <ErrorState error={query.error} retry={() => { void query.refetch(); }} />}
+   {mutation.error && <ErrorState error={mutation.error} />}
+   {data && <>
+     <Card><Text style={{ color: colors.text }}>{t('operations.wait')}: {new Intl.NumberFormat(locale, { style: 'unit', unit: 'minute', unitDisplay: 'short' }).format(data.estimatedWaitMinutes)}</Text><Action label={`${t('home.requests')} · ${data.pendingRequests}`} onPress={() => router.push('/(app)/turn-requests')} />{canManage && <Action label={t('operations.team')} onPress={() => router.push('/(app)/team')} />}{session?.user.role === 'Owner' && <Action label="Marketplace" onPress={() => router.push('/(app)/marketplace-profile')} />}</Card>
+     <Text accessibilityRole="header" style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>{t('operations.queue')}</Text>
+     {!data.turns.length && <Text style={{ color: colors.textMuted }}>{t('operations.empty')}</Text>}
+     {data.turns.map(turn => <Card key={turn.id}><Text style={{ color: colors.text, fontWeight: '800' }}>{turn.ticketNumber} · {turn.customerName}</Text><Text style={{ color: colors.textMuted }}>{turn.serviceName} · {t(`operations.${turn.status}`)}</Text>
+       {turn.status === 'Waiting' && data.barbers.filter(barber => barber.status === 'Available' && (!turn.barberId || barber.id === turn.barberId)).map(barber => <Action key={barber.id} disabled={mutation.isPending} label={`${t('operations.call')} · ${barber.name}`} onPress={() => mutation.mutate(token => operateTurn(token, turn.id, `call/${barber.id}`))} />)}
+       {turn.status === 'Called' && <><Action disabled={mutation.isPending} label={t('operations.start')} onPress={() => mutation.mutate(token => operateTurn(token, turn.id, 'start'))} /><Action disabled={mutation.isPending} label={t('operations.noShow')} onPress={() => mutation.mutate(token => operateTurn(token, turn.id, 'no-show'))} /></>}
+       {turn.status === 'InService' && <Action disabled={mutation.isPending} label={t('operations.complete')} onPress={() => mutation.mutate(token => operateTurn(token, turn.id, 'complete'))} />}
+     </Card>)}
+     <Text accessibilityRole="header" style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>{t('operations.appointments')}</Text>
+     {!data.appointments.length && <Text style={{ color: colors.textMuted }}>{t('operations.empty')}</Text>}
+     {data.appointments.map(item => <Card key={item.id}><Text style={{ color: colors.text }}>{new Intl.DateTimeFormat(locale, { timeStyle: 'short', timeZone: data.timeZoneId }).format(new Date(item.startsAtUtc))} · {item.customerName}</Text><Text style={{ color: colors.textMuted }}>{item.serviceName}</Text></Card>)}
+     {data.barbers.map(barber => <Card key={barber.id}><Text style={{ color: colors.text }}>{barber.name} · {t(`operations.${barber.status}`)}</Text>{barber.status !== 'Busy' && (['Available', 'Break', 'Offline'] as const).filter(status => status !== barber.status).map(status => <Action key={status} label={t(`operations.${status}`)} disabled={mutation.isPending} onPress={() => mutation.mutate(token => changeAvailability(token, barber.id, status))} />)}</Card>)}
+   </>}
+ </ScrollView><View style={{ padding: 12 }}><MobileBottomNav active="home" /></View></SafeAreaView>;
 }
-
-const styles = StyleSheet.create({
- safe:{flex:1,backgroundColor:colors.background},shell:{flex:1},content:{width:'100%',maxWidth:760,alignSelf:'center',paddingHorizontal:spacing.xl,paddingTop:spacing.lg,paddingBottom:spacing.xl,gap:spacing.xl},topbar:{flexDirection:'row',alignItems:'center',justifyContent:'space-between'},logout:{borderWidth:1,borderColor:colors.border,borderRadius:radius.md,paddingHorizontal:14,paddingVertical:9},logoutText:{color:colors.textMuted,fontWeight:'700'},hero:{gap:10},eyebrow:{color:colors.primaryGlow,fontSize:12,fontWeight:'900',letterSpacing:2},title:{color:colors.text,fontSize:30,fontWeight:'900'},body:{color:colors.textMuted,lineHeight:21},roleBadge:{alignSelf:'flex-start',flexDirection:'row',alignItems:'center',gap:7,paddingHorizontal:10,paddingVertical:6,borderRadius:99,backgroundColor:colors.surface},roleDot:{width:7,height:7,borderRadius:4,backgroundColor:colors.primaryGlow},roleText:{color:colors.text,fontWeight:'700'},metricsRow:{flexDirection:'row',gap:12},metricCard:{flex:1,padding:16,borderRadius:radius.lg,backgroundColor:colors.surface,borderWidth:1,borderColor:colors.border},metricValue:{color:colors.text,fontSize:17,fontWeight:'900'},metricLabel:{color:colors.textMuted,marginTop:4},primaryCard:{padding:spacing.xl,borderRadius:radius.lg,backgroundColor:colors.surface,borderWidth:1,borderColor:colors.border,gap:8},teamCard:{padding:spacing.xl,borderRadius:radius.lg,backgroundColor:colors.surfaceStrong,borderWidth:1,borderColor:colors.borderStrong,gap:8},marketplaceCard:{padding:spacing.xl,borderRadius:radius.lg,backgroundColor:colors.surface,borderWidth:1,borderColor:colors.primaryGlow,gap:8},cardKicker:{color:colors.primaryGlow,fontSize:11,fontWeight:'900',letterSpacing:1.5},cardTitle:{color:colors.text,fontSize:21,fontWeight:'900'},cardText:{color:colors.textMuted,lineHeight:20},cardActionText:{color:colors.primaryGlow,fontWeight:'800',marginTop:5},marketplaceAction:{color:colors.primaryGlow,fontWeight:'900',marginTop:5},sectionHeader:{gap:4},sectionEyebrow:{color:colors.primaryGlow,fontSize:11,fontWeight:'900',letterSpacing:1.5},sectionTitle:{color:colors.text,fontSize:20,fontWeight:'900'},footerCard:{alignItems:'center',gap:6,paddingVertical:20},footerLine:{width:40,height:2,backgroundColor:colors.border},footerBrand:{color:colors.text,fontWeight:'900'},footerText:{color:colors.textMuted},navWrap:{width:'100%',maxWidth:760,alignSelf:'center'}
-});

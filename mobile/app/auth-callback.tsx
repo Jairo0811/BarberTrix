@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useI18n } from '@/i18n/I18nProvider';
 import { useAuth } from '@/auth/AuthProvider';
 import { consumePendingExternalOAuth } from '@/auth/socialOAuth';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 import { BrandedBackground } from '@/ui/BrandedBackground';
 
 export default function AuthCallbackScreen() {
+  const { t } = useI18n();
   const { code } = useLocalSearchParams<{ code?: string }>();
   const { completeExternalOAuth } = useAuth();
   const [error, setError] = useState<string>();
@@ -21,7 +23,7 @@ export default function AuthCallbackScreen() {
           throw new Error('La autorización externa no pudo recuperarse.');
         await completeExternalOAuth(handoffCode, pending.codeVerifier);
       } catch {
-        if (active) setError('No pudimos completar el inicio de sesión. Inténtalo nuevamente.');
+        if (active) setError('errors.unexpected');
       }
     })();
     return () => { active = false; };
@@ -33,20 +35,20 @@ export default function AuthCallbackScreen() {
       <View style={styles.card}>
         {error ? (
           <>
-            <Text style={styles.title}>Inicio de sesión incompleto</Text>
-            <Text style={styles.body}>{error}</Text>
+            <Text style={styles.title}>{t('auth.callbackFailed')}</Text>
+            <Text style={styles.body}>{t(error)}</Text>
             <Pressable accessibilityRole="button" onPress={() => router.replace('/(auth)/login')} style={styles.primaryButton}>
-              <Text style={styles.primaryButtonText}>Volver a iniciar sesión</Text>
+              <Text style={styles.primaryButtonText}>{t('auth.callbackRetry')}</Text>
             </Pressable>
             <Pressable accessibilityRole="button" onPress={() => router.replace('/discover')} style={styles.secondaryButton}>
-              <Text style={styles.secondaryButtonText}>Volver al inicio</Text>
+              <Text style={styles.secondaryButtonText}>{t('auth.backHome')}</Text>
             </Pressable>
           </>
         ) : (
           <>
             <ActivityIndicator color={colors.primaryGlow} size="large" />
-            <Text style={styles.title}>Conectando con BarberTrix</Text>
-            <Text style={styles.body}>Estamos creando tu sesión segura.</Text>
+            <Text style={styles.title}>{t('auth.connecting')}</Text>
+            <Text style={styles.body}>{t('auth.creatingSession')}</Text>
           </>
         )}
       </View>

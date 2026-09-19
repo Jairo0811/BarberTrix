@@ -14,6 +14,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
+import { mapMobileError } from '@/api/errorPolicy';
+import { useI18n } from '@/i18n/I18nProvider';
 import * as Location from 'expo-location';
 import { useAuth } from '@/auth/AuthProvider';
 import { MobileApiError } from '@/api/httpClient';
@@ -52,6 +55,8 @@ const emptyProfile: PublicShopProfile = {
 
 export default function MarketplaceProfileScreen() {
   const { session } = useAuth();
+  const { t } = useI18n();
+  const showError = (error: unknown) => Alert.alert(t('errors.unexpected'), t(mapMobileError(error).key));
   const [profile, setProfile] = useState<PublicShopProfile>(emptyProfile);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -91,7 +96,7 @@ export default function MarketplaceProfileScreen() {
         acceptsAppointments: profile.acceptsAppointments,
       });
       setProfile(result);
-      Alert.alert('Perfil guardado', 'La información pública de tu barbería fue actualizada.');
+      Alert.alert(t('marketplace.saved'), t('marketplace.savedBody'));
     } catch (error) {
       showError(error);
     } finally {
@@ -103,7 +108,7 @@ export default function MarketplaceProfileScreen() {
     if (!token) return;
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Permiso necesario', 'BarberTrix necesita acceso a tus fotos para seleccionar esta imagen.');
+      Alert.alert(t('marketplace.permission'), t('marketplace.permissionBody'));
       return;
     }
 
@@ -112,25 +117,29 @@ export default function MarketplaceProfileScreen() {
       allowsEditing: true,
       aspect: kind === 'logo' ? [1, 1] : [16, 9],
       quality: 0.85,
-      base64: true,
+      base64: false,
     });
     if (result.canceled) return;
 
     const asset = result.assets?.[0];
-    if (!asset?.base64) {
-      Alert.alert('No se pudo completar', 'No se pudo leer la imagen seleccionada.');
+    if (!asset?.uri) {
+      Alert.alert(t('marketplace.failed'), t('marketplace.readFailed'));
       return;
     }
 
     setMediaBusy(kind);
     try {
-      const upload = await uploadShopMedia(
-        token,
-        kind,
-        asset.fileName ?? `${kind}.jpg`,
-        asset.mimeType ?? 'image/jpeg',
-        asset.base64,
-      );
+      // Reject oversized inputs before allocating a base64 string or making HTTP calls.
+      const maxBytes = (kind === 'logo' ? 2 : 5) * 1024 * 1024;
+      if (asset.fileSize && asset.fileSize > maxBytes) throw new MobileApiError('', 400, 'MEDIA_TOO_LARGE');
+      const maxDimension = kind === 'logo' ? 768 : 1600;
+      const resize = Math.max(asset.width, asset.height) > maxDimension
+        ? [{ resize: asset.width >= asset.height ? { width: maxDimension } : { height: maxDimension } }] : [];
+      // Native decode + JPEG output handles iPhone HEIC without lying about its MIME.
+      const normalized = await manipulateAsync(asset.uri, resize, { compress: 0.82, format: SaveFormat.JPEG, base64: true });
+      if (!normalized.base64) throw new MobileApiError('', 400, 'MEDIA_EMPTY');
+      if (normalized.base64.length * 3 / 4 > maxBytes) throw new MobileApiError('', 400, 'MEDIA_TOO_LARGE');
+      const upload = await uploadShopMedia(token, kind, `${kind}.jpg`, 'image/jpeg', normalized.base64);
       patch(kind === 'logo' ? 'logoUrl' : 'coverImageUrl', upload.url);
     } catch (error) {
       showError(error);
@@ -142,7 +151,7 @@ export default function MarketplaceProfileScreen() {
   async function useCurrentLocation() {
     const permission = await Location.requestForegroundPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Ubicación desactivada', 'Permite el acceso a la ubicación para colocar tu barbería en el mapa.');
+      Alert.alert(t('marketplace.locationDenied'), t('marketplace.locationPermission'));
       return;
     }
 
@@ -159,7 +168,7 @@ export default function MarketplaceProfileScreen() {
         if (!profile.location.neighborhood) patchLocation('neighborhood', place.district ?? null);
       }
     } catch {
-      Alert.alert('No se pudo ubicar', 'No pudimos obtener tu ubicación actual. Puedes mover el marcador manualmente.');
+      Alert.alert(t('marketplace.locationFailed'), t('marketplace.locationHelp'));
     }
   }
 
@@ -183,7 +192,7 @@ export default function MarketplaceProfileScreen() {
   }
 
   if (session?.user.role !== 'Owner') {
-    return <SafeAreaView style={styles.safe}><Text style={styles.denied}>Solo el propietario puede administrar la publicación de la barbería.</Text></SafeAreaView>;
+    return <SafeAreaView style={styles.safe}><Text style={styles.denied}>{t('marketplace.denied')}</Text></SafeAreaView>;
   }
 
   if (loading) {
@@ -197,88 +206,86 @@ export default function MarketplaceProfileScreen() {
     <SafeAreaView style={styles.safe}>
       <BrandedBackground compact />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Pressable onPress={() => router.back()}><Text style={styles.back}>← Volver</Text></Pressable>
+        <Pressable onPress={() => router.back()}><Text style={styles.back}>{t('marketplace.back')}</Text></Pressable>
 
         <View>
-          <Text style={styles.eyebrow}>MARKETPLACE</Text>
-          <Text style={styles.title}>Perfil público</Text>
-          <Text style={styles.body}>Configura cómo aparece tu barbería en BarberTrix Discovery.</Text>
+          <Text style={styles.eyebrow}>{t('marketplace.title')}</Text>
+          <Text style={styles.title}>{t('marketplace.title')}</Text>
+          <Text style={styles.body}>{t('marketplace.body')}</Text>
         </View>
 
         <View style={[styles.statusCard, profile.isPublished && styles.statusLive]}>
-          <Text style={styles.statusTitle}>{profile.isPublished ? '● Publicada' : '○ No publicada'}</Text>
-          <Text style={styles.statusText}>{profile.isPublished ? 'Los clientes pueden encontrar tu barbería en Discovery.' : 'Tu barbería permanece privada mientras completas su perfil.'}</Text>
+          <Text style={styles.statusTitle}>{profile.isPublished ? t('marketplace.published') : t('marketplace.unpublished')}</Text>
+          <Text style={styles.statusText}>{profile.isPublished ? t('marketplace.publicBody') : t('marketplace.privateBody')}</Text>
         </View>
 
         {profile.publicationIssues.length > 0 && (
           <View style={styles.checklist}>
-            <Text style={styles.sectionTitle}>Antes de publicar</Text>
-            {profile.publicationIssues.map(issue => <Text key={issue} style={styles.issue}>• {issue}</Text>)}
+            <Text style={styles.sectionTitle}>{t('marketplace.checklist')}</Text>
+            {profile.publicationIssues.map(issue => <Text key={issue} style={styles.issue}>• {t(publicationIssueKey(issue))}</Text>)}
           </View>
         )}
 
         <View style={styles.section}>
-          <Text style={styles.sectionEyebrow}>INFORMACIÓN</Text>
-          <Field label="Descripción" multiline value={profile.description ?? ''} onChangeText={value => patch('description', value)} placeholder="Cuéntale a los clientes qué hace especial tu barbería." />
-          <Field label="Teléfono público" value={profile.publicPhone ?? ''} onChangeText={value => patch('publicPhone', value)} placeholder="+1 809..." />
+          <Text style={styles.sectionEyebrow}>{t('marketplace.information')}</Text>
+          <Field label={t('marketplace.description')} multiline value={profile.description ?? ''} onChangeText={value => patch('description', value)} placeholder={t('marketplace.descriptionHint')} />
+          <Field label={t('marketplace.phone')} value={profile.publicPhone ?? ''} onChangeText={value => patch('publicPhone', value)} placeholder="+1 809..." />
           <Field label="WhatsApp" value={profile.whatsAppPhone ?? ''} onChangeText={value => patch('whatsAppPhone', value)} placeholder="+1 809..." />
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionEyebrow}>IMÁGENES</Text>
-          <MediaPicker label="Logo de la barbería" uri={logoUri} kind="logo" busy={mediaBusy === 'logo'} onPress={() => pickMedia('logo')} />
-          <MediaPicker label="Portada de la barbería" uri={coverUri} kind="cover" busy={mediaBusy === 'cover'} onPress={() => pickMedia('cover')} />
+          <Text style={styles.sectionEyebrow}>{t('marketplace.images')}</Text>
+          <MediaPicker label={t('marketplace.logo')} uri={logoUri} kind="logo" busy={mediaBusy === 'logo'} onPress={() => pickMedia('logo')} />
+          <MediaPicker label={t('marketplace.cover')} uri={coverUri} kind="cover" busy={mediaBusy === 'cover'} onPress={() => pickMedia('cover')} />
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionEyebrow}>UBICACIÓN</Text>
-          <Field label="Dirección" value={profile.location.address ?? ''} onChangeText={value => patchLocation('address', value)} placeholder="Av. 27 de Febrero #123" />
+          <Text style={styles.sectionEyebrow}>{t('marketplace.location')}</Text>
+          <Field label={t('marketplace.address')} value={profile.location.address ?? ''} onChangeText={value => patchLocation('address', value)} placeholder={t('common.addressExample')} />
           <View style={styles.row}>
-            <View style={styles.flex}><Field label="Ciudad" value={profile.location.city ?? ''} onChangeText={value => patchLocation('city', value)} placeholder="Santo Domingo" /></View>
-            <View style={styles.flex}><Field label="Sector" value={profile.location.neighborhood ?? ''} onChangeText={value => patchLocation('neighborhood', value)} placeholder="Piantini" /></View>
+            <View style={styles.flex}><Field label={t('marketplace.city')} value={profile.location.city ?? ''} onChangeText={value => patchLocation('city', value)} placeholder={t('common.cityExample')} /></View>
+            <View style={styles.flex}><Field label={t('marketplace.neighborhood')} value={profile.location.neighborhood ?? ''} onChangeText={value => patchLocation('neighborhood', value)} placeholder={t('common.districtExample')} /></View>
           </View>
-          <Field label="Referencia (opcional)" value={profile.location.reference ?? ''} onChangeText={value => patchLocation('reference', value)} placeholder="Frente a..." />
-          <Pressable onPress={useCurrentLocation} style={({ pressed }) => [styles.locationButton, pressed && styles.pressed]}><Text style={styles.locationButtonText}>📍 Usar mi ubicación actual</Text></Pressable>
-          <Text style={styles.mapHelp}>Toca el mapa o arrastra el marcador para corregir la ubicación exacta.</Text>
+          <Field label={t('marketplace.reference')} value={profile.location.reference ?? ''} onChangeText={value => patchLocation('reference', value)} placeholder={t('marketplace.referenceHint')} />
+          <Pressable onPress={useCurrentLocation} style={({ pressed }) => [styles.locationButton, pressed && styles.pressed]}><Text style={styles.locationButtonText}>{t('marketplace.locate')}</Text></Pressable>
+          <Text style={styles.mapHelp}>{t('marketplace.mapHint')}</Text>
           <ShopLocationMap latitude={profile.location.latitude} longitude={profile.location.longitude} onChange={updateCoordinates} />
         </View>
 
         <View style={styles.form}>
-          <Toggle label="Aceptar Turno ahora" value={profile.acceptsWalkIns} onValueChange={value => patch('acceptsWalkIns', value)} />
-          <Toggle label="Aceptar reservaciones" value={profile.acceptsAppointments} onValueChange={value => patch('acceptsAppointments', value)} />
+          <Toggle label={t('marketplace.walkIns')} value={profile.acceptsWalkIns} onValueChange={value => patch('acceptsWalkIns', value)} />
+          <Toggle label={t('marketplace.appointments')} value={profile.acceptsAppointments} onValueChange={value => patch('acceptsAppointments', value)} />
         </View>
 
-        <Pressable disabled={saving || !!mediaBusy} onPress={save} style={({ pressed }) => [styles.primary, pressed && styles.pressed, (saving || !!mediaBusy) && styles.disabled]}><Text style={styles.primaryText}>{saving ? 'Guardando…' : 'Guardar perfil'}</Text></Pressable>
-        <Pressable disabled={saving} onPress={togglePublication} style={({ pressed }) => [styles.publish, pressed && styles.pressed, saving && styles.disabled]}><Text style={styles.publishText}>{profile.isPublished ? 'Retirar de Discovery' : 'Publicar en Discovery'}</Text></Pressable>
+        <Pressable disabled={saving || !!mediaBusy} onPress={save} style={({ pressed }) => [styles.primary, pressed && styles.pressed, (saving || !!mediaBusy) && styles.disabled]}><Text style={styles.primaryText}>{saving ? t('marketplace.saving') : t('marketplace.save')}</Text></Pressable>
+        <Pressable disabled={saving} onPress={togglePublication} style={({ pressed }) => [styles.publish, pressed && styles.pressed, saving && styles.disabled]}><Text style={styles.publishText}>{profile.isPublished ? t('marketplace.unpublish') : t('marketplace.publish')}</Text></Pressable>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 function MediaPicker({ label, uri, kind, busy, onPress }: { label: string; uri: string | null; kind: 'logo' | 'cover'; busy: boolean; onPress(): void }) {
+  const { t } = useI18n();
   return (
     <View style={styles.mediaBlock}>
       <Text style={styles.label}>{label}</Text>
-      <Pressable onPress={onPress} style={({ pressed }) => [styles.mediaPicker, kind === 'cover' && styles.coverPicker, pressed && styles.pressed]}>
-        {uri ? <Image source={{ uri }} resizeMode="cover" style={[styles.mediaImage, kind === 'cover' && styles.coverImage]} /> : <Text style={styles.mediaPlaceholder}>＋ Seleccionar imagen</Text>}
-        <Text style={styles.mediaAction}>{busy ? 'Subiendo…' : uri ? 'Cambiar imagen' : 'Elegir desde Fotos'}</Text>
+      <Pressable accessibilityRole="button" disabled={busy} onPress={onPress} style={({ pressed }) => [styles.mediaPicker, kind === 'cover' && styles.coverPicker, pressed && styles.pressed]}>
+        {uri ? <Image source={{ uri }} resizeMode="cover" style={[styles.mediaImage, kind === 'cover' && styles.coverImage]} /> : <Text style={styles.mediaPlaceholder}>{t('marketplace.select')}</Text>}
+        <Text style={styles.mediaAction}>{busy ? t('marketplace.uploading') : uri ? t('marketplace.changeImage') : t('marketplace.photos')}</Text>
       </Pressable>
-      <Text style={styles.mediaHint}>{kind === 'logo' ? 'JPG, PNG o WEBP · máximo 2 MB' : 'JPG, PNG o WEBP · máximo 5 MB'}</Text>
+      <Text style={styles.mediaHint}>{kind === 'logo' ? t('marketplace.logoLimit') : t('marketplace.coverLimit')}</Text>
     </View>
   );
 }
 
 function Field(props: { label: string; value: string; placeholder: string; multiline?: boolean; onChangeText(value: string): void }) {
-  return <View style={styles.field}><Text style={styles.label}>{props.label}</Text><TextInput value={props.value} placeholder={props.placeholder} multiline={props.multiline} onChangeText={props.onChangeText} style={[styles.input, props.multiline && styles.multiline]} placeholderTextColor={colors.textMuted} /></View>;
+  return <View style={styles.field}><Text style={styles.label}>{props.label}</Text><TextInput accessibilityLabel={props.label} value={props.value} placeholder={props.placeholder} multiline={props.multiline} onChangeText={props.onChangeText} style={[styles.input, props.multiline && styles.multiline]} placeholderTextColor={colors.textMuted} /></View>;
 }
 
 function Toggle({ label, value, onValueChange }: { label: string; value: boolean; onValueChange(value: boolean): void }) {
-  return <View style={styles.toggle}><Text style={styles.label}>{label}</Text><Switch value={value} onValueChange={onValueChange} /></View>;
+  return <View style={styles.toggle}><Text style={styles.label}>{label}</Text><Switch accessibilityLabel={label} value={value} onValueChange={onValueChange} /></View>;
 }
 
-function showError(error: unknown) {
-  Alert.alert('No se pudo completar', error instanceof MobileApiError ? error.message : 'Ocurrió un error inesperado.');
-}
 
 function resolveMediaUrl(url: string | null) {
   if (!url) return null;
@@ -329,3 +336,14 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.82 },
   disabled: { opacity: 0.5 },
 });
+
+function publicationIssueKey(issue: string): string {
+  const keys: Record<string, string> = {
+    'barbershop is inactive': 'marketplace.issueInactive',
+    'add an active location with an address': 'marketplace.issueAddress',
+    'confirm the location on the map': 'marketplace.issueMap',
+    'add at least one active service': 'marketplace.issueService',
+    'add at least one active barber': 'marketplace.issueBarber',
+  };
+  return keys[issue] ?? 'marketplace.issueUnknown';
+}

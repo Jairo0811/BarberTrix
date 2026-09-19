@@ -1,7 +1,8 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { focusManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { AppState } from 'react-native';
+import { useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from '@/auth/AuthProvider';
 import { I18nProvider } from '@/i18n/I18nProvider';
@@ -18,6 +19,12 @@ export default function RootLayout() {
       },
     },
   }));
+
+  useEffect(() => {
+    focusManager.setFocused(AppState.currentState === 'active');
+    const subscription = AppState.addEventListener('change', state => focusManager.setFocused(state === 'active'));
+    return () => subscription.remove();
+  }, []);
 
   return (
     <SafeAreaProvider>

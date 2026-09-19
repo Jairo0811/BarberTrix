@@ -48,10 +48,16 @@ internal sealed class QueueService(
             return null;
         if (!barber.IsActive)
             throw new InvalidOperationException("An inactive barber cannot change status.");
-        if (request.Status == BarberStatus.Busy)
-            throw new InvalidOperationException("Busy status is controlled by the active service flow.");
+        if (!Enum.IsDefined(request.Status))
+            throw new BusinessRuleException("BARBER_STATUS_INVALID", "Select a valid availability status.");
+        if (request.Status == BarberStatus.Busy || barber.Status == BarberStatus.Busy)
+            throw new BusinessRuleException("BARBER_SERVICE_ACTIVE", "Finish the active service before changing availability.");
         barber.ChangeStatus(request.Status);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        try { await dbContext.SaveChangesAsync(cancellationToken); }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw new BusinessRuleException("QUEUE_CONFLICT", "Availability changed. Refresh and try again.");
+        }
         await NotifyAsync(barberShopId, "barber-status-changed", cancellationToken);
         return MapBarber(barber);
     }

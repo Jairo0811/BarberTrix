@@ -9,14 +9,19 @@ using BarberTrix.Infrastructure;
 using BarberTrix.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 var isTesting = builder.Environment.IsEnvironment("Testing");
 
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
-builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
-builder.Services.AddSignalR();
+builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database", tags: ["ready"]);
+builder.Services.AddSignalR(options =>
+{
+    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
+});
 builder.Services.AddScoped<IQueueNotifier, SignalRQueueNotifier>();
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -31,6 +36,9 @@ builder.Services.AddRateLimiter(options =>
     options.AddPolicy("publicQueue", context => RateLimitPartition.GetFixedWindowLimiter(context.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions { PermitLimit = isTesting ? 1000 : 60, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
     options.AddPolicy("tvPairing", context => RateLimitPartition.GetFixedWindowLimiter(context.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions { PermitLimit = isTesting ? 1000 : 12, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
     options.AddPolicy("webhooks", context => RateLimitPartition.GetFixedWindowLimiter(context.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions { PermitLimit = isTesting ? 1000 : 120, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+    options.AddPolicy("invitations", context => RateLimitPartition.GetFixedWindowLimiter(
+        $"{context.User.FindFirst("barbershop_id")?.Value}:{context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? context.User.FindFirst("sub")?.Value ?? context.Connection.RemoteIpAddress?.ToString()}",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = isTesting ? 1000 : 30, Window = TimeSpan.FromHours(1), QueueLimit = 0 }));
 });
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
@@ -78,8 +86,8 @@ app.Use(async (context, next) =>
     await next();
 });
 app.UseCors("frontend");
-app.UseRateLimiter();
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
 app.UseMiddleware<RequestTelemetryMiddleware>();
 app.UseMiddleware<AuditMiddleware>();
@@ -88,10 +96,13 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 
 app.MapHealthChecks("/health");
+app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
+app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });
 app.MapGet("/api", () => Results.Ok(new { name = "BarberTrix API", status = "ok" }));
 app.MapAuthEndpoints();
 app.MapBarberOnboardingEndpoints();
 app.MapQueueEndpoints();
+app.MapTodayEndpoints();
 app.MapAppointmentEndpoints();
 app.MapTurnRequestEndpoints();
 app.MapDiscoveryEndpoints();

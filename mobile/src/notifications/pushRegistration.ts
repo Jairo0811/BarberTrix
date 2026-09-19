@@ -1,3 +1,4 @@
+import { resolveEasProjectId } from './pushPolicy';
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
@@ -14,17 +15,13 @@ export class PushRegistrationError extends Error {
 }
 
 function projectId(): string | undefined {
-  const configured = Constants.expoConfig?.extra?.eas?.projectId;
-  return (typeof configured === 'string' ? configured : undefined)
-    ?? Constants.easConfig?.projectId
-    ?? process.env.EXPO_PUBLIC_EAS_PROJECT_ID?.trim();
+  return resolveEasProjectId(Constants.expoConfig?.extra?.eas?.projectId, Constants.easConfig?.projectId, process.env.EXPO_PUBLIC_EAS_PROJECT_ID);
 }
 
 async function ensurePermission(askForPermission: boolean) {
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('turn-requests', {
-      name: 'Solicitudes de turno',
-      description: 'Cambios importantes en solicitudes y citas.',
+      name: 'BarberTrix',
       importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: '#111111',

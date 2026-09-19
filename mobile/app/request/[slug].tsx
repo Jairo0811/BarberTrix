@@ -1,3 +1,5 @@
+import { useAuth } from '@/auth/AuthProvider';
+import { rememberRequest } from '@/turnRequests/recentRequests';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -25,10 +27,11 @@ function localDateFromValue(value: string) {
 
 export default function RequestTurnScreen() {
   const { locale, t } = useI18n();
-  const { slug: slugParam } = useLocalSearchParams<{ slug: string }>();
+  const { session } = useAuth();
+  const { slug: slugParam, serviceId: initialService, barberId: initialBarber } = useLocalSearchParams<{ slug: string; serviceId?: string; barberId?: string }>();
   const slug = Array.isArray(slugParam) ? slugParam[0] : slugParam;
-  const [serviceId, setServiceId] = useState('');
-  const [barberId, setBarberId] = useState('');
+  const [serviceId, setServiceId] = useState(initialService ?? '');
+  const [barberId, setBarberId] = useState(initialBarber ?? '');
   const [date, setDate] = useState(localDate(1));
   const [startsAt, setStartsAt] = useState('');
   const [name, setName] = useState('');
@@ -73,6 +76,7 @@ export default function RequestTurnScreen() {
     }),
     onSuccess: async response => {
       await publicRequestStore.save(response.request.id, response.lookupToken);
+      if (session && slug) await rememberRequest(session.user.id, { id: response.request.id, slug, serviceId: response.request.serviceId, barberId: response.request.barberId });
       router.replace({ pathname: '/request-status/[slug]/[requestId]', params: { slug: slug!, requestId: response.request.id } });
     },
   });

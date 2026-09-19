@@ -1,3 +1,8 @@
+import { commonCopy } from './features/common';
+import { marketplaceCopy } from './features/marketplace';
+import { teamCopy } from './features/team';
+import { operationsCopy } from './features/operations';
+import { reliabilityCopy } from './features/reliability';
 import type { Dictionary, Locale } from './types';
 import { coreLegacy } from './coreLegacy';
 import ja from './ja';
@@ -31,6 +36,11 @@ const french: Dictionary = {
 const withRequestFlows = (locale: OfficialLocale, dictionary: Dictionary): Dictionary => ({
   ...dictionary,
   ...requestFlowsSupplement[locale],
+  ...reliabilityCopy(locale),
+  ...commonCopy(locale),
+  ...operationsCopy(locale),
+  ...teamCopy(locale),
+  ...marketplaceCopy(locale),
 });
 
 const localizedSpanish = withRequestFlows('es-419', spanish);

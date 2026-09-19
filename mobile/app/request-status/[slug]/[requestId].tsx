@@ -245,7 +245,7 @@ export default function RequestStatusScreen() {
           <Text style={styles.hint}>{t('requestStatus.autoRefresh')}</Text>
         </View>
 
-        <Text style={styles.footer}>BarberTrix · Secure request tracking</Text>
+        <Text style={styles.footer}>{t('common.secureTracking')}</Text>
       </ScrollView>
     </SafeAreaView>
   );

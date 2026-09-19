@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { useI18n } from '@/i18n/I18nProvider';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 export type GeoCoordinate = {
@@ -13,15 +14,17 @@ type Props = {
 };
 
 export function ShopLocationMap({ latitude, longitude }: Props) {
+  const { t, locale } = useI18n();
+  const format = (value: number) => new Intl.NumberFormat(locale, { maximumFractionDigits: 6 }).format(value);
   const hasCoordinates = latitude != null && longitude != null;
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Mapa disponible en iOS y Android</Text>
+      <Text style={styles.title}>{t('common.mapNative')}</Text>
       <Text style={styles.body}>
         {hasCoordinates
-          ? `Ubicación guardada: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
-          : 'Usa “Usar mi ubicación actual” desde un dispositivo móvil para fijar el punto exacto.'}
+          ? t('common.locationSaved', { latitude: format(latitude), longitude: format(longitude) })
+          : t('common.locationHint')}
       </Text>
     </View>
   );

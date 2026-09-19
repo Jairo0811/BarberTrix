@@ -34,6 +34,8 @@ public sealed class ApiSmokeTests : IDisposable
     {
         var health = await client.GetAsync("/health");
         Assert.Equal(HttpStatusCode.OK, health.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/health/live")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/health/ready")).StatusCode);
 
         var demo = await client.PostAsync("/api/auth/demo-login", null);
         demo.EnsureSuccessStatusCode();

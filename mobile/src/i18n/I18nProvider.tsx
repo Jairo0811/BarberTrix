@@ -1,5 +1,6 @@
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
-import { AppState } from 'react-native';
+import { AppState, Platform } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 import { dictionaries } from './dictionaries';
 import { officialLocales, officialLocaleSet } from './officialLocales';
 import type { Locale, LocalePreference, TranslationValues } from './types';
@@ -58,13 +59,18 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const setLocalePreference = (preference: LocalePreference) => {
     const normalized = preference === 'system' || officialLocaleSet.has(preference) ? preference : 'system';
     setLocalePreferenceState(normalized);
+    if (Platform.OS !== 'web') void SecureStore.setItemAsync('barbertrix.locale', normalized).catch(() => undefined);
   };
 
   useEffect(() => {
+    let active = true;
+    if (Platform.OS !== 'web') void SecureStore.getItemAsync('barbertrix.locale').then(saved => {
+      if (active && saved && (saved === 'system' || officialLocaleSet.has(saved as Locale))) setLocalePreferenceState(saved as LocalePreference);
+    }).catch(() => undefined);
     const subscription = AppState.addEventListener('change', state => {
       if (state === 'active') setSystemLocale(resolveDeviceLocale());
     });
-    return () => subscription.remove();
+    return () => { active = false; subscription.remove(); };
   }, []);
 
   const value = useMemo<I18nContextValue>(() => ({
@@ -72,7 +78,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     localePreference,
     setLocalePreference,
     t: (key, values) => {
-      const template = dictionaries[locale][key] ?? key;
+      const template = dictionaries[locale][key] ?? dictionaries.en[key] ?? key;
       if (!values) return template;
       return Object.entries(values).reduce(
         (result, [name, replacement]) => result.replaceAll(`{{${name}}}`, String(replacement)),

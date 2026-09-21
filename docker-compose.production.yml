@@ -64,7 +64,7 @@ services:
       Demo__Enabled: "false"
       Auth__RequireVerifiedEmail: "true"
       PasswordReset__FrontendBaseUrl: ${BARBERTRIX_PUBLIC_ORIGIN:?Set BARBERTRIX_PUBLIC_ORIGIN}
-      ExternalAuth__PublicBaseUrl: ${BARBERTRIX_EXTERNAL_AUTH_PUBLIC_BASE_URL:?Set BARBERTRIX_EXTERNAL_AUTH_PUBLIC_BASE_URL}
+      ExternalAuth__PublicBaseUrl: ${BARBERTRIX_EXTERNAL_AUTH_PUBLIC_BASE_URL:-}
       ExternalAuth__WebReturnUri: ${BARBERTRIX_PUBLIC_ORIGIN}/#/auth-callback
       ExternalAuth__Google__ClientId: ${BARBERTRIX_GOOGLE_CLIENT_ID:-}
       ExternalAuth__Google__ClientIds: ${BARBERTRIX_GOOGLE_CLIENT_ID:-}

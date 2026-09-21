@@ -38,6 +38,13 @@ describe('App authentication and role routing', () => {
     expect(JSON.parse(localStorage.getItem('barbertrix.auth') ?? '{}').role).toBe('Owner')
   })
 
+  it('offers Google and Apple sign-in alongside credentials', () => {
+    renderApp()
+
+    expect(screen.getByRole('button', { name: 'Continuar con Google' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Continuar con Apple' })).toBeInTheDocument()
+  })
+
   it('shows a localized error for invalid credentials', async () => {
     vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({
       code: 'AUTH_INVALID_CREDENTIALS', message: 'Invalid credentials', correlationId: 'corr-1',

@@ -140,6 +140,17 @@ public static class AuthEndpoints
             }
         }).RequireRateLimiting("auth");
 
+        group.MapPost("/oauth/exchange", async (ExternalOAuthExchangeRequest request, HttpContext context, IExternalOAuthBroker broker, CancellationToken cancellationToken) =>
+        {
+            DisableAuthResponseCaching(context);
+            var response = await broker.ExchangeAsync(request, UserAgent(context), Ip(context), cancellationToken);
+            if (response is null)
+                return Results.Json(ApiError.From(context, ApiErrorCodes.AuthInvalidCredentials, "La autorización externa ya no es válida."), statusCode: StatusCodes.Status401Unauthorized);
+
+            WriteRefreshCookie(context, response);
+            return Results.Ok(ToClientResponse(response));
+        }).RequireRateLimiting("auth");
+
         group.MapPost("/mobile/oauth/exchange", async (ExternalOAuthExchangeRequest request, HttpContext context, IExternalOAuthBroker broker, CancellationToken cancellationToken) =>
         {
             DisableAuthResponseCaching(context);

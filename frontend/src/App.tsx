@@ -109,6 +109,12 @@ export default function App() {
   }, [selectedPlan, shouldResumePaidPlan])
 
   useEffect(() => {
+    if (auth?.role === 'Client' && window.location.hash.startsWith('#/login')) {
+      window.location.hash = '#/'
+    }
+  }, [auth])
+
+  useEffect(() => {
     if (!auth) return
     if (!auth.isEmailVerified) {
       document.title = `${t('verification.documentTitle')} | BarberTrix`

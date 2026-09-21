@@ -33,6 +33,7 @@ services:
       SystemAdmin__Password: ${BARBERTRIX_DEMO_PASSWORD:?Set BARBERTRIX_DEMO_PASSWORD in .env}
       ShopMedia__RootPath: /app/data/shop-media
       ExternalAuth__PublicBaseUrl: ${BARBERTRIX_EXTERNAL_AUTH_PUBLIC_BASE_URL:-}
+      ExternalAuth__WebReturnUri: ${BARBERTRIX_EXTERNAL_AUTH_WEB_RETURN_URI:-http://localhost:5173/#/auth-callback}
       ExternalAuth__Google__ClientId: ${BARBERTRIX_GOOGLE_CLIENT_ID:-}
       ExternalAuth__Google__ClientIds: ${BARBERTRIX_GOOGLE_CLIENT_ID:-}
       ExternalAuth__Google__ClientSecret: ${BARBERTRIX_GOOGLE_CLIENT_SECRET:-}

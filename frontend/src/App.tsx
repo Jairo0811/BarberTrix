@@ -5,6 +5,7 @@ import type { Auth } from './types'
 import { useI18n } from './i18n'
 import { api, clearAuth, publicApi, readAuth, writeAuth } from './api'
 import { apiErrorMessage } from './apiErrorMessages'
+import { startSocialAuth, type SocialAuthProvider } from './socialOAuth'
 import SubscriptionBanner from './SubscriptionBanner'
 import {
   billingHash,
@@ -145,6 +146,17 @@ export default function App() {
     }
   }
 
+  async function loginWithSocial(provider: SocialAuthProvider) {
+    setBusy(true)
+    setError('')
+    try {
+      await startSocialAuth(provider)
+    } catch {
+      setError(t('login.socialError'))
+      setBusy(false)
+    }
+  }
+
   function logout() {
     void publicApi<void>('/api/auth/logout', { method: 'POST' }).catch(() => undefined)
     clearAuth()
@@ -239,6 +251,17 @@ export default function App() {
           </form>
 
           <div className="login-separator" aria-hidden="true"><span>{t('login.separator')}</span></div>
+
+          <div className="social-login-actions">
+            <button className="social-login-button google" type="button" disabled={busy} onClick={() => void loginWithSocial('google')}>
+              <span className="social-login-mark" aria-hidden="true">G</span>
+              {t('login.google')}
+            </button>
+            <button className="social-login-button apple" type="button" disabled={busy} onClick={() => void loginWithSocial('apple')}>
+              <span className="social-login-mark apple-mark" aria-hidden="true">●</span>
+              {t('login.apple')}
+            </button>
+          </div>
 
           <button className="demo-button" type="button" onClick={() => { window.location.hash = '#/demo' }}>
             <FontAwesomeIcon icon={faFlask} aria-hidden="true" />

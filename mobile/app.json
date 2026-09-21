@@ -6,6 +6,13 @@
     "version": "0.3.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
+    "backgroundColor": "#071120",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#071120"
+    },
     "plugins": [
       "expo-router",
       "expo-notifications",
@@ -34,10 +41,16 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.jmsoftwaresolutions.barbertrix"
+      "bundleIdentifier": "com.jmsoftwaresolutions.barbertrix",
+      "icon": "./assets/icon.png"
     },
     "android": {
       "package": "com.jmsoftwaresolutions.barbertrix",
+      "icon": "./assets/icon.png",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#071120"
+      },
       "permissions": [
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION"

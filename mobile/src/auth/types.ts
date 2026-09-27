@@ -7,7 +7,7 @@ export type MobileUser = {
   name: string;
   role: 'Owner' | 'Administrator' | 'Receptionist' | 'Barber' | 'Client' | string;
   isEmailVerified: boolean;
-  sessionScope: 'Tenant' | 'Onboarding';
+  sessionScope: 'Tenant' | 'Onboarding' | 'Client';
 };
 
 export type MobileSession = {
@@ -27,7 +27,7 @@ export type MobileAuthResponse = {
   name: string;
   role: string;
   isEmailVerified: boolean;
-  sessionScope: 'Tenant' | 'Onboarding';
+  sessionScope: 'Tenant' | 'Onboarding' | 'Client';
 };
 
 export type StoredRefreshSession = {

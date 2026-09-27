@@ -243,8 +243,7 @@ export default function TeamScreen() {
       ))}
     </View>
   </ScrollView><View style={styles.navWrap}><MobileBottomNav active="team" /></View></SafeAreaView>;
-
-
+}
 
 const styles = StyleSheet.create({
   safe:{flex:1,backgroundColor:colors.background},

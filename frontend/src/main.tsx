@@ -26,13 +26,15 @@ const TvPage = lazy(() => import('./TvPage'))
 const AcceptInvitationPage = lazy(() => import('./AcceptInvitationPage'))
 const VerifyEmailPage = lazy(() => import('./VerifyEmailPage'))
 const BillingSuccessPage = lazy(() => import('./BillingSuccessPage'))
+const SocialAuthCallbackPage = lazy(() => import('./SocialAuthCallbackPage'))
 const LegalPage = lazy(() => import('./LegalPage'))
 
-type PublicRoute = 'home' | 'login' | 'register' | 'forgot-password' | 'reset-password' | 'demo' | 'book' | 'customer' | 'tv' | 'accept-invitation' | 'verify-email' | 'billing-success' | 'terms' | 'privacy'
+type PublicRoute = 'home' | 'login' | 'auth-callback' | 'register' | 'forgot-password' | 'reset-password' | 'demo' | 'book' | 'customer' | 'tv' | 'accept-invitation' | 'verify-email' | 'billing-success' | 'terms' | 'privacy'
 
 const routeLabelKeys: Record<PublicRoute, string> = {
   home: 'route.home',
   login: 'route.login',
+  'auth-callback': 'route.login',
   register: 'route.register',
   'forgot-password': 'route.forgot',
   'reset-password': 'route.reset',
@@ -50,6 +52,7 @@ const routeLabelKeys: Record<PublicRoute, string> = {
 const publicRouteByPath: Record<string, PublicRoute> = {
   '/': 'home',
   '/login': 'login',
+  '/auth-callback': 'auth-callback',
   '/register': 'register',
   '/forgot-password': 'forgot-password',
   '/reset-password': 'reset-password',
@@ -159,6 +162,7 @@ function AppRoutes() {
           <Route path="/" element={<HomePage />} />
           <Route path="/billing-section" element={<Navigate to="/app/billing" replace />} />
           <Route path="/login" element={<App />} />
+          <Route path="/auth-callback" element={<SocialAuthCallbackPage />} />
           <Route path="/app/*" element={<App />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />

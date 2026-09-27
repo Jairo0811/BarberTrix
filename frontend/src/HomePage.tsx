@@ -22,13 +22,29 @@ import { buildSupportEmailHref, buildWhatsAppHref, supportConfig } from './suppo
 import { useI18n } from './i18n'
 import { getProductHomeAuxCopy } from './i18n/eastAsiaHomeAuxCopy'
 import { billingHash, loginHash, normalizePaidPlan, registerHash, rememberPendingPaidPlan } from './billingSelection'
-import { readAuth } from './api'
+import { clearAuth, publicApi, readAuth } from './api'
 import { showError } from './alerts'
+
+function authenticatedDestination(role?: string, sessionScope?: string) {
+  return role === 'Client' || sessionScope === 'Client' ? '#/' : '#/app/overview'
+}
 
 function navigateToLogin() {
   rememberPendingPaidPlan(null)
   const auth = readAuth()
-  window.location.hash = auth ? '#/app/overview' : loginHash()
+  window.location.hash = auth ? authenticatedDestination(auth.role, auth.sessionScope) : loginHash()
+}
+
+async function logoutFromHome() {
+  try {
+    await publicApi<void>('/api/auth/logout', { method: 'POST' })
+  } catch {
+    // Local/session cleanup still needs to happen if the API is temporarily unavailable.
+  }
+
+  clearAuth()
+  rememberPendingPaidPlan(null)
+  window.location.hash = loginHash()
 }
 
 function navigateToRegister(planName?: string) {
@@ -37,7 +53,7 @@ function navigateToRegister(planName?: string) {
 
   if (!paidPlan) {
     rememberPendingPaidPlan(null)
-    window.location.hash = auth ? '#/app/overview' : registerHash()
+    window.location.hash = auth ? authenticatedDestination(auth.role, auth.sessionScope) : registerHash()
     return
   }
 
@@ -66,6 +82,7 @@ export default function HomePage() {
   const currentYear = new Date().getFullYear()
   const whatsappHref = buildWhatsAppHref()
   const auth = readAuth()
+  const authenticatedActionLabel = auth?.role === 'Client' || auth?.sessionScope === 'Client' ? t('home.nav.home') : 'Ir al panel'
   const [activeSection, setActiveSection] = useState('inicio')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -146,7 +163,11 @@ export default function HomePage() {
 
         <div className="home-nav-actions">
           {auth ? (
-            <button className="home-primary-button" type="button" onClick={navigateToLogin}>Ir al panel</button>
+            auth.role === 'Client' || auth.sessionScope === 'Client' ? (
+              <button className="home-login-button" type="button" onClick={() => void logoutFromHome()}>{t('logout')}</button>
+            ) : (
+              <button className="home-primary-button" type="button" onClick={navigateToLogin}>{authenticatedActionLabel}</button>
+            )
           ) : (
             <>
               <button className="home-login-button" type="button" onClick={navigateToLogin}>{t('common.login')}</button>
@@ -166,7 +187,7 @@ export default function HomePage() {
           <p>{t('home.hero.text')}</p>
 
           <div className="home-hero-actions">
-            <button className="home-primary-button large" type="button" onClick={auth ? navigateToLogin : () => navigateToRegister()}>{auth ? 'Ir al panel' : t('home.startFree')} <span>→</span></button>
+            <button className="home-primary-button large" type="button" onClick={auth ? navigateToLogin : () => navigateToRegister()}>{auth ? authenticatedActionLabel : t('home.startFree')} <span>→</span></button>
             <a className="home-secondary-button" href="#caracteristicas" onClick={() => selectSection('caracteristicas')}>{t('home.viewFeatures')}</a>
           </div>
 
@@ -229,7 +250,7 @@ export default function HomePage() {
                 <div className="pricing-price"><strong>{plan.price}</strong><span>{t('home.pricing.month')}</span></div>
                 <ul>{plan.features.map(feature => <li key={feature}><FontAwesomeIcon icon={faCheck} /> {feature}</li>)}</ul>
                 <button className={plan.featured ? 'home-primary-button pricing-button' : 'home-login-button pricing-button'} type="button" onClick={() => navigateToRegister(plan.name)}>
-                  {paidPlan ? `${paidPlan} · ${plan.price}` : auth ? 'Ir al panel' : t('home.startFree')}
+                  {paidPlan ? `${paidPlan} · ${plan.price}` : auth ? authenticatedActionLabel : t('home.startFree')}
                 </button>
               </article>
             )
@@ -252,7 +273,7 @@ export default function HomePage() {
         <div className="contact-card">
           <h3>{t('home.contact.cardTitle')}</h3>
           <p>{t('home.contact.cardText')}</p>
-          <button className="home-primary-button contact-button" type="button" onClick={auth ? navigateToLogin : () => navigateToRegister()}>{auth ? 'Ir al panel' : t('home.startFree')} <span>→</span></button>
+          <button className="home-primary-button contact-button" type="button" onClick={auth ? navigateToLogin : () => navigateToRegister()}>{auth ? authenticatedActionLabel : t('home.startFree')} <span>→</span></button>
           <small>{t('home.contact.cardNote')}</small>
         </div>
       </section>

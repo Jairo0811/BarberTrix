@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
@@ -21,6 +21,9 @@ function renderApp() {
 
 describe('App authentication and role routing', () => {
   beforeEach(() => {
+    localStorage.clear()
+    sessionStorage.clear()
+    window.location.hash = '#/login'
     localStorage.setItem('barbertrix.locale', 'es-419')
     vi.stubGlobal('fetch', vi.fn())
   })
@@ -36,6 +39,13 @@ describe('App authentication and role routing', () => {
 
     expect(await screen.findByTestId('admin-dashboard')).toHaveTextContent('Jairo')
     expect(JSON.parse(localStorage.getItem('barbertrix.auth') ?? '{}').role).toBe('Owner')
+  })
+
+  it('offers Google and Apple sign-in alongside credentials', () => {
+    renderApp()
+
+    expect(screen.getByRole('button', { name: 'Continuar con Google' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Continuar con Apple' })).toBeInTheDocument()
   })
 
   it('shows a localized error for invalid credentials', async () => {
@@ -57,5 +67,20 @@ describe('App authentication and role routing', () => {
     renderApp()
     expect(await screen.findByTestId('barber-portal')).toHaveTextContent('Barber portal: Jairo')
     expect(screen.queryByTestId('admin-dashboard')).not.toBeInTheDocument()
+  })
+
+  it('keeps Client sessions out of the admin dashboard', async () => {
+    localStorage.setItem('barbertrix.auth', JSON.stringify({
+      ...ownerAuth,
+      role: 'Client',
+      barberShopId: null,
+      sessionScope: 'Client',
+    }))
+    window.location.hash = '#/app/overview'
+
+    renderApp()
+
+    expect(screen.queryByTestId('admin-dashboard')).not.toBeInTheDocument()
+    await waitFor(() => expect(window.location.hash).toBe('#/'))
   })
 })

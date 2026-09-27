@@ -18,7 +18,7 @@ export default function AuthenticatedLayout() {
     );
   }
 
-  if (session?.user.role === 'Client') return <Redirect href="/discover" />;
+  if (session?.user.role === 'Client' || session?.user.sessionScope === 'Client') return <Redirect href="/discover" />;
   if (status === 'onboarding') return <Redirect href="/onboarding" />;
   if (status !== 'authenticated') return <Redirect href="/(auth)/login" />;
 

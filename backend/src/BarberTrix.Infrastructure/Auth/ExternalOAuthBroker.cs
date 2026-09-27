@@ -269,11 +269,20 @@ internal sealed class ExternalOAuthBroker(
             throw new ArgumentException("Invalid PKCE challenge.");
     }
 
-    private static void ValidateReturnUri(string value)
+    private void ValidateReturnUri(string value)
     {
-        if (!Uri.TryCreate(value, UriKind.Absolute, out var uri) ||
-            uri.Scheme is not ("barbertrix" or "exp" or "exps"))
-            throw new ArgumentException("Invalid mobile return URI.");
+        if (!Uri.TryCreate(value, UriKind.Absolute, out var uri))
+            throw new ArgumentException("Invalid external authentication return URI.");
+
+        if (uri.Scheme is "barbertrix" or "exp" or "exps")
+            return;
+
+        var webReturnUri = configuration["ExternalAuth:WebReturnUri"]?.Trim();
+        if (!string.IsNullOrWhiteSpace(webReturnUri) &&
+            string.Equals(value, webReturnUri, StringComparison.Ordinal))
+            return;
+
+        throw new ArgumentException("External authentication return URI is not allowed.");
     }
 
     private static string NormalizeProvider(string provider) => provider.Trim().ToLowerInvariant() switch

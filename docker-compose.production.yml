@@ -64,6 +64,16 @@ services:
       Demo__Enabled: "false"
       Auth__RequireVerifiedEmail: "true"
       PasswordReset__FrontendBaseUrl: ${BARBERTRIX_PUBLIC_ORIGIN:?Set BARBERTRIX_PUBLIC_ORIGIN}
+      ExternalAuth__PublicBaseUrl: ${BARBERTRIX_EXTERNAL_AUTH_PUBLIC_BASE_URL:-}
+      ExternalAuth__WebReturnUri: ${BARBERTRIX_PUBLIC_ORIGIN}/#/auth-callback
+      ExternalAuth__Google__ClientId: ${BARBERTRIX_GOOGLE_CLIENT_ID:-}
+      ExternalAuth__Google__ClientIds: ${BARBERTRIX_GOOGLE_CLIENT_ID:-}
+      ExternalAuth__Google__ClientSecret: ${BARBERTRIX_GOOGLE_CLIENT_SECRET:-}
+      ExternalAuth__Apple__ClientId: ${BARBERTRIX_APPLE_CLIENT_ID:-}
+      ExternalAuth__Apple__ClientIds: ${BARBERTRIX_APPLE_CLIENT_ID:-}
+      ExternalAuth__Apple__TeamId: ${BARBERTRIX_APPLE_TEAM_ID:-}
+      ExternalAuth__Apple__KeyId: ${BARBERTRIX_APPLE_KEY_ID:-}
+      ExternalAuth__Apple__PrivateKey: ${BARBERTRIX_APPLE_PRIVATE_KEY:-}
       Cors__AllowedOrigins__0: ${BARBERTRIX_PUBLIC_ORIGIN}
       Email__Enabled: "true"
       Email__ExposeDevelopmentLinks: "false"

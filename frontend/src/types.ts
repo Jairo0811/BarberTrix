@@ -39,5 +39,5 @@ export type Auth = {
   name: string
   role: string
   isEmailVerified: boolean
-  sessionScope: 'Tenant' | 'Onboarding'
+  sessionScope: 'Tenant' | 'Onboarding' | 'Client'
 }

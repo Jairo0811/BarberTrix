@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -12,8 +12,12 @@ export default function AuthCallbackScreen() {
   const { code } = useLocalSearchParams<{ code?: string }>();
   const { completeExternalOAuth } = useAuth();
   const [error, setError] = useState<string>();
+  const started = useRef(false);
 
   useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+
     let active = true;
     (async () => {
       try {

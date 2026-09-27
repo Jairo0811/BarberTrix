@@ -413,11 +413,7 @@
   }
 
   .report-period {
-    padding: 2.5mm 3mm;
-    border-left: 2px solid #2563eb;
-    background: #f8fbff !important;
-    color: #475467 !important;
-    font-size: 8pt;
+    display: none !important;
   }
 
   .report-kpis {
@@ -513,12 +509,16 @@
   }
 
   .report-print-footer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
     display: flex !important;
     justify-content: space-between;
     gap: 10mm;
-    margin-top: 1mm;
     padding-top: 3mm;
     border-top: 1px solid #d7dee8;
+    background: #fff !important;
     color: #667085;
     font-size: 7pt;
   }

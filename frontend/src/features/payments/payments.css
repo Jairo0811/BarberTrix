@@ -1,6 +1,7 @@
 .cash-workspace {
   display: grid;
   gap: 1.25rem;
+  padding-bottom: 4.5rem;
   --cash-surface: #0b1424;
   --cash-surface-strong: #0e1a2d;
   --cash-border: rgba(126, 157, 205, .18);

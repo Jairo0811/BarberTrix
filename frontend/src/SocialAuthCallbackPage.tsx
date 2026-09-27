@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import type { Auth } from './types'
 import { publicApi, writeAuth } from './api'
@@ -9,15 +9,17 @@ export default function SocialAuthCallbackPage() {
   const { t } = useI18n()
   const location = useLocation()
   const [error, setError] = useState('')
+  const started = useRef(false)
 
   useEffect(() => {
-    let active = true
+    if (started.current) return
+    started.current = true
 
     void (async () => {
       const code = new URLSearchParams(location.search).get('code')
       const pending = consumePendingSocialAuth()
       if (!code || !pending) {
-        if (active) setError(t('login.socialExpired'))
+        setError(t('login.socialExpired'))
         return
       }
 
@@ -26,15 +28,12 @@ export default function SocialAuthCallbackPage() {
           method: 'POST',
           body: JSON.stringify({ code, codeVerifier: pending.codeVerifier }),
         })
-        if (!active) return
         writeAuth(auth, true)
         window.location.hash = auth.role === 'Client' ? '#/' : '#/login'
       } catch {
-        if (active) setError(t('login.socialError'))
+        setError(t('login.socialError'))
       }
     })()
-
-    return () => { active = false }
   }, [location.search, t])
 
   return <main className="login-shell">

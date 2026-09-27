@@ -1,23 +1,26 @@
 export const colors = {
-  background: '#050912',
-  backgroundElevated: '#07101D',
-  surface: '#0A1221',
-  surfaceStrong: '#0D192B',
-  surfaceSoft: '#101A2A',
-  border: 'rgba(126, 157, 205, 0.18)',
-  borderStrong: 'rgba(88, 168, 255, 0.34)',
+  background: '#040812',
+  backgroundElevated: '#07111F',
+  surface: '#0A1424',
+  surfaceStrong: '#0E1C30',
+  surfaceSoft: '#122037',
+  surfaceRaised: '#14263F',
+  border: 'rgba(132, 169, 219, 0.20)',
+  borderStrong: 'rgba(88, 168, 255, 0.42)',
+  divider: 'rgba(151, 180, 220, 0.12)',
   primary: '#1687FF',
   primaryPressed: '#0B73E8',
-  primarySoft: 'rgba(22, 135, 255, 0.14)',
-  primaryGlow: '#58A8FF',
-  text: '#F7F8FB',
-  textMuted: '#AEB8CA',
-  textSubtle: '#7F8DA3',
-  success: '#54D68A',
-  successSoft: 'rgba(84, 214, 138, 0.12)',
-  warning: '#FFB24A',
-  danger: '#FF7A7A',
-  dangerSoft: 'rgba(255, 90, 90, 0.10)',
+  primarySoft: 'rgba(22, 135, 255, 0.15)',
+  primaryGlow: '#62B1FF',
+  text: '#F8FAFD',
+  textMuted: '#B6C2D5',
+  textSubtle: '#8796AD',
+  success: '#58DB91',
+  successSoft: 'rgba(88, 219, 145, 0.13)',
+  warning: '#FFB84D',
+  warningSoft: 'rgba(255, 184, 77, 0.12)',
+  danger: '#FF8282',
+  dangerSoft: 'rgba(255, 105, 105, 0.11)',
   black: '#000000',
   white: '#FFFFFF',
 } as const;
@@ -30,19 +33,22 @@ export const spacing = {
   xl: 24,
   xxl: 32,
   xxxl: 40,
+  huge: 52,
 } as const;
 
 export const radius = {
-  sm: 10,
-  md: 14,
-  lg: 18,
-  xl: 24,
+  sm: 11,
+  md: 15,
+  lg: 20,
+  xl: 26,
+  xxl: 32,
   pill: 999,
 } as const;
 
 export const typography = {
   eyebrow: {
     fontSize: 11,
+    lineHeight: 16,
     fontWeight: '900' as const,
     letterSpacing: 1.8,
   },
@@ -52,17 +58,34 @@ export const typography = {
     fontWeight: '900' as const,
     letterSpacing: -0.8,
   },
+  display: {
+    fontSize: 40,
+    lineHeight: 45,
+    fontWeight: '900' as const,
+    letterSpacing: -1.1,
+  },
   sectionTitle: {
-    fontSize: 18,
-    lineHeight: 24,
+    fontSize: 19,
+    lineHeight: 25,
     fontWeight: '900' as const,
   },
   body: {
     fontSize: 15,
     lineHeight: 22,
   },
+  bodyStrong: {
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '700' as const,
+  },
   caption: {
     fontSize: 12,
     lineHeight: 18,
   },
+} as const;
+
+export const control = {
+  minTouch: 48,
+  inputHeight: 54,
+  buttonHeight: 52,
 } as const;

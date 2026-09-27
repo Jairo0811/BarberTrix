@@ -22,7 +22,7 @@ import { buildSupportEmailHref, buildWhatsAppHref, supportConfig } from './suppo
 import { useI18n } from './i18n'
 import { getProductHomeAuxCopy } from './i18n/eastAsiaHomeAuxCopy'
 import { billingHash, loginHash, normalizePaidPlan, registerHash, rememberPendingPaidPlan } from './billingSelection'
-import { readAuth } from './api'
+import { clearAuth, publicApi, readAuth } from './api'
 import { showError } from './alerts'
 
 function authenticatedDestination(role?: string, sessionScope?: string) {
@@ -33,6 +33,18 @@ function navigateToLogin() {
   rememberPendingPaidPlan(null)
   const auth = readAuth()
   window.location.hash = auth ? authenticatedDestination(auth.role, auth.sessionScope) : loginHash()
+}
+
+async function logoutFromHome() {
+  try {
+    await publicApi<void>('/api/auth/logout', { method: 'POST' })
+  } catch {
+    // Local/session cleanup still needs to happen if the API is temporarily unavailable.
+  }
+
+  clearAuth()
+  rememberPendingPaidPlan(null)
+  window.location.hash = loginHash()
 }
 
 function navigateToRegister(planName?: string) {
@@ -151,7 +163,11 @@ export default function HomePage() {
 
         <div className="home-nav-actions">
           {auth ? (
-            <button className="home-primary-button" type="button" onClick={navigateToLogin}>{authenticatedActionLabel}</button>
+            auth.role === 'Client' || auth.sessionScope === 'Client' ? (
+              <button className="home-login-button" type="button" onClick={() => void logoutFromHome()}>{t('logout')}</button>
+            ) : (
+              <button className="home-primary-button" type="button" onClick={navigateToLogin}>{authenticatedActionLabel}</button>
+            )
           ) : (
             <>
               <button className="home-login-button" type="button" onClick={navigateToLogin}>{t('common.login')}</button>

@@ -103,6 +103,21 @@ export default function ReportsSection({ isDemo, capabilities }: Props) {
     void load(start, end)
   }
 
+  const printReport = () => {
+    if (!report) return
+    const previousTitle = document.title
+    const printTitle = `BarberTrix Business Report ${report.from} - ${report.to}`
+    const restoreTitle = () => {
+      document.title = previousTitle
+      window.removeEventListener('afterprint', restoreTitle)
+    }
+
+    document.title = printTitle
+    window.addEventListener('afterprint', restoreTitle)
+    window.print()
+    window.setTimeout(restoreTitle, 1000)
+  }
+
   const exportCsv = () => {
     if (!report) return
     const rows: Array<Array<string | number>> = [
@@ -149,7 +164,7 @@ export default function ReportsSection({ isDemo, capabilities }: Props) {
     <section className="panel dashboard-section reports-workspace" id="reports-section">
       <div className="reports-header">
         <div><p className="eyebrow">{t('reportsAdmin.eyebrow')}</p><h2>{t('reportsAdmin.title')}</h2><p className="muted">{t('reportsAdmin.lead')}</p></div>
-        <div className="report-actions"><button type="button" className="secondary" onClick={exportCsv} disabled={!report}>{t('reportsAdmin.exportCsv')}</button><button type="button" className="secondary" onClick={() => window.print()} disabled={!report}>{t('reportsAdmin.print')}</button></div>
+        <div className="report-actions"><button type="button" className="secondary" onClick={exportCsv} disabled={!report}>{t('reportsAdmin.exportCsv')}</button><button type="button" className="secondary report-print-action" onClick={printReport} disabled={!report}>{t('reportsAdmin.print')}</button></div>
       </div>
 
       <div className="reports-toolbar" aria-label={t('reportsAdmin.filters')}>
@@ -162,6 +177,18 @@ export default function ReportsSection({ isDemo, capabilities }: Props) {
 
       {error && <p className="form-error" role="alert">{error}</p>}
       {report && <>
+        <header className="report-print-header" aria-hidden="true">
+          <img src="/branding/barbertrix-logo.png" alt="" />
+          <div className="report-print-title">
+            <span>BUSINESS REPORTS 2.0</span>
+            <h1>{t('reportsAdmin.title')}</h1>
+            <p>{t('reportsAdmin.periodComparison', { from: report.from, to: report.to, previousFrom: report.previousPeriod.from, previousTo: report.previousPeriod.to })}</p>
+          </div>
+          <div className="report-print-meta">
+            <strong>{currency}</strong>
+            <span>{new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date())}</span>
+          </div>
+        </header>
         <p className="report-period">{t('reportsAdmin.periodComparison', { from: report.from, to: report.to, previousFrom: report.previousPeriod.from, previousTo: report.previousPeriod.to })}</p>
         <div className="report-kpis">
           <article><span>{t('reportsAdmin.revenue')}</span><strong>{money(locale, revenue, currency)}</strong><Trend current={revenue} previous={previousRevenue} /></article>
@@ -177,6 +204,11 @@ export default function ReportsSection({ isDemo, capabilities }: Props) {
           <article className="report-card"><h3>{t('reportsAdmin.paymentMethods')}</h3><div className="payment-breakdown">{report.revenueByMethod.map(item => <div key={item.key}><div><strong>{methodLabel(item.key, item.label)}</strong><span>{t('reportsAdmin.operationCount', { count: item.count })}</span></div><strong>{money(locale, item.revenueByCurrency[currency] ?? 0, currency)}</strong></div>)}</div></article>
           <article className="report-card"><h3>{t('reportsAdmin.peakHours')}</h3><div className="peak-hours">{report.peakHours.slice(0, 8).map(item => <div key={item.hour}><span>{String(item.hour).padStart(2, '0')}:00</span><div><i style={{ width: `${Math.max((item.completedServices / maxHour) * 100, 4)}%` }} /></div><strong>{item.completedServices}</strong></div>)}</div><p className="muted report-note">{t('reportsAdmin.peakNote')}</p></article>
         </div>
+
+        <footer className="report-print-footer" aria-hidden="true">
+          <span>BarberTrix · Business Reports 2.0</span>
+          <span>{report.from} - {report.to} · {currency}</span>
+        </footer>
       </>}
     </section>
   )

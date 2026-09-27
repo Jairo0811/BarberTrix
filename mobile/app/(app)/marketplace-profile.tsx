@@ -29,7 +29,8 @@ import {
   type PublicShopProfile,
 } from '@/discovery/publicShopProfileApi';
 import { ShopLocationMap, type GeoCoordinate } from '@/discovery/ShopLocationMap';
-import { colors, radius, spacing } from '@/theme/tokens';
+import { colors, radius, spacing, typography } from '@/theme/tokens';
+import { BrandLogo } from '@/ui/BrandLogo';
 import { BrandedBackground } from '@/ui/BrandedBackground';
 
 const emptyProfile: PublicShopProfile = {
@@ -201,46 +202,68 @@ export default function MarketplaceProfileScreen() {
 
   const logoUri = resolveMediaUrl(profile.logoUrl);
   const coverUri = resolveMediaUrl(profile.coverImageUrl);
+  const completion = Math.max(0, 6 - profile.publicationIssues.length);
 
   return (
     <SafeAreaView style={styles.safe}>
       <BrandedBackground compact />
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Pressable onPress={() => router.back()}><Text style={styles.back}>{t('marketplace.back')}</Text></Pressable>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <View style={styles.topbar}>
+          <BrandLogo compact />
+          <Pressable onPress={() => router.back()} style={styles.backButton}><Text style={styles.back}>{t('marketplace.back')}</Text></Pressable>
+        </View>
 
-        <View>
+        <View style={styles.hero}>
           <Text style={styles.eyebrow}>{t('marketplace.title')}</Text>
           <Text style={styles.title}>{t('marketplace.title')}</Text>
           <Text style={styles.body}>{t('marketplace.body')}</Text>
         </View>
 
-        <View style={[styles.statusCard, profile.isPublished && styles.statusLive]}>
-          <Text style={styles.statusTitle}>{profile.isPublished ? t('marketplace.published') : t('marketplace.unpublished')}</Text>
-          <Text style={styles.statusText}>{profile.isPublished ? t('marketplace.publicBody') : t('marketplace.privateBody')}</Text>
+        <View style={[styles.statusHero, profile.isPublished && styles.statusLive]}>
+          <View style={styles.statusMain}>
+            <View style={[styles.statusDot, profile.isPublished && styles.statusDotLive]} />
+            <View style={styles.statusCopy}>
+              <Text style={styles.statusTitle}>{profile.isPublished ? t('marketplace.published') : t('marketplace.unpublished')}</Text>
+              <Text style={styles.statusText}>{profile.isPublished ? t('marketplace.publicBody') : t('marketplace.privateBody')}</Text>
+            </View>
+          </View>
+          <View style={styles.completion}>
+            <Text style={styles.completionValue}>{completion}/6</Text>
+            <Text style={styles.completionLabel}>{t('marketplace.checklist')}</Text>
+          </View>
         </View>
 
         {profile.publicationIssues.length > 0 && (
           <View style={styles.checklist}>
+            <Text style={styles.sectionKicker}>{t('marketplace.checklist')}</Text>
             <Text style={styles.sectionTitle}>{t('marketplace.checklist')}</Text>
-            {profile.publicationIssues.map(issue => <Text key={issue} style={styles.issue}>• {t(publicationIssueKey(issue))}</Text>)}
+            {profile.publicationIssues.map(issue => (
+              <View key={issue} style={styles.issueRow}>
+                <Text style={styles.issueBullet}>•</Text>
+                <Text style={styles.issue}>{t(publicationIssueKey(issue))}</Text>
+              </View>
+            ))}
           </View>
         )}
 
         <View style={styles.section}>
-          <Text style={styles.sectionEyebrow}>{t('marketplace.information')}</Text>
+          <Text style={styles.sectionKicker}>{t('marketplace.information')}</Text>
+          <Text style={styles.sectionTitle}>{t('marketplace.information')}</Text>
           <Field label={t('marketplace.description')} multiline value={profile.description ?? ''} onChangeText={value => patch('description', value)} placeholder={t('marketplace.descriptionHint')} />
           <Field label={t('marketplace.phone')} value={profile.publicPhone ?? ''} onChangeText={value => patch('publicPhone', value)} placeholder="+1 809..." />
           <Field label="WhatsApp" value={profile.whatsAppPhone ?? ''} onChangeText={value => patch('whatsAppPhone', value)} placeholder="+1 809..." />
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionEyebrow}>{t('marketplace.images')}</Text>
+          <Text style={styles.sectionKicker}>{t('marketplace.images')}</Text>
+          <Text style={styles.sectionTitle}>{t('marketplace.images')}</Text>
           <MediaPicker label={t('marketplace.logo')} uri={logoUri} kind="logo" busy={mediaBusy === 'logo'} onPress={() => pickMedia('logo')} />
           <MediaPicker label={t('marketplace.cover')} uri={coverUri} kind="cover" busy={mediaBusy === 'cover'} onPress={() => pickMedia('cover')} />
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionEyebrow}>{t('marketplace.location')}</Text>
+          <Text style={styles.sectionKicker}>{t('marketplace.location')}</Text>
+          <Text style={styles.sectionTitle}>{t('marketplace.location')}</Text>
           <Field label={t('marketplace.address')} value={profile.location.address ?? ''} onChangeText={value => patchLocation('address', value)} placeholder={t('common.addressExample')} />
           <View style={styles.row}>
             <View style={styles.flex}><Field label={t('marketplace.city')} value={profile.location.city ?? ''} onChangeText={value => patchLocation('city', value)} placeholder={t('common.cityExample')} /></View>
@@ -252,13 +275,20 @@ export default function MarketplaceProfileScreen() {
           <ShopLocationMap latitude={profile.location.latitude} longitude={profile.location.longitude} onChange={updateCoordinates} />
         </View>
 
-        <View style={styles.form}>
+        <View style={styles.section}>
+          <Text style={styles.sectionKicker}>{t('marketplace.appointments')}</Text>
+          <Text style={styles.sectionTitle}>{t('marketplace.appointments')}</Text>
           <Toggle label={t('marketplace.walkIns')} value={profile.acceptsWalkIns} onValueChange={value => patch('acceptsWalkIns', value)} />
           <Toggle label={t('marketplace.appointments')} value={profile.acceptsAppointments} onValueChange={value => patch('acceptsAppointments', value)} />
         </View>
 
-        <Pressable disabled={saving || !!mediaBusy} onPress={save} style={({ pressed }) => [styles.primary, pressed && styles.pressed, (saving || !!mediaBusy) && styles.disabled]}><Text style={styles.primaryText}>{saving ? t('marketplace.saving') : t('marketplace.save')}</Text></Pressable>
-        <Pressable disabled={saving} onPress={togglePublication} style={({ pressed }) => [styles.publish, pressed && styles.pressed, saving && styles.disabled]}><Text style={styles.publishText}>{profile.isPublished ? t('marketplace.unpublish') : t('marketplace.publish')}</Text></Pressable>
+        <Pressable disabled={saving || !!mediaBusy} onPress={save} style={({ pressed }) => [styles.primary, pressed && styles.pressed, (saving || !!mediaBusy) && styles.disabled]}>
+          <Text style={styles.primaryText}>{saving ? t('marketplace.saving') : t('marketplace.save')}</Text>
+          <Text style={styles.primaryArrow}>→</Text>
+        </Pressable>
+        <Pressable disabled={saving} onPress={togglePublication} style={({ pressed }) => [styles.publish, profile.isPublished && styles.unpublish, pressed && styles.pressed, saving && styles.disabled]}>
+          <Text style={[styles.publishText, profile.isPublished && styles.unpublishText]}>{profile.isPublished ? t('marketplace.unpublish') : t('marketplace.publish')}</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
@@ -293,48 +323,62 @@ function resolveMediaUrl(url: string | null) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
-  loader: { flex: 1 },
-  denied: { color: colors.text, padding: spacing.xl },
-  content: { width: '100%', maxWidth: 760, alignSelf: 'center', padding: spacing.xl, paddingBottom: 56, gap: spacing.xl },
-  back: { color: colors.primaryGlow, fontWeight: '700' },
-  eyebrow: { color: colors.primaryGlow, fontSize: 12, fontWeight: '800', letterSpacing: 2 },
-  title: { color: colors.text, fontSize: 32, fontWeight: '900', marginTop: 6 },
-  body: { color: colors.textMuted, fontSize: 15, lineHeight: 22, marginTop: 8 },
-  statusCard: { padding: spacing.lg, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
-  statusLive: { borderColor: colors.primaryGlow },
-  statusTitle: { color: colors.text, fontSize: 18, fontWeight: '800' },
-  statusText: { color: colors.textMuted, marginTop: 6, lineHeight: 20 },
-  checklist: { padding: spacing.lg, borderRadius: radius.lg, backgroundColor: colors.surface, gap: 8 },
-  sectionTitle: { color: colors.text, fontSize: 17, fontWeight: '800' },
-  issue: { color: colors.textMuted, lineHeight: 20 },
-  section: { gap: spacing.lg, padding: spacing.lg, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
-  sectionEyebrow: { color: colors.primaryGlow, fontSize: 12, fontWeight: '900', letterSpacing: 1.6 },
-  form: { gap: spacing.lg },
-  field: { gap: 8 },
-  label: { color: colors.text, fontSize: 14, fontWeight: '700' },
-  input: { color: colors.text, backgroundColor: colors.surfaceStrong, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15 },
-  multiline: { minHeight: 110, textAlignVertical: 'top' },
-  row: { flexDirection: 'row', gap: spacing.md },
-  flex: { flex: 1 },
-  toggle: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: spacing.lg, backgroundColor: colors.surface, borderRadius: radius.md },
-  mediaBlock: { gap: 8 },
-  mediaPicker: { minHeight: 190, borderRadius: radius.md, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.borderStrong, backgroundColor: colors.surfaceStrong, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', gap: 8 },
-  coverPicker: { minHeight: 180 },
-  mediaImage: { width: 128, height: 128, borderRadius: radius.md },
-  coverImage: { width: '100%', height: 180, borderRadius: 0 },
-  mediaPlaceholder: { color: colors.textMuted, fontWeight: '800' },
-  mediaAction: { color: colors.primaryGlow, fontWeight: '900' },
-  mediaHint: { color: colors.textMuted, fontSize: 12 },
-  locationButton: { minHeight: 48, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, borderWidth: 1, borderColor: colors.borderStrong },
-  locationButtonText: { color: colors.primaryGlow, fontWeight: '900' },
-  mapHelp: { color: colors.textMuted, fontSize: 12, lineHeight: 18 },
-  primary: { backgroundColor: colors.primaryGlow, borderRadius: radius.md, padding: 16, alignItems: 'center' },
-  primaryText: { color: colors.background, fontWeight: '900', fontSize: 16 },
-  publish: { borderWidth: 1, borderColor: colors.primaryGlow, borderRadius: radius.md, padding: 16, alignItems: 'center' },
-  publishText: { color: colors.primaryGlow, fontWeight: '900', fontSize: 16 },
-  pressed: { opacity: 0.82 },
-  disabled: { opacity: 0.5 },
+  safe:{flex:1,backgroundColor:colors.background},
+  loader:{flex:1},
+  denied:{color:colors.text,padding:spacing.xl},
+  content:{width:'100%',maxWidth:780,alignSelf:'center',padding:spacing.xl,paddingBottom:64,gap:spacing.lg},
+  topbar:{minHeight:58,flexDirection:'row',alignItems:'center',justifyContent:'space-between'},
+  backButton:{minHeight:44,justifyContent:'center',paddingHorizontal:8},
+  back:{color:colors.primaryGlow,fontWeight:'900'},
+  hero:{gap:7},
+  eyebrow:{...typography.eyebrow,color:colors.primaryGlow},
+  title:{...typography.title,color:colors.text,fontSize:31,lineHeight:37},
+  body:{...typography.body,color:colors.textMuted},
+  statusHero:{padding:spacing.lg,borderRadius:radius.xl,borderWidth:1,borderColor:colors.border,backgroundColor:colors.surface,flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:12},
+  statusLive:{borderColor:'rgba(88,219,145,.32)',backgroundColor:colors.successSoft},
+  statusMain:{flex:1,flexDirection:'row',alignItems:'center',gap:12},
+  statusDot:{width:12,height:12,borderRadius:6,backgroundColor:colors.textSubtle},
+  statusDotLive:{backgroundColor:colors.success},
+  statusCopy:{flex:1},
+  statusTitle:{color:colors.text,fontSize:18,fontWeight:'900'},
+  statusText:{color:colors.textMuted,marginTop:4,lineHeight:19,fontSize:13},
+  completion:{minWidth:70,minHeight:62,borderRadius:20,alignItems:'center',justifyContent:'center',backgroundColor:colors.surfaceStrong,borderWidth:1,borderColor:colors.border,paddingHorizontal:8},
+  completionValue:{color:colors.text,fontSize:18,fontWeight:'900'},
+  completionLabel:{color:colors.textSubtle,fontSize:9,fontWeight:'800',marginTop:2},
+  checklist:{padding:spacing.lg,borderRadius:radius.xl,backgroundColor:colors.surface,borderWidth:1,borderColor:colors.border,gap:8},
+  section:{gap:spacing.lg,padding:spacing.lg,borderRadius:radius.xl,backgroundColor:'rgba(10,18,33,.94)',borderWidth:1,borderColor:colors.border},
+  sectionKicker:{...typography.eyebrow,color:colors.primaryGlow},
+  sectionTitle:{...typography.sectionTitle,color:colors.text},
+  issueRow:{flexDirection:'row',gap:8},
+  issueBullet:{color:colors.warning,fontWeight:'900'},
+  issue:{flex:1,color:colors.textMuted,lineHeight:20},
+  field:{gap:8},
+  label:{color:colors.text,fontSize:14,fontWeight:'800'},
+  input:{minHeight:56,color:colors.text,backgroundColor:colors.surfaceStrong,borderWidth:1,borderColor:colors.border,borderRadius:radius.md,paddingHorizontal:14,paddingVertical:13,fontSize:15},
+  multiline:{minHeight:110,textAlignVertical:'top'},
+  row:{flexDirection:'row',gap:spacing.md},
+  flex:{flex:1},
+  mediaBlock:{gap:8},
+  mediaPicker:{overflow:'hidden',minHeight:150,borderRadius:radius.lg,borderWidth:1,borderColor:colors.border,backgroundColor:colors.surfaceStrong,alignItems:'center',justifyContent:'center'},
+  coverPicker:{minHeight:190},
+  mediaImage:{width:'100%',height:150},
+  coverImage:{height:190,borderRadius:0},
+  mediaPlaceholder:{color:colors.textMuted,fontWeight:'800',padding:spacing.xl},
+  mediaAction:{color:colors.primaryGlow,fontWeight:'900',paddingVertical:12},
+  mediaHint:{color:colors.textSubtle,fontSize:11},
+  locationButton:{minHeight:52,borderRadius:radius.md,borderWidth:1,borderColor:colors.borderStrong,backgroundColor:colors.primarySoft,alignItems:'center',justifyContent:'center'},
+  locationButtonText:{color:colors.primaryGlow,fontWeight:'900'},
+  mapHelp:{color:colors.textSubtle,fontSize:12,lineHeight:18},
+  toggle:{minHeight:62,flexDirection:'row',justifyContent:'space-between',alignItems:'center',paddingHorizontal:14,borderRadius:radius.md,backgroundColor:colors.surfaceStrong,borderWidth:1,borderColor:colors.border},
+  primary:{minHeight:58,borderRadius:radius.md,backgroundColor:colors.primary,alignItems:'center',justifyContent:'center',flexDirection:'row'},
+  primaryText:{color:colors.white,fontWeight:'900',fontSize:15},
+  primaryArrow:{position:'absolute',right:20,color:colors.white,fontSize:20,fontWeight:'900'},
+  publish:{minHeight:54,borderRadius:radius.md,backgroundColor:colors.successSoft,borderWidth:1,borderColor:'rgba(88,219,145,.3)',alignItems:'center',justifyContent:'center'},
+  publishText:{color:colors.success,fontWeight:'900'},
+  unpublish:{backgroundColor:colors.dangerSoft,borderColor:'rgba(255,130,130,.28)'},
+  unpublishText:{color:colors.danger},
+  pressed:{opacity:.78},
+  disabled:{opacity:.5},
 });
 
 function publicationIssueKey(issue: string): string {

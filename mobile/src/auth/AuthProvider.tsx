@@ -37,7 +37,7 @@ function toSession(response: MobileAuthResponse): MobileSession {
 }
 
 function isClient(response: MobileAuthResponse) {
-  return response.role === 'Client';
+  return response.role === 'Client' || response.sessionScope === 'Client';
 }
 
 async function persistRefresh(response: MobileAuthResponse) {

@@ -80,7 +80,7 @@ export default function StaffTurnRequestsScreen() {
         >
           <View style={styles.topbar}>
             <BrandLogo compact />
-            <View style={styles.liveBadge}>
+            <View style={[styles.liveBadge, realtime !== 'Connected' && styles.liveBadgeOffline]}>
               <View style={[styles.liveDot, realtime !== 'Connected' && { backgroundColor: colors.warning }]} />
               <Text accessibilityLiveRegion="polite" style={[styles.liveText, realtime !== 'Connected' && { color: colors.warning }]}>{t(`realtime.${realtime}`)}</Text>
             </View>
@@ -102,6 +102,13 @@ export default function StaffTurnRequestsScreen() {
               <Text style={styles.summaryLabel}>{t('staffRequests.recent')}</Text>
             </View>
           </View>
+
+          {realtime !== 'Connected' ? (
+            <View style={styles.realtimeNotice}>
+              <Text style={styles.realtimeNoticeTitle}>{t('realtime.fallbackTitle')}</Text>
+              <Text style={styles.realtimeNoticeText}>{t('realtime.fallbackBody')}</Text>
+            </View>
+          ) : null}
 
           {requestQuery.isLoading ? <ActivityIndicator color={colors.primaryGlow} size="large" /> : null}
 
@@ -250,8 +257,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(84, 214, 138, 0.22)',
   },
+  liveBadgeOffline: { backgroundColor: colors.warningSoft, borderColor: 'rgba(255,184,77,.24)' },
   liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.success },
   liveText: { color: colors.success, fontSize: 9, fontWeight: '900', letterSpacing: 1 },
+  realtimeNotice: { padding: spacing.md, borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(255,184,77,.22)', backgroundColor: colors.warningSoft, gap: 4 },
+  realtimeNoticeTitle: { color: colors.warning, fontWeight: '900', fontSize: 13 },
+  realtimeNoticeText: { color: colors.textMuted, fontSize: 12, lineHeight: 18 },
   headerCopy: { gap: 6, marginBottom: spacing.sm },
   eyebrow: { ...typography.eyebrow, color: colors.primaryGlow },
   title: { ...typography.title, color: colors.text },

@@ -87,6 +87,17 @@ function BarberTrixLogo() {
   )
 }
 
+function ClientRedirect() {
+  const { t } = useI18n()
+
+  useEffect(() => {
+    if (window.location.hash.startsWith('#/app') || window.location.hash.startsWith('#/login'))
+      window.location.hash = '#/'
+  }, [])
+
+  return <main className="login-shell"><p>{t('app.loading')}</p></main>
+}
+
 export default function App() {
   const { t, locale } = useI18n()
   const [auth, setAuth] = useState<Auth | null>(readAuth)
@@ -107,12 +118,6 @@ export default function App() {
   useEffect(() => {
     if (shouldResumePaidPlan && selectedPlan) window.location.hash = billingHash(selectedPlan)
   }, [selectedPlan, shouldResumePaidPlan])
-
-  useEffect(() => {
-    if (auth?.role === 'Client' && window.location.hash.startsWith('#/login')) {
-      window.location.hash = '#/'
-    }
-  }, [auth])
 
   useEffect(() => {
     if (!auth) return
@@ -191,6 +196,8 @@ export default function App() {
   if (auth?.sessionScope === 'Onboarding') return <BarberOnboardingPanel auth={auth} onLogout={logout} onAuthChanged={setAuth} />
 
   if (auth?.role === 'Barber') return <Suspense fallback={<main className="login-shell"><p>{t('loading.barberPortal')}</p></main>}><BarberPortal auth={auth} onLogout={logout} /></Suspense>
+
+  if (auth?.role === 'Client' || auth?.sessionScope === 'Client') return <ClientRedirect />
 
   if (auth) return <>
     <SubscriptionBanner auth={auth} isDemo={isDemo} />

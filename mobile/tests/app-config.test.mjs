@@ -5,6 +5,7 @@ import resolveAppConfig from '../app.config.ts'
 const linkedProjectId = '83dd3aa4-69f4-4339-9891-cc40353cb3aa'
 const buildProjectId = '11111111-2222-4333-8444-555555555555'
 const overrideProjectId = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'
+const nilProjectId = '00000000-0000-0000-0000-000000000000'
 
 function withEnvironment(values, action) {
   const keys = Object.keys(values)
@@ -90,6 +91,17 @@ test('invalid project ids are rejected before build configuration is returned', 
       EAS_BUILD_PROJECT_ID: undefined,
       EXPO_PUBLIC_EAS_PROJECT_ID: 'not-a-uuid',
     }, () => resolveAppConfig(baseConfig())),
-    /EAS projectId must be the UUID assigned by EAS/,
+    /EAS projectId must be the non-placeholder UUID assigned by EAS/,
+  )
+})
+
+test('nil UUID placeholders are rejected instead of overriding the linked project', () => {
+  assert.throws(
+    () => withEnvironment({
+      EAS_BUILD: '1',
+      EAS_BUILD_PROJECT_ID: undefined,
+      EXPO_PUBLIC_EAS_PROJECT_ID: nilProjectId,
+    }, () => resolveAppConfig(baseConfig())),
+    /EAS projectId must be the non-placeholder UUID assigned by EAS/,
   )
 })

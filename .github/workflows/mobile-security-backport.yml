@@ -1,0 +1,61 @@
+name: Mobile security backport
+
+on:
+  push:
+    branches:
+      - security/auth-session-hardening
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mobile-security-backport-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backport:
+    name: Apply safe Mobile dependency fixes
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: security/auth-session-hardening
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.2
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - name: Install current lockfile
+        run: npm ci
+      - name: Apply non-breaking npm audit fixes
+        run: npm audit fix
+      - name: Align Expo SDK 57 managed packages
+        run: >-
+          npx expo install
+          expo-crypto@~57.0.3
+          expo-dev-client@~57.0.19
+          expo-image-manipulator@~57.0.21
+          expo-image-picker@~57.0.20
+          expo-location@~57.0.20
+          expo-notifications@~57.0.22
+          expo-secure-store@~57.0.4
+      - name: Validate Expo alignment
+        run: npx expo install --check
+      - name: Validate no critical production advisories
+        run: npm audit --omit=dev --audit-level=critical
+      - name: Commit dependency manifests
+        run: |
+          if git diff --quiet -- package.json package-lock.json; then
+            echo "No dependency manifest changes required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "chore(mobile): backport safe dependency fixes"
+          git push origin HEAD:security/auth-session-hardening

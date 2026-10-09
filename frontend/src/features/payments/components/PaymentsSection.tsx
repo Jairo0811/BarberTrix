@@ -81,6 +81,10 @@ export default function PaymentsSection({ isDemo }: { isDemo: boolean }) {
     return Number.isFinite(counted) ? counted - current.expectedCash : null
   }, [closeCounted, current])
 
+  const latestSession = sessions[0]
+  const summaryCurrency = current?.currency ?? latestSession?.currency ?? 'DOP'
+  const latestDifference = current ? null : latestSession?.difference ?? null
+
   async function run(action: () => Promise<void>) {
     setBusy(true)
     try { await action() }
@@ -178,7 +182,10 @@ export default function PaymentsSection({ isDemo }: { isDemo: boolean }) {
           <h2>{t('paymentsAdmin.title')}</h2>
           <p className="cash-subtitle">{t('paymentsAdmin.subtitle')}</p>
         </div>
-        {current && <span className="cash-status open">{t('paymentsAdmin.openStatus', { currency: current.currency })}</span>}
+        <span className={`cash-status ${current ? 'open' : 'closed'}`}>
+          <span className="cash-status-dot" aria-hidden="true" />
+          {current ? t('paymentsAdmin.openStatus', { currency: current.currency }) : t('paymentsAdmin.closed')}
+        </span>
       </div>
 
       {isDemo ? (
@@ -186,12 +193,38 @@ export default function PaymentsSection({ isDemo }: { isDemo: boolean }) {
       ) : loading ? (
         <p className="cash-empty">{t('paymentsAdmin.loading')}</p>
       ) : <>
+        <div className="cash-overview" aria-label={t('paymentsAdmin.summaryAria')}>
+          <article>
+            <span>{t('paymentsAdmin.state')}</span>
+            <strong>{current ? t('paymentsAdmin.inProgress') : t('paymentsAdmin.closed')}</strong>
+            <small>{current ? dateTime(locale, current.openedAtUtc) : latestSession ? dateTime(locale, latestSession.closedAtUtc) : '—'}</small>
+          </article>
+          <article>
+            <span>{t('paymentsAdmin.currency')}</span>
+            <strong>{summaryCurrency}</strong>
+            <small>{current ? t('paymentsAdmin.openingBalance') : t('paymentsAdmin.recentSessions')}</small>
+          </article>
+          <article>
+            <span>{t('paymentsAdmin.payments')}</span>
+            <strong>{payments.length}</strong>
+            <small>{t('paymentsAdmin.last30Days')}</small>
+          </article>
+          <article className={latestDifference === 0 ? 'success' : latestDifference == null ? '' : 'warning'}>
+            <span>{t('paymentsAdmin.difference')}</span>
+            <strong>{latestDifference == null ? '—' : money(locale, summaryCurrency, latestDifference)}</strong>
+            <small>{current ? t('paymentsAdmin.inProgress') : t('paymentsAdmin.recentSessions')}</small>
+          </article>
+        </div>
+
         {!current ? (
           <div className="cash-open-card">
-            <div>
-              <p className="eyebrow">{t('paymentsAdmin.shiftStart')}</p>
-              <h3>{t('paymentsAdmin.openTitle')}</h3>
-              <p>{t('paymentsAdmin.openText')}</p>
+            <div className="cash-open-copy">
+              <span className="cash-card-icon" aria-hidden="true">↗</span>
+              <div>
+                <p className="eyebrow">{t('paymentsAdmin.shiftStart')}</p>
+                <h3>{t('paymentsAdmin.openTitle')}</h3>
+                <p>{t('paymentsAdmin.openText')}</p>
+              </div>
             </div>
             <form className="cash-inline-form" onSubmit={submitOpen}>
               <label>{t('paymentsAdmin.currency')}<select name="currency" defaultValue="DOP"><option value="DOP">DOP</option><option value="USD">USD</option></select></label>
@@ -210,8 +243,7 @@ export default function PaymentsSection({ isDemo }: { isDemo: boolean }) {
 
           <div className="cash-grid">
             <article className="cash-card">
-              <p className="eyebrow">{t('paymentsAdmin.charge')}</p>
-              <h3>{t('paymentsAdmin.recordPayment')}</h3>
+              <div className="cash-card-heading"><div><p className="eyebrow">{t('paymentsAdmin.charge')}</p><h3>{t('paymentsAdmin.recordPayment')}</h3></div><span className="cash-card-icon" aria-hidden="true">$</span></div>
               <form className="cash-form" onSubmit={submitPayment}>
                 <label>{t('paymentsAdmin.amount')}<input name="amount" type="number" min="0.01" step="0.01" placeholder="0.00" required /></label>
                 <label>{t('paymentsAdmin.method')}<select name="method" defaultValue="Cash"><option value="Cash">{t('paymentsAdmin.method.Cash')}</option><option value="Card">{t('paymentsAdmin.method.Card')}</option><option value="Transfer">{t('paymentsAdmin.method.Transfer')}</option></select></label>
@@ -221,8 +253,7 @@ export default function PaymentsSection({ isDemo }: { isDemo: boolean }) {
             </article>
 
             <article className="cash-card">
-              <p className="eyebrow">{t('paymentsAdmin.movements')}</p>
-              <h3>{t('paymentsAdmin.manualMovement')}</h3>
+              <div className="cash-card-heading"><div><p className="eyebrow">{t('paymentsAdmin.movements')}</p><h3>{t('paymentsAdmin.manualMovement')}</h3></div><span className="cash-card-icon" aria-hidden="true">↕</span></div>
               <form className="cash-form" onSubmit={submitMovement}>
                 <label>{t('paymentsAdmin.type')}<select name="type" defaultValue="CashOut"><option value="CashOut">{t('paymentsAdmin.cashOut')}</option><option value="CashIn">{t('paymentsAdmin.cashIn')}</option></select></label>
                 <label>{t('paymentsAdmin.amount')}<input name="amount" type="number" min="0.01" step="0.01" required /></label>
@@ -232,8 +263,7 @@ export default function PaymentsSection({ isDemo }: { isDemo: boolean }) {
             </article>
 
             <article className="cash-card close-card">
-              <p className="eyebrow">{t('paymentsAdmin.closing')}</p>
-              <h3>{t('paymentsAdmin.reconcile')}</h3>
+              <div className="cash-card-heading"><div><p className="eyebrow">{t('paymentsAdmin.closing')}</p><h3>{t('paymentsAdmin.reconcile')}</h3></div><span className="cash-card-icon danger-icon" aria-hidden="true">✓</span></div>
               <form className="cash-form" onSubmit={submitClose}>
                 <label>{t('paymentsAdmin.countedCash')}<input name="countedCash" type="number" min="0" step="0.01" value={closeCounted} onChange={event => setCloseCounted(event.target.value)} required /></label>
                 <label>{t('paymentsAdmin.note')}<textarea name="note" rows={2} maxLength={500} placeholder={t('paymentsAdmin.optional')} /></label>
@@ -269,7 +299,7 @@ export default function PaymentsSection({ isDemo }: { isDemo: boolean }) {
                   <td>{methodLabel(item.method)}</td>
                   <td><span className={`payment-state ${item.status.toLowerCase()}`}>{statusLabel(item.status)}</span></td>
                   <td>{item.externalReference || '—'}</td>
-                  <td>{item.status === 'Paid' && <button className="cash-link danger-text" disabled={busy} onClick={() => void refund(item)}>{t('paymentsAdmin.refund')}</button>}</td>
+                  <td>{item.status === 'Paid' && <button className="cash-refund-button" disabled={busy} onClick={() => void refund(item)}>{t('paymentsAdmin.refund')}</button>}</td>
                 </tr>)}
               </tbody>
             </table>
@@ -281,7 +311,7 @@ export default function PaymentsSection({ isDemo }: { isDemo: boolean }) {
           <div className="cash-section-title"><div><p className="eyebrow">{t('paymentsAdmin.closings')}</p><h3>{t('paymentsAdmin.recentSessions')}</h3></div><span>{sessions.length}</span></div>
           <div className="cash-session-grid">
             {sessions.map(session => <article key={session.id}>
-              <div><strong>{dateTime(locale, session.openedAtUtc)}</strong><span>{session.closedAtUtc ? t('paymentsAdmin.closedAt', { date: dateTime(locale, session.closedAtUtc) }) : t('paymentsAdmin.inProgress')}</span></div>
+              <div className="cash-session-main"><strong>{dateTime(locale, session.openedAtUtc)}</strong><span>{session.closedAtUtc ? t('paymentsAdmin.closedAt', { date: dateTime(locale, session.closedAtUtc) }) : t('paymentsAdmin.inProgress')}</span></div>
               <div><span>{t('paymentsAdmin.expected')}</span><strong>{money(locale, session.currency, session.expectedCash)}</strong></div>
               <div><span>{t('paymentsAdmin.counted')}</span><strong>{session.countedCash == null ? '—' : money(locale, session.currency, session.countedCash)}</strong></div>
               <div className={session.difference === 0 ? 'positive' : session.difference == null ? '' : 'negative'}><span>{t('paymentsAdmin.difference')}</span><strong>{session.difference == null ? '—' : money(locale, session.currency, session.difference)}</strong></div>

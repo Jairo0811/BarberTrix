@@ -39,14 +39,25 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
         return;
     }
 
-    foreach (var cidr in builder.Configuration.GetSection("ReverseProxy:KnownNetworks").Get<string[]>() ?? [])
+    var knownNetworks = builder.Configuration.GetSection("ReverseProxy:KnownNetworks").Get<string[]>() ?? [];
+    var knownProxies = builder.Configuration.GetSection("ReverseProxy:KnownProxies").Get<string[]>() ?? [];
+
+    // If an explicit allowlist is configured, make it authoritative instead of
+    // silently retaining the framework's loopback defaults alongside it.
+    if (knownNetworks.Length > 0 || knownProxies.Length > 0)
+    {
+        options.KnownIPNetworks.Clear();
+        options.KnownProxies.Clear();
+    }
+
+    foreach (var cidr in knownNetworks)
     {
         if (!System.Net.IPNetwork.TryParse(cidr, out var network))
             throw new InvalidOperationException($"ReverseProxy:KnownNetworks contains an invalid CIDR: '{cidr}'.");
         options.KnownIPNetworks.Add(network);
     }
 
-    foreach (var value in builder.Configuration.GetSection("ReverseProxy:KnownProxies").Get<string[]>() ?? [])
+    foreach (var value in knownProxies)
     {
         if (!IPAddress.TryParse(value, out var proxy))
             throw new InvalidOperationException($"ReverseProxy:KnownProxies contains an invalid IP address: '{value}'.");

@@ -42,7 +42,9 @@ public static class DependencyInjection
         if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32) throw new InvalidOperationException("Jwt:Key must be configured at runtime with at least 32 characters.");
 
         services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
-        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<AuthService>();
+        services.AddSingleton<ILoginAttemptGuard, LoginAttemptGuard>();
+        services.AddScoped<IAuthService, HardenedAuthService>();
         services.AddScoped<IExternalAuthService, ExternalAuthService>();
         services.AddHttpClient<IExternalIdentityVerifier, ExternalIdentityVerifier>();
         services.AddHttpClient<IExternalOAuthBroker, ExternalOAuthBroker>();
@@ -93,11 +95,10 @@ public static class DependencyInjection
                     var securityStamp = context.Principal?.FindFirst("security_stamp")?.Value;
                     if (!Guid.TryParse(userIdValue, out var userId) || string.IsNullOrWhiteSpace(securityStamp)) { context.Fail("Invalid session."); return; }
                     var db = context.HttpContext.RequestServices.GetRequiredService<ApplicationDbContext>();
-                    var user = await db.Users.AsNoTracking().Where(x => x.Id == userId && x.IsActive && x.SecurityStamp == securityStamp).Select(x => new { x.Email }).SingleOrDefaultAsync(context.HttpContext.RequestAborted);
-                    if (user is null) { context.Fail("Session revoked."); return; }
-                    var systemAdminEmail = configuration["SystemAdmin:Email"] ?? configuration["DemoAdmin:Email"];
-                    if (!string.IsNullOrWhiteSpace(systemAdminEmail) && string.Equals(user.Email, systemAdminEmail.Trim(), StringComparison.OrdinalIgnoreCase) && context.Principal?.Identity is System.Security.Claims.ClaimsIdentity identity && !context.Principal.IsInRole(UserRole.Owner.ToString()))
-                        identity.AddClaim(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, UserRole.Owner.ToString()));
+                    var sessionIsValid = await db.Users.AsNoTracking().AnyAsync(
+                        x => x.Id == userId && x.IsActive && x.SecurityStamp == securityStamp,
+                        context.HttpContext.RequestAborted);
+                    if (!sessionIsValid) context.Fail("Session revoked.");
                 }
             };
         });

@@ -29,9 +29,11 @@ import { paymentsAdminSupplement } from './paymentsAdminSupplement'
 import { reportsAdminSupplement } from './reportsAdminSupplement'
 import { tvSupplement } from './tvSupplement'
 import { tvAudioSupplement } from './tvAudioSupplement'
+import { socialAuthSupplement } from './socialAuthSupplement'
 
 const withCommercialAdmin = (locale: OfficialLocale, dictionary: Dictionary): Dictionary => ({
   ...dictionary,
+  ...socialAuthSupplement[locale],
   ...commercialCoreSupplement[locale],
   ...appointmentsAdminSupplement[locale],
   ...customersAdminSupplement[locale],

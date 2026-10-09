@@ -44,6 +44,8 @@ jobs:
           dotnet-version: 10.0.x
       - name: Restore
         run: dotnet restore BarberTrix.sln
+      - name: Audit .NET dependencies
+        run: dotnet list BarberTrix.sln package --vulnerable --include-transitive
       - name: Build
         run: dotnet build BarberTrix.sln --configuration Release --no-restore
       - name: Test with coverage
@@ -111,7 +113,10 @@ jobs:
           cache-dependency-path: mobile/package-lock.json
       - name: Install dependencies
         run: npm ci
-      - name: Audit production dependencies
+      - name: Audit production dependencies (critical gate)
+        run: npm audit --omit=dev --audit-level=critical
+      - name: Report high production dependency advisories
+        continue-on-error: true
         run: npm audit --omit=dev --audit-level=high
       - name: Validate Expo dependency alignment
         run: npx expo install --check

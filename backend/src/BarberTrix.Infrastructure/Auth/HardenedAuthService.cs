@@ -1,10 +1,13 @@
 using System.Collections.Concurrent;
 using System.Data;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net.Mail;
 using System.Security.Claims;
 using System.Text;
 using BarberTrix.Application.Auth;
+using BarberTrix.Application.Common;
 using BarberTrix.Domain.Entities;
+using BarberTrix.Infrastructure.Common;
 using BarberTrix.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -61,21 +64,43 @@ internal sealed class HardenedAuthService(
     ApplicationDbContext dbContext,
     IPasswordHasher<User> passwordHasher,
     IConfiguration configuration,
-    ILoginAttemptGuard loginAttempts) : IAuthService
+    ILoginAttemptGuard loginAttempts,
+    ITransactionalEmailDispatcher emailDispatcher) : IAuthService
 {
+    private const int MaximumPasswordLength = 128;
     private static readonly User DummyUser = User.CreateClient("Timing Guard", "timing-guard@example.invalid", string.Empty);
     private static readonly string DummyPasswordHash = new PasswordHasher<User>()
         .HashPassword(DummyUser, "Timing-guard-only-password-2026!Aa1");
 
-    public Task<AuthResponse> RegisterOwnerAsync(RegisterOwnerRequest request, string? userAgent, string? ipAddress, CancellationToken cancellationToken = default) =>
-        inner.RegisterOwnerAsync(request, userAgent, ipAddress, cancellationToken);
+    public async Task<AuthResponse> RegisterOwnerAsync(RegisterOwnerRequest request, string? userAgent, string? ipAddress, CancellationToken cancellationToken = default)
+    {
+        ValidateRegistrationCredentials(request.Email, request.Password);
+        try
+        {
+            return await inner.RegisterOwnerAsync(request, userAgent, ipAddress, cancellationToken);
+        }
+        catch (InvalidOperationException ex) when (IsRegistrationCollision(ex))
+        {
+            throw new BusinessRuleException("REGISTRATION_CONFLICT", "Unable to create an account with the supplied registration details.");
+        }
+    }
 
-    public Task<AuthResponse> RegisterBarberAsync(RegisterBarberRequest request, string? userAgent, string? ipAddress, CancellationToken cancellationToken = default) =>
-        inner.RegisterBarberAsync(request, userAgent, ipAddress, cancellationToken);
+    public async Task<AuthResponse> RegisterBarberAsync(RegisterBarberRequest request, string? userAgent, string? ipAddress, CancellationToken cancellationToken = default)
+    {
+        ValidateRegistrationCredentials(request.Email, request.Password);
+        try
+        {
+            return await inner.RegisterBarberAsync(request, userAgent, ipAddress, cancellationToken);
+        }
+        catch (InvalidOperationException ex) when (IsRegistrationCollision(ex))
+        {
+            throw new BusinessRuleException("REGISTRATION_CONFLICT", "Unable to create an account with the supplied registration details.");
+        }
+    }
 
     public async Task<AuthResponse?> LoginAsync(LoginRequest request, string? userAgent, string? ipAddress, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password) || request.Password.Length > MaximumPasswordLength)
             return null;
 
         var normalizedEmail = request.Email.Trim().ToLowerInvariant();
@@ -175,8 +200,12 @@ internal sealed class HardenedAuthService(
     public Task<string?> CreatePasswordResetTokenAsync(ForgotPasswordRequest request, CancellationToken cancellationToken = default) =>
         inner.CreatePasswordResetTokenAsync(request, cancellationToken);
 
-    public Task<bool> ResetPasswordAsync(ResetPasswordRequest request, CancellationToken cancellationToken = default) =>
-        inner.ResetPasswordAsync(request, cancellationToken);
+    public Task<bool> ResetPasswordAsync(ResetPasswordRequest request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrEmpty(request.NewPassword) || request.NewPassword.Length > MaximumPasswordLength)
+            return Task.FromResult(false);
+        return inner.ResetPasswordAsync(request, cancellationToken);
+    }
 
     public Task<string?> CreateEmailVerificationTokenAsync(Guid userId, CancellationToken cancellationToken = default) =>
         inner.CreateEmailVerificationTokenAsync(userId, cancellationToken);
@@ -190,11 +219,24 @@ internal sealed class HardenedAuthService(
     public Task<IReadOnlyList<TeamMemberResponse>> GetTeamAsync(Guid barberShopId, CancellationToken cancellationToken = default) =>
         inner.GetTeamAsync(barberShopId, cancellationToken);
 
-    public Task<InvitationResponse> CreateInvitationAsync(Guid barberShopId, CreateInvitationRequest request, string frontendBaseUrl, bool exposeDevelopmentUrl, CancellationToken cancellationToken = default) =>
-        inner.CreateInvitationAsync(barberShopId, request, frontendBaseUrl, exposeDevelopmentUrl, cancellationToken);
+    public async Task<InvitationResponse> CreateInvitationAsync(Guid barberShopId, CreateInvitationRequest request, string frontendBaseUrl, bool exposeDevelopmentUrl, CancellationToken cancellationToken = default)
+    {
+        ValidateEmail(request.Email);
+        var invitation = await inner.CreateInvitationAsync(barberShopId, request, frontendBaseUrl, exposeDevelopmentUrl, cancellationToken);
+        await emailDispatcher.FlushAsync(cancellationToken);
+        return invitation;
+    }
 
-    public Task<AuthResponse> AcceptInvitationAsync(AcceptInvitationRequest request, string? userAgent, string? ipAddress, CancellationToken cancellationToken = default) =>
-        inner.AcceptInvitationAsync(request, userAgent, ipAddress, cancellationToken);
+    public async Task<AuthResponse> AcceptInvitationAsync(AcceptInvitationRequest request, string? userAgent, string? ipAddress, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrEmpty(request.Password) || request.Password.Length > MaximumPasswordLength)
+            throw new ArgumentException($"Password must not exceed {MaximumPasswordLength} characters.", nameof(request));
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+        var response = await inner.AcceptInvitationAsync(request, userAgent, ipAddress, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return response;
+    }
 
     public Task<bool> DeactivateTeamMemberAsync(Guid barberShopId, Guid userId, CancellationToken cancellationToken = default) =>
         inner.DeactivateTeamMemberAsync(barberShopId, userId, cancellationToken);
@@ -209,6 +251,25 @@ internal sealed class HardenedAuthService(
             .Where(x => x.UserId == userId && x.RevokedAtUtc == null)
             .ExecuteUpdateAsync(setters => setters.SetProperty(x => x.RevokedAtUtc, revokedAt), cancellationToken);
     }
+
+    private static void ValidateRegistrationCredentials(string email, string password)
+    {
+        ValidateEmail(email);
+        if (string.IsNullOrEmpty(password) || password.Length > MaximumPasswordLength)
+            throw new ArgumentException($"Password must be between 1 and {MaximumPasswordLength} characters.", nameof(password));
+    }
+
+    private static void ValidateEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email) || email.Length > 180 ||
+            !MailAddress.TryCreate(email.Trim(), out var address) ||
+            !string.Equals(address.Address, email.Trim(), StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException("A valid email is required.", nameof(email));
+    }
+
+    private static bool IsRegistrationCollision(InvalidOperationException exception) =>
+        exception.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase) ||
+        exception.Message.Contains("already in use", StringComparison.OrdinalIgnoreCase);
 
     private AuthResponse CreateAuthResponse(User user, string refreshToken, DateTimeOffset refreshExpiresAtUtc)
     {

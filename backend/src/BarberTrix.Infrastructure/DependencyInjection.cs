@@ -26,6 +26,7 @@ using BarberTrix.Infrastructure.Tv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -42,7 +43,10 @@ public static class DependencyInjection
         if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32) throw new InvalidOperationException("Jwt:Key must be configured at runtime with at least 32 characters.");
 
         services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
-        services.AddScoped<IAuthService, AuthService>();
+        services.AddMemoryCache();
+        services.AddScoped<AuthService>();
+        services.AddSingleton<ILoginAttemptGuard, LoginAttemptGuard>();
+        services.AddScoped<IAuthService, HardenedAuthService>();
         services.AddScoped<IExternalAuthService, ExternalAuthService>();
         services.AddHttpClient<IExternalIdentityVerifier, ExternalIdentityVerifier>();
         services.AddHttpClient<IExternalOAuthBroker, ExternalOAuthBroker>();
@@ -62,7 +66,10 @@ public static class DependencyInjection
         services.AddScoped<IPublicShopProfileService, PublicShopProfileService>();
         services.AddSingleton<IShopMediaStorage, ShopMediaStorage>();
         services.AddScoped<ITvDisplayService, TvDisplayService>();
-        services.AddScoped<IEmailSender, ConfigurableEmailSender>();
+        services.AddScoped<ConfigurableEmailSender>();
+        services.AddScoped<TransactionalEmailSender>();
+        services.AddScoped<IEmailSender>(provider => provider.GetRequiredService<TransactionalEmailSender>());
+        services.AddScoped<ITransactionalEmailDispatcher>(provider => provider.GetRequiredService<TransactionalEmailSender>());
         services.AddHttpClient<IHumanVerificationService, HumanVerificationService>();
         services.AddHttpClient<IBillingService, PayPalBillingService>();
         services.AddHttpClient<IExpoPushGateway, ExpoPushGateway>();
@@ -92,12 +99,20 @@ public static class DependencyInjection
                     var userIdValue = context.Principal?.FindFirst("sub")?.Value ?? context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
                     var securityStamp = context.Principal?.FindFirst("security_stamp")?.Value;
                     if (!Guid.TryParse(userIdValue, out var userId) || string.IsNullOrWhiteSpace(securityStamp)) { context.Fail("Invalid session."); return; }
-                    var db = context.HttpContext.RequestServices.GetRequiredService<ApplicationDbContext>();
-                    var user = await db.Users.AsNoTracking().Where(x => x.Id == userId && x.IsActive && x.SecurityStamp == securityStamp).Select(x => new { x.Email }).SingleOrDefaultAsync(context.HttpContext.RequestAborted);
-                    if (user is null) { context.Fail("Session revoked."); return; }
-                    var systemAdminEmail = configuration["SystemAdmin:Email"] ?? configuration["DemoAdmin:Email"];
-                    if (!string.IsNullOrWhiteSpace(systemAdminEmail) && string.Equals(user.Email, systemAdminEmail.Trim(), StringComparison.OrdinalIgnoreCase) && context.Principal?.Identity is System.Security.Claims.ClaimsIdentity identity && !context.Principal.IsInRole(UserRole.Owner.ToString()))
-                        identity.AddClaim(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, UserRole.Owner.ToString()));
+
+                    var cache = context.HttpContext.RequestServices.GetRequiredService<IMemoryCache>();
+                    var cacheKey = $"auth-session:{userId:N}:{securityStamp}";
+                    if (!cache.TryGetValue(cacheKey, out bool sessionIsValid))
+                    {
+                        var db = context.HttpContext.RequestServices.GetRequiredService<ApplicationDbContext>();
+                        sessionIsValid = await db.Users.AsNoTracking().AnyAsync(
+                            x => x.Id == userId && x.IsActive && x.SecurityStamp == securityStamp,
+                            context.HttpContext.RequestAborted);
+                        if (sessionIsValid)
+                            cache.Set(cacheKey, true, TimeSpan.FromSeconds(15));
+                    }
+
+                    if (!sessionIsValid) context.Fail("Session revoked.");
                 }
             };
         });

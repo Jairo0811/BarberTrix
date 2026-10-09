@@ -4,6 +4,7 @@ import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-d
 import HomePage from './HomePage'
 import LanguageSwitcher from './LanguageSwitcher'
 import { I18nProvider, useI18n } from './i18n'
+import { hasRememberedAuth, readAuth, restoreRememberedAuth } from './api'
 import { clearPendingPayPalSubscriptionId, paypalCallbackHashFromSearch } from './billingSelection'
 import { isAdminAppPath } from './portals/admin/adminRoutes'
 import './styles.css'
@@ -183,12 +184,19 @@ function AppRoutes() {
   )
 }
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <I18nProvider>
-      <HashRouter>
-        <AppRoutes />
-      </HashRouter>
-    </I18nProvider>
-  </StrictMode>,
-)
+async function bootstrap() {
+  if (!readAuth() && hasRememberedAuth())
+    await restoreRememberedAuth()
+
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <I18nProvider>
+        <HashRouter>
+          <AppRoutes />
+        </HashRouter>
+      </I18nProvider>
+    </StrictMode>,
+  )
+}
+
+void bootstrap()

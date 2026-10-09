@@ -64,7 +64,10 @@ public static class DependencyInjection
         services.AddScoped<IPublicShopProfileService, PublicShopProfileService>();
         services.AddSingleton<IShopMediaStorage, ShopMediaStorage>();
         services.AddScoped<ITvDisplayService, TvDisplayService>();
-        services.AddScoped<IEmailSender, ConfigurableEmailSender>();
+        services.AddScoped<ConfigurableEmailSender>();
+        services.AddScoped<TransactionalEmailSender>();
+        services.AddScoped<IEmailSender>(provider => provider.GetRequiredService<TransactionalEmailSender>());
+        services.AddScoped<ITransactionalEmailDispatcher>(provider => provider.GetRequiredService<TransactionalEmailSender>());
         services.AddHttpClient<IHumanVerificationService, HumanVerificationService>();
         services.AddHttpClient<IBillingService, PayPalBillingService>();
         services.AddHttpClient<IExpoPushGateway, ExpoPushGateway>();

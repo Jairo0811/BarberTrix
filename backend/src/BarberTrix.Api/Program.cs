@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using BarberTrix.Api.Endpoints;
@@ -27,6 +28,41 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
     options.ForwardLimit = 1;
+
+    var trustAnyProxy = builder.Configuration.GetValue<bool>("ReverseProxy:TrustAnyProxy");
+    if (trustAnyProxy)
+    {
+        // Only enable this when the API is reachable exclusively through a trusted edge proxy.
+        // docker-compose.production.yml keeps the API internal and exposes only nginx.
+        options.KnownIPNetworks.Clear();
+        options.KnownProxies.Clear();
+        return;
+    }
+
+    var knownNetworks = builder.Configuration.GetSection("ReverseProxy:KnownNetworks").Get<string[]>() ?? [];
+    var knownProxies = builder.Configuration.GetSection("ReverseProxy:KnownProxies").Get<string[]>() ?? [];
+
+    // If an explicit allowlist is configured, make it authoritative instead of
+    // silently retaining the framework's loopback defaults alongside it.
+    if (knownNetworks.Length > 0 || knownProxies.Length > 0)
+    {
+        options.KnownIPNetworks.Clear();
+        options.KnownProxies.Clear();
+    }
+
+    foreach (var cidr in knownNetworks)
+    {
+        if (!System.Net.IPNetwork.TryParse(cidr, out var network))
+            throw new InvalidOperationException($"ReverseProxy:KnownNetworks contains an invalid CIDR: '{cidr}'.");
+        options.KnownIPNetworks.Add(network);
+    }
+
+    foreach (var value in knownProxies)
+    {
+        if (!IPAddress.TryParse(value, out var proxy))
+            throw new InvalidOperationException($"ReverseProxy:KnownProxies contains an invalid IP address: '{value}'.");
+        options.KnownProxies.Add(proxy);
+    }
 });
 builder.Services.AddRateLimiter(options =>
 {
@@ -99,6 +135,8 @@ app.MapHealthChecks("/health");
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });
 app.MapGet("/api", () => Results.Ok(new { name = "BarberTrix API", status = "ok" }));
+if (isTesting)
+    app.MapGet("/__tests/edge", (HttpContext context) => Results.Ok(new { remoteIp = context.Connection.RemoteIpAddress?.ToString(), scheme = context.Request.Scheme }));
 app.MapAuthEndpoints();
 app.MapBarberOnboardingEndpoints();
 app.MapQueueEndpoints();

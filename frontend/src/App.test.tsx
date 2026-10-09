@@ -38,7 +38,8 @@ describe('App authentication and role routing', () => {
     await user.click(screen.getByRole('button', { name: 'Iniciar sesión' }))
 
     expect(await screen.findByTestId('admin-dashboard')).toHaveTextContent('Jairo')
-    expect(JSON.parse(localStorage.getItem('barbertrix.auth') ?? '{}').role).toBe('Owner')
+    expect(JSON.parse(sessionStorage.getItem('barbertrix.auth') ?? '{}').role).toBe('Owner')
+    expect(localStorage.getItem('barbertrix.auth')).toBeNull()
   })
 
   it('offers Google and Apple sign-in alongside credentials', () => {

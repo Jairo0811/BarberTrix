@@ -2,6 +2,7 @@ import type { Auth } from './types'
 
 export const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
 export const authStorageKey = 'barbertrix.auth'
+export const rememberStorageKey = 'barbertrix.remember-session'
 
 export class ApiClientError extends Error {
   constructor(
@@ -23,21 +24,41 @@ type ApiErrorPayload = {
 }
 
 export function readAuth(): Auth | null {
-  const raw = localStorage.getItem(authStorageKey) ?? sessionStorage.getItem(authStorageKey)
+  let raw = sessionStorage.getItem(authStorageKey)
+
+  // One-time migration from the legacy implementation that persisted the
+  // access token in localStorage when "remember me" was enabled.
+  if (!raw) {
+    const legacy = localStorage.getItem(authStorageKey)
+    if (legacy) {
+      localStorage.removeItem(authStorageKey)
+      localStorage.setItem(rememberStorageKey, 'true')
+      sessionStorage.setItem(authStorageKey, legacy)
+      raw = legacy
+    }
+  }
+
   if (!raw) return null
   try { return JSON.parse(raw) as Auth } catch { clearAuth(); return null }
 }
 
 export function writeAuth(auth: Auth, remember?: boolean) {
-  const useLocal = remember ?? localStorage.getItem(authStorageKey) !== null
   localStorage.removeItem(authStorageKey)
-  sessionStorage.removeItem(authStorageKey)
-  ;(useLocal ? localStorage : sessionStorage).setItem(authStorageKey, JSON.stringify(auth))
+  sessionStorage.setItem(authStorageKey, JSON.stringify(auth))
+
+  if (remember === true) localStorage.setItem(rememberStorageKey, 'true')
+  if (remember === false) localStorage.removeItem(rememberStorageKey)
+
   window.dispatchEvent(new CustomEvent('barbertrix-auth-changed', { detail: auth }))
+}
+
+export function hasRememberedAuth() {
+  return localStorage.getItem(rememberStorageKey) === 'true'
 }
 
 export function clearAuth() {
   localStorage.removeItem(authStorageKey)
+  localStorage.removeItem(rememberStorageKey)
   sessionStorage.removeItem(authStorageKey)
 }
 
@@ -58,6 +79,13 @@ async function refreshAuth(): Promise<Auth | null> {
   const next = await response.json() as Auth
   writeAuth(next)
   return next
+}
+
+export async function restoreRememberedAuth(): Promise<Auth | null> {
+  if (!hasRememberedAuth()) return null
+  const restored = await refreshAuth().catch(() => null)
+  if (!restored) clearAuth()
+  return restored
 }
 
 export async function api<T>(path: string, init?: RequestInit, retry = true): Promise<T> {

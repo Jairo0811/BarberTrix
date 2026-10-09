@@ -26,6 +26,7 @@ using BarberTrix.Infrastructure.Tv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -42,6 +43,7 @@ public static class DependencyInjection
         if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32) throw new InvalidOperationException("Jwt:Key must be configured at runtime with at least 32 characters.");
 
         services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
+        services.AddMemoryCache();
         services.AddScoped<AuthService>();
         services.AddSingleton<ILoginAttemptGuard, LoginAttemptGuard>();
         services.AddScoped<IAuthService, HardenedAuthService>();
@@ -97,10 +99,19 @@ public static class DependencyInjection
                     var userIdValue = context.Principal?.FindFirst("sub")?.Value ?? context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
                     var securityStamp = context.Principal?.FindFirst("security_stamp")?.Value;
                     if (!Guid.TryParse(userIdValue, out var userId) || string.IsNullOrWhiteSpace(securityStamp)) { context.Fail("Invalid session."); return; }
-                    var db = context.HttpContext.RequestServices.GetRequiredService<ApplicationDbContext>();
-                    var sessionIsValid = await db.Users.AsNoTracking().AnyAsync(
-                        x => x.Id == userId && x.IsActive && x.SecurityStamp == securityStamp,
-                        context.HttpContext.RequestAborted);
+
+                    var cache = context.HttpContext.RequestServices.GetRequiredService<IMemoryCache>();
+                    var cacheKey = $"auth-session:{userId:N}:{securityStamp}";
+                    if (!cache.TryGetValue(cacheKey, out bool sessionIsValid))
+                    {
+                        var db = context.HttpContext.RequestServices.GetRequiredService<ApplicationDbContext>();
+                        sessionIsValid = await db.Users.AsNoTracking().AnyAsync(
+                            x => x.Id == userId && x.IsActive && x.SecurityStamp == securityStamp,
+                            context.HttpContext.RequestAborted);
+                        if (sessionIsValid)
+                            cache.Set(cacheKey, true, TimeSpan.FromSeconds(15));
+                    }
+
                     if (!sessionIsValid) context.Fail("Session revoked.");
                 }
             };

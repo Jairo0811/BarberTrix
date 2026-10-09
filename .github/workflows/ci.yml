@@ -37,7 +37,7 @@ jobs:
       ConnectionStrings__DefaultConnection: "Server=localhost,1433;Database=BarberTrixCi;User Id=sa;Password=BarberTrix_CI_2026!Secure;Encrypt=True;TrustServerCertificate=True"
       Jwt__Key: "ci-only-jwt-key-with-more-than-thirty-two-characters-2026"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -73,7 +73,7 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -104,7 +104,7 @@ jobs:
       run:
         working-directory: mobile
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -144,7 +144,7 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -190,7 +190,7 @@ jobs:
       BARBERTRIX_FULLSTACK_CONNECTION: "Server=localhost,1433;Database=BarberTrixFullstackCi;User Id=sa;Password=BarberTrix_CI_2026!Secure;Encrypt=True;TrustServerCertificate=True"
       BARBERTRIX_FULLSTACK_JWT_KEY: "ci-only-fullstack-jwt-key-with-more-than-thirty-two-characters-2026"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -230,6 +230,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: [backend, frontend, mobile, frontend-e2e, fullstack-e2e]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: docker build -f backend/Dockerfile -t barbertrix-api:ci .
       - run: docker build -f frontend/Dockerfile -t barbertrix-web:ci .

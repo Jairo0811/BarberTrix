@@ -25,7 +25,7 @@ jobs:
           cache-dependency-path: mobile/package-lock.json
       - run: npm ci
       - name: Apply non-breaking npm audit fixes
-        run: npm audit fix
+        run: npm audit fix || true
       - name: Commit lockfile remediation
         working-directory: .
         run: |

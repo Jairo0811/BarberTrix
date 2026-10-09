@@ -72,7 +72,13 @@ test('EAS build fails only when no project id source exists', () => {
       EAS_BUILD: '1',
       EAS_BUILD_PROJECT_ID: undefined,
       EXPO_PUBLIC_EAS_PROJECT_ID: undefined,
-    }, () => resolveAppConfig(baseConfig(undefined))),
+    }, () => resolveAppConfig({
+      config: {
+        name: 'BarberTrix',
+        slug: 'barbertrix',
+        extra: {},
+      },
+    })),
     /Link the project with EAS/,
   )
 })

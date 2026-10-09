@@ -41,7 +41,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 
     foreach (var cidr in builder.Configuration.GetSection("ReverseProxy:KnownNetworks").Get<string[]>() ?? [])
     {
-        if (!IPNetwork.TryParse(cidr, out var network))
+        if (!System.Net.IPNetwork.TryParse(cidr, out var network))
             throw new InvalidOperationException($"ReverseProxy:KnownNetworks contains an invalid CIDR: '{cidr}'.");
         options.KnownIPNetworks.Add(network);
     }
@@ -124,6 +124,8 @@ app.MapHealthChecks("/health");
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });
 app.MapGet("/api", () => Results.Ok(new { name = "BarberTrix API", status = "ok" }));
+if (isTesting)
+    app.MapGet("/__tests/edge", (HttpContext context) => Results.Ok(new { remoteIp = context.Connection.RemoteIpAddress?.ToString(), scheme = context.Request.Scheme }));
 app.MapAuthEndpoints();
 app.MapBarberOnboardingEndpoints();
 app.MapQueueEndpoints();

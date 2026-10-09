@@ -1,6 +1,7 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 
 const projectIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const nilProjectId = '00000000-0000-0000-0000-000000000000';
 
 export default ({ config }: ConfigContext): ExpoConfig => {
   const configuredProjectId = typeof config.extra?.eas?.projectId === 'string'
@@ -11,8 +12,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     || configuredProjectId;
   const owner = process.env.EXPO_ACCOUNT_OWNER?.trim();
 
-  if (projectId && !projectIdPattern.test(projectId))
-    throw new Error('EAS projectId must be the UUID assigned by EAS.');
+  if (projectId && (!projectIdPattern.test(projectId) || projectId.toLowerCase() === nilProjectId))
+    throw new Error('EAS projectId must be the non-placeholder UUID assigned by EAS.');
   if (process.env.EAS_BUILD && !projectId)
     throw new Error('Link the project with EAS so extra.eas.projectId is available before building.');
 

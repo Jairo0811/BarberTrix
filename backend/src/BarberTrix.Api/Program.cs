@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using BarberTrix.Api.Endpoints;
@@ -27,6 +28,30 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
     options.ForwardLimit = 1;
+
+    var trustAnyProxy = builder.Configuration.GetValue<bool>("ReverseProxy:TrustAnyProxy");
+    if (trustAnyProxy)
+    {
+        // Only enable this when the API is reachable exclusively through a trusted edge proxy.
+        // docker-compose.production.yml keeps the API internal and exposes only nginx.
+        options.KnownIPNetworks.Clear();
+        options.KnownProxies.Clear();
+        return;
+    }
+
+    foreach (var cidr in builder.Configuration.GetSection("ReverseProxy:KnownNetworks").Get<string[]>() ?? [])
+    {
+        if (!IPNetwork.TryParse(cidr, out var network))
+            throw new InvalidOperationException($"ReverseProxy:KnownNetworks contains an invalid CIDR: '{cidr}'.");
+        options.KnownIPNetworks.Add(network);
+    }
+
+    foreach (var value in builder.Configuration.GetSection("ReverseProxy:KnownProxies").Get<string[]>() ?? [])
+    {
+        if (!IPAddress.TryParse(value, out var proxy))
+            throw new InvalidOperationException($"ReverseProxy:KnownProxies contains an invalid IP address: '{value}'.");
+        options.KnownProxies.Add(proxy);
+    }
 });
 builder.Services.AddRateLimiter(options =>
 {

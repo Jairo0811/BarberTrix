@@ -106,7 +106,7 @@ export default function ReportsSection({ isDemo, capabilities }: Props) {
   const printReport = () => {
     if (!report) return
     const previousTitle = document.title
-    const printTitle = `BarberTrix Business Report ${report.from} - ${report.to}`
+    const printTitle = `${t('reportsAdmin.csvTitle')} ${report.from} - ${report.to}`
     const restoreTitle = () => {
       document.title = previousTitle
       window.removeEventListener('afterprint', restoreTitle)
@@ -180,7 +180,7 @@ export default function ReportsSection({ isDemo, capabilities }: Props) {
         <header className="report-print-header" aria-hidden="true">
           <img src="/branding/barbertrix-logo.png" alt="" />
           <div className="report-print-title">
-            <span>BUSINESS REPORTS 2.0</span>
+            <span>{t('reportsAdmin.eyebrow')}</span>
             <h1>{t('reportsAdmin.title')}</h1>
             <p>{t('reportsAdmin.periodComparison', { from: report.from, to: report.to, previousFrom: report.previousPeriod.from, previousTo: report.previousPeriod.to })}</p>
           </div>
@@ -206,7 +206,7 @@ export default function ReportsSection({ isDemo, capabilities }: Props) {
         </div>
 
         <footer className="report-print-footer" aria-hidden="true">
-          <span>BarberTrix · Business Reports 2.0</span>
+          <span>{t('reportsAdmin.csvTitle')}</span>
           <span>{report.from} - {report.to} · {currency}</span>
         </footer>
       </>}

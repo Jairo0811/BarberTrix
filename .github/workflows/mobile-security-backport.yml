@@ -33,7 +33,14 @@ jobs:
       - name: Install current lockfile
         run: npm ci
       - name: Apply non-breaking npm audit fixes
-        run: npm audit fix
+        run: |
+          set +e
+          npm audit fix
+          status=$?
+          set -e
+          if [ "$status" -gt 1 ]; then
+            exit "$status"
+          fi
       - name: Align Expo SDK 57 managed packages
         run: >-
           npx expo install

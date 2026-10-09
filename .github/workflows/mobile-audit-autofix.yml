@@ -1,0 +1,40 @@
+name: Mobile Audit Autofix (temporary)
+
+on:
+  push:
+    branches: [quality/security-followup]
+
+permissions:
+  contents: write
+
+jobs:
+  audit-fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: quality/security-followup
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.2
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm ci
+      - name: Apply non-breaking npm audit fixes
+        run: npm audit fix
+      - name: Commit lockfile remediation
+        working-directory: .
+        run: |
+          if git diff --quiet -- mobile/package.json mobile/package-lock.json; then
+            echo "No safe npm audit lockfile changes available."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add mobile/package.json mobile/package-lock.json
+          git commit -m "fix(mobile): apply safe npm audit remediations"
+          git push origin HEAD:quality/security-followup

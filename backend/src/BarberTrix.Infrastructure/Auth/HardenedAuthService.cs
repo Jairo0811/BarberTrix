@@ -132,7 +132,7 @@ internal sealed class HardenedAuthService(
 
         if (verification == PasswordVerificationResult.SuccessRehashNeeded)
         {
-            user.ChangePasswordHash(passwordHasher.HashPassword(user, request.Password));
+            user.UpgradePasswordHash(passwordHasher.HashPassword(user, request.Password));
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 
@@ -158,9 +158,6 @@ internal sealed class HardenedAuthService(
 
         if (current.RevokedAtUtc is { } revokedAt)
         {
-            // A just-rotated token can legitimately be presented twice by parallel clients/tabs.
-            // Reject the duplicate immediately, but only treat it as likely theft once the short
-            // grace period has elapsed. A later replay revokes the whole active session family.
             if (!string.IsNullOrWhiteSpace(current.ReplacedByTokenHash) && revokedAt <= now - RefreshReuseGracePeriod)
                 await RevokeAllActiveSessionsAsync(current.UserId, cancellationToken);
             return null;
@@ -185,8 +182,6 @@ internal sealed class HardenedAuthService(
                 .SetProperty(x => x.RevokedAtUtc, now)
                 .SetProperty(x => x.ReplacedByTokenHash, nextHash), cancellationToken);
 
-        // Another request won the atomic rotation race. This duplicate is unauthorized, but it
-        // is not sufficient evidence of token theft while the grace period is still in effect.
         if (affected != 1)
             return null;
 

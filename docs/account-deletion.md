@@ -1,13 +1,13 @@
 # BarberTrix account deletion lifecycle
 
-BarberTrix provides account deletion from the authenticated mobile Settings screen and from the public Web resource `/#/account-deletion`.
+BarberTrix provides account deletion from the authenticated mobile Settings screen and from the Web flow `/#/account-deletion`. A stable public store resource is also published as `/account-deletion.html` and links into the authenticated deletion flow.
 
 ## User experience
 
 - Mobile: **Settings → Delete account** presents the consequences and requires a second destructive confirmation.
-- Web: `/#/account-deletion` is publicly readable so it can be supplied to Google Play as the account-deletion resource. An authenticated user can complete deletion from that page.
+- Web: `/account-deletion.html` is publicly readable and is the preferred URL to supply to Google Play. It explains the lifecycle without requiring authentication and links to `/#/account-deletion`, where an authenticated user can complete deletion.
 - The API requires an authenticated session and the explicit confirmation value `DELETE` before processing `DELETE /api/account`.
-- A successful deletion removes active refresh sessions, so the deleted identity cannot restore an old session.
+- A successful deletion removes refresh sessions and evicts any cached positive access-session validation, so the deleted identity cannot continue using a previously validated token.
 
 ## Data lifecycle
 
@@ -37,7 +37,8 @@ The lifecycle is:
 4. Revoke team memberships and deactivate tenant identities.
 5. Deactivate operational barbers and revoke TV display credentials.
 6. Remove pending team invitations, join requests, sessions, push registrations, and personal profiles.
-7. Anonymize the Owner identity.
+7. Evict cached positive session validation for affected identities.
+8. Anonymize the Owner identity.
 
 Business transactions and other records subject to retention are not silently destroyed by this path.
 
@@ -55,5 +56,5 @@ Before store submission, verify on installed production-signed builds that:
 - deletion completes after re-authenticated/valid sessions;
 - deleted sessions cannot be restored;
 - paid Owner deletion cancels the real provider subscription;
-- the public account-deletion URL is deployed over HTTPS and remains reachable without authentication;
+- `/account-deletion.html` is deployed over HTTPS and remains reachable without authentication;
 - the privacy policy describes the same deletion and retention behavior.

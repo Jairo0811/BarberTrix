@@ -1,0 +1,56 @@
+name: Release contract
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  release-contract:
+    name: Release contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate RC artifacts and Mobile association
+        run: |
+          python3 - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
+          required = [
+              Path('docs/test-matrix.md'),
+              Path('docs/release-candidate.md'),
+              Path('docs/mobile-release.md'),
+              Path('docs/account-deletion.md'),
+              Path('docs/operations/disaster-recovery.md'),
+              Path('frontend/public/account-deletion.html'),
+              Path('mobile/app.json'),
+          ]
+          missing = [str(path) for path in required if not path.is_file()]
+          if missing:
+              raise SystemExit(f'Missing RC artifacts: {missing}')
+
+          app = json.loads(Path('mobile/app.json').read_text(encoding='utf-8'))['expo']
+          project_id = app.get('extra', {}).get('eas', {}).get('projectId', '')
+          uuid_pattern = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', re.I)
+          if not uuid_pattern.fullmatch(project_id) or project_id == '00000000-0000-0000-0000-000000000000':
+              raise SystemExit('mobile/app.json must contain a valid non-placeholder EAS projectId.')
+
+          expected_package = 'com.jmsoftwaresolutions.barbertrix'
+          if app.get('ios', {}).get('bundleIdentifier') != expected_package:
+              raise SystemExit('Unexpected iOS bundleIdentifier.')
+          if app.get('android', {}).get('package') != expected_package:
+              raise SystemExit('Unexpected Android package.')
+
+          mobile_release = Path('docs/mobile-release.md').read_text(encoding='utf-8')
+          for linked_doc in ('test-matrix.md', 'account-deletion.md', 'release-candidate.md'):
+              if linked_doc not in mobile_release:
+                  raise SystemExit(f'mobile-release.md must link {linked_doc}.')
+
+          print('Release contract validated.')
+          PY

@@ -109,6 +109,15 @@ public sealed class User : BaseEntity
         Touch();
     }
 
+    public void UpgradePasswordHash(string passwordHash)
+    {
+        if (string.IsNullOrWhiteSpace(passwordHash))
+            throw new ArgumentException("Password hash is required.", nameof(passwordHash));
+
+        PasswordHash = passwordHash;
+        Touch();
+    }
+
     public void ChangeEmail(string email)
     {
         if (string.IsNullOrWhiteSpace(email) || !email.Contains('@'))

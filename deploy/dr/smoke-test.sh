@@ -42,9 +42,8 @@ fi
 
 compose exec -T sqlserver /bin/bash -lc '
   if [[ -x /opt/mssql-tools18/bin/sqlcmd ]]; then SQLCMD=/opt/mssql-tools18/bin/sqlcmd; else SQLCMD=/opt/mssql-tools/bin/sqlcmd; fi
-  "$SQLCMD" -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C -b -Q "
-    IF DB_ID(N'"'"'BarberTrixDb'"'"') IS NULL CREATE DATABASE [BarberTrixDb];
-    USE [BarberTrixDb];
+  "$SQLCMD" -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C -b -Q "IF DB_ID(N'"'"'BarberTrixDb'"'"') IS NULL EXEC(N'"'"'CREATE DATABASE [BarberTrixDb]'"'"');"
+  "$SQLCMD" -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C -b -d BarberTrixDb -Q "
     IF OBJECT_ID(N'"'"'dbo.DrSentinel'"'"', N'"'"'U'"'"') IS NOT NULL DROP TABLE dbo.DrSentinel;
     CREATE TABLE dbo.DrSentinel (Value nvarchar(64) NOT NULL);
     INSERT INTO dbo.DrSentinel(Value) VALUES (N'"'"'before-backup'"'"');

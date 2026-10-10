@@ -68,7 +68,7 @@ internal sealed class AccountDeletionService(
             workspaceClosed,
             subscriptionCancelled,
             workspaceClosed
-                ? "Your account was anonymized and the BarberTrix workspace was closed. Operational records that must be retained remain detached from your identity."
+                ? "Your account was anonymized and the BarberTrix workspace was closed. Operational records that must be retained remain associated only with the anonymized workspace identity."
                 : "Your BarberTrix account was anonymized and all active sessions were removed.");
     }
 
@@ -137,7 +137,12 @@ internal sealed class AccountDeletionService(
             .ExecuteDeleteAsync(cancellationToken);
 
         await RemovePrivateIdentityDataAsync(tenantUserIds, cancellationToken);
+
+        // Preserve the historical Owner -> workspace anchor after anonymization. The account remains
+        // inactive with rotated credentials, but retained tenant records continue to reference a stable
+        // tombstoned workspace instead of forcing EF/SQL to dismantle the retained relational graph.
         owner.AnonymizeForDeletion();
+        owner.AssignTenant(shopId, UserRole.Owner);
     }
 
     private async Task RemovePrivateIdentityDataAsync(Guid[] userIds, CancellationToken cancellationToken)

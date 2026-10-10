@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
   card: { width: '100%', maxWidth: 520, gap: spacing.lg, padding: spacing.xxl, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surface, alignItems: 'center' },
   title: { ...typography.sectionTitle, color: colors.text, textAlign: 'center' },
   body: { ...typography.body, color: colors.textMuted, textAlign: 'center' },
-  primaryButton: { width: '100%', minHeight: 52, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, backgroundColor: colors.primary },
+  primaryButton: { width: '100%', minHeight: 52, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, backgroundColor: colors.primaryAction },
   primaryButtonText: { color: colors.white, fontWeight: '900' },
   secondaryButton: { width: '100%', minHeight: 48, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, borderWidth: 1, borderColor: colors.borderStrong },
   secondaryButtonText: { color: colors.primaryGlow, fontWeight: '800' },

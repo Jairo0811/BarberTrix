@@ -231,5 +231,7 @@ jobs:
     needs: [backend, frontend, mobile, frontend-e2e, fullstack-e2e]
     steps:
       - uses: actions/checkout@v4
+      - name: Validate production Compose
+        run: docker compose --env-file .env.production.example -f docker-compose.production.yml config --quiet
       - run: docker build -f backend/Dockerfile -t barbertrix-api:ci .
       - run: docker build -f frontend/Dockerfile -t barbertrix-web:ci .

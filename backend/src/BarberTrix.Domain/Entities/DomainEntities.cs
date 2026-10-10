@@ -43,6 +43,15 @@ public sealed class BarberShop : BaseEntity
         Touch();
     }
 
+    public void Deactivate()
+    {
+        if (!IsActive)
+            return;
+
+        IsActive = false;
+        Touch();
+    }
+
     private static string Require(string value, string parameterName) =>
         string.IsNullOrWhiteSpace(value)
             ? throw new ArgumentException("Value is required.", parameterName)
@@ -161,6 +170,20 @@ public sealed class User : BaseEntity
 
     public void Deactivate()
     {
+        IsActive = false;
+        SecurityStamp = Guid.NewGuid().ToString("N");
+        Touch();
+    }
+
+    public void AnonymizeForDeletion()
+    {
+        Name = "Deleted user";
+        Email = $"deleted-{Id:N}@users.invalid";
+        PasswordHash = $"deleted:{Guid.NewGuid():N}";
+        BarberShopId = null;
+        BarberId = null;
+        Role = UserRole.Client;
+        IsEmailVerified = false;
         IsActive = false;
         SecurityStamp = Guid.NewGuid().ToString("N");
         Touch();

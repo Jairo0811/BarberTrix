@@ -47,6 +47,7 @@ public static class DependencyInjection
         services.AddScoped<AuthService>();
         services.AddSingleton<ILoginAttemptGuard, LoginAttemptGuard>();
         services.AddScoped<IAuthService, HardenedAuthService>();
+        services.AddScoped<IAccountDeletionService, AccountDeletionService>();
         services.AddScoped<IExternalAuthService, ExternalAuthService>();
         services.AddHttpClient<IExternalIdentityVerifier, ExternalIdentityVerifier>();
         services.AddHttpClient<IExternalOAuthBroker, ExternalOAuthBroker>();

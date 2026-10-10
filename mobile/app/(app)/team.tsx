@@ -125,7 +125,7 @@ export default function TeamScreen() {
   >
     <View style={styles.topbar}>
       <BrandLogo compact />
-      <Pressable onPress={() => router.back()} style={styles.backButton}><Text style={styles.back}>{t('team.back')}</Text></Pressable>
+      <Pressable accessibilityRole="button" onPress={() => router.back()} style={styles.backButton}><Text style={styles.back}>{t('team.back')}</Text></Pressable>
     </View>
 
     <View style={styles.hero}>
@@ -158,7 +158,13 @@ export default function TeamScreen() {
 
       <View style={styles.roles}>
         {roles.map(item => (
-          <Pressable key={item} onPress={() => setInviteRole(item)} style={[styles.roleChip, inviteRole === item && styles.roleChipActive]}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ selected: inviteRole === item }}
+            key={item}
+            onPress={() => setInviteRole(item)}
+            style={[styles.roleChip, inviteRole === item && styles.roleChipActive]}
+          >
             <Text style={[styles.roleText, inviteRole === item && styles.roleTextActive]}>{labelRole(item)}</Text>
           </Pressable>
         ))}
@@ -173,6 +179,8 @@ export default function TeamScreen() {
       )}
 
       <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ disabled: working || loading || loadError != null || !name.trim() || !email.trim() }}
         disabled={working || loading || loadError != null || !name.trim() || !email.trim()}
         onPress={invite}
         style={({ pressed }) => [styles.primary, (working || loading || loadError != null || !name.trim() || !email.trim()) && styles.disabled, pressed && styles.primaryPressed]}
@@ -199,8 +207,8 @@ export default function TeamScreen() {
           <View style={styles.avatar}><Text style={styles.avatarText}>{request.barberName.slice(0, 1).toUpperCase()}</Text></View>
           <View style={styles.itemGrow}><Text style={styles.itemTitle}>{request.barberName}</Text><Text style={styles.muted}>{request.email}</Text></View>
           <View style={styles.inlineActions}>
-            <Pressable disabled={working} onPress={() => approve(request)} style={styles.smallPrimary}><Text style={styles.smallPrimaryText}>{t('team.approve')}</Text></Pressable>
-            <Pressable disabled={working} onPress={() => reject(request)} style={styles.smallGhost}><Text style={styles.smallGhostText}>{t('team.reject')}</Text></Pressable>
+            <Pressable accessibilityRole="button" accessibilityState={{ disabled: working }} disabled={working} onPress={() => approve(request)} style={styles.smallPrimary}><Text style={styles.smallPrimaryText}>{t('team.approve')}</Text></Pressable>
+            <Pressable accessibilityRole="button" accessibilityState={{ disabled: working }} disabled={working} onPress={() => reject(request)} style={styles.smallGhost}><Text style={styles.smallGhostText}>{t('team.reject')}</Text></Pressable>
           </View>
         </View>
       ))}
@@ -225,6 +233,8 @@ export default function TeamScreen() {
           </View>
           {role === 'Owner' && member.role !== 'Owner' && member.isActive && (
             <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ disabled: working }}
               disabled={working}
               onPress={() => Alert.alert(
                 t('team.deactivate'),
@@ -260,7 +270,7 @@ const styles = StyleSheet.create({
   metricsRow:{flexDirection:'row',gap:8},
   metricCard:{flex:1,minHeight:86,justifyContent:'center',padding:12,borderRadius:radius.lg,backgroundColor:colors.surface,borderWidth:1,borderColor:colors.border},
   metricValue:{color:colors.text,fontSize:25,fontWeight:'900'},
-  metricLabel:{color:colors.textSubtle,fontSize:11,fontWeight:'800',marginTop:3},
+  metricLabel:{color:colors.textSubtle,fontSize:12,fontWeight:'800',marginTop:3},
   card:{backgroundColor:'rgba(10,18,33,.94)',borderWidth:1,borderColor:colors.border,borderRadius:radius.xl,padding:spacing.lg,gap:12},
   sectionHeader:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:12},
   sectionKicker:{...typography.eyebrow,color:colors.primaryGlow},
@@ -275,7 +285,7 @@ const styles = StyleSheet.create({
   roleChipActive:{borderColor:colors.primaryGlow,backgroundColor:colors.primarySoft},
   roleText:{color:colors.textMuted,fontWeight:'800'},
   roleTextActive:{color:colors.primaryGlow},
-  primary:{minHeight:56,backgroundColor:colors.primary,borderRadius:radius.md,paddingHorizontal:18,alignItems:'center',justifyContent:'center',flexDirection:'row'},
+  primary:{minHeight:56,backgroundColor:colors.primaryAction,borderRadius:radius.md,paddingHorizontal:18,alignItems:'center',justifyContent:'center',flexDirection:'row'},
   primaryPressed:{backgroundColor:colors.primaryPressed},
   primaryText:{color:colors.white,fontWeight:'900'},
   primaryArrow:{position:'absolute',right:18,color:colors.white,fontSize:19,fontWeight:'900'},
@@ -290,12 +300,12 @@ const styles = StyleSheet.create({
   memberMeta:{flexDirection:'row',alignItems:'center',gap:6,marginTop:5},
   statusDot:{width:6,height:6,borderRadius:3,backgroundColor:colors.success},
   statusDotInactive:{backgroundColor:colors.textSubtle},
-  memberMetaText:{color:colors.textSubtle,fontSize:11,fontWeight:'700'},
+  memberMetaText:{color:colors.textSubtle,fontSize:12,fontWeight:'700'},
   inlineActions:{flexDirection:'row',gap:6},
-  smallPrimary:{backgroundColor:colors.primary,borderRadius:radius.sm,paddingHorizontal:10,paddingVertical:9,minHeight:48,justifyContent:'center'},
-  smallPrimaryText:{color:colors.white,fontWeight:'900',fontSize:11},
+  smallPrimary:{backgroundColor:colors.primaryAction,borderRadius:radius.sm,paddingHorizontal:10,paddingVertical:9,minHeight:48,justifyContent:'center'},
+  smallPrimaryText:{color:colors.white,fontWeight:'900',fontSize:12},
   smallGhost:{borderWidth:1,borderColor:colors.border,borderRadius:radius.sm,paddingHorizontal:10,paddingVertical:9,minHeight:48,justifyContent:'center'},
-  smallGhostText:{color:colors.textMuted,fontWeight:'800',fontSize:11},
+  smallGhostText:{color:colors.textMuted,fontWeight:'800',fontSize:12},
   empty:{flexDirection:'row',alignItems:'center',gap:12,paddingVertical:8},
   emptyIcon:{width:38,textAlign:'center',color:colors.success,fontSize:20,fontWeight:'900'},
   emptyTitle:{color:colors.text,fontWeight:'900'},

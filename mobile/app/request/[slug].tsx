@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
     borderColor: colors.borderStrong,
   },
   shopDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.success },
-  shopBadgeText: { color: colors.primaryGlow, fontSize: 11, fontWeight: '900' },
+  shopBadgeText: { color: colors.primaryGlow, fontSize: 12, fontWeight: '900' },
   hero: { alignItems: 'center', gap: 8, marginBottom: spacing.sm },
   eyebrow: { ...typography.eyebrow, color: colors.primaryGlow },
   title: { ...typography.title, color: colors.text, textAlign: 'center', maxWidth: 760 },
@@ -414,7 +414,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: radius.md,
     paddingHorizontal: 14,
-    backgroundColor: '#08111F',
+    backgroundColor: colors.backgroundElevated,
     color: colors.text,
     fontSize: 15,
   },
@@ -450,7 +450,7 @@ const styles = StyleSheet.create({
   submit: {
     minHeight: 56,
     borderRadius: radius.md,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryAction,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
@@ -460,5 +460,5 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.45 },
   submitText: { color: colors.white, fontWeight: '900', fontSize: 16 },
   submitArrow: { position: 'absolute', right: 20, color: colors.white, fontSize: 22, fontWeight: '700' },
-  footer: { color: colors.textSubtle, textAlign: 'center', fontSize: 11, fontWeight: '700', marginTop: spacing.sm },
+  footer: { color: colors.textSubtle, textAlign: 'center', fontSize: 12, fontWeight: '700', marginTop: spacing.sm },
 });

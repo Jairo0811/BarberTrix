@@ -71,6 +71,8 @@ internal sealed class HardenedAuthService(
     private static readonly User DummyUser = User.CreateClient("Timing Guard", "timing-guard@example.invalid", string.Empty);
     private static readonly string DummyPasswordHash = new PasswordHasher<User>()
         .HashPassword(DummyUser, "Timing-guard-only-password-2026!Aa1");
+    private TimeSpan RefreshReuseGracePeriod => TimeSpan.FromSeconds(
+        Math.Clamp(configuration.GetValue("Auth:RefreshReuseGraceSeconds", 10), 0, 60));
 
     public async Task<AuthResponse> RegisterOwnerAsync(RegisterOwnerRequest request, string? userAgent, string? ipAddress, CancellationToken cancellationToken = default)
     {
@@ -154,9 +156,12 @@ internal sealed class HardenedAuthService(
         if (current is null)
             return null;
 
-        if (current.RevokedAtUtc is not null)
+        if (current.RevokedAtUtc is { } revokedAt)
         {
-            if (!string.IsNullOrWhiteSpace(current.ReplacedByTokenHash))
+            // A just-rotated token can legitimately be presented twice by parallel clients/tabs.
+            // Reject the duplicate immediately, but only treat it as likely theft once the short
+            // grace period has elapsed. A later replay revokes the whole active session family.
+            if (!string.IsNullOrWhiteSpace(current.ReplacedByTokenHash) && revokedAt <= now - RefreshReuseGracePeriod)
                 await RevokeAllActiveSessionsAsync(current.UserId, cancellationToken);
             return null;
         }
@@ -180,12 +185,10 @@ internal sealed class HardenedAuthService(
                 .SetProperty(x => x.RevokedAtUtc, now)
                 .SetProperty(x => x.ReplacedByTokenHash, nextHash), cancellationToken);
 
+        // Another request won the atomic rotation race. This duplicate is unauthorized, but it
+        // is not sufficient evidence of token theft while the grace period is still in effect.
         if (affected != 1)
-        {
-            await RevokeAllActiveSessionsAsync(current.UserId, cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
             return null;
-        }
 
         dbContext.RefreshSessions.Add(new RefreshSession(user.Id, nextHash, refreshExpires, userAgent, ipAddress));
         await dbContext.SaveChangesAsync(cancellationToken);

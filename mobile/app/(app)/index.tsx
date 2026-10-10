@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
   cardTitle: { color: colors.text, fontSize: 17, fontWeight: '900' },
   cardMeta: { color: colors.textMuted, marginTop: 4, lineHeight: 19 },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: radius.pill, backgroundColor: colors.surfaceStrong, borderWidth: 1, borderColor: colors.border },
-  statusBadgeText: { color: colors.textMuted, fontSize: 10, fontWeight: '900' },
+  statusBadgeText: { color: colors.textMuted, fontSize: 12, fontWeight: '900' },
   statusBadgeAvailable: { backgroundColor: colors.successSoft, borderColor: 'rgba(88,219,145,.24)' },
   statusBadgeTextAvailable: { color: colors.success },
   navWrap: { width: '100%', maxWidth: 780, alignSelf: 'center', paddingHorizontal: spacing.sm, paddingBottom: spacing.sm, backgroundColor: 'rgba(5, 9, 18, 0.92)' },

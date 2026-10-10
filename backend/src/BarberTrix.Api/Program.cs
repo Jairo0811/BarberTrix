@@ -138,6 +138,7 @@ app.MapGet("/api", () => Results.Ok(new { name = "BarberTrix API", status = "ok"
 if (isTesting)
     app.MapGet("/__tests/edge", (HttpContext context) => Results.Ok(new { remoteIp = context.Connection.RemoteIpAddress?.ToString(), scheme = context.Request.Scheme }));
 app.MapAuthEndpoints();
+app.MapAccountDeletionEndpoints();
 app.MapBarberOnboardingEndpoints();
 app.MapQueueEndpoints();
 app.MapTodayEndpoints();

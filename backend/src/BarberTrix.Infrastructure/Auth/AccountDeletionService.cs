@@ -60,9 +60,6 @@ internal sealed class AccountDeletionService(
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
-        // JWT validation caches only successful sessions for a short window. Explicit eviction
-        // makes deletion immediate instead of allowing an already-validated access token to live
-        // until that positive cache entry expires.
         foreach (var identity in cachedSessions)
             sessionCache.Remove($"auth-session:{identity.UserId:N}:{identity.SecurityStamp}");
 
@@ -101,7 +98,7 @@ internal sealed class AccountDeletionService(
     {
         var shopId = owner.BarberShopId!.Value;
         var shop = await dbContext.BarberShops.SingleAsync(x => x.Id == shopId, cancellationToken);
-        shop.CloseForAccountDeletion();
+        shop.Deactivate();
 
         var tenantUsers = await dbContext.Users
             .Where(x => x.BarberShopId == shopId && x.IsActive)
@@ -143,9 +140,7 @@ internal sealed class AccountDeletionService(
         owner.AnonymizeForDeletion();
     }
 
-    private async Task RemovePrivateIdentityDataAsync(
-        Guid[] userIds,
-        CancellationToken cancellationToken)
+    private async Task RemovePrivateIdentityDataAsync(Guid[] userIds, CancellationToken cancellationToken)
     {
         if (userIds.Length == 0)
             return;

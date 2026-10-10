@@ -1,0 +1,25 @@
+name: barbertrix-dr-smoke
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: ${BARBERTRIX_DB_PASSWORD:?Set BARBERTRIX_DB_PASSWORD}
+    volumes:
+      - sql-data:/var/opt/mssql
+      - backups:/var/opt/mssql/backups
+
+  ops:
+    image: alpine:3.20
+    profiles: ["ops"]
+    entrypoint: ["/bin/sh"]
+    volumes:
+      - backups:/backups
+      - shop-media:/data
+
+volumes:
+  sql-data:
+  backups:
+  shop-media:

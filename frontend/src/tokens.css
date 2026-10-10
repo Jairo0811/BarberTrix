@@ -1,12 +1,19 @@
-/* BarberTrix design tokens for accessible web surfaces.
-   Keep bright brand blue for accents; use the darker action pair behind white button text. */
+/* Design tokens de BarberTrix.
+   Fuente única para colores de marca y texto secundario. Los grises de texto cumplen
+   WCAG AA sobre las superficies oscuras principales de la aplicación. */
 :root {
   --bt-primary: #1687ff;
   --bt-primary-soft: #8ac3ff;
+  /* Fondos con texto blanco: contraste >= 4.5:1. El azul brillante queda para acentos. */
   --bt-primary-action: #0b73e8;
   --bt-primary-action-strong: #0a5fc4;
+  --bt-primary-glow: #62adff;
   --bt-focus: #62adff;
   --bt-page-bg: #050912;
+  --bt-text: #f7f8fb;
   --bt-text-muted: #8896ab;
+  --bt-text-subtle: #8796ad;
   --bt-tap-target: 44px;
+  /* Alias conservado para estilos nuevos que expresan el mismo mínimo. */
+  --bt-min-touch: var(--bt-tap-target);
 }

@@ -8,7 +8,7 @@
   z-index: 10000;
   max-width: calc(100vw - 24px);
   padding: 10px 14px;
-  border: 2px solid #8ac3ff;
+  border: 2px solid var(--bt-primary-soft);
   border-radius: 8px;
   background: #07111f;
   color: #ffffff;
@@ -36,7 +36,7 @@
 }
 
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
-  outline: 3px solid #62adff;
+  outline: 3px solid var(--bt-focus);
   outline-offset: 3px;
 }
 
@@ -55,6 +55,26 @@ button:disabled,
   font-size: 23px;
   line-height: 1.2;
   letter-spacing: -.02em;
+}
+
+/* Coarse-pointer devices need a dependable touch target without inflating mouse/TV UI. */
+@media (pointer: coarse) {
+  :where(button, [role='button'], select, input:not([type='checkbox'], [type='radio'], [type='range'], [type='hidden'])) {
+    min-height: var(--bt-tap-target);
+  }
+
+  .dashboard-mobile-menu,
+  .dashboard-sidebar-close {
+    width: var(--bt-tap-target);
+    min-width: var(--bt-tap-target);
+    height: var(--bt-tap-target);
+    min-height: var(--bt-tap-target);
+  }
+
+  /* The TV screen is non-touch presentation UI; preserve its explicit sizing. */
+  .tv-page :where(button, input) {
+    min-height: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

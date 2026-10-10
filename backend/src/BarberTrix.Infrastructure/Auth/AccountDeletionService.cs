@@ -101,7 +101,7 @@ internal sealed class AccountDeletionService(
     {
         var shopId = owner.BarberShopId!.Value;
         var shop = await dbContext.BarberShops.SingleAsync(x => x.Id == shopId, cancellationToken);
-        shop.Deactivate();
+        shop.CloseForAccountDeletion();
 
         var tenantUsers = await dbContext.Users
             .Where(x => x.BarberShopId == shopId && x.IsActive)

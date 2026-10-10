@@ -56,7 +56,7 @@ public sealed class RefreshTokenHardeningTests(BarberTrixFactory factory)
         Assert.Equal(1, responses.Count(x => x.StatusCode == HttpStatusCode.OK));
         Assert.Equal(7, responses.Count(x => x.StatusCode == HttpStatusCode.Unauthorized));
 
-        var winnerResponse = Assert.Single(responses.Where(x => x.StatusCode == HttpStatusCode.OK));
+        var winnerResponse = Assert.Single(responses, x => x.StatusCode == HttpStatusCode.OK);
         var winner = await winnerResponse.Content.ReadFromJsonAsync<MobilePayload>();
         Assert.NotNull(winner);
 

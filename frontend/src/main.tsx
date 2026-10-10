@@ -30,8 +30,9 @@ const VerifyEmailPage = lazy(() => import('./VerifyEmailPage'))
 const BillingSuccessPage = lazy(() => import('./BillingSuccessPage'))
 const SocialAuthCallbackPage = lazy(() => import('./SocialAuthCallbackPage'))
 const LegalPage = lazy(() => import('./LegalPage'))
+const AccountDeletionPage = lazy(() => import('./AccountDeletionPage'))
 
-type PublicRoute = 'home' | 'login' | 'auth-callback' | 'register' | 'forgot-password' | 'reset-password' | 'demo' | 'book' | 'customer' | 'tv' | 'accept-invitation' | 'verify-email' | 'billing-success' | 'terms' | 'privacy'
+type PublicRoute = 'home' | 'login' | 'auth-callback' | 'register' | 'forgot-password' | 'reset-password' | 'demo' | 'book' | 'customer' | 'tv' | 'accept-invitation' | 'verify-email' | 'billing-success' | 'terms' | 'privacy' | 'account-deletion'
 
 const routeLabelKeys: Record<PublicRoute, string> = {
   home: 'route.home',
@@ -49,6 +50,7 @@ const routeLabelKeys: Record<PublicRoute, string> = {
   'billing-success': 'route.billingSuccess',
   terms: 'route.terms',
   privacy: 'route.privacy',
+  'account-deletion': 'route.privacy',
 }
 
 const publicRouteByPath: Record<string, PublicRoute> = {
@@ -67,6 +69,7 @@ const publicRouteByPath: Record<string, PublicRoute> = {
   '/billing-success': 'billing-success',
   '/terms': 'terms',
   '/privacy': 'privacy',
+  '/account-deletion': 'account-deletion',
 }
 
 const paypalCallbackHash = paypalCallbackHashFromSearch(window.location.search)
@@ -178,6 +181,7 @@ function AppRoutes() {
           <Route path="/billing-success" element={<BillingSuccessPage />} />
           <Route path="/terms" element={<LegalPage kind="terms" />} />
           <Route path="/privacy" element={<LegalPage kind="privacy" />} />
+          <Route path="/account-deletion" element={<AccountDeletionPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>

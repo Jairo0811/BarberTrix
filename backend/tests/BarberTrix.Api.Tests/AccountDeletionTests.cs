@@ -44,7 +44,7 @@ public sealed class AccountDeletionTests
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth.AccessToken);
 
         // Warm the positive JWT-validation cache first. Deletion must explicitly evict it.
-        using var beforeDeletion = await client.GetAsync("/api/shop/settings");
+        using var beforeDeletion = await client.GetAsync("/api/operations/today");
         beforeDeletion.EnsureSuccessStatusCode();
 
         using var request = new HttpRequestMessage(HttpMethod.Delete, "/api/account")
@@ -71,7 +71,7 @@ public sealed class AccountDeletionTests
         Assert.False(shop.IsActive);
         Assert.False(await db.RefreshSessions.AsNoTracking().AnyAsync(x => x.UserId == auth.UserId));
 
-        using var oldAccessToken = await client.GetAsync("/api/shop/settings");
+        using var oldAccessToken = await client.GetAsync("/api/operations/today");
         Assert.Equal(HttpStatusCode.Unauthorized, oldAccessToken.StatusCode);
 
         client.DefaultRequestHeaders.Authorization = null;

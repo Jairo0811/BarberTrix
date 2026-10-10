@@ -76,4 +76,29 @@ public sealed class IdentityEntityTests
         Assert.NotNull(membership.EndedAtUtc);
         Assert.Throws<InvalidOperationException>(() => membership.Suspend());
     }
+
+    [Fact]
+    public void PasswordHashUpgradePreservesSecurityStamp()
+    {
+        var user = User.CreateClient("Client", "client@example.com", "old-hash");
+        var originalStamp = user.SecurityStamp;
+
+        user.UpgradePasswordHash("new-hash");
+
+        Assert.Equal("new-hash", user.PasswordHash);
+        Assert.Equal(originalStamp, user.SecurityStamp);
+        Assert.NotNull(user.UpdatedAtUtc);
+    }
+
+    [Fact]
+    public void PasswordChangeRotatesSecurityStamp()
+    {
+        var user = User.CreateClient("Client", "client@example.com", "old-hash");
+        var originalStamp = user.SecurityStamp;
+
+        user.ChangePasswordHash("new-hash");
+
+        Assert.Equal("new-hash", user.PasswordHash);
+        Assert.NotEqual(originalStamp, user.SecurityStamp);
+    }
 }

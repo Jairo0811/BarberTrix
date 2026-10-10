@@ -23,7 +23,7 @@ For every deleted identity BarberTrix:
 - removes the personal barber profile when one exists;
 - revokes shop memberships.
 
-Operational records that must remain structurally valid are retained without the deleted user's active identity. Actual legal retention periods must be defined in the final privacy policy for the operator's jurisdiction.
+Operational records that must remain structurally valid are retained without an active personal identity. Actual legal retention periods must be defined in the final privacy policy for the operator's jurisdiction.
 
 ## Owner/workspace deletion
 
@@ -38,7 +38,9 @@ The lifecycle is:
 5. Deactivate operational barbers and revoke TV display credentials.
 6. Remove pending team invitations, join requests, sessions, push registrations, and personal profiles.
 7. Evict cached positive session validation for affected identities.
-8. Anonymize the Owner identity.
+8. Anonymize and deactivate the Owner identity while retaining only its technical link to the tombstoned workspace so historical tenant records and foreign-key integrity remain stable.
+
+The retained Owner row is not an active account: its personal name/email are replaced, its password and security stamp are invalidated, and authentication is disabled. The workspace association exists only as a structural/audit anchor for retained tenant data.
 
 Business transactions and other records subject to retention are not silently destroyed by this path.
 

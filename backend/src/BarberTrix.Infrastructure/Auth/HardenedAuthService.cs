@@ -132,7 +132,7 @@ internal sealed class HardenedAuthService(
 
         if (verification == PasswordVerificationResult.SuccessRehashNeeded)
         {
-            user.ChangePasswordHash(passwordHasher.HashPassword(user, request.Password));
+            user.UpgradePasswordHash(passwordHasher.HashPassword(user, request.Password));
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 

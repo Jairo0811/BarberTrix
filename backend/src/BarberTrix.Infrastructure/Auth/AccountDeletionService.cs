@@ -3,12 +3,14 @@ using BarberTrix.Application.Commercial;
 using BarberTrix.Domain.Entities;
 using BarberTrix.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace BarberTrix.Infrastructure.Auth;
 
 internal sealed class AccountDeletionService(
     ApplicationDbContext dbContext,
-    IBillingService billingService) : IAccountDeletionService
+    IBillingService billingService,
+    IMemoryCache sessionCache) : IAccountDeletionService
 {
     private const string ConfirmationPhrase = "DELETE";
 
@@ -26,6 +28,12 @@ internal sealed class AccountDeletionService(
 
         var workspaceClosed = user.Role == UserRole.Owner && user.BarberShopId.HasValue;
         var subscriptionCancelled = false;
+        var cachedSessions = workspaceClosed
+            ? await dbContext.Users.AsNoTracking()
+                .Where(x => x.BarberShopId == user.BarberShopId && x.IsActive)
+                .Select(x => new SessionCacheIdentity(x.Id, x.SecurityStamp))
+                .ToListAsync(cancellationToken)
+            : [new SessionCacheIdentity(user.Id, user.SecurityStamp)];
 
         // Never close the local workspace first and leave a paid provider subscription charging.
         // Provider cancellation intentionally happens before the database transaction. If it fails,
@@ -51,6 +59,12 @@ internal sealed class AccountDeletionService(
 
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
+
+        // JWT validation caches only successful sessions for a short window. Explicit eviction
+        // makes deletion immediate instead of allowing an already-validated access token to live
+        // until that positive cache entry expires.
+        foreach (var identity in cachedSessions)
+            sessionCache.Remove($"auth-session:{identity.UserId:N}:{identity.SecurityStamp}");
 
         return new AccountDeletionResponse(
             deletedAtUtc,
@@ -152,4 +166,6 @@ internal sealed class AccountDeletionService(
             .Where(x => userIds.Contains(x.UserId))
             .ExecuteDeleteAsync(cancellationToken);
     }
+
+    private sealed record SessionCacheIdentity(Guid UserId, string SecurityStamp);
 }

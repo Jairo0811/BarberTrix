@@ -37,11 +37,15 @@ public sealed class AccountDeletionTests
     }
 
     [Fact]
-    public async Task OwnerDeletionAnonymizesIdentityClosesWorkspaceAndRevokesRefreshSession()
+    public async Task OwnerDeletionAnonymizesIdentityClosesWorkspaceAndRevokesAllSessionsImmediately()
     {
         using var client = CreateClient();
         var auth = await RegisterOwnerAsync(client);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth.AccessToken);
+
+        // Warm the positive JWT-validation cache first. Deletion must explicitly evict it.
+        using var beforeDeletion = await client.GetAsync("/api/shop/settings");
+        beforeDeletion.EnsureSuccessStatusCode();
 
         using var request = new HttpRequestMessage(HttpMethod.Delete, "/api/account")
         {
@@ -67,6 +71,10 @@ public sealed class AccountDeletionTests
         Assert.False(shop.IsActive);
         Assert.False(await db.RefreshSessions.AsNoTracking().AnyAsync(x => x.UserId == auth.UserId));
 
+        using var oldAccessToken = await client.GetAsync("/api/shop/settings");
+        Assert.Equal(HttpStatusCode.Unauthorized, oldAccessToken.StatusCode);
+
+        client.DefaultRequestHeaders.Authorization = null;
         var mobileLogin = await client.PostAsJsonAsync("/api/auth/mobile/login", new
         {
             email = auth.Email,

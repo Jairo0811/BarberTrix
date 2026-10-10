@@ -144,10 +144,10 @@ internal sealed class AccountDeletionService(
     }
 
     private async Task RemovePrivateIdentityDataAsync(
-        IReadOnlyCollection<Guid> userIds,
+        Guid[] userIds,
         CancellationToken cancellationToken)
     {
-        if (userIds.Count == 0)
+        if (userIds.Length == 0)
             return;
 
         await dbContext.BarberProfiles

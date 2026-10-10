@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using BarberTrix.Domain.Entities;
 using BarberTrix.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -61,7 +62,9 @@ public sealed class AccountDeletionTests
         var shop = await db.BarberShops.AsNoTracking().SingleAsync(x => x.Id == auth.BarberShopId);
 
         Assert.False(user.IsActive);
-        Assert.Null(user.BarberShopId);
+        Assert.Equal(auth.BarberShopId, user.BarberShopId);
+        Assert.Equal(UserRole.Owner, user.Role);
+        Assert.Equal("Deleted user", user.Name);
         Assert.StartsWith("deleted-", user.Email, StringComparison.Ordinal);
         Assert.EndsWith("@users.invalid", user.Email, StringComparison.Ordinal);
         Assert.False(shop.IsActive);

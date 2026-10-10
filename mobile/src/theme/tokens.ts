@@ -9,7 +9,9 @@ export const colors = {
   borderStrong: 'rgba(88, 168, 255, 0.42)',
   divider: 'rgba(151, 180, 220, 0.12)',
   primary: '#1687FF',
-  primaryPressed: '#0B73E8',
+  // Darker action surface keeps white button labels at WCAG AA contrast.
+  primaryAction: '#0B73E8',
+  primaryPressed: '#085DC2',
   primarySoft: 'rgba(22, 135, 255, 0.15)',
   primaryGlow: '#62B1FF',
   text: '#F8FAFD',
@@ -47,7 +49,7 @@ export const radius = {
 
 export const typography = {
   eyebrow: {
-    fontSize: 11,
+    fontSize: 12,
     lineHeight: 16,
     fontWeight: '900' as const,
     letterSpacing: 1.8,

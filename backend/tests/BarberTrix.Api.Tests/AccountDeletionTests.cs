@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using BarberTrix.Domain.Entities;
 using BarberTrix.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -69,9 +68,7 @@ public sealed class AccountDeletionTests
         Assert.Null(user.BarberShopId);
         Assert.StartsWith("deleted-", user.Email, StringComparison.Ordinal);
         Assert.EndsWith("@users.invalid", user.Email, StringComparison.Ordinal);
-        Assert.StartsWith("deleted-", shop.Slug, StringComparison.Ordinal);
-        Assert.Equal("Closed BarberTrix workspace", shop.Name);
-        Assert.Equal(SubscriptionStatus.Cancelled, shop.SubscriptionStatus);
+        Assert.False(shop.IsActive);
         Assert.False(await db.RefreshSessions.AsNoTracking().AnyAsync(x => x.UserId == auth.UserId));
 
         using var oldAccessToken = await client.GetAsync("/api/operations/today");

@@ -26,6 +26,13 @@ TestResults/
 playwright-report/
 test-results/
 
+# Backup artifacts
+backups/
+*.bak
+*.manifest
+*.sha256
+*-media.tar.gz
+
 # IDE
 .idea/
 .vscode/*

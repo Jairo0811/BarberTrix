@@ -225,10 +225,23 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+  disaster-recovery:
+    name: Disaster recovery rehearsal
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate DR scripts
+        run: |
+          bash -n deploy/ops/backup.sh
+          bash -n deploy/ops/restore.sh
+          bash -n deploy/dr/smoke-test.sh
+      - name: Rehearse backup and restore
+        run: bash deploy/dr/smoke-test.sh
+
   containers:
     name: Production containers
     runs-on: ubuntu-latest
-    needs: [backend, frontend, mobile, frontend-e2e, fullstack-e2e]
+    needs: [backend, frontend, mobile, frontend-e2e, fullstack-e2e, disaster-recovery]
     steps:
       - uses: actions/checkout@v4
       - name: Validate production Compose

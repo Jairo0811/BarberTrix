@@ -1,0 +1,12 @@
+/* BarberTrix design tokens for accessible web surfaces.
+   Keep bright brand blue for accents; use the darker action pair behind white button text. */
+:root {
+  --bt-primary: #1687ff;
+  --bt-primary-soft: #8ac3ff;
+  --bt-primary-action: #0b73e8;
+  --bt-primary-action-strong: #0a5fc4;
+  --bt-focus: #62adff;
+  --bt-page-bg: #050912;
+  --bt-text-muted: #8896ab;
+  --bt-tap-target: 44px;
+}

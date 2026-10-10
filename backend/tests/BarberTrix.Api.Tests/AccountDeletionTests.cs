@@ -23,10 +23,7 @@ public sealed class AccountDeletionTests
         var auth = await RegisterOwnerAsync(client);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth.AccessToken);
 
-        using var request = new HttpRequestMessage(HttpMethod.Delete, "/api/account")
-        {
-            Content = JsonContent.Create(new { confirmation = "NO" })
-        };
+        using var request = DeletionRequest("NO");
         using var response = await client.SendAsync(request);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -43,14 +40,13 @@ public sealed class AccountDeletionTests
         var auth = await RegisterOwnerAsync(client);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth.AccessToken);
 
-        // Warm the positive JWT-validation cache first. Deletion must explicitly evict it.
-        using var beforeDeletion = await client.GetAsync("/api/operations/today");
-        beforeDeletion.EnsureSuccessStatusCode();
+        // A rejected confirmation still passes authentication, warming the positive JWT cache
+        // without requiring email verification or mutating the account.
+        using var warmRequest = DeletionRequest("NO");
+        using var warmResponse = await client.SendAsync(warmRequest);
+        Assert.Equal(HttpStatusCode.BadRequest, warmResponse.StatusCode);
 
-        using var request = new HttpRequestMessage(HttpMethod.Delete, "/api/account")
-        {
-            Content = JsonContent.Create(new { confirmation = "DELETE" })
-        };
+        using var request = DeletionRequest("DELETE");
         using var response = await client.SendAsync(request);
         response.EnsureSuccessStatusCode();
 
@@ -71,7 +67,8 @@ public sealed class AccountDeletionTests
         Assert.False(shop.IsActive);
         Assert.False(await db.RefreshSessions.AsNoTracking().AnyAsync(x => x.UserId == auth.UserId));
 
-        using var oldAccessToken = await client.GetAsync("/api/operations/today");
+        using var oldTokenRequest = DeletionRequest("NO");
+        using var oldAccessToken = await client.SendAsync(oldTokenRequest);
         Assert.Equal(HttpStatusCode.Unauthorized, oldAccessToken.StatusCode);
 
         client.DefaultRequestHeaders.Authorization = null;
@@ -82,6 +79,11 @@ public sealed class AccountDeletionTests
         });
         Assert.Equal(HttpStatusCode.Unauthorized, mobileLogin.StatusCode);
     }
+
+    private static HttpRequestMessage DeletionRequest(string confirmation) => new(HttpMethod.Delete, "/api/account")
+    {
+        Content = JsonContent.Create(new { confirmation })
+    };
 
     private HttpClient CreateClient() => factory.CreateClient(new WebApplicationFactoryClientOptions
     {

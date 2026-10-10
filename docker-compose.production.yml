@@ -10,6 +10,7 @@ services:
       MSSQL_SA_PASSWORD: ${BARBERTRIX_DB_PASSWORD:?Set BARBERTRIX_DB_PASSWORD}
     volumes:
       - barbertrix-sqlserver:/var/opt/mssql
+      - barbertrix-backups:/var/opt/mssql/backups
     healthcheck:
       test: ["CMD-SHELL", "bash -c 'cat < /dev/null > /dev/tcp/localhost/1433'"]
       interval: 15s
@@ -118,6 +119,15 @@ services:
     depends_on:
       - api
 
+  ops:
+    image: alpine:3.20
+    profiles: ["ops"]
+    entrypoint: ["/bin/sh"]
+    volumes:
+      - barbertrix-backups:/backups
+      - barbertrix-shop-media:/data
+
 volumes:
   barbertrix-sqlserver:
   barbertrix-shop-media:
+  barbertrix-backups:

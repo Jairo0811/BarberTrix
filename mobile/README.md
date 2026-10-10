@@ -43,7 +43,7 @@ Las transiciones guardan los avisos en `PushNotificationOutbox` dentro de la mis
 1. Usa Node.js 22.13 o superior.
 2. Copia `.env.example` a `.env`.
 3. Configura `EXPO_PUBLIC_API_BASE_URL` con una URL alcanzable desde el emulador o dispositivo.
-4. Configura `EXPO_PUBLIC_EAS_PROJECT_ID` en desarrollo. En builds EAS se usa primero el `projectId` incorporado por EAS.
+4. El `projectId` enlazado por EAS en `app.json` (`extra.eas.projectId`) es la fuente por defecto. `EXPO_PUBLIC_EAS_PROJECT_ID` puede usarse como override explícito en desarrollo; durante EAS Build también se reconoce `EAS_BUILD_PROJECT_ID`.
 5. Ejecuta `npm ci`.
 6. Ejecuta `npx expo install --check` para verificar la alineación de los módulos con Expo SDK 57.
 7. Ejecuta `npm run typecheck`.

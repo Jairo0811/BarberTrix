@@ -81,6 +81,6 @@ const styles = StyleSheet.create({
   },
   iconBubbleActive: { backgroundColor: 'rgba(22,135,255,.18)' },
   icon: { color: colors.textSubtle, fontSize: 17, fontWeight: '900' },
-  label: { color: colors.textMuted, fontSize: 11, fontWeight: '900', textAlign: 'center' },
+  label: { color: colors.textMuted, fontSize: 12, fontWeight: '900', textAlign: 'center' },
   textActive: { color: colors.primaryGlow },
 });

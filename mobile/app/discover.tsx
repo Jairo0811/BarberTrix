@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
   metric: { flex: 1, borderRadius: radius.lg, backgroundColor: colors.surfaceStrong, padding: spacing.md, borderWidth: 1, borderColor: colors.divider },
   metricValue: { fontSize: 24, fontWeight: '900', color: colors.text },
   metricLabel: { ...typography.caption, color: colors.textMuted },
-  primaryButton: { minHeight: control.buttonHeight, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 10, borderRadius: radius.lg, backgroundColor: colors.primary, paddingHorizontal: spacing.lg },
+  primaryButton: { minHeight: control.buttonHeight, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 10, borderRadius: radius.lg, backgroundColor: colors.primaryAction, paddingHorizontal: spacing.lg },
   primaryButtonText: { fontWeight: '900', color: colors.white, fontSize: 15 },
   primaryArrow: { fontWeight: '900', color: colors.white, fontSize: 18 },
   staffButton: { minHeight: 50, alignItems: 'center', justifyContent: 'center', marginTop: spacing.xl, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surface },

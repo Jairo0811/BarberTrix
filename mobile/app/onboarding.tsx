@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   signOutButton: {
-    minHeight: 42,
+    minHeight: 44,
     justifyContent: 'center',
     paddingHorizontal: 14,
     borderRadius: radius.md,
@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
-    backgroundColor: '#08111F',
+    backgroundColor: colors.backgroundElevated,
     paddingHorizontal: 14,
     color: colors.text,
     fontSize: 15,
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
     minWidth: 138,
     paddingHorizontal: spacing.lg,
     borderRadius: radius.md,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryAction,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
   cardCopy: { gap: 4 },
   cardTitle: { color: colors.text, fontSize: 18, fontWeight: '900' },
   meta: { color: colors.textMuted, fontSize: 13, lineHeight: 19 },
-  timeZone: { color: colors.textSubtle, fontSize: 11, fontWeight: '700' },
+  timeZone: { color: colors.textSubtle, fontSize: 12, fontWeight: '700' },
   pendingArea: { gap: spacing.sm },
   pendingBadge: {
     alignSelf: 'flex-start',
@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 178, 74, 0.22)',
   },
   pendingDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.warning },
-  pendingText: { color: colors.warning, fontSize: 11, fontWeight: '900' },
+  pendingText: { color: colors.warning, fontSize: 12, fontWeight: '900' },
   secondaryButton: {
     minHeight: 48,
     paddingHorizontal: spacing.lg,
@@ -375,7 +375,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderStrong,
   },
-  statusText: { color: colors.primaryGlow, fontSize: 10, fontWeight: '900' },
+  statusText: { color: colors.primaryGlow, fontSize: 12, fontWeight: '900' },
   reviewNote: { color: colors.textSubtle, fontStyle: 'italic', lineHeight: 19 },
   emptyCard: {
     flexDirection: 'row',

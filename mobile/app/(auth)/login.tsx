@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.65,
   },
   subtitle: {
-    color: '#8D9AB0',
+    color: colors.textSubtle,
     fontSize: 14,
     lineHeight: 21,
     textAlign: 'center',
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
   },
   fieldGroup: { gap: 8 },
   fieldLabel: {
-    color: '#C9D1DF',
+    color: colors.textMuted,
     fontSize: 13,
     fontWeight: '800',
   },
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
   },
   fieldIcon: {
     width: 46,
-    color: '#66809F',
+    color: colors.textSubtle,
     textAlign: 'center',
     fontSize: 14,
     fontWeight: '900',
@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 122, 122, 0.24)',
   },
   error: {
-    color: '#FFABAB',
+    color: colors.danger,
     fontWeight: '800',
     lineHeight: 20,
     textAlign: 'center',
@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryAction,
   },
   submitButtonPressed: {
     backgroundColor: colors.primaryPressed,

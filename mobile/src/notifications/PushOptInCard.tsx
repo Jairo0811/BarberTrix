@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
     minHeight: 46,
     marginTop: spacing.xs,
     borderRadius: radius.md,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryAction,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.lg,

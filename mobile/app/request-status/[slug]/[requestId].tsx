@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
   },
   statusPulse: { width: 12, height: 12, borderRadius: 6 },
   statusCopy: { flex: 1, gap: 5 },
-  statusLabel: { fontSize: 10, fontWeight: '900', letterSpacing: 1.5 },
+  statusLabel: { fontSize: 12, fontWeight: '900', letterSpacing: 1.5 },
   title: { color: colors.text, fontSize: 28, lineHeight: 34, fontWeight: '900', letterSpacing: -0.5 },
   statusCard: {
     backgroundColor: colors.surface,
@@ -333,7 +333,7 @@ const styles = StyleSheet.create({
   primary: {
     minHeight: 56,
     borderRadius: radius.md,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryAction,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
@@ -398,5 +398,5 @@ const styles = StyleSheet.create({
   },
   autoRefreshDot: { width: 8, height: 8, marginTop: 5, borderRadius: 4, backgroundColor: colors.success },
   hint: { flex: 1, color: colors.textSubtle, fontSize: 12, lineHeight: 19 },
-  footer: { textAlign: 'center', color: colors.textSubtle, fontSize: 10, fontWeight: '700', marginTop: spacing.sm },
+  footer: { textAlign: 'center', color: colors.textSubtle, fontSize: 12, fontWeight: '700', marginTop: spacing.sm },
 });

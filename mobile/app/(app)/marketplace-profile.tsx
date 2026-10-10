@@ -210,7 +210,7 @@ export default function MarketplaceProfileScreen() {
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <View style={styles.topbar}>
           <BrandLogo compact />
-          <Pressable onPress={() => router.back()} style={styles.backButton}><Text style={styles.back}>{t('marketplace.back')}</Text></Pressable>
+          <Pressable accessibilityRole="button" onPress={() => router.back()} style={styles.backButton}><Text style={styles.back}>{t('marketplace.back')}</Text></Pressable>
         </View>
 
         <View style={styles.hero}>
@@ -270,7 +270,7 @@ export default function MarketplaceProfileScreen() {
             <View style={styles.flex}><Field label={t('marketplace.neighborhood')} value={profile.location.neighborhood ?? ''} onChangeText={value => patchLocation('neighborhood', value)} placeholder={t('common.districtExample')} /></View>
           </View>
           <Field label={t('marketplace.reference')} value={profile.location.reference ?? ''} onChangeText={value => patchLocation('reference', value)} placeholder={t('marketplace.referenceHint')} />
-          <Pressable onPress={useCurrentLocation} style={({ pressed }) => [styles.locationButton, pressed && styles.pressed]}><Text style={styles.locationButtonText}>{t('marketplace.locate')}</Text></Pressable>
+          <Pressable accessibilityRole="button" onPress={useCurrentLocation} style={({ pressed }) => [styles.locationButton, pressed && styles.pressed]}><Text style={styles.locationButtonText}>{t('marketplace.locate')}</Text></Pressable>
           <Text style={styles.mapHelp}>{t('marketplace.mapHint')}</Text>
           <ShopLocationMap latitude={profile.location.latitude} longitude={profile.location.longitude} onChange={updateCoordinates} />
         </View>
@@ -282,11 +282,11 @@ export default function MarketplaceProfileScreen() {
           <Toggle label={t('marketplace.appointments')} value={profile.acceptsAppointments} onValueChange={value => patch('acceptsAppointments', value)} />
         </View>
 
-        <Pressable disabled={saving || !!mediaBusy} onPress={save} style={({ pressed }) => [styles.primary, pressed && styles.pressed, (saving || !!mediaBusy) && styles.disabled]}>
+        <Pressable accessibilityRole="button" accessibilityState={{ disabled: saving || !!mediaBusy }} disabled={saving || !!mediaBusy} onPress={save} style={({ pressed }) => [styles.primary, pressed && styles.pressed, (saving || !!mediaBusy) && styles.disabled]}>
           <Text style={styles.primaryText}>{saving ? t('marketplace.saving') : t('marketplace.save')}</Text>
           <Text style={styles.primaryArrow}>→</Text>
         </Pressable>
-        <Pressable disabled={saving} onPress={togglePublication} style={({ pressed }) => [styles.publish, profile.isPublished && styles.unpublish, pressed && styles.pressed, saving && styles.disabled]}>
+        <Pressable accessibilityRole="button" accessibilityState={{ disabled: saving }} disabled={saving} onPress={togglePublication} style={({ pressed }) => [styles.publish, profile.isPublished && styles.unpublish, pressed && styles.pressed, saving && styles.disabled]}>
           <Text style={[styles.publishText, profile.isPublished && styles.unpublishText]}>{profile.isPublished ? t('marketplace.unpublish') : t('marketplace.publish')}</Text>
         </Pressable>
       </ScrollView>
@@ -316,7 +316,6 @@ function Toggle({ label, value, onValueChange }: { label: string; value: boolean
   return <View style={styles.toggle}><Text style={styles.label}>{label}</Text><Switch accessibilityLabel={label} value={value} onValueChange={onValueChange} /></View>;
 }
 
-
 function resolveMediaUrl(url: string | null) {
   if (!url) return null;
   return url.startsWith('/') ? `${env.apiBaseUrl}${url}` : url;
@@ -344,7 +343,7 @@ const styles = StyleSheet.create({
   statusText:{color:colors.textMuted,marginTop:4,lineHeight:19,fontSize:13},
   completion:{minWidth:70,minHeight:62,borderRadius:20,alignItems:'center',justifyContent:'center',backgroundColor:colors.surfaceStrong,borderWidth:1,borderColor:colors.border,paddingHorizontal:8},
   completionValue:{color:colors.text,fontSize:18,fontWeight:'900'},
-  completionLabel:{color:colors.textSubtle,fontSize:9,fontWeight:'800',marginTop:2},
+  completionLabel:{color:colors.textSubtle,fontSize:12,fontWeight:'800',marginTop:2},
   checklist:{padding:spacing.lg,borderRadius:radius.xl,backgroundColor:colors.surface,borderWidth:1,borderColor:colors.border,gap:8},
   section:{gap:spacing.lg,padding:spacing.lg,borderRadius:radius.xl,backgroundColor:'rgba(10,18,33,.94)',borderWidth:1,borderColor:colors.border},
   sectionKicker:{...typography.eyebrow,color:colors.primaryGlow},
@@ -365,12 +364,12 @@ const styles = StyleSheet.create({
   coverImage:{height:190,borderRadius:0},
   mediaPlaceholder:{color:colors.textMuted,fontWeight:'800',padding:spacing.xl},
   mediaAction:{color:colors.primaryGlow,fontWeight:'900',paddingVertical:12},
-  mediaHint:{color:colors.textSubtle,fontSize:11},
+  mediaHint:{color:colors.textSubtle,fontSize:12},
   locationButton:{minHeight:52,borderRadius:radius.md,borderWidth:1,borderColor:colors.borderStrong,backgroundColor:colors.primarySoft,alignItems:'center',justifyContent:'center'},
   locationButtonText:{color:colors.primaryGlow,fontWeight:'900'},
   mapHelp:{color:colors.textSubtle,fontSize:12,lineHeight:18},
   toggle:{minHeight:62,flexDirection:'row',justifyContent:'space-between',alignItems:'center',paddingHorizontal:14,borderRadius:radius.md,backgroundColor:colors.surfaceStrong,borderWidth:1,borderColor:colors.border},
-  primary:{minHeight:58,borderRadius:radius.md,backgroundColor:colors.primary,alignItems:'center',justifyContent:'center',flexDirection:'row'},
+  primary:{minHeight:58,borderRadius:radius.md,backgroundColor:colors.primaryAction,alignItems:'center',justifyContent:'center',flexDirection:'row'},
   primaryText:{color:colors.white,fontWeight:'900',fontSize:15},
   primaryArrow:{position:'absolute',right:20,color:colors.white,fontSize:20,fontWeight:'900'},
   publish:{minHeight:54,borderRadius:radius.md,backgroundColor:colors.successSoft,borderWidth:1,borderColor:'rgba(88,219,145,.3)',alignItems:'center',justifyContent:'center'},

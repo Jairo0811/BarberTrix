@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using BarberTrix.Api.Contracts;
 using BarberTrix.Application.Auth;
+using Microsoft.AspNetCore.Mvc;
 
 namespace BarberTrix.Api.Endpoints;
 
@@ -11,7 +12,7 @@ public static class AccountDeletionEndpoints
     public static IEndpointRouteBuilder MapAccountDeletionEndpoints(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapDelete("/api/account", async (
-            DeleteAccountRequest request,
+            [FromBody] DeleteAccountRequest request,
             HttpContext context,
             IAccountDeletionService service,
             CancellationToken cancellationToken) =>

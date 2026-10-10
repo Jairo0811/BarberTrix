@@ -8,7 +8,7 @@
   z-index: 10000;
   max-width: calc(100vw - 24px);
   padding: 10px 14px;
-  border: 2px solid #8ac3ff;
+  border: 2px solid var(--bt-primary-soft);
   border-radius: 8px;
   background: #07111f;
   color: #ffffff;
@@ -36,7 +36,7 @@
 }
 
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
-  outline: 3px solid #62adff;
+  outline: 3px solid var(--bt-focus);
   outline-offset: 3px;
 }
 
@@ -55,6 +55,117 @@ button:disabled,
   font-size: 23px;
   line-height: 1.2;
   letter-spacing: -.02em;
+}
+
+/*
+ * Piso de legibilidad para microcopy visible.
+ * Esta capa se carga de forma global y usa !important a propósito: varios módulos
+ * se cargan en chunks perezosos y no deben poder reintroducir texto de 9–11 px.
+ */
+.eyebrow,
+.showcase-stats span,
+.ticket small,
+.turn-copy small,
+.admin-pill.compact,
+.sidebar-session-summary strong,
+.sidebar-session-summary small,
+.dashboard-topbar-copy span,
+.dashboard-user-copy small,
+.dashboard-context-banner div > span,
+.dashboard-kpi span,
+.dashboard-kpi small,
+.dashboard-card-header p,
+.queue-summary-copy strong,
+.queue-summary-copy span,
+.queue-summary-status,
+.dashboard-section-title p,
+.demo-feature-card strong,
+.demo-feature-card small,
+.demo-login-status strong,
+.demo-login-status span,
+.demo-login-note,
+.home-badge,
+.home-feature-row small,
+.home-stats small,
+.home-section-kicker,
+.pricing-badge,
+.pricing-note,
+.home-footer span,
+.home-footer-platform-copy,
+.store-badge small,
+.home-footer-pro .footer-support-link,
+.home-footer-pro .home-footer-bottom span,
+.language-switcher select,
+.login-field > span,
+.remember-option,
+.forgot-link,
+.login-separator,
+.register-copy,
+.login-error,
+.support-option small {
+  font-size: 12px !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--bt-text-muted);
+  opacity: 1;
+}
+
+/*
+ * #1687ff permanece como azul de marca/acento. Para superficies con texto blanco,
+ * #0b73e8 y #0a5fc4 mantienen contraste WCAG AA.
+ */
+.primary,
+.turn-actions button,
+.agenda-view-switch button.active,
+.booking-tabs button.active,
+.booking-form > button,
+.business-form button,
+.billing-actions button,
+.billing-actions a {
+  background: var(--bt-primary-action) !important;
+  color: #fff !important;
+}
+
+.login-submit,
+.recovery-primary,
+.demo-login-primary,
+.home-primary-button,
+.register-submit {
+  background: linear-gradient(180deg, var(--bt-primary-action), var(--bt-primary-action-strong)) !important;
+  color: #fff !important;
+}
+
+.pricing-badge {
+  background: var(--bt-primary-action) !important;
+  color: #fff !important;
+}
+
+.login-submit:not(:disabled):hover,
+.recovery-primary:not(:disabled):hover,
+.register-submit:not(:disabled):hover {
+  filter: brightness(.96);
+}
+
+/* Objetivos táctiles de al menos 44px en pantallas táctiles. */
+@media (pointer: coarse) {
+  :where(button, [role='button'], select, textarea, input:not([type='checkbox'], [type='radio'], [type='range'], [type='hidden'])) {
+    min-height: var(--bt-tap-target);
+  }
+
+  .dashboard-mobile-menu,
+  .dashboard-sidebar-close {
+    width: var(--bt-tap-target);
+    min-width: var(--bt-tap-target);
+    height: var(--bt-tap-target);
+    min-height: var(--bt-tap-target);
+  }
+
+  /* La pantalla TV es UI de presentación, no una superficie táctil. */
+  .tv-page :where(button, input) {
+    min-height: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

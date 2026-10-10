@@ -27,6 +27,7 @@ public sealed class BarberShop : BaseEntity
     public SubscriptionPlan Plan { get; private set; } = SubscriptionPlan.Free;
     public SubscriptionStatus SubscriptionStatus { get; private set; } = SubscriptionStatus.Active;
     public DateTimeOffset? TrialEndsAtUtc { get; private set; }
+    public bool IsActive { get; private set; } = true;
 
     public void UpdateSettings(string name, string timeZoneId)
     {
@@ -42,13 +43,12 @@ public sealed class BarberShop : BaseEntity
         Touch();
     }
 
-    public void CloseForAccountDeletion()
+    public void Deactivate()
     {
-        Name = "Closed BarberTrix workspace";
-        Slug = $"deleted-{Id:N}";
-        Plan = SubscriptionPlan.Free;
-        SubscriptionStatus = SubscriptionStatus.Cancelled;
-        TrialEndsAtUtc = null;
+        if (!IsActive)
+            return;
+
+        IsActive = false;
         Touch();
     }
 

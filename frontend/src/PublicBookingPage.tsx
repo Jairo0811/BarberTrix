@@ -7,7 +7,53 @@ import './public-booking.css'
 
 type Service = { id: string; name: string; price: number; estimatedDurationMinutes: number }
 type Barber = { id: string; name: string; chairNumber: number }
-type Shop = { name: string; slug: string; timeZoneId: string; services: Service[]; barbers: Barber[] }
+type ShopProfile = { description?: string | null; logoUrl?: string | null; coverImageUrl?: string | null; whatsAppPhone?: string | null; publicPhone?: string | null; address?: string | null; city?: string | null; latitude?: number | null; longitude?: number | null }
+type Shop = { name: string; slug: string; timeZoneId: string; services: Service[]; barbers: Barber[]; profile?: ShopProfile | null }
+
+function safeImage(url?: string | null) { return url && /^(https?:\/\/|\/)/i.test(url) ? url : null }
+
+function ShopHeader({ shop, title }: { shop: Shop | null; title: string }) {
+  const p = shop?.profile
+  const cover = safeImage(p?.coverImageUrl)
+  const logo = safeImage(p?.logoUrl)
+  const wa = p?.whatsAppPhone?.replace(/\D/g, '')
+  const place = [p?.address, p?.city].filter(Boolean).join(', ')
+  const mapUrl = p?.latitude != null && p?.longitude != null ? `https://www.google.com/maps?q=${p.latitude},${p.longitude}` : place ? `https://www.google.com/maps?q=${encodeURIComponent(place)}` : null
+  return <header className="shop-hero">
+    {cover && <img className="shop-cover" src={cover} alt="" loading="eager" decoding="async" />}
+    <div className="shop-identity">
+      {logo ? <img className="shop-logo" src={logo} alt="" decoding="async" /> : <span className="shop-logo shop-logo-fallback" aria-hidden="true">{(shop?.name ?? 'B').trim().charAt(0).toUpperCase()}</span>}
+      <div><h1>{shop?.name}</h1>{p?.description && <p className="shop-description">{p.description}</p>}</div>
+    </div>
+    {(wa || p?.publicPhone || mapUrl) && <div className="shop-actions">
+      {wa && <a href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer">WhatsApp</a>}
+      {p?.publicPhone && <a href={`tel:${p.publicPhone.replace(/[^\d+]/g, '')}`}>{p.publicPhone}</a>}
+      {mapUrl && <a href={mapUrl} target="_blank" rel="noreferrer">{place || 'Maps'}</a>}
+    </div>}
+    <p className="booking-kicker">{title}</p>
+  </header>
+}
+
+function ServiceChoices({ services, label }: { services: Service[]; label: string }) {
+  return <fieldset className="choice-group"><legend>{label}</legend>
+    {services.map(item => <label key={item.id} className="choice-card">
+      <input type="radio" name="serviceId" value={item.id} required />
+      <span className="choice-body"><strong>{item.name}</strong><small>{item.estimatedDurationMinutes} min</small></span>
+      <span className="choice-price">RD${item.price}</span>
+    </label>)}
+  </fieldset>
+}
+
+function BarberChoices({ barbers, label, anyLabel }: { barbers: Barber[]; label: string; anyLabel: string }) {
+  return <fieldset className="choice-group choice-group-barbers"><legend>{label}</legend>
+    <label className="choice-card"><input type="radio" name="barberId" value="" defaultChecked /><span className="choice-avatar" aria-hidden="true">✂</span><span className="choice-body"><strong>{anyLabel}</strong></span></label>
+    {barbers.map(item => <label key={item.id} className="choice-card">
+      <input type="radio" name="barberId" value={item.id} />
+      <span className="choice-avatar" aria-hidden="true">{item.name.trim().charAt(0).toUpperCase()}</span>
+      <span className="choice-body"><strong>{item.name}</strong><small>#{item.chairNumber}</small></span>
+    </label>)}
+  </fieldset>
+}
 type PublicCapabilities = { canUseAppointments: boolean; canUseTv: boolean }
 type TurnResult = { turn: { id: string; ticketNumber: string; status: string }; lookupToken: string; position: number; estimatedWaitMinutes: number }
 type Slot = { startsAtUtc: string; endsAtUtc: string; barberId: string; barberName: string }
@@ -202,9 +248,7 @@ export default function PublicBookingPage() {
 
   return <main className="public-booking">
     <section className="booking-card">
-      <a href="#/"><img src="/branding/barbertrix-logo.png" alt="BarberTrix" /></a>
-      <p className="booking-kicker">{shop?.name}</p>
-      <h1>{t('booking.title')}</h1>
+      <ShopHeader shop={shop} title={t('booking.title')} />
 
       <div className="booking-tabs">
         <button className={mode === 'queue' ? 'active' : ''} onClick={() => setMode('queue')}>{t('customer.takeTurn')}</button>
@@ -217,14 +261,8 @@ export default function PublicBookingPage() {
       {mode === 'queue' && !turn && <form className="booking-form" onSubmit={createTurn}>
         <input name="customerName" placeholder={t('booking.nameOptional')} maxLength={120} />
         <input name="customerPhone" placeholder={t('booking.phoneOptional')} maxLength={40} />
-        <select name="serviceId" required defaultValue="">
-          <option value="" disabled>{t('selectService')}</option>
-          {shop?.services.map(item => <option key={item.id} value={item.id}>{item.name} · RD${item.price}</option>)}
-        </select>
-        <select name="barberId" defaultValue="">
-          <option value="">{t('booking.nextBarber')}</option>
-          {shop?.barbers.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
-        </select>
+        <ServiceChoices services={shop?.services ?? []} label={t('selectService')} />
+        <BarberChoices barbers={shop?.barbers ?? []} label={t('anyBarber')} anyLabel={t('booking.nextBarber')} />
         <button disabled={busy}>{busy ? t('booking.generating') : t('booking.getTurn')}</button>
       </form>}
 
@@ -242,17 +280,11 @@ export default function PublicBookingPage() {
         <input name="customerName" placeholder={t('booking.name')} required maxLength={120} />
         <input name="customerPhone" placeholder={t('booking.phone')} maxLength={40} />
         <input name="customerEmail" type="email" placeholder={t('common.email')} maxLength={180} />
-        <select name="serviceId" required defaultValue="">
-          <option value="" disabled>{t('selectService')}</option>
-          {shop?.services.map(item => <option key={item.id} value={item.id}>{item.name} · {item.estimatedDurationMinutes} min</option>)}
-        </select>
-        <select name="barberId" defaultValue="">
-          <option value="">{t('anyBarber')}</option>
-          {shop?.barbers.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
-        </select>
+        <ServiceChoices services={shop?.services ?? []} label={t('selectService')} />
+        <BarberChoices barbers={shop?.barbers ?? []} label={t('anyBarber')} anyLabel={t('anyBarber')} />
         <input name="date" type="date" min={new Date().toISOString().slice(0, 10)} required />
         <button disabled={busy}>{t('booking.searchSlots')}</button>
-        {slots.length > 0 && <div className="slot-grid">{slots.slice(0, 24).map(slot => <button type="button" key={`${slot.barberId}-${slot.startsAtUtc}`} onClick={event => void book(slot, event.currentTarget.form!)}>
+        {slots.length > 0 && <div className="slot-grid">{slots.map(slot => <button type="button" key={`${slot.barberId}-${slot.startsAtUtc}`} onClick={event => void book(slot, event.currentTarget.form!)}>
           {new Date(slot.startsAtUtc).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}<small>{slot.barberName}</small>
         </button>)}</div>}
       </form>}

@@ -41,7 +41,7 @@ export default function ForgotPasswordPage() {
     <main className="recovery-page" aria-labelledby="forgot-password-title">
       <section className="recovery-card">
         <a className="recovery-logo" href="#/" aria-label={t('common.backHome')}>
-          <img src="/branding/barbertrix-logo.png" alt="BarberTrix" />
+          <img src="/branding/barbertrix-logo.webp" alt="BarberTrix" />
         </a>
 
         {!result ? (

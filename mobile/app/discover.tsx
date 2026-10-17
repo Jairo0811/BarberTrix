@@ -1,7 +1,7 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MobileBottomNav } from '@/ui/MobileBottomNav';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useAuth } from '@/auth/AuthProvider';
@@ -14,6 +14,7 @@ import { searchShops, type DiscoveryShopCard } from '@/discovery/discoveryApi';
 import { useI18n } from '@/i18n/I18nProvider';
 import { colors, control, radius, spacing, typography } from '@/theme/tokens';
 import { BrandLogo } from '@/ui/BrandLogo';
+import { resolveMediaUrl } from '@/ui/mediaUrl';
 import { BrandedBackground } from '@/ui/BrandedBackground';
 
 export default function DiscoverScreen() {
@@ -118,6 +119,10 @@ export default function DiscoverScreen() {
 }
 
 function ShopCard({ item, copy, canBook, signInToBook }: { item: DiscoveryShopCard; copy: DiscoveryCopy; canBook: boolean; signInToBook: string }) {
+  const logoUri = resolveMediaUrl(item.logoUrl);
+  const coverUri = resolveMediaUrl(item.coverImageUrl);
+  const [logoFailed, setLogoFailed] = useState(false);
+  const [coverFailed, setCoverFailed] = useState(false);
   const { t, locale } = useI18n();
   const waitText = item.availableBarbers === 0
     ? t('discovery.noBarbers')
@@ -138,9 +143,12 @@ function ShopCard({ item, copy, canBook, signInToBook }: { item: DiscoveryShopCa
 
   return (
     <View style={styles.card}>
+      {coverUri && !coverFailed && <Image source={{ uri: coverUri }} resizeMode="cover" onError={() => setCoverFailed(true)} style={styles.cardCover} />}
       <View style={styles.cardTop}>
         <View style={styles.cardIdentity}>
-          <View style={styles.shopInitial}><Text style={styles.shopInitialText}>{item.name.slice(0, 1).toUpperCase()}</Text></View>
+          {logoUri && !logoFailed
+            ? <Image source={{ uri: logoUri }} resizeMode="cover" onError={() => setLogoFailed(true)} style={styles.shopLogo} />
+            : <View style={styles.shopInitial}><Text style={styles.shopInitialText}>{item.name.slice(0, 1).toUpperCase()}</Text></View>}
           <View style={styles.shopCopy}>
             <Text style={styles.shopName}>{item.name}</Text>
             {!!item.address && <Text numberOfLines={2} style={styles.address}>{item.address}</Text>}
@@ -198,6 +206,8 @@ const styles = StyleSheet.create({
   cardTop: { flexDirection: 'row', gap: spacing.md, alignItems: 'flex-start', justifyContent: 'space-between' },
   cardIdentity: { flex: 1, flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
   shopInitial: { width: 46, height: 46, borderRadius: 16, backgroundColor: colors.primarySoft, borderWidth: 1, borderColor: colors.borderStrong, alignItems: 'center', justifyContent: 'center' },
+  cardCover: { width: '100%', height: 112, borderRadius: radius.lg, backgroundColor: colors.surfaceStrong },
+  shopLogo: { width: 46, height: 46, borderRadius: 16, backgroundColor: colors.surfaceStrong, borderWidth: 1, borderColor: colors.borderStrong },
   shopInitialText: { color: colors.primaryGlow, fontSize: 20, fontWeight: '900' },
   shopCopy: { flex: 1, gap: spacing.xs },
   shopName: { ...typography.sectionTitle, color: colors.text },

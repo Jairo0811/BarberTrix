@@ -9,6 +9,8 @@ public sealed class DiscoveryService(ApplicationDbContext db) : IDiscoveryServic
 {
     private const int DefaultServiceDurationMinutes = 30;
 
+    private sealed record ShopMediaRow(Guid BarberShopId, string? LogoUrl, string? CoverImageUrl);
+
     public async Task<IReadOnlyList<DiscoveryShopCard>> SearchAsync(string? query, int limit, CancellationToken cancellationToken)
     {
         limit = Math.Clamp(limit, 1, 50);
@@ -33,6 +35,10 @@ public sealed class DiscoveryService(ApplicationDbContext db) : IDiscoveryServic
             return Array.Empty<DiscoveryShopCard>();
 
         var shopIds = shops.Select(x => x.Id).ToArray();
+        var media = (await db.Database.SqlQuery<ShopMediaRow>($"SELECT BarberShopId, LogoUrl, CoverImageUrl FROM PublicShopProfiles WHERE IsPublished = {true}")
+            .ToListAsync(cancellationToken))
+            .Where(x => shopIds.Contains(x.BarberShopId))
+            .ToDictionary(x => x.BarberShopId);
         var locations = await db.ShopLocations.AsNoTracking()
             .Where(x => shopIds.Contains(x.BarberShopId) && x.IsActive)
             .OrderBy(x => x.CreatedAtUtc)
@@ -83,7 +89,9 @@ public sealed class DiscoveryService(ApplicationDbContext db) : IDiscoveryServic
                 activeBarbers,
                 availableBarbers,
                 services?.StartingPrice,
-                estimatedWait));
+                estimatedWait,
+                media.GetValueOrDefault(shop.Id)?.LogoUrl,
+                media.GetValueOrDefault(shop.Id)?.CoverImageUrl));
         }
 
         return result

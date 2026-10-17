@@ -11,7 +11,9 @@ public sealed record DiscoveryShopCard(
     int ActiveBarbers,
     int AvailableBarbers,
     decimal? StartingPrice,
-    int? EstimatedWaitMinutes);
+    int? EstimatedWaitMinutes,
+    string? LogoUrl = null,
+    string? CoverImageUrl = null);
 
 public interface IDiscoveryService
 {

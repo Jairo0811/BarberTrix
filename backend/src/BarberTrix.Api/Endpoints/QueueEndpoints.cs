@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using BarberTrix.Api.Contracts;
 using BarberTrix.Application.Common;
+using BarberTrix.Application.Discovery;
 using BarberTrix.Application.Queue;
 
 namespace BarberTrix.Api.Endpoints;
@@ -10,8 +11,13 @@ public static class QueueEndpoints
     public static IEndpointRouteBuilder MapQueueEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var publicGroup = endpoints.MapGroup("/api/public/shops/{slug}").WithTags("Public queue").RequireRateLimiting("publicQueue");
-        publicGroup.MapGet("/", async (string slug, IQueueService service, CancellationToken ct) =>
-            await service.GetPublicShopAsync(slug, ct) is { } shop ? Results.Ok(shop) : Results.NotFound());
+        publicGroup.MapGet("/", async (string slug, IQueueService service, IPublicShopProfileService profiles, CancellationToken ct) =>
+        {
+            if (await service.GetPublicShopAsync(slug, ct) is not { } shop) return Results.NotFound();
+            // Contact details are only exposed once the owner has published the shop profile.
+            var profile = await profiles.GetAsync(shop.Id, ct);
+            return Results.Ok(profile.IsPublished ? shop with { Profile = PublicShopContactDto.From(profile) } : shop);
+        });
         publicGroup.MapGet("/capabilities", async (string slug, IShopLookupService shops, IPlanLimitService limits, CancellationToken ct) =>
         {
             var shopId = await shops.GetActiveShopIdBySlugAsync(slug, ct);

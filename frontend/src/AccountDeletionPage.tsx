@@ -54,7 +54,7 @@ export default function AccountDeletionPage() {
 
   return <main className="login-shell"><article className="login-card legal-card">
     <a className="back-home-link" href="#/">← {copy.back}</a>
-    <img className="legal-logo" src="/branding/barbertrix-logo.png" alt="BarberTrix" />
+    <img className="legal-logo" src="/branding/barbertrix-logo.webp" alt="BarberTrix" />
     <h1>{copy.title}</h1>
     <p>{copy.intro}</p>
     <p>{copy.owner}</p>

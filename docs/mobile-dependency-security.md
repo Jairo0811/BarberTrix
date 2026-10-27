@@ -4,15 +4,15 @@
 
 The mobile client targets Expo SDK 57 and React Native 0.86.3. Expo-managed packages are kept aligned with `npx expo install --check`.
 
-As of 2026-10-09, the project is aligned with the compatibility versions currently reported by Expo SDK 57, including the latest required patch updates for:
+As of 2026-10-27, dependency alignment was verified for the PR #126 Expo SDK 57 baseline (updated on 2026-10-17). Relevant direct versions include:
 
-- `expo-crypto ~57.0.3`;
-- `expo-dev-client ~57.0.19`;
-- `expo-image-manipulator ~57.0.21`;
-- `expo-image-picker ~57.0.20`;
-- `expo-location ~57.0.20`;
-- `expo-notifications ~57.0.22`;
-- `expo-secure-store ~57.0.4`.
+- `expo ~57.0.30`, `expo-router ~57.0.28`;
+- `expo-crypto ~57.0.4`, `expo-dev-client ~57.0.20`;
+- `expo-linking ~57.0.13`, `expo-location ~57.0.21`;
+- `expo-notifications ~57.0.23`, `expo-secure-store ~57.0.4`;
+- `expo-image-manipulator ~57.0.21`, `expo-image-picker ~57.0.20`.
+
+The CI `npx expo install --check`, typecheck, tests and Android/iOS bundle exports pass on this baseline.
 
 CI validates the mobile client with:
 
@@ -62,3 +62,22 @@ Do not downgrade Expo or force an incompatible Expo Router major solely to make 
 - Re-evaluate these advisory chains whenever Expo, Expo Router, Metro, React Native, config plugins or their transitive dependencies release compatible fixes.
 
 This is a documented temporary upstream-risk acceptance, not a declaration that the advisories are irrelevant.
+
+## Reassessment — 2026-10-27 (PR #126)
+
+**Observed dependency-audit outcome:** `npm audit --omit=dev` reports 29 affected package entries: **19 high, 10 moderate, 0 critical**. This is an upstream transitive-dependency issue; counting every propagated audit entry as a distinct vulnerability would overstate the number of independent root advisories.
+
+| Root and installed version | Advisory | Introduced through | Available remedy / scope |
+|---|---|---|---|
+| `braces@3.0.3` | [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) (high) | `micromatch -> metro-file-map -> Metro/Expo` | No patched upstream release confirmed 2026-10-27; nested glob patterns can exhaust the Node.js process. Metro/build-tool input exposure must be assessed. |
+| `node-forge@1.4.0` | [GHSA-86w9-cpqp-85rv](https://github.com/advisories/GHSA-86w9-cpqp-85rv) (high) | `@expo/code-signing-certificates -> Expo CLI` | No patched upstream release listed 2026-10-27. Review signing/certificate-verification trust boundaries in build tooling; do not infer runtime exploitability. |
+| `decode-uri-component@0.2.2` | [GHSA-vcc3-ghjq-m6fr](https://github.com/advisories/GHSA-vcc3-ghjq-m6fr) (moderate) | `query-string@7.1.3 -> expo-router@57.0.28` | `decode-uri-component@0.5.0` is patched, but forcing a transitive major outside `query-string@7`'s declared range requires regression tests for URL handling and deep links. Potential runtime exposure merits special attention. |
+| `uuid@7.0.3` | [GHSA-w5hq-g745-h8pq](https://github.com/advisories/GHSA-w5hq-g745-h8pq) (moderate) | `xcode@3.0.1 -> @expo/config-plugins` | `uuid >=11.1.1` addresses the advisory, but the `xcode` dependency declares `^7.0.3`; replacing it blindly risks native project generation. |
+
+**Security controls confirmed in PR #126:** backend, frontend, Mobile, Playwright, full-stack E2E, restore rehearsal, Compose and container image builds passed. The `Security` workflow's secret scan passed, but its CodeQL jobs were *skipped* under the previous opt-in setting; the PR now explicitly enables CodeQL and its new results must be reviewed. A green high-audit reporting step is *not* a clean report because that step intentionally uses `continue-on-error: true`.
+
+**Disposition:** **open security debt, not remediated**. Do not use `npm audit fix --force`, Expo downgrades, arbitrary dependency overrides, or version-only allowlisting to make npm audit report zero. Prefer compatible upstream updates or an independently tested, narrowly scoped fix. Review advisories and the shipped Android/iOS bundle's actual reachable code paths before approving a commercial release. Keep critical findings blocking and high findings visible; a release owner must explicitly document any residual high-risk acceptance, its expiry and compensating controls.
+
+**Next review:** 2026-11-03, or sooner if Expo / Metro / node-forge / braces / query-string / xcode publish relevant updates. Re-run the complete mobile CI suite and native signed-build smoke tests after a dependency change.
+
+This reassessment **does not** attest live PayPal, physical-device push/OAuth, production secrets, live monitoring, legal clearance or store approval. Those are separate external acceptance gates in [release-candidate.md](release-candidate.md).

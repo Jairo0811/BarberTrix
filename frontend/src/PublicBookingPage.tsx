@@ -242,7 +242,9 @@ export default function PublicBookingPage() {
   }
 
   if (!slug) return <main className="public-booking"><section><h1>{t('booking.missingShopTitle')}</h1><p>{t('booking.missingShopText')}</p></section></main>
-  if (!shop && !error) return <main className="public-booking"><section><p>{t('booking.loadingShop')}</p></section></main>
+  if (!shop) return <main className="public-booking"><section className="booking-card">
+    <p className={error ? 'booking-error' : ''} role={error ? 'alert' : 'status'}>{error || t('booking.loadingShop')}</p>
+  </section></main>
 
   const appointmentsEnabled = capabilities?.canUseAppointments === true
 

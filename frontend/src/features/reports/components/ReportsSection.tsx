@@ -178,7 +178,7 @@ export default function ReportsSection({ isDemo, capabilities }: Props) {
       {error && <p className="form-error" role="alert">{error}</p>}
       {report && <>
         <header className="report-print-header" aria-hidden="true">
-          <img src="/branding/barbertrix-logo.png" alt="" />
+          <img src="/branding/barbertrix-logo.webp" alt="" />
           <div className="report-print-title">
             <span>{t('reportsAdmin.eyebrow')}</span>
             <h1>{t('reportsAdmin.title')}</h1>

@@ -82,7 +82,7 @@ function BarberOnboardingPanel({ auth, onLogout, onAuthChanged }: { auth: Auth; 
 function BarberTrixLogo() {
   return (
     <div className="official-logo" aria-label="BarberTrix">
-      <img src="/branding/barbertrix-logo.png" alt="BarberTrix" />
+      <img src="/branding/barbertrix-logo.webp" alt="BarberTrix" />
     </div>
   )
 }

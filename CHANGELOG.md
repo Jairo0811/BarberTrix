@@ -18,6 +18,8 @@ El proyecto sigue [Semantic Versioning](https://semver.org/) y el formato de [Ke
 
 ### Added
 
+- `GET /api/public/shops/{slug}` devuelve `profile` (logo, portada, descripción, teléfono, WhatsApp, dirección y coordenadas) cuando la barbería está publicada; la página pública de turnos lo muestra.
+
 - turnos públicos con consulta privada, cancelación e idempotencia;
 - SignalR y BarberTrix TV;
 - agenda híbrida, clientes, caja y reportes;

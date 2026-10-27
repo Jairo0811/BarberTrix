@@ -53,7 +53,7 @@ export default function CustomerPortalPage() {
 
   return <main className="customer-portal">
     <header className="customer-portal-header">
-      <a href="#/"><img src="/branding/barbertrix-logo.png" alt="BarberTrix" /></a>
+      <a href="#/"><img src="/branding/barbertrix-logo.webp" alt="BarberTrix" /></a>
       <span>{t('customer.portalTitle')}</span>
     </header>
 

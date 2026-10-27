@@ -1,3 +1,4 @@
+using BarberTrix.Application.Discovery;
 using BarberTrix.Domain.Entities;
 
 namespace BarberTrix.Application.Queue;
@@ -43,7 +44,31 @@ public sealed record QueueMetricsResponse(
     int AvailableBarbers,
     int EstimatedWaitMinutes);
 
-public sealed record PublicShopResponse(Guid Id, string Name, string Slug, string TimeZoneId, IReadOnlyList<ServiceResponse> Services, IReadOnlyList<BarberResponse> Barbers);
+public sealed record PublicShopResponse(Guid Id, string Name, string Slug, string TimeZoneId, IReadOnlyList<ServiceResponse> Services, IReadOnlyList<BarberResponse> Barbers, PublicShopContactDto? Profile = null);
+
+/// <summary>Public-safe subset of the shop profile shown on the booking page. Only sent when the shop is published.</summary>
+public sealed record PublicShopContactDto(
+    string? Description,
+    string? PublicPhone,
+    string? WhatsAppPhone,
+    string? LogoUrl,
+    string? CoverImageUrl,
+    string? Address,
+    string? City,
+    decimal? Latitude,
+    decimal? Longitude)
+{
+    public static PublicShopContactDto From(PublicShopProfileDto profile) => new(
+        profile.Description,
+        profile.PublicPhone,
+        profile.WhatsAppPhone,
+        profile.LogoUrl,
+        profile.CoverImageUrl,
+        profile.Location.Address,
+        profile.Location.City,
+        profile.Location.Latitude,
+        profile.Location.Longitude);
+}
 public sealed record PublicCreateTurnRequest(Guid ServiceId, string? CustomerName, string? CustomerPhone, Guid? BarberId, string? IdempotencyKey);
 public sealed record PublicTurnResponse(TurnResponse Turn, string LookupToken, int Position, int EstimatedWaitMinutes);
 public sealed record PublicTurnStatusResponse(TurnResponse Turn, int Position, int EstimatedWaitMinutes);

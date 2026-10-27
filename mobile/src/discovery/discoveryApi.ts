@@ -12,6 +12,8 @@ export type DiscoveryShopCard = {
   availableBarbers: number;
   startingPrice?: number | null;
   estimatedWaitMinutes?: number | null;
+  logoUrl?: string | null;
+  coverImageUrl?: string | null;
 };
 
 export async function searchShops(query?: string): Promise<DiscoveryShopCard[]> {

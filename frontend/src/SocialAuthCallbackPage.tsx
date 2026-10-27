@@ -38,7 +38,7 @@ export default function SocialAuthCallbackPage() {
 
   return <main className="login-shell">
     <section className="login-card social-callback-card" aria-live="polite">
-      <img src="/branding/barbertrix-logo.png" alt="BarberTrix" />
+      <img src="/branding/barbertrix-logo.webp" alt="BarberTrix" />
       {error ? (
         <>
           <p className="login-error" role="alert">{error}</p>

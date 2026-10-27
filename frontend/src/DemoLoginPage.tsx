@@ -62,7 +62,7 @@ export default function DemoLoginPage() {
     <main className="demo-login-page">
       <section className="demo-login-card" aria-labelledby="demo-login-title">
         <a className="demo-login-logo" href="#/" aria-label={t('common.backHome')}>
-          <img src="/branding/barbertrix-logo.png" alt="BarberTrix" />
+          <img src="/branding/barbertrix-logo.webp" alt="BarberTrix" />
         </a>
 
         <span className="demo-login-badge"><FontAwesomeIcon icon={faFlask} /> {t('demo.badge')}</span>

@@ -88,7 +88,7 @@ export default function RegisterPage() {
       <section className="register-showcase" aria-label="BarberTrix">
         <div className="register-showcase-overlay" aria-hidden="true" />
         <div className="register-brand">
-          <img src="/branding/barbertrix-logo.png" alt="BarberTrix" />
+          <img src="/branding/barbertrix-logo.webp" alt="BarberTrix" />
         </div>
 
         <div className="register-copy-block">

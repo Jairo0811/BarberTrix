@@ -204,6 +204,15 @@ export default function HomePage() {
         <div className="home-hero-visual" aria-hidden="true">
           <div className="home-hero-glow" />
           <img src="/branding/barbertrix-home-chair.webp" alt="" />
+          <div className="home-queue-mock">
+            <div className="home-queue-mock-head"><span className="home-queue-live" /><strong>{t('home.feature.realtime.title')}</strong></div>
+            <ol>
+              <li className="is-now"><b>A-014</b><span>Carlos</span><em>1</em></li>
+              <li><b>A-015</b><span>Miguel</span><em>2</em></li>
+              <li><b>A-016</b><span>Andrés</span><em>3</em></li>
+            </ol>
+            <div className="home-queue-mock-foot"><span>~25 min</span><span>3</span></div>
+          </div>
         </div>
       </section>
 

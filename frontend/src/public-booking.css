@@ -25,3 +25,15 @@
 .slot-grid{max-height:320px;overflow:auto}
 .shop-live{display:inline-flex;align-items:center;gap:8px;margin:0;padding:8px 14px;border-radius:999px;background:rgba(88,219,145,.12);border:1px solid rgba(88,219,145,.35);font-size:.9rem;width:fit-content}
 .shop-live-dot{width:9px;height:9px;border-radius:50%;background:#58db91}
+
+.ticket-result{display:grid;justify-items:center;gap:10px;text-align:center;padding:24px 18px;border-radius:20px;border:1px solid rgba(255,255,255,.14);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02))}
+.ticket-kicker{font-size:.85rem;letter-spacing:.08em;text-transform:uppercase;color:var(--bt-text-muted)}
+.ticket-number{font-size:clamp(3rem,16vw,4.75rem);line-height:1;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.ticket-pill{padding:6px 16px;border-radius:999px;font-weight:700;font-size:.92rem;background:rgba(255,255,255,.1)}
+.ticket-waiting .ticket-pill{background:rgba(22,135,255,.2)}
+.ticket-called,.ticket-inservice{border-color:#58db91;box-shadow:0 0 0 4px rgba(88,219,145,.18)}
+.ticket-called .ticket-pill,.ticket-inservice .ticket-pill{background:#58db91;color:#04210f}
+.ticket-called .ticket-number{animation:ticket-pulse 1.4s ease-in-out infinite}
+.ticket-row{margin:0;padding:10px 14px;width:100%;border-radius:12px;background:rgba(255,255,255,.05);font-size:1rem}
+@keyframes ticket-pulse{50%{transform:scale(1.05)}}
+@media (prefers-reduced-motion:reduce){.ticket-called .ticket-number{animation:none}}

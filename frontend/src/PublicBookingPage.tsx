@@ -121,6 +121,19 @@ export default function PublicBookingPage() {
     }).catch(() => setError(t('booking.loadShopError')))
   }, [slug, t])
 
+  // The ticket number in the tab title helps clients who switch apps while waiting.
+  useEffect(() => {
+    if (!turn) return
+    const previous = document.title
+    document.title = `${turn.turn.ticketNumber} · ${shop?.name ?? 'BarberTrix'}`
+    return () => { document.title = previous }
+  }, [turn?.turn.ticketNumber, shop?.name])
+
+  // Haptic nudge when the barber calls this turn (supported browsers only).
+  useEffect(() => {
+    if (turn?.turn.status === 'Called' && typeof navigator.vibrate === 'function') navigator.vibrate([200, 100, 200])
+  }, [turn?.turn.status])
+
   useEffect(() => {
     if (!shop || turn || appointment) return
     let cancelled = false
@@ -288,12 +301,12 @@ export default function PublicBookingPage() {
         <button disabled={busy}>{busy ? t('booking.generating') : t('booking.getTurn')}</button>
       </form>}
 
-      {mode === 'queue' && turn && <div className="ticket-result">
-        <span>{t('booking.yourTurn')}</span>
-        <strong>{turn.turn.ticketNumber}</strong>
-        <p>{t('booking.status', { status: turnStatusLabel(t, turn.turn.status) })}</p>
-        <p>{t('booking.position', { position: turn.position > 0 ? turn.position : t('booking.servingNow') })}</p>
-        <p>{t('booking.estimatedWait', { minutes: turn.estimatedWaitMinutes })}</p>
+      {mode === 'queue' && turn && <div className={`ticket-result ticket-${turn.turn.status.toLowerCase()}`} aria-live="polite">
+        <span className="ticket-kicker">{t('booking.yourTurn')}</span>
+        <strong className="ticket-number">{turn.turn.ticketNumber}</strong>
+        <span className="ticket-pill">{turnStatusLabel(t, turn.turn.status)}</span>
+        <p className="ticket-row">{t('booking.position', { position: turn.position > 0 ? turn.position : t('booking.servingNow') })}</p>
+        <p className="ticket-row">{t('booking.estimatedWait', { minutes: turn.estimatedWaitMinutes })}</p>
         <small>{t('booking.keepTurnLink')}</small>
         {['Waiting', 'Called'].includes(turn.turn.status) && <button disabled={busy} onClick={() => void cancelSaved('turn')}>{t('booking.cancelTurn')}</button>}
       </div>}

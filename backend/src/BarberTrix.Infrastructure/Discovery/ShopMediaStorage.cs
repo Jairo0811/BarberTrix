@@ -1,4 +1,5 @@
 using BarberTrix.Application.Discovery;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Configuration;
 
 namespace BarberTrix.Infrastructure.Discovery;
@@ -10,7 +11,7 @@ public sealed class ShopMediaStorage(IConfiguration configuration) : IShopMediaS
     public async Task<string> SaveAsync(Guid shopId, string kind, string fileName, string contentType, byte[] content, CancellationToken cancellationToken)
     {
         var normalizedKind = NormalizeKind(kind);
-        var maxBytes = normalizedKind == "logo" ? 2 * 1024 * 1024 : 5 * 1024 * 1024;
+        var maxBytes = normalizedKind == "logo" || normalizedKind.StartsWith("barber-", StringComparison.Ordinal) ? 2 * 1024 * 1024 : 5 * 1024 * 1024;
         if (content.Length == 0) throw new ArgumentException("MEDIA_EMPTY");
         if (content.Length > maxBytes) throw new ArgumentException("MEDIA_TOO_LARGE");
         var detected = DetectContentType(content);
@@ -67,10 +68,19 @@ public sealed class ShopMediaStorage(IConfiguration configuration) : IShopMediaS
         return null;
     }
 
-    private static string NormalizeKind(string kind) => kind?.Trim().ToLowerInvariant() switch
+    // Barber portraits use "barber-<32 hex chars>" (the barber id without dashes); nothing else is accepted,
+    // so the kind can never contain path separators or traversal sequences.
+    private static readonly Regex BarberKind = new("^barber-[0-9a-f]{32}$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+    private static string NormalizeKind(string kind)
     {
-        "logo" => "logo",
-        "cover" => "cover",
-        _ => throw new ArgumentException("MEDIA_KIND_INVALID")
-    };
+        var normalized = kind?.Trim().ToLowerInvariant();
+        return normalized switch
+        {
+            "logo" => "logo",
+            "cover" => "cover",
+            not null when BarberKind.IsMatch(normalized) => normalized,
+            _ => throw new ArgumentException("MEDIA_KIND_INVALID")
+        };
+    }
 }

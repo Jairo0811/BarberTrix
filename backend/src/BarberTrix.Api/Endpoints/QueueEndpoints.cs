@@ -51,6 +51,29 @@ public static class QueueEndpoints
         group.MapPut("/barbers/{barberId:guid}", async (Guid barberId, UpdateBarberRequest request, HttpContext context, IQueueService service, CancellationToken ct) =>
             await ExecuteTransitionAsync(context, () => service.UpdateBarberAsync(GetShopId(context), barberId, request, ct)))
             .RequireAuthorization(policy => policy.RequireRole("Owner", "Administrator"));
+        group.MapPut("/barbers/{barberId:guid}/photo", async (Guid barberId, UploadShopMediaRequest request, HttpContext context, IQueueService service, IShopMediaStorage storage, CancellationToken ct) =>
+        {
+            var shopId = GetShopId(context);
+            if ((await service.GetBarbersAsync(shopId, ct)).All(x => x.Id != barberId)) return Results.NotFound();
+            const int maxBytes = 2 * 1024 * 1024;
+            if (string.IsNullOrEmpty(request.Base64)) return ApiErrorResults.BadRequest(context, "MEDIA_EMPTY", "Select an image.");
+            if (request.Base64.Length > 4 * ((maxBytes + 2) / 3)) return ApiErrorResults.BadRequest(context, "MEDIA_TOO_LARGE", "The image exceeds the size limit.");
+            try
+            {
+                var bytes = Convert.FromBase64String(request.Base64);
+                var url = await storage.SaveAsync(shopId, $"barber-{barberId:N}", request.FileName, request.ContentType, bytes, ct);
+                return Results.Ok(new ShopMediaUploadResponse(url));
+            }
+            catch (FormatException)
+            {
+                return ApiErrorResults.BadRequest(context, "MEDIA_TYPE_INVALID", "The selected image could not be read.");
+            }
+            catch (ArgumentException ex)
+            {
+                var code = ex.Message is "MEDIA_EMPTY" or "MEDIA_TOO_LARGE" or "MEDIA_TYPE_INVALID" ? ex.Message : "MEDIA_TYPE_INVALID";
+                return ApiErrorResults.BadRequest(context, code, "The selected image is not valid.");
+            }
+        }).RequireAuthorization(policy => policy.RequireRole("Owner", "Administrator"));
         group.MapPatch("/barbers/{barberId:guid}/status", async (Guid barberId, ChangeBarberStatusRequest request, HttpContext context, IQueueService service, CancellationToken ct) =>
         {
             if (!CanOperateBarber(context.User, barberId)) return Results.Forbid();

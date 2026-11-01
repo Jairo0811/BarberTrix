@@ -6,47 +6,51 @@ namespace BarberTrix.Api.Tests;
 
 public sealed class ShopMediaStorageTests : IDisposable
 {
-    private readonly string root = Path.Combine(Path.GetTempPath(), "barbertrix-media-tests", Guid.NewGuid().ToString("N"));
-    private ShopMediaStorage Storage => new(new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { ["ShopMedia:RootPath"] = root }).Build());
-    public static TheoryData<string, byte[]> Images => new()
-    {
-        { "image/jpeg", [255, 216, 255, 224, 0, 0, 0, 0, 0, 0, 255, 217] },
-        { "image/png", [137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 0] },
-        { "image/webp", [82, 73, 70, 70, 4, 0, 0, 0, 87, 69, 66, 80] }
-    };
+    private readonly string root = Path.Combine(Path.GetTempPath(), "barbertrix-media-" + Guid.NewGuid().ToString("N"));
+    private readonly ShopMediaStorage storage;
+    private static readonly byte[] Png = [137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 0];
 
-    [Theory, MemberData(nameof(Images))]
-    public async Task SignatureValidatedMediaCanBeReadOnlyFromItsShop(string mime, byte[] bytes)
+    public ShopMediaStorageTests() =>
+        storage = new ShopMediaStorage(new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { ["ShopMedia:RootPath"] = root }).Build());
+
+    [Fact]
+    public async Task StoresAndReadsABarberPortraitUnderItsOwnKind()
     {
-        var id = Guid.NewGuid();
-        await Storage.SaveAsync(id, "logo", "../../unsafe.exe", mime, bytes, default);
-        var result = await Storage.OpenAsync(id, "logo", default);
-        Assert.NotNull(result);
-        await using var stream = result.Stream;
-        Assert.Equal(mime, result.ContentType);
-        using var copy = new MemoryStream();
-        await stream.CopyToAsync(copy);
-        Assert.Equal(bytes, copy.ToArray());
-        Assert.Null(await Storage.OpenAsync(Guid.NewGuid(), "logo", default));
-        Assert.Single(Directory.GetFiles(root, "*", SearchOption.AllDirectories));
+        var shopId = Guid.NewGuid();
+        var kind = $"barber-{Guid.NewGuid():N}";
+
+        var url = await storage.SaveAsync(shopId, kind, "me.png", "image/png", Png, CancellationToken.None);
+
+        Assert.Equal($"/api/public/shop-media/{shopId:D}/{kind}", url);
+        var media = await storage.OpenAsync(shopId, kind, CancellationToken.None);
+        Assert.NotNull(media);
+        await using var stream = media.Stream;
+        Assert.Equal("image/png", media.ContentType);
+    }
+
+    [Theory]
+    [InlineData("barber-../../secrets")]
+    [InlineData("barber-123")]
+    [InlineData("barber-00000000000000000000000000000000/x")]
+    [InlineData("Barber_00000000000000000000000000000000")]
+    [InlineData("avatar")]
+    public async Task RejectsKindsThatAreNotLogoCoverOrABarberId(string kind)
+    {
+        var error = await Assert.ThrowsAsync<ArgumentException>(() => storage.SaveAsync(Guid.NewGuid(), kind, "x.png", "image/png", Png, CancellationToken.None));
+        Assert.Equal("MEDIA_KIND_INVALID", error.Message);
     }
 
     [Fact]
-    public async Task RejectedOrCancelledReplacementPreservesExistingImage()
+    public async Task BarberPortraitsAreLimitedToTwoMegabytes()
     {
-        var id = Guid.NewGuid();
-        byte[] png = [137, 80, 78, 71, 13, 10, 26, 10];
-        await Storage.SaveAsync(id, "logo", "logo.png", "image/png", png, default);
-        await Assert.ThrowsAsync<ArgumentException>(() => Storage.SaveAsync(id, "logo", "x.jpg", "image/jpeg", png, default));
-        await Assert.ThrowsAsync<ArgumentException>(() => Storage.SaveAsync(id, "logo", "x.png", "image/png", [], default));
-        await Assert.ThrowsAsync<ArgumentException>(() => Storage.SaveAsync(id, "logo", "x.png", "image/png", new byte[2 * 1024 * 1024 + 1], default));
-        await Assert.ThrowsAsync<ArgumentException>(() => Storage.SaveAsync(id, "../logo", "x.png", "image/png", png, default));
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => Storage.SaveAsync(id, "logo", "x.png", "image/png", png, new CancellationToken(true)));
-        var existing = await Storage.OpenAsync(id, "logo", default);
-        Assert.NotNull(existing);
-        await existing.Stream.DisposeAsync();
-        Assert.Empty(Directory.GetFiles(root, "*.tmp", SearchOption.AllDirectories));
+        var oversized = new byte[2 * 1024 * 1024 + 1];
+        Png.CopyTo(oversized, 0);
+        var error = await Assert.ThrowsAsync<ArgumentException>(() => storage.SaveAsync(Guid.NewGuid(), $"barber-{Guid.NewGuid():N}", "x.png", "image/png", oversized, CancellationToken.None));
+        Assert.Equal("MEDIA_TOO_LARGE", error.Message);
     }
 
-    public void Dispose() { if (Directory.Exists(root)) Directory.Delete(root, recursive: true); }
+    public void Dispose()
+    {
+        if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+    }
 }

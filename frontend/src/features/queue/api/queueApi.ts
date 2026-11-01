@@ -47,6 +47,16 @@ export function updateBarber(barber: Barber, body: { name: string; chairNumber: 
   return api<Barber>(`/api/queue/barbers/${barber.id}`, { method: 'PUT', body: JSON.stringify(body) })
 }
 
+export async function uploadBarberPhoto(barberId: string, file: File) {
+  const base64 = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result).split(',')[1] ?? '')
+    reader.onerror = () => reject(new Error('read failed'))
+    reader.readAsDataURL(file)
+  })
+  return api<{ url: string }>(`/api/queue/barbers/${barberId}/photo`, { method: 'PUT', body: JSON.stringify({ fileName: file.name, contentType: file.type, base64 }) })
+}
+
 export function updateBarberStatus(barberId: string, status: BarberStatus) {
   return api<Barber>(`/api/queue/barbers/${barberId}/status`, { method: 'PATCH', body: JSON.stringify({ status }) })
 }

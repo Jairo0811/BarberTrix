@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
 import { API_URL } from './api'
+import { BarberAvatar } from './BarberAvatar'
 import { useI18n } from './i18n'
 import { turnStatusLabel } from './i18n/domainLabels'
 import './public-booking.css'
@@ -8,7 +9,7 @@ import './public-booking.css'
 type Service = { id: string; name: string; price: number; estimatedDurationMinutes: number }
 type Barber = { id: string; name: string; chairNumber: number }
 type ShopProfile = { description?: string | null; logoUrl?: string | null; coverImageUrl?: string | null; whatsAppPhone?: string | null; publicPhone?: string | null; address?: string | null; city?: string | null; latitude?: number | null; longitude?: number | null }
-type Shop = { name: string; slug: string; timeZoneId: string; services: Service[]; barbers: Barber[]; profile?: ShopProfile | null }
+type Shop = { id: string; name: string; slug: string; timeZoneId: string; services: Service[]; barbers: Barber[]; profile?: ShopProfile | null }
 
 function safeImage(url?: string | null) { return url && /^(https?:\/\/|\/)/i.test(url) ? url : null }
 
@@ -47,12 +48,12 @@ function ServiceChoices({ services, label }: { services: Service[]; label: strin
   </fieldset>
 }
 
-function BarberChoices({ barbers, label, anyLabel }: { barbers: Barber[]; label: string; anyLabel: string }) {
+function BarberChoices({ barbers, label, anyLabel, shopId }: { barbers: Barber[]; label: string; anyLabel: string; shopId?: string }) {
   return <fieldset className="choice-group choice-group-barbers"><legend>{label}</legend>
     <label className="choice-card"><input type="radio" name="barberId" value="" defaultChecked /><span className="choice-avatar" aria-hidden="true">✂</span><span className="choice-body"><strong>{anyLabel}</strong></span></label>
     {barbers.map(item => <label key={item.id} className="choice-card">
       <input type="radio" name="barberId" value={item.id} />
-      <span className="choice-avatar" aria-hidden="true">{item.name.trim().charAt(0).toUpperCase()}</span>
+      <BarberAvatar shopId={shopId} barberId={item.id} name={item.name} />
       <span className="choice-body"><strong>{item.name}</strong><small>#{item.chairNumber}</small></span>
     </label>)}
   </fieldset>
@@ -297,7 +298,7 @@ export default function PublicBookingPage() {
         <input name="customerName" placeholder={t('booking.nameOptional')} maxLength={120} />
         <input name="customerPhone" placeholder={t('booking.phoneOptional')} maxLength={40} />
         <ServiceChoices services={shop?.services ?? []} label={t('selectService')} />
-        <BarberChoices barbers={shop?.barbers ?? []} label={t('anyBarber')} anyLabel={t('booking.nextBarber')} />
+        <BarberChoices shopId={shop?.id} barbers={shop?.barbers ?? []} label={t('anyBarber')} anyLabel={t('booking.nextBarber')} />
         <button disabled={busy}>{busy ? t('booking.generating') : t('booking.getTurn')}</button>
       </form>}
 
@@ -316,7 +317,7 @@ export default function PublicBookingPage() {
         <input name="customerPhone" placeholder={t('booking.phone')} maxLength={40} />
         <input name="customerEmail" type="email" placeholder={t('common.email')} maxLength={180} />
         <ServiceChoices services={shop?.services ?? []} label={t('selectService')} />
-        <BarberChoices barbers={shop?.barbers ?? []} label={t('anyBarber')} anyLabel={t('anyBarber')} />
+        <BarberChoices shopId={shop?.id} barbers={shop?.barbers ?? []} label={t('anyBarber')} anyLabel={t('anyBarber')} />
         <input name="date" type="date" min={new Date().toISOString().slice(0, 10)} required />
         <button disabled={busy}>{t('booking.searchSlots')}</button>
         {slots.length > 0 && <div className="slot-grid">{slots.map(slot => <button type="button" key={`${slot.barberId}-${slot.startsAtUtc}`} onClick={event => void book(slot, event.currentTarget.form!)}>

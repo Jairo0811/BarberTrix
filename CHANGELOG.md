@@ -18,6 +18,7 @@ El proyecto sigue [Semantic Versioning](https://semver.org/) y el formato de [Ke
 
 ### Added
 
+- Fotos de barberos: `PUT /api/queue/barbers/{id}/photo` (Owner/Administrator, JPG/PNG/WebP hasta 2 MB) guarda el retrato en el almacenamiento de medios existente con el tipo `barber-<id>` (sin migración). El panel permite subirla y la página pública de turnos la muestra, con la inicial como respaldo.
 - `GET /api/public/shops/{slug}` devuelve `profile` (logo, portada, descripción, teléfono, WhatsApp, dirección y coordenadas) cuando la barbería está publicada; la página pública de turnos lo muestra.
 
 - turnos públicos con consulta privada, cancelación e idempotencia;

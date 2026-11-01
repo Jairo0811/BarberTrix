@@ -37,3 +37,9 @@
 .ticket-row{margin:0;padding:10px 14px;width:100%;border-radius:12px;background:rgba(255,255,255,.05);font-size:1rem}
 @keyframes ticket-pulse{50%{transform:scale(1.05)}}
 @media (prefers-reduced-motion:reduce){.ticket-called .ticket-number{animation:none}}
+
+.choice-avatar{overflow:hidden}
+.choice-avatar img,.barber-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.barber-photo{width:64px;height:64px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:rgba(255,255,255,.1);font-weight:800;font-size:1.4rem;flex:none}
+.barber-photo-upload{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:6px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.2);font-size:.82rem;cursor:pointer}
+.barber-photo-upload:focus-within{outline:2px solid var(--bt-focus);outline-offset:2px}

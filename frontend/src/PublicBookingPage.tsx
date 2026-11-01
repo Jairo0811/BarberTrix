@@ -12,7 +12,9 @@ type Shop = { name: string; slug: string; timeZoneId: string; services: Service[
 
 function safeImage(url?: string | null) { return url && /^(https?:\/\/|\/)/i.test(url) ? url : null }
 
-function ShopHeader({ shop, title }: { shop: Shop | null; title: string }) {
+type QueueSummary = { waiting: number; waitMinutes: number }
+
+function ShopHeader({ shop, title, queue, waitingLabel }: { shop: Shop | null; title: string; queue: QueueSummary | null; waitingLabel: string }) {
   const p = shop?.profile
   const cover = safeImage(p?.coverImageUrl)
   const logo = safeImage(p?.logoUrl)
@@ -30,6 +32,7 @@ function ShopHeader({ shop, title }: { shop: Shop | null; title: string }) {
       {p?.publicPhone && <a href={`tel:${p.publicPhone.replace(/[^\d+]/g, '')}`}>{p.publicPhone}</a>}
       {mapUrl && <a href={mapUrl} target="_blank" rel="noreferrer">{place || 'Maps'}</a>}
     </div>}
+    {queue && <p className="shop-live" role="status"><span className="shop-live-dot" aria-hidden="true" /><strong>{queue.waiting}</strong> {waitingLabel}{queue.waitMinutes > 0 && <> · ~{queue.waitMinutes} min</>}</p>}
     <p className="booking-kicker">{title}</p>
   </header>
 }
@@ -75,6 +78,7 @@ export default function PublicBookingPage() {
   const [turnIdempotencyKey, setTurnIdempotencyKey] = useState(() => crypto.randomUUID())
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [queueInfo, setQueueInfo] = useState<QueueSummary | null>(null)
 
   useEffect(() => {
     const turnId = queryValue('turn')
@@ -116,6 +120,22 @@ export default function PublicBookingPage() {
       if (capabilitiesResponse.ok) setCapabilities(await capabilitiesResponse.json() as PublicCapabilities)
     }).catch(() => setError(t('booking.loadShopError')))
   }, [slug, t])
+
+  useEffect(() => {
+    if (!shop || turn || appointment) return
+    let cancelled = false
+    const load = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/public/shops/${encodeURIComponent(slug)}/queue`)
+        if (!response.ok || cancelled) return
+        const data = await response.json() as { turns: { status: string }[]; estimatedWaitMinutes: number }
+        if (!cancelled) setQueueInfo({ waiting: data.turns.filter(item => item.status === 'Waiting').length, waitMinutes: data.estimatedWaitMinutes })
+      } catch { /* informational only */ }
+    }
+    void load()
+    const timer = window.setInterval(() => void load(), 30000)
+    return () => { cancelled = true; window.clearInterval(timer) }
+  }, [shop, slug, turn, appointment])
 
   useEffect(() => {
     if (!slug || !turn) return
@@ -250,7 +270,7 @@ export default function PublicBookingPage() {
 
   return <main className="public-booking">
     <section className="booking-card">
-      <ShopHeader shop={shop} title={t('booking.title')} />
+      <ShopHeader shop={shop} title={t('booking.title')} queue={queueInfo} waitingLabel={t('waiting')} />
 
       <div className="booking-tabs">
         <button className={mode === 'queue' ? 'active' : ''} onClick={() => setMode('queue')}>{t('customer.takeTurn')}</button>

@@ -23,3 +23,5 @@
 .choice-group-barbers{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
 .choice-group-barbers legend{grid-column:1/-1}
 .slot-grid{max-height:320px;overflow:auto}
+.shop-live{display:inline-flex;align-items:center;gap:8px;margin:0;padding:8px 14px;border-radius:999px;background:rgba(88,219,145,.12);border:1px solid rgba(88,219,145,.35);font-size:.9rem;width:fit-content}
+.shop-live-dot{width:9px;height:9px;border-radius:50%;background:#58db91}

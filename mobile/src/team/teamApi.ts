@@ -38,6 +38,11 @@ export type Invitation = {
 
 export const getTeam = (token: string) => apiRequest<TeamMember[]>('/api/team/', {}, token);
 export const getOperationalBarbers = (token: string) => apiRequest<OperationalBarber[]>('/api/queue/barbers', {}, token);
+export const uploadBarberPhoto = (token: string, barberId: string, base64: string) =>
+  apiRequest<{ url: string }>(`/api/queue/barbers/${barberId}/photo`, {
+    method: 'PUT',
+    body: JSON.stringify({ fileName: 'barber.jpg', contentType: 'image/jpeg', base64 }),
+  }, token);
 export const getJoinRequests = (token: string) => apiRequest<JoinRequest[]>('/api/team/join-requests/', {}, token);
 
 export const createOperationalBarber = (token: string, name: string, chairNumber: number) =>

@@ -26,7 +26,8 @@ const en = {
   "team.sent": "Invitation sent to {{email}}.",
   "team.approved": "{{name}} was assigned to chair {{chair}}.",
   "team.deactivateConfirm": "Deactivate {{name}}? Their access will be revoked.",
-  "team.cancel": "Cancel"
+  "team.cancel": "Cancel",
+  "team.photo": "Photo"
 } as const;
 const es: Record<keyof typeof en, string> = {
  'team.chairConflict': 'La silla {{chair}} ya está asignada. Te sugerimos la silla {{suggestion}}.', 'team.rejectionReason': 'Solicitud rechazada por la barbería.',
@@ -56,6 +57,7 @@ const es: Record<keyof typeof en, string> = {
   "team.sent": "Invitación enviada a {{email}}.",
   "team.approved": "{{name}} fue asignado a la silla {{chair}}.",
   "team.deactivateConfirm": "¿Desactivar a {{name}}? Se revocará su acceso.",
-  "team.cancel": "Cancelar"
+  "team.cancel": "Cancelar",
+  "team.photo": "Foto"
 };
 export const teamCopy = (locale: string) => locale.startsWith('es') ? es : en;

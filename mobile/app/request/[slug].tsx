@@ -10,6 +10,7 @@ import { createPublicTurnRequest, getAvailability, getPublicShop } from '@/turnR
 import { publicRequestStore } from '@/turnRequests/publicRequestStore';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 import { BrandLogo } from '@/ui/BrandLogo';
+import { BarberAvatar } from '@/ui/BarberAvatar';
 import { BrandedBackground } from '@/ui/BrandedBackground';
 
 function localDate(offset: number) {
@@ -197,6 +198,7 @@ export default function RequestTurnScreen() {
                   style={({ pressed }) => [styles.choice, selected && styles.choiceSelected, pressed && styles.choicePressed]}
                 >
                   <View style={styles.choiceTopLine}>
+                    <BarberAvatar shopId={shop.id} barberId={barber.id} name={barber.name} size={36} />
                     <Text style={[styles.choiceTitle, selected && styles.choiceTitleSelected]}>{barber.name}</Text>
                     {selected ? <Text style={styles.selectedGlyph}>✓</Text> : null}
                   </View>

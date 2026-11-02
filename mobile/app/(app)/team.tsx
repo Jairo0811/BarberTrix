@@ -2,13 +2,17 @@ import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { useAuth } from '@/auth/AuthProvider';
 import { mapMobileError } from '@/api/errorPolicy';
 import { useI18n } from '@/i18n/I18nProvider';
 import { suggestChair } from '@/team/chairSuggestion';
+import { BarberAvatar } from '@/ui/BarberAvatar';
 import {
   approveJoinRequest,
   deactivateTeamMember,
+  uploadBarberPhoto,
   getJoinRequests,
   getOperationalBarbers,
   getTeam,
@@ -37,6 +41,7 @@ export default function TeamScreen() {
   const canManage = role === 'Owner' || role === 'Administrator';
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [barbers, setBarbers] = useState<OperationalBarber[]>([]);
+  const [photoVersion, setPhotoVersion] = useState(0);
   const [requests, setRequests] = useState<JoinRequest[]>([]);
   const [loadError, setLoadError] = useState<unknown>(null);
   const [formError, setFormError] = useState<unknown>(null);
@@ -106,6 +111,25 @@ export default function TeamScreen() {
     setWorking(true);
     try { await rejectJoinRequest(token, request.id, t('team.rejectionReason')); await load(); }
     catch (error) { showError(error); } finally { setWorking(false); }
+  }
+
+  async function pickPhoto(member: TeamMember) {
+    if (!token || !member.barberId) return;
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) { Alert.alert(t('marketplace.permission'), t('marketplace.permissionBody')); return; }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.85 });
+    if (result.canceled) return;
+    const asset = result.assets?.[0];
+    if (!asset?.uri) { Alert.alert(t('marketplace.failed'), t('marketplace.readFailed')); return; }
+    setWorking(true);
+    try {
+      const resize = Math.max(asset.width, asset.height) > 640 ? [{ resize: asset.width >= asset.height ? { width: 640 } : { height: 640 } }] : [];
+      // JPEG output also normalizes iPhone HEIC; 640 px keeps portraits far below the 2 MB server limit.
+      const normalized = await manipulateAsync(asset.uri, resize, { compress: 0.82, format: SaveFormat.JPEG, base64: true });
+      if (!normalized.base64) { Alert.alert(t('marketplace.failed'), t('marketplace.readFailed')); return; }
+      await uploadBarberPhoto(token, member.barberId, normalized.base64);
+      setPhotoVersion(Date.now());
+    } catch (error) { showError(error); } finally { setWorking(false); }
   }
 
   async function deactivate(member: TeamMember) {
@@ -222,7 +246,9 @@ export default function TeamScreen() {
 
       {members.map(member => (
         <View key={member.id} style={styles.member}>
-          <View style={styles.avatar}><Text style={styles.avatarText}>{member.name.slice(0, 1).toUpperCase()}</Text></View>
+          {member.barberId
+            ? <BarberAvatar shopId={session?.user.barberShopId} barberId={member.barberId} name={member.name} size={44} version={photoVersion} />
+            : <View style={styles.avatar}><Text style={styles.avatarText}>{member.name.slice(0, 1).toUpperCase()}</Text></View>}
           <View style={styles.itemGrow}>
             <Text style={styles.itemTitle}>{member.name}</Text>
             <Text style={styles.muted}>{member.email}</Text>
@@ -231,6 +257,17 @@ export default function TeamScreen() {
               <Text style={styles.memberMetaText}>{labelRole(member.role)} · {member.isActive ? t('team.active') : t('team.inactive')}</Text>
             </View>
           </View>
+          {role === 'Owner' && member.barberId && member.isActive && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ disabled: working }}
+              disabled={working}
+              onPress={() => { void pickPhoto(member); }}
+              style={styles.smallGhost}
+            >
+              <Text style={styles.smallGhostText}>{t('team.photo')}</Text>
+            </Pressable>
+          )}
           {role === 'Owner' && member.role !== 'Owner' && member.isActive && (
             <Pressable
               accessibilityRole="button"

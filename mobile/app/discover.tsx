@@ -7,6 +7,7 @@ import { router } from 'expo-router';
 import { useAuth } from '@/auth/AuthProvider';
 import { getLoginExtrasCopy } from '@/auth/loginExtras';
 import { getDiscoveryCopy, type DiscoveryCopy } from '@/discovery/discoveryCopy';
+import { filterOpenNow, isOpenNow } from '@/discovery/openNow';
 import { sortShops, type ShopSort } from '@/discovery/sortShops';
 import { ErrorState } from '@/ui/ErrorState';
 import { Action } from '@/ui/OperationalUI';
@@ -38,7 +39,8 @@ export default function DiscoverScreen() {
     staleTime: 20_000,
     refetchInterval: 30_000,
   });
-  const results = useMemo(() => sortShops(shopsQuery.data ?? [], sort), [shopsQuery.data, sort]);
+  const [onlyOpen, setOnlyOpen] = useState(false);
+  const results = useMemo(() => filterOpenNow(sortShops(shopsQuery.data ?? [], sort), onlyOpen), [shopsQuery.data, sort, onlyOpen]);
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -96,6 +98,9 @@ export default function DiscoverScreen() {
             <View style={styles.sortRow}>
               <Action disabled={sort === 'wait'} label={t('discovery.sortWait')} onPress={() => setSort('wait')} />
               <Action disabled={sort === 'availability'} label={t('discovery.sortAvailable')} onPress={() => setSort('availability')} />
+              <Pressable accessibilityRole="button" accessibilityState={{ selected: onlyOpen }} onPress={() => setOnlyOpen(value => !value)} style={[styles.openChip, onlyOpen && styles.openChipOn]}>
+                <View style={styles.openDot} /><Text style={styles.openChipText}>{copy.openNow}</Text>
+              </Pressable>
             </View>
 
             {shopsQuery.isError && <ErrorState error={shopsQuery.error} retry={() => { void shopsQuery.refetch(); }} />}
@@ -152,6 +157,10 @@ function ShopCard({ item, copy, canBook, signInToBook }: { item: DiscoveryShopCa
           <View style={styles.shopCopy}>
             <Text style={styles.shopName}>{item.name}</Text>
             {!!item.address && <Text numberOfLines={2} style={styles.address}>{item.address}</Text>}
+            <View style={styles.statusRow}>
+              <View style={[styles.openDot, !isOpenNow(item) && styles.closedDot]} />
+              <Text style={[styles.statusText, !isOpenNow(item) && styles.statusTextClosed]}>{isOpenNow(item) ? copy.openNow : copy.closedNow}</Text>
+            </View>
           </View>
         </View>
         <View style={[styles.waitBadge, noWait && styles.waitBadgeLive]}>
@@ -201,6 +210,14 @@ const styles = StyleSheet.create({
   searchWrap: { marginTop: spacing.md, minHeight: control.inputHeight, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: radius.lg, backgroundColor: colors.surfaceStrong, flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.md },
   searchIcon: { color: colors.primaryGlow, fontSize: 22, marginRight: 8 },
   search: { flex: 1, color: colors.text, fontSize: 16, paddingVertical: 0 },
+  openChip: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, minHeight: 44, paddingHorizontal: spacing.md, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.divider, backgroundColor: colors.surfaceStrong },
+  openChipOn: { borderColor: colors.success, backgroundColor: colors.surfaceRaised },
+  openChipText: { color: colors.text, fontWeight: '800', fontSize: 14 },
+  openDot: { width: 9, height: 9, borderRadius: 5, backgroundColor: colors.success },
+  closedDot: { backgroundColor: colors.textSubtle },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: 4 },
+  statusText: { color: colors.success, fontWeight: '800', fontSize: 13 },
+  statusTextClosed: { color: colors.textSubtle },
   sortRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.xs },
   card: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.xl, backgroundColor: colors.surface, padding: spacing.lg, gap: spacing.lg },
   cardTop: { flexDirection: 'row', gap: spacing.md, alignItems: 'flex-start', justifyContent: 'space-between' },

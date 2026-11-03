@@ -18,6 +18,7 @@ El proyecto sigue [Semantic Versioning](https://semver.org/) y el formato de [Ke
 
 ### Added
 
+- App móvil, Descubrir: insignia "Abierto ahora" en cada barbería (hay al menos un barbero disponible) y filtro para ver solo las abiertas, en los 10 idiomas.
 - Fotos de barberos: `PUT /api/queue/barbers/{id}/photo` (Owner/Administrator, JPG/PNG/WebP hasta 2 MB) guarda el retrato en el almacenamiento de medios existente con el tipo `barber-<id>` (sin migración). El panel web y la pantalla Equipo de la app móvil permiten subirla; la página pública de turnos y el flujo de solicitud móvil la muestran, con la inicial como respaldo.
 - `GET /api/public/shops/{slug}` devuelve `profile` (logo, portada, descripción, teléfono, WhatsApp, dirección y coordenadas) cuando la barbería está publicada; la página pública de turnos lo muestra.
 

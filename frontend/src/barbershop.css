@@ -69,3 +69,124 @@
 .pricing-badge { background: var(--bt-brass) !important; color: #1b1305 !important; }
 .home-hero .home-queue-mock { left: 16px; }
 .home-queue-mock li.is-now { background: linear-gradient(90deg, rgba(212,175,106,.3), rgba(212,175,106,.12)); box-shadow: inset 3px 0 0 var(--bt-brass); }
+
+/* ==========================================================================
+   Resto de pantallas. El prefijo `body` sube la especificidad para ganarle a las
+   hojas que cargan después (chunks perezosos del panel y los portales).
+   ========================================================================== */
+
+/* Acento y titulares globales */
+body .eyebrow, body .portal-kicker, body .customer-hero > div > span, body .dashboard-heading-kicker,
+body .tv-eyebrow, body .tv-section-label, body .showcase-badge, body .demo-login-badge { color: var(--bt-brass); }
+body .dashboard-heading h1, body .customer-hero h1, body .role-portal-heading h1, body .login-card h2,
+body .register-card header h1, body .recovery-card h1, body .demo-login-heading h1, body .login-showcase h1,
+body .shop-identity h1, body .tv-header h1, body .tv-setup-card h1, body .legal-card h1 {
+  font-family: var(--bt-display); text-transform: uppercase; letter-spacing: .02em; font-weight: 700;
+}
+body .login-showcase h1 span { color: var(--bt-brass); }
+body a:not([class]) { text-underline-offset: 3px; }
+
+/* Botones principales en latón (accessibility.css los fuerza a azul con !important) */
+body .primary, body .turn-actions button, body .agenda-view-switch button.active, body .booking-tabs button.active,
+body .booking-form > button, body .business-form button, body .billing-actions button, body .billing-actions a,
+body .login-submit, body .recovery-primary, body .demo-login-primary, body .register-submit,
+body .portal-primary-link, body .portal-primary {
+  background: linear-gradient(180deg, #e6c98c, #c49a4e) !important; color: #1b1305 !important;
+  border-color: #e4c382 !important; box-shadow: 0 10px 24px rgba(196, 154, 78, .22);
+}
+body .login-submit:not(:disabled):hover, body .recovery-primary:not(:disabled):hover, body .register-submit:not(:disabled):hover {
+  box-shadow: 0 16px 32px rgba(196, 154, 78, .3);
+}
+body .primary:disabled, body .login-submit:disabled, body .register-submit:disabled, body .recovery-primary:disabled { opacity: .55; filter: grayscale(.4); }
+
+/* Enlaces: latón legible (antes azul oscuro sobre fondo oscuro en "términos") */
+body .forgot-link, body .login-card a, body .register-card a, body .recovery-card a, body .demo-login-card a,
+body .back-home-link:hover, body .legal-card a { color: var(--bt-brass); }
+body .register-terms a { color: var(--bt-brass); text-decoration: underline; }
+body .remember-option input:checked { background: var(--bt-brass); border-color: var(--bt-brass); }
+body .remember-option input:checked::after { color: #1b1305; }
+body .login-field input:focus, body .input-wrap input:focus, body .register-input-wrap input:focus,
+body .recovery-input-wrap input:focus { border-color: var(--bt-brass); box-shadow: 0 0 0 3px rgba(212, 175, 106, .22); }
+
+/* Tarjetas de autenticación / demo / TV: borde latón y franja de poste arriba */
+body .login-card, body .register-card, body .recovery-card, body .demo-login-card, body .tv-setup-card, body .legal-card {
+  position: relative; overflow: hidden; border-color: rgba(212, 175, 106, .28);
+}
+body .login-card::before, body .register-card::before, body .recovery-card::before, body .demo-login-card::before,
+body .tv-setup-card::before, body .legal-card::before {
+  content: ''; position: absolute; left: 0; right: 0; top: 0; height: 5px; background: var(--bt-pole-stripes); background-size: 56px 56px;
+}
+body .demo-feature-card { border-color: rgba(212, 175, 106, .2); }
+body .demo-feature-card span, body .register-benefits article > span { color: var(--bt-brass); background: rgba(212, 175, 106, .12); border-color: rgba(212, 175, 106, .35); }
+
+/* Panel del dueño / admin */
+body .dashboard-sidebar { border-right-color: rgba(212, 175, 106, .22); }
+body .dashboard-sidebar::after { content: ''; position: absolute; top: 0; bottom: 0; right: -1px; width: 4px; background: var(--bt-pole-stripes); background-size: 56px 56px; opacity: .85; pointer-events: none; }
+body .dashboard-nav button.active { border-color: rgba(212, 175, 106, .45); background: linear-gradient(90deg, rgba(212, 175, 106, .26), rgba(212, 175, 106, .07)); box-shadow: inset 3px 0 0 var(--bt-brass); }
+body .dashboard-nav .nav-icon, body .kpi-icon, body .portal-kpis svg, body .context-banner-icon { color: var(--bt-brass); }
+body .kpi-icon { background: rgba(212, 175, 106, .12); }
+body .admin-pill { color: var(--bt-brass); border-color: rgba(212, 175, 106, .4); background: rgba(212, 175, 106, .08); }
+body .dashboard-avatar { border-color: var(--bt-brass); color: var(--bt-brass); }
+body .dashboard-topbar { border-bottom-color: rgba(212, 175, 106, .2); }
+body .dashboard-kpi:hover { border-color: rgba(212, 175, 106, .45); }
+body .dashboard-kpi strong { font-family: var(--bt-display); font-size: 30px; letter-spacing: .02em; }
+body .dashboard-context-banner { border-color: rgba(212, 175, 106, .3); }
+
+/* Números de turno como en el ticket del cliente */
+body .queue-summary-ticket, body .ticket strong { color: var(--bt-brass); font-family: var(--bt-display); letter-spacing: .05em; }
+body .ticket { border-left: 3px solid var(--bt-brass); padding-left: 12px; }
+
+/* Portales (barbero / cliente) */
+body .role-portal-header, body .customer-portal-header { border-bottom: 1px solid rgba(212, 175, 106, .22); position: relative; }
+body .role-portal-header::after, body .customer-portal-header::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 4px; background: var(--bt-pole-stripes); background-size: 56px 56px; opacity: .85; }
+body .portal-card.featured { border-color: rgba(212, 175, 106, .4); background: linear-gradient(180deg, rgba(212, 175, 106, .1), rgba(10, 20, 36, .8)); }
+body .portal-kpis article, body .portal-card { border-color: rgba(212, 175, 106, .16); }
+body .portal-secondary { border-color: rgba(212, 175, 106, .35); }
+
+/* Reserva pública del cliente */
+body .shop-hero { border-bottom: 1px solid rgba(212, 175, 106, .25); }
+body .choice-card:has(input:checked) { border-color: var(--bt-brass); background: rgba(212, 175, 106, .1); }
+body .choice-price { color: var(--bt-brass); }
+body .shop-actions a:hover, body .shop-actions a:focus-visible { border-color: var(--bt-brass); }
+body .shop-live { border-color: rgba(212, 175, 106, .4); }
+
+/* Pantalla TV */
+body .tv-header { border-bottom: 4px solid transparent; border-image: var(--bt-pole-stripes) 1; border-image-slice: 1; }
+body .tv-called-card { border-color: rgba(212, 175, 106, .5); }
+body .tv-now-section, body .tv-called-card { --tv-accent: var(--bt-brass); }
+
+/* Acentos azules que quedaban sueltos */
+body .role-portal-heading > div > span, body .customer-hero > div > span, body .role-portal .portal-kicker { color: var(--bt-brass); }
+body .dashboard-kpi .kpi-icon { background: rgba(212, 175, 106, .12); color: var(--bt-brass); box-shadow: inset 0 0 0 1px rgba(212, 175, 106, .25); }
+body .quick-actions .quick-icon, body .dashboard-nav .nav-icon svg { color: var(--bt-brass); }
+body .quick-actions button:hover { border-color: rgba(212, 175, 106, .4); background: rgba(212, 175, 106, .08); }
+body .demo-button { color: var(--bt-brass); border-color: rgba(212, 175, 106, .35); }
+body .demo-button:hover { background: rgba(212, 175, 106, .08); border-color: rgba(212, 175, 106, .6); }
+body .login-card .password-toggle, body .register-input-wrap button, body .recovery-input-wrap button { color: var(--bt-brass); }
+body .login-card .password-toggle:hover { color: #ecd29b; }
+body .portal-actions button:not(.danger):not(:disabled), body .portal-list button:not(:disabled) { border-color: rgba(212, 175, 106, .4); }
+
+/* Avatares de barbero: estos estilos solo existían en public-booking.css (chunk de la reserva
+   pública), así que en el panel salían como una letra suelta. Aquí son globales. */
+body .barber-photo, body .choice-avatar { display: grid; place-items: center; overflow: hidden; border-radius: 50%; flex: none; font-weight: 800; background: rgba(212, 175, 106, .14); color: var(--bt-brass); border: 2px solid rgba(212, 175, 106, .5); }
+body .barber-photo img, body .choice-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+body .barber-card { grid-template-columns: 64px max-content 1fr; align-items: center; position: relative; border-color: rgba(212, 175, 106, .2); }
+body .barber-card span.barber-photo { grid-row: 1 / span 3; grid-column: 1; width: 64px; height: 64px; font-size: 1.5rem; color: var(--bt-brass); }
+body .barber-card .status-dot { position: absolute; top: 14px; right: 14px; }
+body .barber-card strong { grid-column: 2 / -1; font-size: 1.05rem; }
+body .barber-card span:not(.status-dot):not(.barber-photo), body .barber-card small { grid-column: 2 / -1; }
+body .barber-card select, body .barber-card .barber-photo-upload { grid-column: 1 / -1; }
+body .barber-card .turn-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+body .barber-card .turn-actions button { min-height: 40px; padding: 8px 18px; }
+body .barber-card .barber-photo-upload { justify-self: start; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 14px; border-radius: 999px; border: 1px dashed rgba(212, 175, 106, .55); color: var(--bt-brass); font-size: .85rem; font-weight: 700; cursor: pointer; }
+body .barber-card .barber-photo-upload:hover { background: rgba(212, 175, 106, .1); }
+body .barber-card .barber-photo-upload:focus-within { outline: 2px solid var(--bt-focus); outline-offset: 2px; }
+/* Acción destructiva: contorno rojo en vez de latón macizo */
+body .barber-card .turn-actions button.danger { background: transparent !important; color: #f1c7c7 !important; border-color: rgba(255, 130, 130, .5) !important; box-shadow: none; }
+
+/* Reserva pública: tarjeta con franja de poste, logo y rótulos en latón */
+body .booking-card { position: relative; overflow: hidden; border-color: rgba(212, 175, 106, .3); }
+body .booking-card::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 6px; background: var(--bt-pole-stripes); background-size: 56px 56px; }
+body .booking-kicker { color: var(--bt-brass); font-family: var(--bt-display); text-transform: uppercase; letter-spacing: .12em; }
+body .shop-logo-fallback { background: linear-gradient(180deg, #e6c98c, #c49a4e); color: #1b1305; }
+body .shop-live-dot { background: var(--bt-brass); }

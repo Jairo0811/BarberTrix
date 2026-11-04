@@ -14,6 +14,17 @@ internal sealed class TransactionalEmailSender(
     ConfigurableEmailSender transport,
     ILogger<TransactionalEmailSender> logger) : IEmailSender, ITransactionalEmailDispatcher
 {
+    private static readonly Action<ILogger, int, Exception?> DeliveryWarning =
+        LoggerMessage.Define<int>(
+            LogLevel.Warning,
+            new EventId(1, nameof(DeliveryWarning)),
+            "Transactional e-mail delivery attempt {Attempt} failed");
+
+    private static readonly Action<ILogger, int, Exception?> DeliveryError =
+        LoggerMessage.Define<int>(
+            LogLevel.Error,
+            new EventId(2, nameof(DeliveryError)),
+            "Transactional e-mail was not delivered after {Attempts} attempts");
     internal static readonly TimeSpan[] RetryDelays = [TimeSpan.FromMilliseconds(250), TimeSpan.FromSeconds(1)];
 
     private readonly Queue<PendingEmail> pending = new();
@@ -41,11 +52,10 @@ internal sealed class TransactionalEmailSender(
             var delivered = await TrySendWithRetryAsync(
                 ct => transport.SendAsync(email.Recipient, email.Subject, email.HtmlBody, ct),
                 RetryDelays,
-                (attempt, exception) => logger.LogWarning(exception,
-                    "Transactional e-mail delivery attempt {Attempt} failed", attempt),
+                (attempt, exception) => DeliveryWarning(logger, attempt, exception),
                 cancellationToken);
             if (!delivered)
-                logger.LogError("Transactional e-mail was not delivered after {Attempts} attempts", RetryDelays.Length + 1);
+                DeliveryError(logger, RetryDelays.Length + 1, null);
         }
     }
 

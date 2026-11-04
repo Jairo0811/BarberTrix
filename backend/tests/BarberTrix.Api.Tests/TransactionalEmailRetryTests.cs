@@ -8,7 +8,7 @@ public sealed class TransactionalEmailRetryTests
     private static readonly TimeSpan[] NoDelay = [TimeSpan.Zero, TimeSpan.Zero];
 
     [Fact]
-    public async Task Succeeds_on_first_attempt_without_reporting_failures()
+    public async Task SucceedsOnFirstAttemptWithoutReportingFailures()
     {
         var calls = 0;
         var delivered = await TransactionalEmailSender.TrySendWithRetryAsync(
@@ -19,7 +19,7 @@ public sealed class TransactionalEmailRetryTests
     }
 
     [Fact]
-    public async Task Retries_transient_failures_then_succeeds()
+    public async Task RetriesTransientFailuresThenSucceeds()
     {
         var calls = 0;
         var failures = new List<int>();
@@ -33,7 +33,7 @@ public sealed class TransactionalEmailRetryTests
     }
 
     [Fact]
-    public async Task Gives_up_after_all_attempts_without_throwing()
+    public async Task GivesUpAfterAllAttemptsWithoutThrowing()
     {
         var calls = 0;
         var delivered = await TransactionalEmailSender.TrySendWithRetryAsync(
@@ -44,7 +44,7 @@ public sealed class TransactionalEmailRetryTests
     }
 
     [Fact]
-    public async Task Cancellation_is_not_swallowed()
+    public async Task CancellationIsNotSwallowed()
     {
         using var cts = new CancellationTokenSource();
         await cts.CancelAsync();

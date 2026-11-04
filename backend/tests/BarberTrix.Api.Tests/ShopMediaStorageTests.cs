@@ -28,6 +28,21 @@ public sealed class ShopMediaStorageTests : IDisposable
         Assert.Equal("image/png", media.ContentType);
     }
 
+    [Fact]
+    public async Task ExposesLastModifiedSoTheApiCanServeCacheValidators()
+    {
+        var shopId = Guid.NewGuid();
+        var before = DateTimeOffset.UtcNow.AddMinutes(-1);
+        await storage.SaveAsync(shopId, "logo", "l.png", "image/png", Png, CancellationToken.None);
+
+        var media = await storage.OpenAsync(shopId, "logo", CancellationToken.None);
+
+        Assert.NotNull(media);
+        await using var stream = media.Stream;
+        Assert.NotNull(media.LastModifiedUtc);
+        Assert.InRange(media.LastModifiedUtc.Value, before, DateTimeOffset.UtcNow.AddMinutes(1));
+    }
+
     [Theory]
     [InlineData("barber-../../secrets")]
     [InlineData("barber-123")]

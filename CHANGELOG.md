@@ -3,6 +3,7 @@
 - Login lockout tracker is now memory-bounded: expired entries are swept every minute and the map is capped at 50,000 accounts, so spraying random e-mails can no longer grow it without limit.
 - Rate-limited responses (429) now carry a `Retry-After` header and an `application/problem+json` body with `code: RATE_LIMITED`.
 - Transactional e-mails (verification, invitations) sent after a committed transaction are now retried (3 attempts, 250 ms / 1 s backoff). If SMTP stays down the failure is logged instead of turning an already-saved registration or invitation into a 500 and dropping the remaining queued e-mails.
+- Shop media (`/api/public/shop-media/...`) is now cacheable: `Cache-Control: public, max-age=300, must-revalidate`, `ETag` and `Last-Modified` with 304 revalidation, and it has its own rate-limit policy (600/min per IP) instead of sharing the 60/min public-queue budget, which discovery lists with many logos/covers/portraits could exhaust and turn images into 429s.
 - Added `TransactionalEmailRetryTests` and `LoginAttemptGuardTests` (lockout threshold, case-insensitivity, window expiry, reset, sweep, memory bound).
 
 ## Unreleased - Free plan and turn quotas

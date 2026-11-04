@@ -53,7 +53,7 @@ public sealed class ShopMediaStorage(IConfiguration configuration) : IShopMediaS
                 var type = DetectContentType(header.AsSpan(0, count));
                 if (type is null) { await stream.DisposeAsync(); return null; }
                 stream.Position = 0;
-                return new StoredShopMedia(stream, type);
+                return new StoredShopMedia(stream, type, new DateTimeOffset(File.GetLastWriteTimeUtc(path), TimeSpan.Zero));
             }
             catch { await stream.DisposeAsync(); throw; }
         }

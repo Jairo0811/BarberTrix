@@ -38,7 +38,7 @@ public sealed record UpdatePublicShopProfileRequest(
 
 public sealed record UploadShopMediaRequest(string FileName, string ContentType, string Base64);
 public sealed record ShopMediaUploadResponse(string Url);
-public sealed record StoredShopMedia(Stream Stream, string ContentType);
+public sealed record StoredShopMedia(Stream Stream, string ContentType, DateTimeOffset? LastModifiedUtc = null);
 
 public interface IShopMediaStorage
 {

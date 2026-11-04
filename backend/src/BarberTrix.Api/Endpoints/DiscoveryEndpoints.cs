@@ -12,18 +12,27 @@ public static class DiscoveryEndpoints
             .WithTags("Public discovery")
             .RequireRateLimiting("publicQueue");
 
-        endpoints.MapGet("/api/public/shop-media/{shopId:guid}/{kind}", async (Guid shopId, string kind, IShopMediaStorage storage, CancellationToken ct) =>
+        endpoints.MapGet("/api/public/shop-media/{shopId:guid}/{kind}", async (Guid shopId, string kind, HttpContext context, IShopMediaStorage storage, CancellationToken ct) =>
         {
             try
             {
                 var media = await storage.OpenAsync(shopId, kind, ct);
-                return media is null ? Results.NotFound() : Results.Stream(media.Stream, media.ContentType, enableRangeProcessing: true);
+                if (media is null) return Results.NotFound();
+                // Images change rarely (clients also pass ?v= after an upload). Let browsers/apps/CDNs
+                // reuse them and revalidate cheaply instead of re-downloading on every card render.
+                context.Response.Headers.CacheControl = "public, max-age=300, must-revalidate";
+                var lastModified = media.LastModifiedUtc;
+                return Results.Stream(media.Stream, media.ContentType, lastModified: lastModified,
+                    entityTag: lastModified is { } stamp
+                        ? new Microsoft.Net.Http.Headers.EntityTagHeaderValue($"\"{stamp.UtcTicks:x}-{media.Stream.Length:x}\"")
+                        : null,
+                    enableRangeProcessing: true);
             }
             catch (ArgumentException)
             {
                 return Results.NotFound();
             }
-        }).WithTags("Public discovery").RequireRateLimiting("publicQueue");
+        }).WithTags("Public discovery").RequireRateLimiting("media");
 
         var profile = endpoints.MapGroup("/api/shop/public-profile")
             .WithTags("Marketplace profile")

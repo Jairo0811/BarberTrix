@@ -23,6 +23,7 @@ const RegisterPage = lazy(() => import('./RegisterPage'))
 const ForgotPasswordPage = lazy(() => import('./ForgotPasswordPage'))
 const ResetPasswordPage = lazy(() => import('./ResetPasswordPage'))
 const DemoLoginPage = lazy(() => import('./DemoLoginPage'))
+const ShowcasePage = lazy(() => import('./showcase/ShowcasePage'))
 const PublicBookingPage = lazy(() => import('./PublicBookingPage'))
 const CustomerPortalPage = lazy(() => import('./CustomerPortalPage'))
 const TvPage = lazy(() => import('./TvPage'))
@@ -62,6 +63,7 @@ const publicRouteByPath: Record<string, PublicRoute> = {
   '/forgot-password': 'forgot-password',
   '/reset-password': 'reset-password',
   '/demo': 'demo',
+  '/showcase': 'demo',
   '/book': 'book',
   '/customer': 'customer',
   '/tv': 'tv',
@@ -173,7 +175,8 @@ function AppRoutes() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/demo" element={<DemoLoginPage />} />
+          <Route path="/demo" element={import.meta.env.VITE_SHOWCASE_MODE === 'true' ? <ShowcasePage /> : <DemoLoginPage />} />
+          <Route path="/showcase" element={<ShowcasePage />} />
           <Route path="/book" element={<PublicBookingPage />} />
           <Route path="/customer" element={<CustomerPortalPage />} />
           <Route path="/tv" element={<TvPage />} />
@@ -191,7 +194,7 @@ function AppRoutes() {
 }
 
 async function bootstrap() {
-  if (!readAuth() && hasRememberedAuth())
+  if (import.meta.env.VITE_SHOWCASE_MODE !== 'true' && !readAuth() && hasRememberedAuth())
     await restoreRememberedAuth()
 
   createRoot(document.getElementById('root')!).render(

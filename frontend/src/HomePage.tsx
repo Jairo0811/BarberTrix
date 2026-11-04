@@ -188,6 +188,7 @@ export default function HomePage() {
 
           <div className="home-hero-actions">
             <button className="home-primary-button large" type="button" onClick={auth ? navigateToLogin : () => navigateToRegister()}>{auth ? authenticatedActionLabel : t('home.startFree')} <span>→</span></button>
+            <a className="home-secondary-button" href="#/showcase">{t('login.demo')}</a>
             <a className="home-secondary-button" href="#caracteristicas" onClick={() => selectSection('caracteristicas')}>{t('home.viewFeatures')}</a>
           </div>
 

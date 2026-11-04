@@ -19,7 +19,7 @@ public sealed class LoginAttemptGuardTests
     }
 
     [Fact]
-    public void Blocks_after_eight_failures_and_is_case_insensitive()
+    public void BlocksAfterEightFailuresAndIsCaseInsensitive()
     {
         var (guard, _) = Create();
         for (var i = 0; i < 7; i++) guard.RecordFailure("ana@example.com");
@@ -31,7 +31,7 @@ public sealed class LoginAttemptGuardTests
     }
 
     [Fact]
-    public void Unblocks_after_the_window_expires()
+    public void UnblocksAfterTheWindowExpires()
     {
         var (guard, clock) = Create();
         for (var i = 0; i < 8; i++) guard.RecordFailure("ana@example.com");
@@ -42,7 +42,7 @@ public sealed class LoginAttemptGuardTests
     }
 
     [Fact]
-    public void Successful_login_resets_the_counter()
+    public void SuccessfulLoginResetsTheCounter()
     {
         var (guard, _) = Create();
         for (var i = 0; i < 8; i++) guard.RecordFailure("ana@example.com");
@@ -51,7 +51,7 @@ public sealed class LoginAttemptGuardTests
     }
 
     [Fact]
-    public void Expired_entries_are_swept_even_if_never_queried_again()
+    public void ExpiredEntriesAreSweptEvenIfNeverQueriedAgain()
     {
         var (guard, clock) = Create();
         for (var i = 0; i < 500; i++) guard.RecordFailure($"spray{i}@example.com");
@@ -64,7 +64,7 @@ public sealed class LoginAttemptGuardTests
     }
 
     [Fact]
-    public void Memory_stays_bounded_under_a_sustained_spray()
+    public void MemoryStaysBoundedUnderASustainedSpray()
     {
         var (guard, clock) = Create();
         for (var i = 0; i < LoginAttemptGuard.MaximumTrackedAccounts + 5_000; i++)

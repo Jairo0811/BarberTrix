@@ -1,0 +1,71 @@
+/* Capa visual "barbería": latón, poste de barbero, tickets perforados y titulares
+   condensados. Se importa al final para sobreescribir sin tocar los estilos base.
+   Sin fuentes externas (la CSP solo permite 'self'); la pila usa fuentes del sistema. */
+:root {
+  --bt-brass: #d4af6a;          /* 9:1 sobre --bt-page-bg */
+  --bt-brass-deep: #9c7a3c;
+  --bt-pole-red: #d6283b;
+  --bt-pole-blue: #1c6fe0;
+  --bt-display: "Oswald", "Bebas Neue", "Roboto Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --bt-pole-stripes: repeating-linear-gradient(-45deg, var(--bt-pole-red) 0 10px, #f4f1ea 10px 20px, var(--bt-pole-blue) 20px 30px, #f4f1ea 30px 40px);
+}
+
+/* Barra de poste de barbero bajo la navegación */
+.home-nav::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 4px; background: var(--bt-pole-stripes); background-size: 56px 56px; opacity: .9; pointer-events: none; }
+.home-nav { border-bottom-color: rgba(212, 175, 106, .25); }
+.home-links a.active::after { background: var(--bt-brass); box-shadow: 0 0 14px rgba(212, 175, 106, .55); }
+
+/* Titulares tipo cartel de barbería */
+.home-hero h1, .home-section-heading h2, .pricing-price strong, .ticket-number {
+  font-family: var(--bt-display); text-transform: uppercase; letter-spacing: .01em; font-weight: 700;
+}
+.home-hero h1 { line-height: 1; letter-spacing: .005em; }
+.home-hero h1 span { color: var(--bt-brass); }
+.home-section-heading h2 { letter-spacing: .01em; }
+
+/* Etiquetas en latón con filete a ambos lados */
+.home-section-kicker { color: var(--bt-brass); display: inline-flex; align-items: center; gap: 10px; }
+.home-section-kicker::before, .home-section-kicker::after { content: ''; width: 22px; height: 1px; background: currentColor; opacity: .6; }
+.home-badge { border-color: rgba(212, 175, 106, .4); background: rgba(212, 175, 106, .08); color: var(--bt-brass); }
+.pricing-badge { background: var(--bt-brass); color: #1b1305; }
+
+/* Fondo del hero: espiga sutil + luz cálida */
+.home-hero { background:
+  radial-gradient(circle at 72% 42%, rgba(212, 175, 106, .12), transparent 26%),
+  repeating-linear-gradient(45deg, rgba(255,255,255,.018) 0 2px, transparent 2px 14px),
+  linear-gradient(90deg, #02060d 0%, #050b16 46%, #02060b 100%); }
+
+/* Poste de barbero animado junto a la silla */
+.home-pole { position: absolute; z-index: 4; right: 6%; top: 12%; width: 34px; height: 210px; border-radius: 17px; border: 3px solid var(--bt-brass); background: var(--bt-pole-stripes); background-size: 48px 48px; box-shadow: 0 0 0 4px rgba(0,0,0,.35), 0 18px 40px rgba(0,0,0,.5), inset 0 0 12px rgba(0,0,0,.45); animation: bt-pole 2.4s linear infinite; }
+.home-pole::before, .home-pole::after { content: ''; position: absolute; left: 50%; width: 46px; height: 12px; transform: translateX(-50%); border-radius: 6px; background: linear-gradient(180deg, #ecd29b, var(--bt-brass-deep)); }
+.home-pole::before { top: -14px; } .home-pole::after { bottom: -14px; }
+@keyframes bt-pole { to { background-position: 0 48px; } }
+@media (prefers-reduced-motion: reduce) { .home-pole { animation: none; } }
+@media (max-width: 760px) { .home-pole { display: none; } }
+
+/* Botón principal: latón con texto oscuro (contraste > 8:1) */
+.home-primary-button { color: #1b1305; border-color: #e4c382; background: linear-gradient(180deg, #e6c98c, #c49a4e); box-shadow: 0 12px 28px rgba(196, 154, 78, .25); }
+.home-primary-button:focus-visible { outline-color: var(--bt-brass); }
+
+/* Mini tablero de turnos: aspecto de ticket */
+.home-queue-mock { border-color: rgba(212, 175, 106, .35); border-top: 4px solid transparent; border-image: var(--bt-pole-stripes) 1 0 0 0 / 4px 0 0 0 / 0; border-radius: 4px 4px 18px 18px; }
+.home-queue-mock li.is-now b { color: var(--bt-brass); }
+
+/* Ticket público de turno: perforado y con número en latón */
+.ticket-result { position: relative; border-radius: 6px; border: 1px dashed rgba(212, 175, 106, .5); background: linear-gradient(180deg, rgba(212,175,106,.09), rgba(255,255,255,.02)); }
+.ticket-result::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 6px; background: var(--bt-pole-stripes); background-size: 56px 56px; border-radius: 6px 6px 0 0; }
+.ticket-result::after { content: ''; position: absolute; left: -9px; right: -9px; top: 58%; height: 18px; pointer-events: none;
+  background: radial-gradient(circle 9px at 0 50%, var(--bt-page-bg) 98%, transparent) left / 51% 100% no-repeat, radial-gradient(circle 9px at 100% 50%, var(--bt-page-bg) 98%, transparent) right / 51% 100% no-repeat; }
+.ticket-kicker { color: var(--bt-brass); }
+.ticket-number { color: var(--bt-brass); letter-spacing: .06em; text-shadow: 0 2px 0 rgba(0,0,0,.4); }
+
+/* Tarjetas de características y precios: filete de latón al pasar el cursor */
+.home-feature-card, .pricing-card { transition: border-color .2s ease, transform .2s ease; }
+.home-feature-card:hover, .pricing-card:hover { border-color: rgba(212, 175, 106, .5); transform: translateY(-2px); }
+.home-card-icon { color: var(--bt-brass); }
+
+/* accessibility.css fuerza el azul con !important; aquí se reemplaza por latón (texto oscuro, contraste > 8:1). */
+.home-primary-button { background: linear-gradient(180deg, #e6c98c, #c49a4e) !important; color: #1b1305 !important; }
+.pricing-badge { background: var(--bt-brass) !important; color: #1b1305 !important; }
+.home-hero .home-queue-mock { left: 16px; }
+.home-queue-mock li.is-now { background: linear-gradient(90deg, rgba(212,175,106,.3), rgba(212,175,106,.12)); box-shadow: inset 3px 0 0 var(--bt-brass); }

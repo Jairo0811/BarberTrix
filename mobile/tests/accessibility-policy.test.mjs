@@ -29,9 +29,26 @@ test('accessibility-hardened mobile surfaces keep visible text at 12px or larger
   }
 })
 
-test('mobile theme keeps a dedicated AA action color without lowering the touch-target floor', async () => {
-  const source = await readFile(new URL('../src/theme/tokens.ts', import.meta.url), 'utf8')
+function luminance(hex) {
+  const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255)
+    .map(c => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b
+}
+function contrast(a, b) {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x)
+  return (hi + 0.05) / (lo + 0.05)
+}
 
-  assert.match(source, /primaryAction:\s*'#0B73E8'/)
+test('mobile theme keeps AA contrast for action labels without lowering the touch-target floor', async () => {
+  const source = await readFile(new URL('../src/theme/tokens.ts', import.meta.url), 'utf8')
+  const token = name => source.match(new RegExp(`${name}:\\s*'(#[0-9A-Fa-f]{6})'`))?.[1]
+
+  for (const name of ['primaryAction', 'primaryPressed']) {
+    const background = token(name)
+    const label = token('onPrimary')
+    assert.ok(background && label, `${name}/onPrimary must be defined as 6-digit hex colors`)
+    assert.ok(contrast(background, label) >= 4.5, `${label} on ${name} (${background}) must reach 4.5:1`)
+  }
+  assert.ok(contrast(token('primaryGlow'), token('background')) >= 4.5, 'accent text must stay readable on the app background')
   assert.match(source, /minTouch:\s*48/)
 })

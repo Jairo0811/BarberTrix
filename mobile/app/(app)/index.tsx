@@ -13,6 +13,7 @@ import { ErrorState } from '@/ui/ErrorState';
 import { MobileBottomNav } from '@/ui/MobileBottomNav';
 import { BrandLogo } from '@/ui/BrandLogo';
 import { BrandedBackground } from '@/ui/BrandedBackground';
+import { PoleStripe } from '@/ui/PoleStripe';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 export default function TodayScreen() {
@@ -60,6 +61,7 @@ export default function TodayScreen() {
 
           <View style={styles.hero}>
             <View style={styles.heroGlow} />
+            <PoleStripe style={styles.heroStripe} />
             <ScreenHeader title={t('operations.today')} context={data?.shopName} realtime={realtime} />
             <Text style={styles.heroRole}>{session?.user.name} · {session?.user.role}</Text>
           </View>
@@ -194,6 +196,7 @@ const styles = StyleSheet.create({
   content: { width: '100%', maxWidth: 780, alignSelf: 'center', paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.xl, gap: spacing.lg },
   topbar: { minHeight: 58, justifyContent: 'center' },
   hero: { position: 'relative', overflow: 'hidden', padding: spacing.lg, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: 'rgba(9,18,34,0.92)' },
+  heroStripe: { position: 'absolute', top: 0, left: 0, right: 0 },
   heroGlow: { position: 'absolute', width: 220, height: 220, borderRadius: 110, top: -130, right: -80, backgroundColor: colors.primarySoft },
   heroRole: { color: colors.textMuted, fontSize: 12, fontWeight: '700', marginTop: spacing.sm },
   kpiRow: { flexDirection: 'row', gap: spacing.sm },

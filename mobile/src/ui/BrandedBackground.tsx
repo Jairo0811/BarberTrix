@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
     borderRadius: 280,
     top: -320,
     right: -250,
-    backgroundColor: 'rgba(22, 135, 255, 0.15)',
+    backgroundColor: 'rgba(212, 175, 106, 0.04)',
   },
   glowTopCompact: {
     width: 430,
@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
     borderRadius: 140,
     top: '38%',
     left: -210,
-    backgroundColor: 'rgba(74, 126, 255, 0.045)',
+    backgroundColor: 'rgba(214, 40, 59, 0.025)',
   },
   glowBottom: {
     position: 'absolute',
@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
     borderRadius: 195,
     bottom: -275,
     left: -220,
-    backgroundColor: 'rgba(22, 135, 255, 0.075)',
+    backgroundColor: 'rgba(28, 111, 224, 0.045)',
   },
   gridOne: {
     position: 'absolute',
@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: '15%',
     width: 1,
-    backgroundColor: 'rgba(98, 177, 255, 0.032)',
+    backgroundColor: 'rgba(212, 175, 106, 0.035)',
   },
   gridTwo: {
     position: 'absolute',
@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     right: '13%',
     width: 1,
-    backgroundColor: 'rgba(98, 177, 255, 0.026)',
+    backgroundColor: 'rgba(212, 175, 106, 0.028)',
   },
   horizon: {
     position: 'absolute',
@@ -79,6 +79,6 @@ const styles = StyleSheet.create({
     right: 0,
     top: '58%',
     height: 1,
-    backgroundColor: 'rgba(98, 177, 255, 0.018)',
+    backgroundColor: 'rgba(212, 175, 106, 0.02)',
   },
 });

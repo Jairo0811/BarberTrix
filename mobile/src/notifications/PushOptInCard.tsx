@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   buttonPressed: { backgroundColor: colors.primaryPressed },
-  buttonText: { color: colors.white, fontWeight: '900' },
+  buttonText: { color: colors.onPrimary, fontWeight: '900' },
   error: { marginTop: 2, color: colors.danger, fontWeight: '700', lineHeight: 19 },
   disabled: { opacity: 0.55 },
 });

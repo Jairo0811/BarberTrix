@@ -460,7 +460,7 @@ const styles = StyleSheet.create({
   },
   submitPressed: { backgroundColor: colors.primaryPressed },
   disabled: { opacity: 0.45 },
-  submitText: { color: colors.white, fontWeight: '900', fontSize: 16 },
-  submitArrow: { position: 'absolute', right: 20, color: colors.white, fontSize: 22, fontWeight: '700' },
+  submitText: { color: colors.onPrimary, fontWeight: '900', fontSize: 16 },
+  submitArrow: { position: 'absolute', right: 20, color: colors.onPrimary, fontSize: 22, fontWeight: '700' },
   footer: { color: colors.textSubtle, textAlign: 'center', fontSize: 12, fontWeight: '700', marginTop: spacing.sm },
 });

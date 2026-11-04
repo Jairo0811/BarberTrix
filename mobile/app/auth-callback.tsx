@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
   title: { ...typography.sectionTitle, color: colors.text, textAlign: 'center' },
   body: { ...typography.body, color: colors.textMuted, textAlign: 'center' },
   primaryButton: { width: '100%', minHeight: 52, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, backgroundColor: colors.primaryAction },
-  primaryButtonText: { color: colors.white, fontWeight: '900' },
+  primaryButtonText: { color: colors.onPrimary, fontWeight: '900' },
   secondaryButton: { width: '100%', minHeight: 48, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, borderWidth: 1, borderColor: colors.borderStrong },
   secondaryButtonText: { color: colors.primaryGlow, fontWeight: '800' },
 });

@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryPressed: { backgroundColor: colors.primaryPressed },
-  primaryText: { color: colors.white, fontWeight: '900' },
+  primaryText: { color: colors.onPrimary, fontWeight: '900' },
   danger: {
     flex: 1,
     minHeight: 48,

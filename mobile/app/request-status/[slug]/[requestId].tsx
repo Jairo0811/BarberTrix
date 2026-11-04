@@ -11,6 +11,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 import { BrandLogo } from '@/ui/BrandLogo';
 import { BrandedBackground } from '@/ui/BrandedBackground';
+import { PoleStripe } from '@/ui/PoleStripe';
 
 function statusTone(status: string) {
   switch (status) {
@@ -164,6 +165,7 @@ export default function RequestStatusScreen() {
         </View>
 
         <View style={styles.statusCard}>
+          <PoleStripe style={styles.cardStripe} />
           <View style={styles.cardTopLine}>
             <View style={styles.serviceIcon}><Text style={styles.serviceIconText}>BT</Text></View>
             <View style={styles.serviceCopy}>
@@ -290,12 +292,16 @@ const styles = StyleSheet.create({
   statusCopy: { flex: 1, gap: 5 },
   statusLabel: { fontSize: 12, fontWeight: '900', letterSpacing: 1.5 },
   title: { color: colors.text, fontSize: 28, lineHeight: 34, fontWeight: '900', letterSpacing: -0.5 },
+  cardStripe: { position: 'absolute', top: 0, left: 0, right: 0 },
   statusCard: {
+    position: 'relative',
+    overflow: 'hidden',
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderStrong,
     borderRadius: radius.xl,
     padding: spacing.lg,
+    paddingTop: spacing.lg + 6,
     gap: spacing.md,
   },
   cardTopLine: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
@@ -340,8 +346,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   primaryPressed: { backgroundColor: colors.primaryPressed },
-  primaryText: { color: colors.white, fontWeight: '900' },
-  primaryArrow: { position: 'absolute', right: 20, color: colors.white, fontSize: 21, fontWeight: '700' },
+  primaryText: { color: colors.onPrimary, fontWeight: '900' },
+  primaryArrow: { position: 'absolute', right: 20, color: colors.onPrimary, fontSize: 21, fontWeight: '700' },
   secondary: {
     minHeight: 52,
     borderRadius: radius.md,

@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryPressed: { backgroundColor: colors.primaryPressed },
-  primaryButtonText: { color: colors.white, fontWeight: '900' },
+  primaryButtonText: { color: colors.onPrimary, fontWeight: '900' },
   sectionHeader: { gap: 4, marginTop: spacing.md },
   sectionEyebrow: { ...typography.eyebrow, color: colors.textSubtle },
   sectionTitle: { ...typography.sectionTitle, color: colors.text },

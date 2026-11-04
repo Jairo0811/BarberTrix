@@ -21,6 +21,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { BrandLogo } from '@/ui/BrandLogo';
 import { BrandedBackground } from '@/ui/BrandedBackground';
+import { PoleStripe } from '@/ui/PoleStripe';
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
@@ -87,7 +88,7 @@ export default function LoginScreen() {
             </Pressable>
 
             <View style={styles.card}>
-              <View style={styles.cardTopAccent} />
+              <PoleStripe style={styles.cardStripe} />
 
               <BrandLogo />
 
@@ -244,18 +245,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     backgroundColor: 'rgba(11, 20, 35, 0.98)',
     borderWidth: 1,
-    borderColor: 'rgba(126, 157, 205, 0.20)',
+    borderColor: colors.borderStrong,
   },
-  cardTopAccent: {
-    position: 'absolute',
-    top: 0,
-    left: 26,
-    right: 26,
-    height: 2,
-    borderBottomLeftRadius: 4,
-    borderBottomRightRadius: 4,
-    backgroundColor: colors.primary,
-  },
+  cardStripe: { position: 'absolute', top: 0, left: 0, right: 0 },
   heading: {
     alignItems: 'center',
     gap: 8,
@@ -386,7 +378,7 @@ const styles = StyleSheet.create({
   },
   submitButtonDisabled: { opacity: 0.60 },
   submitButtonText: {
-    color: colors.white,
+    color: colors.onPrimary,
     fontSize: 16,
     fontWeight: '900',
   },

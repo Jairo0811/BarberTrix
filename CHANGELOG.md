@@ -1,3 +1,9 @@
+## Unreleased - Mobile barbershop identity
+
+- Mobile theme moved from blue to the web's brass palette (`primary`, `primaryAction`, `primaryGlow`, `borderStrong` re-pointed; new `onPrimary`, `poleRed/White/Blue` tokens) with dark labels on filled actions.
+- New `PoleStripe` component (barber-pole bars) on the login card, the home hero and the request-status ticket; uppercase display/title/header typography; warmer branded background.
+- The accessibility policy test now checks AA contrast of `onPrimary` on `primaryAction`/`primaryPressed` and of accent text on the background instead of pinning a hex value.
+
 ## Unreleased - Backend hardening
 
 - Login lockout tracker is now memory-bounded: expired entries are swept every minute and the map is capped at 50,000 accounts, so spraying random e-mails can no longer grow it without limit.

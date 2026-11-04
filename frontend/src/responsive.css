@@ -1,0 +1,85 @@
+/* Capa responsive: se importa al final. El prefijo `body` sube la especificidad para ganarle
+   a hojas de chunks perezosos. Objetivos: texto >= 12 px, áreas táctiles >= 44 px en pantallas
+   táctiles/estrechas, sin zoom automático de iOS, altura dinámica en móviles y sin anillos de foco
+   en contenedores enfocados solo por script. */
+
+/* Contenedores con tabindex="-1" se enfocan por código (saltar al contenido); no son interactivos. */
+body [tabindex='-1']:focus { outline: none; }
+
+/* Piso tipográfico en todos los anchos */
+body .home-primary-button, body .home-login-button, body .home-secondary-button,
+body .login-submit, body .register-submit, body .recovery-primary, body .demo-button,
+body .social-login-button, body .back-home-link, body .recovery-back, body .password-toggle,
+body .register-password-toggle, body .quick-actions button, body .recovery-form label > span,
+body .login-card .password-toggle span, body .social-login-mark { font-size: 13px; }
+body .admin-pill, body .dashboard-heading-kicker, body .dashboard-date, body .dashboard-footer span,
+body .register-benefits article > span, body .home-badge, body .home-section-kicker { font-size: 12px; }
+
+/* Iconos de portada en latón, como el resto */
+body .home-feature-icon, body .home-stat-icon, body .home-card-icon, body .support-option-icon { color: var(--bt-brass); border-color: rgba(212, 175, 106, .3); background: rgba(212, 175, 106, .1); }
+
+/* Altura dinámica: en móviles 100vh incluye la barra del navegador y corta contenido */
+@supports (height: 100dvh) {
+  body .login-shell, body .register-page, body .recovery-page, body .demo-login-page,
+  body .public-booking, body .tv-page, body .dashboard-app, body .home-page { min-height: 100dvh; }
+  body .dashboard-sidebar { height: 100dvh; }
+}
+
+/* Barra de suscripción más compacta */
+body .subscription-banner { padding: 10px 14px; }
+body .subscription-banner strong { font-size: 15px; }
+
+/* Móvil y tablet táctil */
+@media (max-width: 1023px), (pointer: coarse) {
+  body .back-home-link, body .recovery-back, body .forgot-link, body .register-link,
+  body .footer-support-link, body .home-footer a, body footer a {
+    display: inline-flex; align-items: center; min-height: 44px; padding-block: 8px;
+  }
+  body .password-toggle, body .register-password-toggle, body .recovery-input-wrap button,
+  body .login-card .password-toggle { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  body .demo-button, body .social-login-button, body .home-primary-button, body .home-secondary-button,
+  body .home-login-button, body .login-submit, body .register-submit, body .recovery-primary,
+  body a.login-submit, body a.recovery-link-button, body .portal-primary-link, body .portal-secondary { min-height: 48px; }
+  body a.login-submit, body a.recovery-link-button, body .portal-primary-link { display: inline-flex; align-items: center; justify-content: center; }
+  body .home-mobile-menu { min-width: 44px; min-height: 44px; }
+  body .quick-actions button, body .dashboard-nav button { min-height: 44px; }
+  body .home-primary-button.pricing-button, body .home-primary-button.contact-button { min-height: 48px; }
+  body .language-switcher { min-height: 46px; }
+  body .language-switcher select { min-height: 44px; }
+}
+
+/* Teléfonos */
+@media (max-width: 760px) {
+  /* 16 px evita el zoom automático al enfocar campos en iOS Safari */
+  body input:not([type='checkbox']):not([type='radio']):not([type='range']), body select, body textarea { font-size: 16px; }
+  body .home-primary-button, body .home-login-button, body .home-secondary-button,
+  body .login-submit, body .register-submit, body .recovery-primary, body .demo-button,
+  body .social-login-button { font-size: 14px; }
+  body .subscription-banner { margin: 8px; }
+  body .subscription-banner strong { font-size: 14px; }
+  body .subscription-banner span { font-size: 13px; }
+  body .dashboard-footer { padding-bottom: 64px; }
+  body .home-page footer { padding-bottom: 72px; }
+}
+
+/* Selector de idioma: botón redondo de 44 px; el <select> nativo queda encima, transparente */
+@media (max-width: 720px) {
+  body .language-switcher { right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); width: 44px; min-height: 44px; height: 44px; padding: 0; justify-content: center; border-radius: 50%; }
+  body .language-switcher-icon { width: 20px; height: 20px; color: var(--bt-brass); }
+  body .language-switcher-icon svg { width: 18px; height: 18px; }
+  body .language-switcher select { position: absolute; inset: -2px; width: calc(100% + 4px); height: calc(100% + 4px); min-width: 0; max-width: none; opacity: 0; font-size: 16px; }
+}
+
+/* Pantallas grandes: limita el ancho de lectura del contenido del panel y del hero */
+@media (min-width: 1600px) {
+  body .dashboard-content { max-width: 1480px; margin-inline: auto; width: 100%; }
+}
+
+/* Enlaces independientes (no dentro de una frase) y acciones secundarias */
+body .social-login-mark.apple-mark { font-size: 12px; }
+@media (max-width: 1023px), (pointer: coarse) {
+  body .locked-feature-card a, body .shop-actions a, body .portal-secondary-link, body .customer-portal > section > a, body main > section > a[href='#/'] {
+    display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding-block: 8px;
+  }
+  body .barber-card .turn-actions button, body .turn-actions button { min-height: 44px; }
+}

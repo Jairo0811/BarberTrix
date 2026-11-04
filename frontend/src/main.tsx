@@ -17,6 +17,7 @@ import './icon-polish.css'
 import './accessibility.css'
 import './language-switcher.css'
 import './barbershop.css'
+import './responsive.css'
 
 const App = lazy(() => import('./App'))
 const RegisterPage = lazy(() => import('./RegisterPage'))

@@ -177,7 +177,7 @@ body .barber-card strong { grid-column: 2 / -1; font-size: 1.05rem; }
 body .barber-card span:not(.status-dot):not(.barber-photo), body .barber-card small { grid-column: 2 / -1; }
 body .barber-card select, body .barber-card .barber-photo-upload { grid-column: 1 / -1; }
 body .barber-card .turn-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
-body .barber-card .turn-actions button { min-height: 40px; padding: 8px 18px; }
+body .barber-card .turn-actions button { min-height: 44px; padding: 8px 18px; }
 body .barber-card .barber-photo-upload { justify-self: start; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 14px; border-radius: 999px; border: 1px dashed rgba(212, 175, 106, .55); color: var(--bt-brass); font-size: .85rem; font-weight: 700; cursor: pointer; }
 body .barber-card .barber-photo-upload:hover { background: rgba(212, 175, 106, .1); }
 body .barber-card .barber-photo-upload:focus-within { outline: 2px solid var(--bt-focus); outline-offset: 2px; }

@@ -1,3 +1,11 @@
+## Unreleased - Web responsive pass
+
+- New `frontend/src/responsive.css`: 44–48 px touch targets on phones and coarse pointers (back links, password toggles, submit/social/demo buttons, dashboard and quick-action buttons, turn actions, portal links), 12–13 px minimum text size, 16 px form fields below 760 px so iOS Safari stops zooming on focus, `100dvh` heights where supported, safe-area padding and a reduced footer/banner footprint.
+- The language switcher collapses to a 44 px round brass button below 720 px (the native `<select>` stays on top, transparent, so the OS picker still opens) and keeps a 44 px hit area on tablets.
+- `index.html` viewport now declares `viewport-fit=cover`; the admin content wrapper no longer paints a focus ring when it receives programmatic focus.
+- Dashboard content is width-capped at 1480 px from 1600 px up so ultra-wide screens stop stretching lines of text.
+- Added `frontend/e2e/responsive-layout.spec.ts`: six public routes × 320/390/768/1280 px asserting no horizontal overflow, no text below 12 px and no control under 44 px on narrow viewports (24 cases).
+
 ## Unreleased - Mobile barbershop identity
 
 - Mobile theme moved from blue to the web's brass palette (`primary`, `primaryAction`, `primaryGlow`, `borderStrong` re-pointed; new `onPrimary`, `poleRed/White/Blue` tokens) with dark labels on filled actions.

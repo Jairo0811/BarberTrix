@@ -1,3 +1,9 @@
+## Unreleased - Backend hardening
+
+- Login lockout tracker is now memory-bounded: expired entries are swept every minute and the map is capped at 50,000 accounts, so spraying random e-mails can no longer grow it without limit.
+- Rate-limited responses (429) now carry a `Retry-After` header and an `application/problem+json` body with `code: RATE_LIMITED`.
+- Added `LoginAttemptGuardTests` (lockout threshold, case-insensitivity, window expiry, reset, sweep, memory bound).
+
 ## Unreleased - Free plan and turn quotas
 
 - Added a permanent Free tier with 100 monthly turns plus a 10-turn grace allowance, 2 active barbers, 5 active services and 7-day queue history.

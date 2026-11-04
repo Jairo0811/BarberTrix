@@ -67,6 +67,20 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    // Tell well-behaved clients (web, mobile, TV) when to retry instead of a bare 429.
+    options.OnRejected = async (rejected, cancellationToken) =>
+    {
+        var response = rejected.HttpContext.Response;
+        if (rejected.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+            response.Headers.RetryAfter = Math.Max(1, (int)Math.Ceiling(retryAfter.TotalSeconds)).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        await response.WriteAsJsonAsync(new
+        {
+            type = "https://httpstatuses.com/429",
+            title = "Too many requests",
+            status = StatusCodes.Status429TooManyRequests,
+            code = "RATE_LIMITED"
+        }, options: null, contentType: "application/problem+json", cancellationToken: cancellationToken);
+    };
     options.AddPolicy("auth", context => RateLimitPartition.GetFixedWindowLimiter(context.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions { PermitLimit = isTesting ? 1000 : 10, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
     options.AddPolicy("registration", context => RateLimitPartition.GetFixedWindowLimiter(context.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions { PermitLimit = isTesting ? 1000 : 5, Window = TimeSpan.FromHours(1), QueueLimit = 0 }));
     options.AddPolicy("publicQueue", context => RateLimitPartition.GetFixedWindowLimiter(context.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions { PermitLimit = isTesting ? 1000 : 60, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));

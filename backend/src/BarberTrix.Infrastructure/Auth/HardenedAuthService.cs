@@ -23,20 +23,29 @@ internal interface ILoginAttemptGuard
     void Reset(string normalizedEmail);
 }
 
-internal sealed class LoginAttemptGuard : ILoginAttemptGuard
+internal sealed class LoginAttemptGuard(TimeProvider? timeProvider = null) : ILoginAttemptGuard
 {
     private sealed record Entry(int Failures, DateTimeOffset WindowStartedAtUtc);
 
-    private readonly ConcurrentDictionary<string, Entry> attempts = new(StringComparer.OrdinalIgnoreCase);
+    // Without bounds, an attacker spraying random e-mail addresses grows this map forever
+    // (entries were only removed when the same address was queried again).
+    internal const int MaximumTrackedAccounts = 50_000;
     private static readonly TimeSpan Window = TimeSpan.FromMinutes(15);
+    private static readonly TimeSpan SweepInterval = TimeSpan.FromMinutes(1);
     private const int MaximumFailures = 8;
+
+    private readonly TimeProvider clock = timeProvider ?? TimeProvider.System;
+    private readonly ConcurrentDictionary<string, Entry> attempts = new(StringComparer.OrdinalIgnoreCase);
+    private long nextSweepTicks;
+
+    internal int TrackedAccounts => attempts.Count;
 
     public bool IsBlocked(string normalizedEmail)
     {
         if (!attempts.TryGetValue(normalizedEmail, out var entry))
             return false;
 
-        if (DateTimeOffset.UtcNow - entry.WindowStartedAtUtc >= Window)
+        if (clock.GetUtcNow() - entry.WindowStartedAtUtc >= Window)
         {
             attempts.TryRemove(normalizedEmail, out _);
             return false;
@@ -47,7 +56,8 @@ internal sealed class LoginAttemptGuard : ILoginAttemptGuard
 
     public void RecordFailure(string normalizedEmail)
     {
-        var now = DateTimeOffset.UtcNow;
+        var now = clock.GetUtcNow();
+        SweepIfDue(now);
         attempts.AddOrUpdate(
             normalizedEmail,
             _ => new Entry(1, now),
@@ -57,6 +67,32 @@ internal sealed class LoginAttemptGuard : ILoginAttemptGuard
     }
 
     public void Reset(string normalizedEmail) => attempts.TryRemove(normalizedEmail, out _);
+
+    private void SweepIfDue(DateTimeOffset now)
+    {
+        var due = Interlocked.Read(ref nextSweepTicks);
+        var overCapacity = attempts.Count >= MaximumTrackedAccounts;
+        if (!overCapacity && now.UtcTicks < due)
+            return;
+
+        // Only one caller sweeps per interval; others continue immediately.
+        if (!overCapacity && Interlocked.CompareExchange(ref nextSweepTicks, (now + SweepInterval).UtcTicks, due) != due)
+            return;
+
+        foreach (var pair in attempts)
+        {
+            if (now - pair.Value.WindowStartedAtUtc >= Window)
+                attempts.TryRemove(pair);
+        }
+
+        // Still full of live entries (a sustained spray): drop the oldest windows first so the
+        // process stays bounded. Accounts under a real attack re-enter on their next failure.
+        if (attempts.Count >= MaximumTrackedAccounts)
+        {
+            foreach (var pair in attempts.OrderBy(x => x.Value.WindowStartedAtUtc).Take(MaximumTrackedAccounts / 10))
+                attempts.TryRemove(pair);
+        }
+    }
 }
 
 internal sealed class HardenedAuthService(

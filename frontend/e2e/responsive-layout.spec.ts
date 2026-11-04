@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 
 // Guards the responsive contract on public screens: no horizontal overflow, readable text,
 // and comfortable touch targets for buttons/inputs on narrow screens.
-const routes = ['/#/', '/#/login', '/#/register', '/#/forgot-password', '/#/demo', '/#/terms']
+const routes = ['/#/', '/#/login', '/#/register', '/#/forgot-password', '/#/demo', '/#/terms', '/#/showcase']
 const widths = [320, 390, 768, 1280]
 
 for (const width of widths) {

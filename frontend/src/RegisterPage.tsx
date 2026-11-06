@@ -6,6 +6,7 @@ import type { Auth } from './types'
 import { publicApi, writeAuth } from './api'
 import { apiErrorMessage } from './apiErrorMessages'
 import { isStrongPassword, passwordPolicyHint, passwordPolicyMessage } from './passwordPolicy'
+import TurnstileWidget, { turnstileSiteKey } from './TurnstileWidget'
 import { loginHash, paidPlanFromHash, rememberPendingPaidPlan } from './billingSelection'
 
 function buildShopSlug(name: string) {
@@ -27,6 +28,8 @@ export default function RegisterPage() {
   const [error, setError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmation, setShowConfirmation] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState('')
+  const [captchaAttempt, setCaptchaAttempt] = useState(0)
   const selectedPlan = paidPlanFromHash(window.location.hash)
   const benefits = [t('register.benefit1'), t('register.benefit2'), t('register.benefit3'), t('register.benefit4')]
 
@@ -69,6 +72,7 @@ export default function RegisterPage() {
           password,
           timeZoneId: Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Santo_Domingo',
           acceptedTerms: data.get('acceptedTerms') === 'on',
+          captchaToken: captchaToken || null,
         }),
       })
 
@@ -78,6 +82,8 @@ export default function RegisterPage() {
       window.location.reload()
     } catch (exception) {
       setError(apiErrorMessage(exception, locale, t('register.genericError')))
+      setCaptchaToken('')
+      setCaptchaAttempt(attempt => attempt + 1)
     } finally {
       setBusy(false)
     }
@@ -166,7 +172,8 @@ export default function RegisterPage() {
                 {localizedRegisterCopy['register.acceptTermsPrefix']} <a href="#/terms" target="_blank">{localizedRegisterCopy['register.terms']}</a> {localizedRegisterCopy['register.acceptTermsJoin']} <a href="#/privacy" target="_blank">{localizedRegisterCopy['register.privacy']}</a>.
               </span>
             </label>
-            <button className="register-submit" type="submit" disabled={busy}>{busy ? t('register.submitting') : t('register.submit')}</button>
+            <TurnstileWidget key={captchaAttempt} onToken={setCaptchaToken} />
+            <button className="register-submit" type="submit" disabled={busy || (Boolean(turnstileSiteKey) && !captchaToken)}>{busy ? t('register.submitting') : t('register.submit')}</button>
           </form>
 
           {error && <p id="register-error" className="register-error" role="alert" aria-live="assertive">{error}</p>}

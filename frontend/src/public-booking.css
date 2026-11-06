@@ -43,3 +43,7 @@
 .barber-photo{width:64px;height:64px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:rgba(255,255,255,.1);font-weight:800;font-size:1.4rem;flex:none}
 .barber-photo-upload{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:6px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.2);font-size:.82rem;cursor:pointer}
 .barber-photo-upload:focus-within{outline:2px solid var(--bt-focus);outline-offset:2px}
+
+.booking-field{display:grid;gap:.35rem;font-weight:650;color:var(--bt-text-muted)}
+.booking-field input{width:100%;min-width:0}
+.slot-grid button:disabled{opacity:.55;cursor:wait}

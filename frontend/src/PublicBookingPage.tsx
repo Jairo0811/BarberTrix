@@ -345,7 +345,7 @@ export default function PublicBookingPage() {
       </div>}
 
       {mode === 'appointment' && appointmentsEnabled && !appointment && <form className="booking-form" onSubmit={findSlots} onChange={event => {
-        if (['serviceId', 'barberId', 'date'].includes((event.target as HTMLInputElement).name)) {
+        if (['serviceId', 'barberId', 'date'].includes(event.target.getAttribute('name') ?? '')) {
           availabilityVersion.current += 1
           setSlots([])
           setSlotsKey(null)

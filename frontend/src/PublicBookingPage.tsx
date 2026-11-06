@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
 import { API_URL } from './api'
 import { BarberAvatar } from './BarberAvatar'
@@ -67,6 +67,18 @@ function queryValue(name: string) {
   return new URLSearchParams((location.hash.split('?')[1] ?? '')).get(name) ?? ''
 }
 
+function dateInZone(timeZone: string) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone, year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(new Date())
+  const value = (type: Intl.DateTimeFormatPartTypes) => parts.find(part => part.type === type)?.value ?? ''
+  return `${value('year')}-${value('month')}-${value('day')}`
+}
+
+function availabilityKey(form: FormData) {
+  return JSON.stringify([form.get('serviceId'), form.get('barberId'), form.get('date')])
+}
+
 export default function PublicBookingPage() {
   const { locale, t } = useI18n()
   const slug = useMemo(() => queryValue('shop'), [])
@@ -76,6 +88,9 @@ export default function PublicBookingPage() {
   const [turn, setTurn] = useState<TurnResult | null>(null)
   const [appointment, setAppointment] = useState<AppointmentResult | null>(null)
   const [slots, setSlots] = useState<Slot[]>([])
+  const [slotsKey, setSlotsKey] = useState<string | null>(null)
+  const availabilityVersion = useRef(0)
+  const bookingInFlight = useRef(false)
   const [turnIdempotencyKey, setTurnIdempotencyKey] = useState(() => crypto.randomUUID())
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -204,23 +219,38 @@ export default function PublicBookingPage() {
     setBusy(true)
     setError('')
     const data = new FormData(event.currentTarget)
+    const version = ++availabilityVersion.current
+    const key = availabilityKey(data)
+    setSlots([])
+    setSlotsKey(null)
 
     try {
-      const response = await fetch(`${API_URL}/api/public/shops/${encodeURIComponent(slug)}/appointments/availability?serviceId=${data.get('serviceId')}&date=${data.get('date')}&barberId=${data.get('barberId') || ''}`)
+      const response = await fetch(`${API_URL}/api/public/shops/${encodeURIComponent(slug)}/appointments/availability?serviceId=${encodeURIComponent(String(data.get('serviceId')))}&date=${encodeURIComponent(String(data.get('date')))}&barberId=${encodeURIComponent(String(data.get('barberId') || ''))}`)
       const payload = await response.json().catch(() => null)
-      if (!response.ok || !payload) throw new Error(t('booking.availabilityError'))
-      setSlots(payload as Slot[])
+      if (!response.ok || !Array.isArray(payload)) throw new Error(t('booking.availabilityError'))
+      if (version === availabilityVersion.current) {
+        setSlots(payload as Slot[])
+        setSlotsKey(key)
+      }
     } catch {
-      setError(t('booking.availabilityError'))
+      if (version === availabilityVersion.current) setError(t('booking.availabilityError'))
     } finally {
       setBusy(false)
     }
   }
 
   async function book(slot: Slot, form: HTMLFormElement) {
+    if (bookingInFlight.current || !form.reportValidity()) return
+    const data = new FormData(form)
+    if (slotsKey !== availabilityKey(data) || !slots.some(item => item.barberId === slot.barberId && item.startsAtUtc === slot.startsAtUtc)) {
+      setSlots([])
+      setSlotsKey(null)
+      setError(t('booking.availabilityError'))
+      return
+    }
+    bookingInFlight.current = true
     setBusy(true)
     setError('')
-    const data = new FormData(form)
 
     try {
       const response = await fetch(`${API_URL}/api/public/shops/${encodeURIComponent(slug)}/appointments`, {
@@ -241,10 +271,12 @@ export default function PublicBookingPage() {
       const created = payload as AppointmentResult
       setAppointment(created)
       setSlots([])
+      setSlotsKey(null)
       history.replaceState(null, '', `#/book?shop=${encodeURIComponent(slug)}&appointment=${created.appointment.id}&token=${encodeURIComponent(created.lookupToken)}`)
     } catch {
       setError(t('booking.bookError'))
     } finally {
+      bookingInFlight.current = false
       setBusy(false)
     }
   }
@@ -295,8 +327,8 @@ export default function PublicBookingPage() {
       {error && <p className="booking-error" role="alert">{error}</p>}
 
       {mode === 'queue' && !turn && <form className="booking-form" onSubmit={createTurn}>
-        <input name="customerName" placeholder={t('booking.nameOptional')} maxLength={120} />
-        <input name="customerPhone" placeholder={t('booking.phoneOptional')} maxLength={40} />
+        <label className="booking-field"><span>{t('booking.nameOptional')}</span><input name="customerName" autoComplete="name" placeholder={t('booking.nameOptional')} maxLength={120} /></label>
+        <label className="booking-field"><span>{t('booking.phoneOptional')}</span><input name="customerPhone" type="tel" autoComplete="tel" placeholder={t('booking.phoneOptional')} maxLength={40} /></label>
         <ServiceChoices services={shop?.services ?? []} label={t('selectService')} />
         <BarberChoices shopId={shop?.id} barbers={shop?.barbers ?? []} label={t('anyBarber')} anyLabel={t('booking.nextBarber')} />
         <button disabled={busy}>{busy ? t('booking.generating') : t('booking.getTurn')}</button>
@@ -312,22 +344,29 @@ export default function PublicBookingPage() {
         {['Waiting', 'Called'].includes(turn.turn.status) && <button disabled={busy} onClick={() => void cancelSaved('turn')}>{t('booking.cancelTurn')}</button>}
       </div>}
 
-      {mode === 'appointment' && appointmentsEnabled && !appointment && <form className="booking-form" onSubmit={findSlots}>
-        <input name="customerName" placeholder={t('booking.name')} required maxLength={120} />
-        <input name="customerPhone" placeholder={t('booking.phone')} maxLength={40} />
-        <input name="customerEmail" type="email" placeholder={t('common.email')} maxLength={180} />
+      {mode === 'appointment' && appointmentsEnabled && !appointment && <form className="booking-form" onSubmit={findSlots} onChange={event => {
+        if (['serviceId', 'barberId', 'date'].includes(event.target.getAttribute('name') ?? '')) {
+          availabilityVersion.current += 1
+          setSlots([])
+          setSlotsKey(null)
+          setError('')
+        }
+      }}>
+        <label className="booking-field"><span>{t('booking.name')}</span><input name="customerName" autoComplete="name" placeholder={t('booking.name')} required maxLength={120} /></label>
+        <label className="booking-field"><span>{t('booking.phone')}</span><input name="customerPhone" type="tel" autoComplete="tel" placeholder={t('booking.phone')} maxLength={40} /></label>
+        <label className="booking-field"><span>{t('common.email')}</span><input name="customerEmail" type="email" autoComplete="email" placeholder={t('common.email')} maxLength={180} /></label>
         <ServiceChoices services={shop?.services ?? []} label={t('selectService')} />
         <BarberChoices shopId={shop?.id} barbers={shop?.barbers ?? []} label={t('anyBarber')} anyLabel={t('anyBarber')} />
-        <input name="date" type="date" min={new Date().toISOString().slice(0, 10)} required />
+        <label className="booking-field"><span>{t('appointmentsAdmin.date')}</span><input name="date" type="date" min={dateInZone(shop.timeZoneId)} required /></label>
         <button disabled={busy}>{t('booking.searchSlots')}</button>
-        {slots.length > 0 && <div className="slot-grid">{slots.map(slot => <button type="button" key={`${slot.barberId}-${slot.startsAtUtc}`} onClick={event => void book(slot, event.currentTarget.form!)}>
-          {new Date(slot.startsAtUtc).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}<small>{slot.barberName}</small>
+        {slots.length > 0 && <div className="slot-grid">{slots.map(slot => <button type="button" disabled={busy} key={`${slot.barberId}-${slot.startsAtUtc}`} onClick={event => { if (event.currentTarget.form) void book(slot, event.currentTarget.form) }}>
+          {new Date(slot.startsAtUtc).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', timeZone: shop.timeZoneId })}<small>{slot.barberName}</small>
         </button>)}</div>}
       </form>}
 
       {mode === 'appointment' && appointment && <div className="ticket-result appointment">
         <span>{t('booking.appointmentConfirmed')}</span>
-        <strong>{new Date(appointment.appointment.startsAtUtc).toLocaleString(locale)}</strong>
+        <strong>{new Date(appointment.appointment.startsAtUtc).toLocaleString(locale, { timeZone: shop.timeZoneId })}</strong>
         <p>{t('booking.appointmentWith', { service: appointment.appointment.serviceName, barber: appointment.appointment.barberName })}</p>
         <small>{t('booking.keepAppointmentLink')}</small>
         {appointment.appointment.status === 'Confirmed' && <button disabled={busy} onClick={() => void cancelSaved('appointment')}>{t('booking.cancelAppointment')}</button>}

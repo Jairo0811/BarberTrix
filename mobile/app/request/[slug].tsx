@@ -1,6 +1,6 @@
 import { useAuth } from '@/auth/AuthProvider';
 import { rememberRequest } from '@/turnRequests/recentRequests';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -13,13 +13,14 @@ import { BrandLogo } from '@/ui/BrandLogo';
 import { BarberAvatar } from '@/ui/BarberAvatar';
 import { BrandedBackground } from '@/ui/BrandedBackground';
 
-function localDate(offset: number) {
-  const date = new Date();
-  date.setDate(date.getDate() + offset);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+function localDate(offset: number, timeZone?: string) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone, year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(new Date());
+  const part = (name: Intl.DateTimeFormatPartTypes) => parts.find(value => value.type === name)?.value ?? '';
+  const day = new Date(`${part('year')}-${part('month')}-${part('day')}T12:00:00Z`);
+  day.setUTCDate(day.getUTCDate() + offset);
+  return day.toISOString().slice(0, 10);
 }
 
 function localDateFromValue(value: string) {
@@ -40,10 +41,6 @@ export default function RequestTurnScreen() {
   const [email, setEmail] = useState('');
   const [notes, setNotes] = useState('');
 
-  const slotFormatter = useMemo(
-    () => new Intl.DateTimeFormat(locale, { weekday: 'short', hour: 'numeric', minute: '2-digit' }),
-    [locale],
-  );
   const dayFormatter = useMemo(
     () => new Intl.DateTimeFormat(locale, { weekday: 'short', month: 'short', day: 'numeric' }),
     [locale],
@@ -56,6 +53,13 @@ export default function RequestTurnScreen() {
   });
 
   const shop = shopQuery.data;
+  const slotFormatter = useMemo(
+    () => new Intl.DateTimeFormat(locale, { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone: shop?.timeZoneId }),
+    [locale, shop?.timeZoneId],
+  );
+  useEffect(() => {
+    if (shop?.timeZoneId) { setDate(localDate(1, shop.timeZoneId)); setStartsAt(''); }
+  }, [shop?.timeZoneId]);
   const activeServices = useMemo(() => shop?.services.filter(x => x.isActive) ?? [], [shop]);
   const activeBarbers = useMemo(() => shop?.barbers.filter(x => x.isActive) ?? [], [shop]);
 
@@ -133,7 +137,10 @@ export default function RequestTurnScreen() {
     );
   }
 
-  const canSubmit = Boolean(serviceId && barberId && startsAt && name.trim()) && !createMutation.isPending;
+  const emailValid = !email.trim() || (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) && email.trim().length <= 180);
+  const nameValid = name.trim().length > 0 && name.trim().length <= 120;
+  const phoneValid = phone.trim().length <= 40;
+  const canSubmit = Boolean(serviceId && barberId && startsAt && nameValid && phoneValid && emailValid) && !createMutation.isPending;
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -216,7 +223,7 @@ export default function RequestTurnScreen() {
           </View>
           <View style={styles.row}>
             {[1, 2, 3].map(offset => {
-              const value = localDate(offset);
+              const value = localDate(offset, shop?.timeZoneId);
               const selected = date === value;
 
               return (
@@ -276,9 +283,10 @@ export default function RequestTurnScreen() {
           </View>
 
           <View style={styles.formStack}>
-            <TextInput accessibilityLabel={t('publicRequest.name')} value={name} onChangeText={setName} placeholder={t('publicRequest.name')} placeholderTextColor={colors.textSubtle} style={styles.input} autoCapitalize="words" />
-            <TextInput accessibilityLabel={t('publicRequest.phone')} value={phone} onChangeText={setPhone} placeholder={t('publicRequest.phone')} placeholderTextColor={colors.textSubtle} style={styles.input} keyboardType="phone-pad" />
-            <TextInput accessibilityLabel={t('publicRequest.email')} value={email} onChangeText={setEmail} placeholder={t('publicRequest.email')} placeholderTextColor={colors.textSubtle} style={styles.input} keyboardType="email-address" autoCapitalize="none" />
+            <TextInput accessibilityLabel={t('publicRequest.name')} value={name} maxLength={120} onChangeText={setName} placeholder={t('publicRequest.name')} placeholderTextColor={colors.textSubtle} style={styles.input} autoCapitalize="words" />
+            <TextInput accessibilityLabel={t('publicRequest.phone')} value={phone} maxLength={40} onChangeText={setPhone} placeholder={t('publicRequest.phone')} placeholderTextColor={colors.textSubtle} style={styles.input} keyboardType="phone-pad" autoComplete="tel" />
+            <TextInput accessibilityLabel={t('publicRequest.email')} value={email} maxLength={180} onChangeText={setEmail} placeholder={t('publicRequest.email')} placeholderTextColor={colors.textSubtle} style={styles.input} keyboardType="email-address" autoCapitalize="none" autoComplete="email" />
+            {!emailValid && <Text accessibilityRole="alert" style={styles.error}>{locale.startsWith('es') ? 'Introduce un correo electrónico válido.' : 'Enter a valid email address.'}</Text>}
             <TextInput accessibilityLabel={t('publicRequest.notes')} value={notes} onChangeText={setNotes} placeholder={t('publicRequest.notes')} placeholderTextColor={colors.textSubtle} style={[styles.input, styles.multiline]} multiline maxLength={500} />
           </View>
         </View>

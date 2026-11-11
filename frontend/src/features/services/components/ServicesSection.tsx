@@ -2,7 +2,7 @@ import { FormEvent, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlus, faScissors } from '@fortawesome/free-solid-svg-icons'
 import type { Service } from '../../../types'
-import { showError, showSuccessToast } from '../../../alerts'
+import { confirmDestructive, showError, showSuccessToast } from '../../../alerts'
 import { apiErrorMessage } from '../../../apiErrorMessages'
 import { useI18n } from '../../../i18n'
 import { createService, updateService } from '../../queue/api/queueApi'
@@ -61,6 +61,11 @@ export default function ServicesSection({ services, copy: c, onRefresh, onError 
   }
 
   async function toggleActive(service: Service) {
+    if (busy) return
+    if (service.isActive) {
+      const confirmed = await confirmDestructive(t('commercial.deactivate'), service.name, t('commercial.deactivate'))
+      if (!confirmed) return
+    }
     const updated = await runOperation(() => updateService(service, {
       name: service.name, price: service.price, estimatedDurationMinutes: service.estimatedDurationMinutes,
       description: service.description ?? null, isActive: !service.isActive,

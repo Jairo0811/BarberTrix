@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { api, ApiClientError } from '../../../api'
 import { apiErrorMessage } from '../../../apiErrorMessages'
-import { showError, showSuccessToast } from '../../../alerts'
+import { confirmDestructive, showError, showSuccessToast } from '../../../alerts'
 import { useI18n } from '../../../i18n'
 import LockedFeature from '../../../shared/components/LockedFeature'
 import type { Capabilities, Shop, Subscription } from '../../../portals/admin/commercialTypes'
@@ -88,6 +88,13 @@ export default function BillingSection({
   }
 
   async function cancelSubscription() {
+    if (busy) return
+    const confirmed = await confirmDestructive(
+      t('billing.cancel'),
+      locale.startsWith('es') ? '¿Confirmas la cancelación inmediata de tu suscripción?' : 'Are you sure you want to cancel your subscription immediately?',
+      t('billing.cancel'),
+    )
+    if (!confirmed) return
     setBusy(true)
     try {
       await api('/api/billing/cancel?atPeriodEnd=false', { method: 'POST' })

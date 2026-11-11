@@ -1,5 +1,6 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
 import { api } from '../../../api'
+import { confirmDestructive, showSuccessToast } from '../../../alerts'
 import { useI18n } from '../../../i18n'
 import type { Capabilities } from '../../../portals/admin/commercialTypes'
 import LockedFeature from '../../../shared/components/LockedFeature'
@@ -73,12 +74,15 @@ export default function TvAdminSection({ capabilities }: Props) {
   }
 
   async function revoke(display: TvDisplay) {
-    if (!window.confirm(t('tvAdmin.confirmRevoke'))) return
+    if (busyId) return
+    const confirmed = await confirmDestructive(t('tvAdmin.confirmRevoke'), display.name, t('tvAdmin.revoke'))
+    if (!confirmed) return
     setBusyId(display.id); setMessage('')
     try {
       await api<void>(`/api/tv/displays/${display.id}`, { method: 'DELETE' })
       setPairings(current => { const next = { ...current }; delete next[display.id]; return next })
       await load()
+      void showSuccessToast(t('tvAdmin.revoke'))
     } catch { setMessage(t('tvAdmin.operationError')) }
     finally { setBusyId(null) }
   }

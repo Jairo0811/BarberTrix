@@ -1,7 +1,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 import type { Barber, Service } from '../../../types'
-import { showError, showSuccessToast } from '../../../alerts'
+import { confirmDestructive, showError, showSuccessToast } from '../../../alerts'
 import { apiErrorMessage } from '../../../apiErrorMessages'
 import { useI18n } from '../../../i18n'
 import LockedFeature from '../../../shared/components/LockedFeature'
@@ -171,6 +171,13 @@ export default function AppointmentsSection({ isDemo, shop, capabilities }: Prop
   }, [visibleAppointments, shop?.timeZoneId])
 
   async function appointmentAction(id: string, action: 'check-in' | 'complete' | 'no-show' | 'cancel') {
+    if (busy) return
+    if (action === 'cancel' || action === 'no-show') {
+      const label = action === 'cancel' ? t('appointmentsAdmin.cancel') : t('appointmentsAdmin.status.NoShow')
+      const appointment = appointments.find(item => item.id === id)
+      const confirmed = await confirmDestructive(label, appointment?.customerName ?? '', label)
+      if (!confirmed) return
+    }
     setBusy(true)
     try {
       await runAppointmentAction(id, action)

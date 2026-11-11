@@ -1,0 +1,50 @@
+/* BarberTrix SweetAlert2 theme — shared by public booking and administration. */
+.bt-swal-popup {
+  width: min(30rem, calc(100vw - 2rem));
+  padding: 1.6rem;
+  border: 1px solid rgba(115, 158, 216, .24);
+  border-radius: 18px;
+  background: linear-gradient(160deg, #101d33 0%, #070f1e 100%);
+  color: var(--bt-text, #f7f8fb);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .64), 0 0 42px rgba(12, 112, 236, .13);
+}
+.bt-swal-popup .swal2-icon { margin: .8rem auto 1rem; }
+.bt-swal-title { padding: 0; color: var(--bt-text, #f7f8fb); font-size: 1.35rem; line-height: 1.3; }
+.bt-swal-description { color: #c2cfdf; font-size: .98rem; line-height: 1.55; overflow-wrap: anywhere; }
+.bt-swal-popup .swal2-actions { width: 100%; gap: .6rem; margin: 1.4rem auto 0; }
+.bt-swal-confirm, .bt-swal-cancel {
+  width: auto;
+  min-width: 7rem;
+  min-height: var(--bt-tap-target, 44px);
+  padding: .72rem 1.1rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: #fff;
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+}
+.bt-swal-confirm { background: var(--bt-primary-action, #0b73e8); }
+.bt-swal-confirm:hover { background: var(--bt-primary-action-strong, #0a5fc4); }
+.bt-swal-cancel { background: #1b2a43; border-color: rgba(170, 194, 229, .28); }
+.bt-swal-cancel:hover { background: #304260; }
+.bt-swal-confirm:focus-visible, .bt-swal-cancel:focus-visible {
+  outline: 3px solid var(--bt-focus, #62adff);
+  outline-offset: 3px;
+}
+.bt-swal-toast {
+  width: min(24rem, calc(100vw - 1.5rem));
+  padding: .9rem 1rem;
+  border-radius: 12px;
+}
+.bt-swal-toast .bt-swal-title { font-size: .92rem; line-height: 1.4; }
+.bt-swal-toast .swal2-icon { margin: 0 .5rem 0 0; }
+.bt-swal-progress { background: var(--bt-primary, #1687ff); }
+@media (max-width: 480px) {
+  .bt-swal-popup { padding: 1.2rem; }
+  .bt-swal-popup .swal2-actions { flex-wrap: wrap; }
+  .bt-swal-confirm, .bt-swal-cancel { flex: 1 1 7rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bt-swal-popup, .bt-swal-popup * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

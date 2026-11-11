@@ -1,7 +1,7 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react'
 import { api } from '../../../api'
 import { apiErrorMessage } from '../../../apiErrorMessages'
-import { showError, showSuccessToast } from '../../../alerts'
+import { confirmDestructive, showError, showSuccessToast } from '../../../alerts'
 import { useI18n } from '../../../i18n'
 import LockedFeature from '../../../shared/components/LockedFeature'
 import type { Auth, Barber } from '../../../types'
@@ -58,6 +58,11 @@ export default function TeamSection({ auth, barbers, isDemo, isSystemAdmin }: Pr
   }
 
   async function deactivateMember(id: string) {
+    if (busy) return
+    const member = team.find(item => item.id === id)
+    if (!member || !member.isActive || member.role === 'Owner') return
+    const confirmed = await confirmDestructive(t('commercial.deactivate'), member.name, t('commercial.deactivate'))
+    if (!confirmed) return
     setBusy(true)
     try { await api(`/api/team/${id}`, { method: 'DELETE' }); await load(); void showSuccessToast(t('team.userDeactivated')) }
     catch (error) { await showError(t('team.deactivateError'), apiErrorMessage(error, locale, t('team.deactivateError'))) }

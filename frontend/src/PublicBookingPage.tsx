@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
 import { API_URL } from './api'
+import { confirmDestructive } from './alerts'
 import { BarberAvatar } from './BarberAvatar'
 import { useI18n } from './i18n'
 import { turnStatusLabel } from './i18n/domainLabels'
@@ -283,7 +284,11 @@ export default function PublicBookingPage() {
 
   async function cancelSaved(kind: 'turn' | 'appointment') {
     const saved = kind === 'turn' ? turn : appointment
-    if (!saved) return
+    if (!saved || busy) return
+    const label = kind === 'turn' ? t('booking.cancelTurn') : t('booking.cancelAppointment')
+    const detail = kind === 'turn' ? turn?.turn.ticketNumber ?? '' : appointment?.appointment.serviceName ?? ''
+    const confirmed = await confirmDestructive(label, detail, label)
+    if (!confirmed) return
 
     setBusy(true)
     setError('')

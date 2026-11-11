@@ -7,6 +7,7 @@ import { I18nProvider, useI18n } from './i18n'
 import { hasRememberedAuth, readAuth, restoreRememberedAuth } from './api'
 import { clearPendingPayPalSubscriptionId, paypalCallbackHashFromSearch } from './billingSelection'
 import { isAdminAppPath } from './portals/admin/adminRoutes'
+import 'sweetalert2/dist/sweetalert2.min.css'
 import './tokens.css'
 import './styles.css'
 import './login.css'
@@ -18,6 +19,7 @@ import './accessibility.css'
 import './language-switcher.css'
 import './barbershop.css'
 import './responsive.css'
+import './alerts.css'
 
 const App = lazy(() => import('./App'))
 const RegisterPage = lazy(() => import('./RegisterPage'))

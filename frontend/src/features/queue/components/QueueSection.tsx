@@ -75,9 +75,9 @@ export default function QueueSection({ barbers, services, turns, overview, loadi
         <article className="panel">
           <div className="panel-heading"><div><p className="eyebrow">{c.newTurn}</p><h2>{c.addToQueue}</h2></div></div>
           <form className="form-stack" onSubmit={createTurn}>
-            <input name="customerName" placeholder={c.customerOptional} />
-            <select name="serviceId" required defaultValue=""><option value="" disabled>{c.selectService}</option>{services.filter(service => service.isActive).map(service => <option key={service.id} value={service.id}>{service.name} · RD${service.price}</option>)}</select>
-            <select name="barberId" defaultValue=""><option value="">{c.anyBarber}</option>{barbers.filter(barber => barber.isActive).map(barber => <option key={barber.id} value={barber.id}>{barber.name} · {c.chair} {barber.chairNumber}</option>)}</select>
+            <label className="form-field-label">{c.customerOptional}<input name="customerName" autoComplete="name" maxLength={120} placeholder={c.customerOptional} /></label>
+            <label className="form-field-label">{c.selectService}<select name="serviceId" required defaultValue=""><option value="" disabled>{c.selectService}</option>{services.filter(service => service.isActive).map(service => <option key={service.id} value={service.id}>{service.name} · RD${service.price}</option>)}</select></label>
+            <label className="form-field-label">{c.anyBarber}<select name="barberId" defaultValue=""><option value="">{c.anyBarber}</option>{barbers.filter(barber => barber.isActive).map(barber => <option key={barber.id} value={barber.id}>{barber.name} · {c.chair} {barber.chairNumber}</option>)}</select></label>
             <button className="primary" disabled={busy || loading || activeServices === 0}><FontAwesomeIcon icon={faPlus} /> {c.generateTurn}</button>
           </form>
         </article>

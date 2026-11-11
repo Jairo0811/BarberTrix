@@ -503,3 +503,6 @@
 
   .dashboard-kpis.is-loading .dashboard-kpi::after { animation: none; }
 }
+
+.form-field-label{display:grid;gap:.35rem;min-width:0;font-weight:650}
+.form-field-label>input,.form-field-label>select{width:100%;min-width:0}

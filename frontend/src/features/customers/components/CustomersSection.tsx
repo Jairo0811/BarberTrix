@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { apiErrorMessage } from '../../../apiErrorMessages'
 import { showError, showSuccessToast } from '../../../alerts'
 import { useI18n } from '../../../i18n'
@@ -25,6 +25,9 @@ export default function CustomersSection({ isDemo }: { isDemo: boolean }) {
   const [editing, setEditing] = useState(false)
   const [notes, setNotes] = useState('')
   const [busy, setBusy] = useState(false)
+  const selectedCustomerRef = useRef<string | null>(null)
+  const profileVersion = useRef(0)
+  selectedCustomerRef.current = selectedId
 
   const formatDate = (value?: string | null) => value
     ? new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(value))
@@ -51,20 +54,26 @@ export default function CustomersSection({ isDemo }: { isDemo: boolean }) {
   }, [isDemo])
 
   const loadProfile = useCallback(async (customerId: string) => {
+    const version = ++profileVersion.current
     setProfileLoading(true)
     try {
       const next = await getCustomerProfile(customerId)
+      if (selectedCustomerRef.current !== customerId || version !== profileVersion.current) return
       setProfile(next)
       setNotes(next.notes ?? '')
     } finally {
-      setProfileLoading(false)
+      if (selectedCustomerRef.current === customerId && version === profileVersion.current) setProfileLoading(false)
     }
   }, [])
 
   useEffect(() => { void loadCustomers().catch(() => undefined) }, [loadCustomers])
   useEffect(() => {
-    if (!selectedId || isDemo) { setProfile(null); return }
-    void loadProfile(selectedId).catch(() => setProfile(null))
+    if (!selectedId || isDemo) { ++profileVersion.current; setProfile(null); return }
+    setProfile(null)
+    void loadProfile(selectedId).catch(() => {
+      if (selectedCustomerRef.current === selectedId) setProfile(null)
+    })
+    return () => { ++profileVersion.current }
   }, [isDemo, loadProfile, selectedId])
 
   const filteredCustomers = useMemo(() => {
@@ -143,9 +152,9 @@ export default function CustomersSection({ isDemo }: { isDemo: boolean }) {
         <section className="customer-create-card">
           <strong>{t('customersAdmin.newCustomer')}</strong>
           <form className="business-form" onSubmit={create}>
-            <input name="name" placeholder={t('customersAdmin.name')} required />
-            <input name="phone" placeholder={t('customersAdmin.phone')} inputMode="tel" />
-            <input name="email" type="email" placeholder={t('customersAdmin.email')} />
+            <label>{t('customersAdmin.name')}<input name="name" autoComplete="name" maxLength={120} placeholder={t('customersAdmin.name')} required /></label>
+            <label>{t('customersAdmin.phone')}<input name="phone" type="tel" autoComplete="tel" maxLength={40} placeholder={t('customersAdmin.phone')} /></label>
+            <label>{t('customersAdmin.email')}<input name="email" autoComplete="email" maxLength={180} type="email" placeholder={t('customersAdmin.email')} /></label>
             <button disabled={busy}>{t('customersAdmin.add')}</button>
           </form>
         </section>
@@ -203,9 +212,9 @@ export default function CustomersSection({ isDemo }: { isDemo: boolean }) {
               {editing && <section className="customer-edit-card">
                 <strong>{t('customersAdmin.editContact')}</strong>
                 <form className="business-form" onSubmit={saveCustomer}>
-                  <input name="name" defaultValue={profile.customer.name} placeholder={t('customersAdmin.name')} required />
-                  <input name="phone" defaultValue={profile.customer.phone ?? ''} placeholder={t('customersAdmin.phone')} inputMode="tel" />
-                  <input name="email" defaultValue={profile.customer.email ?? ''} type="email" placeholder={t('customersAdmin.email')} />
+                  <label>{t('customersAdmin.name')}<input name="name" defaultValue={profile.customer.name} autoComplete="name" maxLength={120} placeholder={t('customersAdmin.name')} required /></label>
+                  <label>{t('customersAdmin.phone')}<input name="phone" type="tel" defaultValue={profile.customer.phone ?? ''} autoComplete="tel" maxLength={40} placeholder={t('customersAdmin.phone')} /></label>
+                  <label>{t('customersAdmin.email')}<input name="email" defaultValue={profile.customer.email ?? ''} autoComplete="email" maxLength={180} type="email" placeholder={t('customersAdmin.email')} /></label>
                   <button disabled={busy}>{t('customersAdmin.saveChanges')}</button>
                 </form>
               </section>}
@@ -213,7 +222,7 @@ export default function CustomersSection({ isDemo }: { isDemo: boolean }) {
               <section className="customer-note-card">
                 <strong>{t('customersAdmin.notesTitle')}</strong>
                 <p className="customer-meta">{t('customersAdmin.notesText')}</p>
-                <textarea value={notes} maxLength={1000} onChange={event => setNotes(event.target.value)} placeholder={t('customersAdmin.notesPlaceholder')} />
+                <textarea aria-label={t('customersAdmin.notesTitle')} value={notes} maxLength={1000} onChange={event => setNotes(event.target.value)} placeholder={t('customersAdmin.notesPlaceholder')} />
                 <button type="button" disabled={busy || notes === (profile.notes ?? '')} onClick={() => void saveNotes()}>{t('customersAdmin.saveNotes')}</button>
               </section>
 

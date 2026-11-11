@@ -23,6 +23,10 @@ public static class AuthEndpoints
                 WriteRefreshCookie(context, response);
                 return Results.Ok(ToClientResponse(response));
             }
+            catch (InvalidOperationException ex) when (ex.Message == "Human verification failed.")
+            {
+                return ApiErrorResults.BadRequest(context, ApiErrorCodes.AuthCaptchaInvalid, "No se pudo completar la verificación humana. Inténtalo nuevamente.");
+            }
             catch (InvalidOperationException ex)
             {
                 return Results.Conflict(ApiError.From(context, ApiErrorCodes.AuthRegistrationConflict, ex.Message));
@@ -40,6 +44,10 @@ public static class AuthEndpoints
                 var response = await authService.RegisterBarberAsync(request, UserAgent(context), Ip(context), cancellationToken);
                 WriteRefreshCookie(context, response);
                 return Results.Ok(ToClientResponse(response));
+            }
+            catch (InvalidOperationException ex) when (ex.Message == "Human verification failed.")
+            {
+                return ApiErrorResults.BadRequest(context, ApiErrorCodes.AuthCaptchaInvalid, "No se pudo completar la verificación humana. Inténtalo nuevamente.");
             }
             catch (InvalidOperationException ex)
             {

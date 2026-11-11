@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 import type { Barber, Service } from '../../../types'
 import { showError, showSuccessToast } from '../../../alerts'
@@ -80,6 +80,7 @@ export default function AppointmentsSection({ isDemo, shop, capabilities }: Prop
   const [editBarberId, setEditBarberId] = useState('')
   const [editSlot, setEditSlot] = useState('')
   const [editSlots, setEditSlots] = useState<AvailabilitySlot[]>([])
+  const rescheduleDialog = useRef<HTMLElement>(null)
 
   const statusLabel = (status: string) => localizedStatuses.has(status) ? t(`appointmentsAdmin.status.${status}`) : t('status.unknown')
   const durationLabel = (minutes: number) => new Intl.NumberFormat(locale, { style: 'unit', unit: 'minute', unitDisplay: 'short' }).format(minutes)
@@ -107,16 +108,45 @@ export default function AppointmentsSection({ isDemo, shop, capabilities }: Prop
   }, [shop])
 
   useEffect(() => {
+    let active = true
     setFormSlot('')
-    if (!shop || !formServiceId || !formBarberId || !formDate) { setSlots([]); return }
-    void listAvailability(shop.slug, formServiceId, formDate, formBarberId).then(setSlots).catch(() => setSlots([]))
+    setSlots([])
+    if (shop && formServiceId && formBarberId && formDate) {
+      void listAvailability(shop.slug, formServiceId, formDate, formBarberId)
+        .then(next => { if (active) setSlots(next) })
+        .catch(() => { if (active) setSlots([]) })
+    }
+    return () => { active = false }
   }, [shop, formServiceId, formBarberId, formDate])
 
   useEffect(() => {
+    let active = true
     setEditSlot('')
-    if (!shop || !editing || !editBarberId || !editDate) { setEditSlots([]); return }
-    void listAvailability(shop.slug, editing.serviceId, editDate, editBarberId).then(setEditSlots).catch(() => setEditSlots([]))
+    setEditSlots([])
+    if (shop && editing && editBarberId && editDate) {
+      void listAvailability(shop.slug, editing.serviceId, editDate, editBarberId)
+        .then(next => { if (active) setEditSlots(next) })
+        .catch(() => { if (active) setEditSlots([]) })
+    }
+    return () => { active = false }
   }, [shop, editing, editBarberId, editDate])
+
+  useEffect(() => {
+    if (!editing) return
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const focusables = () => Array.from(rescheduleDialog.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled)') ?? [])
+    focusables()[0]?.focus()
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { event.preventDefault(); setEditing(null); return }
+      if (event.key !== 'Tab') return
+      const items = focusables()
+      if (!items.length) return
+      if (event.shiftKey && document.activeElement === items[0]) { event.preventDefault(); items[items.length - 1].focus() }
+      else if (!event.shiftKey && document.activeElement === items[items.length - 1]) { event.preventDefault(); items[0].focus() }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => { document.removeEventListener('keydown', onKeyDown); previousFocus?.focus() }
+  }, [editing])
 
   const visibleAppointments = useMemo(() => {
     const weekStart = mondayOf(selectedDate)
@@ -235,13 +265,13 @@ export default function AppointmentsSection({ isDemo, shop, capabilities }: Prop
           <article className="appointment-form-card">
             <p className="eyebrow">{t('appointmentsAdmin.newEyebrow')}</p><h3>{t('appointmentsAdmin.createTitle')}</h3>
             <form className="business-form appointment-form" onSubmit={create}>
-              <input name="customerName" placeholder={t('appointmentsAdmin.customerName')} required />
-              <input name="customerPhone" placeholder={t('appointmentsAdmin.phone')} inputMode="tel" />
-              <input name="customerEmail" placeholder={t('appointmentsAdmin.email')} type="email" />
-              <select value={formServiceId} onChange={event => setFormServiceId(event.target.value)} required><option value="">{t('appointmentsAdmin.service')}</option>{services.map(item => <option key={item.id} value={item.id}>{item.name} · {durationLabel(item.estimatedDurationMinutes)}</option>)}</select>
-              <select value={formBarberId} onChange={event => setFormBarberId(event.target.value)} required><option value="">{t('appointmentsAdmin.barber')}</option>{barbers.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
-              <input type="date" value={formDate} min={today} onChange={event => setFormDate(event.target.value)} required />
-              <select value={formSlot} onChange={event => setFormSlot(event.target.value)} required disabled={!slots.length}><option value="">{slots.length ? t('appointmentsAdmin.slotAvailable') : t('appointmentsAdmin.noSlots')}</option>{slots.map(slot => <option key={`${slot.barberId}-${slot.startsAtUtc}`} value={slot.startsAtUtc}>{formatTime(slot.startsAtUtc, locale, shop?.timeZoneId)}</option>)}</select>
+              <label>{t('appointmentsAdmin.customerName')}<input name="customerName" autoComplete="name" maxLength={120} placeholder={t('appointmentsAdmin.customerName')} required /></label>
+              <label>{t('appointmentsAdmin.phone')}<input name="customerPhone" type="tel" autoComplete="tel" maxLength={40} placeholder={t('appointmentsAdmin.phone')} /></label>
+              <label>{t('appointmentsAdmin.email')}<input name="customerEmail" autoComplete="email" maxLength={180} placeholder={t('appointmentsAdmin.email')} type="email" /></label>
+              <label>{t('appointmentsAdmin.service')}<select value={formServiceId} onChange={event => setFormServiceId(event.target.value)} required><option value="">{t('appointmentsAdmin.service')}</option>{services.map(item => <option key={item.id} value={item.id}>{item.name} · {durationLabel(item.estimatedDurationMinutes)}</option>)}</select></label>
+              <label>{t('appointmentsAdmin.barber')}<select value={formBarberId} onChange={event => setFormBarberId(event.target.value)} required><option value="">{t('appointmentsAdmin.barber')}</option>{barbers.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+              <label>{t('appointmentsAdmin.date')}<input type="date" value={formDate} min={today} onChange={event => setFormDate(event.target.value)} required /></label>
+              <label>{t('appointmentsAdmin.slotAvailable')}<select value={formSlot} onChange={event => setFormSlot(event.target.value)} required disabled={!slots.length}><option value="">{slots.length ? t('appointmentsAdmin.slotAvailable') : t('appointmentsAdmin.noSlots')}</option>{slots.map(slot => <option key={`${slot.barberId}-${slot.startsAtUtc}`} value={slot.startsAtUtc}>{formatTime(slot.startsAtUtc, locale, shop?.timeZoneId)}</option>)}</select></label>
               <button disabled={busy || !formSlot}>{t('appointmentsAdmin.create')}</button>
             </form>
           </article>
@@ -250,12 +280,12 @@ export default function AppointmentsSection({ isDemo, shop, capabilities }: Prop
         </section>}
 
         {editing && <div className="appointment-modal-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setEditing(null) }}>
-          <section className="appointment-modal" role="dialog" aria-modal="true" aria-labelledby="reschedule-title">
+          <section ref={rescheduleDialog} className="appointment-modal" role="dialog" aria-modal="true" aria-labelledby="reschedule-title">
             <p className="eyebrow">{t('appointmentsAdmin.rescheduleEyebrow')}</p><h3 id="reschedule-title">{editing.customerName}</h3><p>{editing.serviceName} · {t('appointmentsAdmin.currently', { date: formatDateTime(editing.startsAtUtc, locale, shop?.timeZoneId) })}</p>
             <form className="business-form appointment-form" onSubmit={saveReschedule}>
-              <select value={editBarberId} onChange={event => setEditBarberId(event.target.value)} required>{barbers.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
-              <input type="date" value={editDate} min={today} onChange={event => setEditDate(event.target.value)} required />
-              <select value={editSlot} onChange={event => setEditSlot(event.target.value)} required disabled={!editSlots.length}><option value="">{editSlots.length ? t('appointmentsAdmin.newSlot') : t('appointmentsAdmin.noSlots')}</option>{editSlots.map(slot => <option key={`${slot.barberId}-${slot.startsAtUtc}`} value={slot.startsAtUtc}>{formatTime(slot.startsAtUtc, locale, shop?.timeZoneId)}</option>)}</select>
+              <label>{t('appointmentsAdmin.barber')}<select value={editBarberId} onChange={event => setEditBarberId(event.target.value)} required>{barbers.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+              <label>{t('appointmentsAdmin.date')}<input type="date" value={editDate} min={today} onChange={event => setEditDate(event.target.value)} required /></label>
+              <label>{t('appointmentsAdmin.newSlot')}<select value={editSlot} onChange={event => setEditSlot(event.target.value)} required disabled={!editSlots.length}><option value="">{editSlots.length ? t('appointmentsAdmin.newSlot') : t('appointmentsAdmin.noSlots')}</option>{editSlots.map(slot => <option key={`${slot.barberId}-${slot.startsAtUtc}`} value={slot.startsAtUtc}>{formatTime(slot.startsAtUtc, locale, shop?.timeZoneId)}</option>)}</select></label>
               <div className="billing-actions"><button type="button" className="secondary-link" onClick={() => setEditing(null)}>{t('commercial.close')}</button><button disabled={busy || !editSlot}>{t('appointmentsAdmin.saveChange')}</button></div>
             </form>
           </section>

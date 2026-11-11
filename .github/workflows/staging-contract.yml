@@ -16,6 +16,9 @@ on:
     branches: [main]
     paths:
       - docker-compose.production.yml
+      - frontend/nginx.conf
+      - deploy/staging/nginx.conf
+      - scripts/staging/check_nginx.py
       - docker-compose.staging.yml
       - .env.staging.example
       - scripts/staging/check_compose.py

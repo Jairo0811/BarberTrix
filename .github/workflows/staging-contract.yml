@@ -8,6 +8,8 @@ on:
       - frontend/nginx.conf
       - deploy/staging/nginx.conf
       - scripts/staging/check_nginx.py
+      - scripts/staging/smoke_readonly.py
+      - scripts/staging/test_smoke_readonly.py
       - docker-compose.staging.yml
       - .env.staging.example
       - scripts/staging/check_compose.py
@@ -19,6 +21,8 @@ on:
       - frontend/nginx.conf
       - deploy/staging/nginx.conf
       - scripts/staging/check_nginx.py
+      - scripts/staging/smoke_readonly.py
+      - scripts/staging/test_smoke_readonly.py
       - docker-compose.staging.yml
       - .env.staging.example
       - scripts/staging/check_compose.py
@@ -32,6 +36,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Test staging smoke probe (no network)
+        run: python3 -m unittest discover -s scripts/staging -p 'test_smoke_readonly.py' -v
       - name: Validate Nginx syntax (production and staging)
         shell: bash
         run: |

@@ -35,6 +35,26 @@ docker compose --project-name barbertrix-staging --env-file .env.staging.example
 
 El comando no imprime valores de secretos, porque solo el verificador recibe la configuración JSON. No ejecutar `docker compose config` solo en un log público si se usan secretos reales.
 
+## Verificación de humo de staging (sin escrituras)
+
+La prueba de humo no crea usuarios, citas ni suscripciones. Solo ejecuta peticiones **GET** sobre cuatro rutas: `/health` (Nginx), `/health/live` (ASP.NET Core), `/health/ready` (API + SQL Server) y `/api` (identidad del backend). Exige HTTPS con certificado válido, origen de staging explícito, código 200, cabecera de seguridad y cero redirecciones.
+
+Desde Windows PowerShell o Bash, con el dominio real de staging ya configurado:
+
+```bash
+python3 scripts/staging/smoke_readonly.py --base-url https://staging.tu-dominio.com
+```
+
+La URL anterior es ilustrativa, no un despliegue existente. El verificador **rechaza** HTTP, hosts de producción sin «staging», URLs de ejemplo, redirecciones y cabeceras inseguras. Si SQL Server no está disponible, el probe debe fallar en `/health/ready`.
+
+Las pruebas unitarias del propio script son locales y no se conectan a ningún servicio:
+
+```bash
+python3 -m unittest discover -s scripts/staging -p 'test_smoke_readonly.py' -v
+```
+
+Las pruebas de negocio con datos ficticios (correo, Turnstile, autorización multi-tenant, citas, PayPal Sandbox, etc.) siguen siendo **aceptación manual pendiente**.
+
 ## Validación operativa (requiere aprobación e infraestructura)
 
 Después de completar `.env.staging` con credenciales de prueba y confirmar HTTPS/proxy, ejecutar:

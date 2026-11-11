@@ -13,6 +13,33 @@ def require(ok: bool, message: str) -> None:
         raise ValueError(message)
 
 
+def is_trusted_nginx_bind(mount: object) -> bool:
+    """Verify the resolved Docker bind mount on Linux and Windows hosts.
+
+    Compose emits absolute source paths with forward slashes on Linux but may
+    emit backslashes on Windows. Normalize only for validation, never relax the
+    expected target, mount type, location or read-only requirement.
+    """
+    if not isinstance(mount, dict):
+        return False
+    if mount.get("type") != "bind":
+        return False
+    if mount.get("target") != "/etc/nginx/conf.d/default.conf":
+        return False
+    if mount.get("read_only") is not True:
+        return False
+    source = mount.get("source")
+    if not isinstance(source, str):
+        return False
+    source = source.replace("\\", "/")
+    is_absolute = source.startswith("/") or (
+        len(source) >= 3 and source[0].isalpha() and source[1:3] == ":/"
+    )
+    if not is_absolute or ".." in source.split("/"):
+        return False
+    return source.endswith("/deploy/staging/nginx.conf")
+
+
 def main() -> int:
     try:
         config = json.load(sys.stdin)
@@ -29,13 +56,14 @@ def main() -> int:
         require(api.get("environment", {}).get("Demo__Enabled") == "false", "Demo must be disabled in staging")
         require(api.get("environment", {}).get("Auth__RequireVerifiedEmail") == "true", "Verified email must be required")
         mounts = web.get("volumes", [])
-        trusted_conf = [
+        nginx_mounts = [
             v for v in mounts
-            if v.get("target") == "/etc/nginx/conf.d/default.conf"
-            and str(v.get("source", "")).endswith("/deploy/staging/nginx.conf")
-            and v.get("read_only") is True
+            if isinstance(v, dict) and v.get("target") == "/etc/nginx/conf.d/default.conf"
         ]
-        require(len(trusted_conf) == 1, "Staging must use the read-only HTTPS-aware Nginx config")
+        require(
+            len(nginx_mounts) == 1 and is_trusted_nginx_bind(nginx_mounts[0]),
+            "Staging must use the read-only HTTPS-aware Nginx config",
+        )
         ports = web.get("ports", [])
         require(len(ports) == 1, "Staging web must publish exactly one port")
         p = ports[0]

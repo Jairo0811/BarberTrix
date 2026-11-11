@@ -27,6 +27,17 @@ Este overlay deriva de `docker-compose.production.yml` para probar las mismas im
 5. Configurar una aplicación PayPal **Sandbox**, sus planes y webhook Sandbox apuntando a una URL HTTPS de staging que reciba `/api/webhooks/paypal`. Rechazar cualquier Client ID, secreto o plan Live.
 6. Proteger el acceso a staging (IP allowlist, VPN o autenticación de entrada) y preparar backups y métricas independientes.
 
+## Compatibilidad con Docker Desktop en Windows
+
+Docker Compose puede representar el `source` del volumen bind como `C:\\Users\\...\\deploy\\staging\\nginx.conf` en Windows o con barras `/` en Linux. `scripts/staging/check_compose.py` normaliza únicamente los separadores de esta **ruta de origen** para reconocer ambas plataformas. Sigue exigiendo un bind de archivo, destino exacto `/etc/nginx/conf.d/default.conf` y `read_only: true`; no acepta rutas relativas ni montajes de escritura.
+
+Las pruebas de regresión para rutas Windows, WSL y Linux corren en el workflow de staging sin iniciar servicios. Si el contrato falla, inspeccionar **solo los metadatos** del montaje (nunca imprimir el JSON de Compose completo, porque contiene variables de entorno):
+
+```powershell
+$resolved = docker compose --project-name barbertrix-staging --env-file .env.staging.example -f docker-compose.production.yml -f docker-compose.staging.yml config --format json | ConvertFrom-Json
+$resolved.services.web.volumes | Where-Object { $_.target -eq "/etc/nginx/conf.d/default.conf" } | Select-Object type, target, read_only
+```
+
 ## Validación estática (sin desplegar)
 
 ```bash

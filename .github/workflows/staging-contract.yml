@@ -13,6 +13,7 @@ on:
       - docker-compose.staging.yml
       - .env.staging.example
       - scripts/staging/check_compose.py
+      - scripts/staging/test_compose_contract.py
       - .github/workflows/staging-contract.yml
   push:
     branches: [main]
@@ -26,6 +27,7 @@ on:
       - docker-compose.staging.yml
       - .env.staging.example
       - scripts/staging/check_compose.py
+      - scripts/staging/test_compose_contract.py
       - .github/workflows/staging-contract.yml
 
 permissions:
@@ -36,8 +38,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Test staging smoke probe (no network)
-        run: python3 -m unittest discover -s scripts/staging -p 'test_smoke_readonly.py' -v
+      - name: Test staging Python contracts (no network)
+        run: python3 -m unittest discover -s scripts/staging -p 'test_*.py' -v
       - name: Validate Nginx syntax (production and staging)
         # The isolated syntax container lacks the Compose 'api' DNS alias.
         # --add-host is test-only and makes no running backend reachable.

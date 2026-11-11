@@ -11,7 +11,9 @@ Este overlay deriva de `docker-compose.production.yml` para probar las mismas im
 - `PayPal__Sandbox=true` se fuerza en el overlay, junto con `Push__Enabled=false` (sin mensajes a dispositivos reales).
 - Se conserva `ASPNETCORE_ENVIRONMENT=Production` para ejecutar comprobaciones reales de autenticación, correo y secretos, evitando funcionalidades solo disponibles en Development.
 - La API está detrás de Nginx; no desplegarla como servicio público independiente sin revisar la política `ReverseProxy__TrustAnyProxy`.
-- **Cuidado:** el Nginx actual utiliza `X-Forwarded-Proto $scheme` y `Host $host`. Si se termina TLS en un proxy externo y Nginx recibe HTTP, hay que verificar el esquema que observa la API y evitar loops HTTPS/redirecciones o cookies inseguras. El servicio queda en localhost hasta completar esa revisión.
+- **Health checks veraces:** `/health` verifica solamente Nginx; `/health/live` y `/health/ready` se envían a ASP.NET Core. `/health/ready` **debe devolver 503** si SQL Server no responde; nunca aceptes un 200 generado estáticamente por el proxy como evidencia de disponibilidad de la API.
+- **Terminación TLS en staging:** `deploy/staging/nginx.conf` está montado **solo en el stack de staging** y fuerza `X-Forwarded-Proto: https` al backend. Es válido únicamente cuando `127.0.0.1:8088` está detrás de un proxy HTTPS de confianza en la misma máquina. **No publiques 8088 por HTTP hacia Internet ni reutilices este archivo en un servidor HTTP público.** El Nginx general continúa reflejando el esquema real de la conexión y requiere una revisión independiente cuando se configure el proxy de producción.
+- **Nginx y salud:** GitHub Actions valida la sintaxis de ambas configuraciones, verifica las ubicaciones de health y comprueba que staging monte la configuración restringida en solo lectura.
 - No hay servicio BarberTrix ni SQL Server aprovisionado en Render por este cambio. No se crean servicios, bases de datos, dominios ni pagos automáticamente.
 
 ## Configurar SIN publicar secretos

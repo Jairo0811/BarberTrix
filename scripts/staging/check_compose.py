@@ -28,6 +28,14 @@ def main() -> int:
         require(api.get("environment", {}).get("Push__Enabled") == "false", "Push must be disabled in staging")
         require(api.get("environment", {}).get("Demo__Enabled") == "false", "Demo must be disabled in staging")
         require(api.get("environment", {}).get("Auth__RequireVerifiedEmail") == "true", "Verified email must be required")
+        mounts = web.get("volumes", [])
+        trusted_conf = [
+            v for v in mounts
+            if v.get("target") == "/etc/nginx/conf.d/default.conf"
+            and str(v.get("source", "")).endswith("/deploy/staging/nginx.conf")
+            and v.get("read_only") is True
+        ]
+        require(len(trusted_conf) == 1, "Staging must use the read-only HTTPS-aware Nginx config")
         ports = web.get("ports", [])
         require(len(ports) == 1, "Staging web must publish exactly one port")
         p = ports[0]

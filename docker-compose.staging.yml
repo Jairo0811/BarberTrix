@@ -1,0 +1,20 @@
+# Overlay for a NON-PRODUCTION BarberTrix stack.
+# Requires Docker Compose >=2.24.4 for !override (ports must not retain 0.0.0.0:80).
+# Always combine with docker-compose.production.yml and use -p barbertrix-staging.
+name: barbertrix-staging
+
+services:
+  api:
+    environment:
+      PayPal__Sandbox: "true"
+      Push__Enabled: "false"
+      Demo__Enabled: "false"
+      Auth__RequireVerifiedEmail: "true"
+  web:
+    # Only reachable through a trusted HTTPS termination proxy on the host.
+    # Nginx pins X-Forwarded-Proto=https; this must never be deployed with public HTTP.
+    volumes:
+      - ./deploy/staging/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    # Prevent the inherited public "80:80" port from remaining exposed.
+    ports: !override
+      - "127.0.0.1:8088:80"

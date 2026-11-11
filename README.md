@@ -66,7 +66,7 @@ Discovery aprovecha información operativa real de BarberTrix: personas esperand
 
 ## 🔐 Experiencia cliente y autenticación
 
-Discovery puede explorarse sin autenticación, pero **reservar una cita requiere una cuenta de cliente autenticada**. Esto permite mantener historial, reprogramaciones, cancelaciones, preferencias, reseñas y futuras funciones de fidelización.
+Discovery puede explorarse sin autenticación. En **Marketplace/Discovery Mobile**, reservar una cita vinculada al historial y perfil del cliente requiere una cuenta autenticada. En cambio, el flujo **web público** (`/#/book?shop=<slug>`) permite reservas de invitado en barberías con citas habilitadas; consulta y cancelación utilizan un token opaco. Son experiencias distintas y deben verificarse por separado. Véase [`docs/staging-acceptance.md`](docs/staging-acceptance.md).
 
 Mobile ofrece:
 

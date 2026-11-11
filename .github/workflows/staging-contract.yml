@@ -1,0 +1,57 @@
+name: Staging contract
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - docker-compose.production.yml
+      - frontend/nginx.conf
+      - deploy/staging/nginx.conf
+      - scripts/staging/check_nginx.py
+      - scripts/staging/smoke_readonly.py
+      - scripts/staging/test_smoke_readonly.py
+      - docker-compose.staging.yml
+      - .env.staging.example
+      - scripts/staging/check_compose.py
+      - .github/workflows/staging-contract.yml
+  push:
+    branches: [main]
+    paths:
+      - docker-compose.production.yml
+      - frontend/nginx.conf
+      - deploy/staging/nginx.conf
+      - scripts/staging/check_nginx.py
+      - scripts/staging/smoke_readonly.py
+      - scripts/staging/test_smoke_readonly.py
+      - docker-compose.staging.yml
+      - .env.staging.example
+      - scripts/staging/check_compose.py
+      - .github/workflows/staging-contract.yml
+
+permissions:
+  contents: read
+
+jobs:
+  staging-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test staging smoke probe (no network)
+        run: python3 -m unittest discover -s scripts/staging -p 'test_smoke_readonly.py' -v
+      - name: Validate Nginx syntax (production and staging)
+        # The isolated syntax container lacks the Compose 'api' DNS alias.
+        # --add-host is test-only and makes no running backend reachable.
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/staging/check_nginx.py frontend/nginx.conf deploy/staging/nginx.conf
+          docker run --rm --add-host api:127.0.0.1 -v "$PWD/frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro" nginx:1.29-alpine nginx -t
+          docker run --rm --add-host api:127.0.0.1 -v "$PWD/deploy/staging/nginx.conf:/etc/nginx/conf.d/default.conf:ro" nginx:1.29-alpine nginx -t
+      - name: Verify staging isolation and overrides
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose version
+          docker compose --project-name barbertrix-staging --env-file .env.staging.example \
+            -f docker-compose.production.yml -f docker-compose.staging.yml \
+            config --format json | python3 scripts/staging/check_compose.py

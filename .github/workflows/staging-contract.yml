@@ -1,0 +1,36 @@
+name: Staging contract
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - docker-compose.production.yml
+      - docker-compose.staging.yml
+      - .env.staging.example
+      - scripts/staging/check_compose.py
+      - .github/workflows/staging-contract.yml
+  push:
+    branches: [main]
+    paths:
+      - docker-compose.production.yml
+      - docker-compose.staging.yml
+      - .env.staging.example
+      - scripts/staging/check_compose.py
+      - .github/workflows/staging-contract.yml
+
+permissions:
+  contents: read
+
+jobs:
+  staging-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify staging isolation and overrides
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose version
+          docker compose --project-name barbertrix-staging --env-file .env.staging.example \
+            -f docker-compose.production.yml -f docker-compose.staging.yml \
+            config --format json | python3 scripts/staging/check_compose.py

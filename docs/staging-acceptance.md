@@ -51,7 +51,7 @@ No compartir la salida completa de `config`, logs con tokens, archivos `.env`, d
 
 | Flujo | Evidencia mínima | Estado |
 | --- | --- | --- |
-| Despliegue inicial | migración, `/health/live` y `/health/ready` con DB sana | PENDIENTE |
+| Despliegue inicial | migración, `/health` (Nginx), `/health/live` (API) y `/health/ready` (API + SQL Server) | PENDIENTE |
 | Registro Owner | Turnstile válido, inválido, expirado; sin exponer secreto | PENDIENTE |
 | Correo | correo de verificación y reset en buzón controlado | PENDIENTE |
 | Autenticación | login, refresh, logout y cookie segura detrás de HTTPS | PENDIENTE |

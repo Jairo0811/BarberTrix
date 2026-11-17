@@ -10,10 +10,10 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Identity.Core" Version="10.0.*" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.*" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.*" />
-    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+    <PackageReference Include="Microsoft.Extensions.Identity.Core" Version="11.0.*" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="11.0.*" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="11.0.*" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="11.0.0" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="BarberTrix.Api.Tests" />
